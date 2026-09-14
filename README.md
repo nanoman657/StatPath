@@ -48,12 +48,25 @@ src/
     index.ts        the assembled curriculum
   ui/               React components (path map, lesson player, exercise views, profile)
 tests/              vitest suites (every exercise is validated and graded)
-scripts/ingest_pdf.py   chunk the textbook PDF and audit lesson coverage
+scripts/
+  ingest_cnxml.py   fetch the OpenStax source from GitHub and audit lesson coverage
+  ingest_pdf.py     chunk the textbook PDF and audit lesson coverage
+docs/coverage.md    latest coverage report
 ```
 
-## Auditing coverage against the textbook PDF
+## Auditing coverage against the textbook
 
-The book is ~22 MB, so `scripts/ingest_pdf.py` reads it page by page and writes it out in 25-page chunks, extracts every section heading and key term, and produces `data/extracted/coverage_report.md` listing which sections do and do not have a lesson:
+Two scripts check the curriculum against the book itself. Neither copies book text into the repository.
+
+**From the OpenStax source on GitHub (no PDF needed):**
+
+```bash
+python scripts/ingest_cnxml.py --cache data/cnxml
+```
+
+This downloads the book's collection file and its 102 CNXML modules from `openstax/osbooks-introductory-statistics-bundle`, then writes `data/extracted/toc.json`, `key_terms.json`, and `coverage_report.md`. The report lists every numbered section with the StatPath lesson that covers it and every glossary term that is not mentioned anywhere in `src/`. A committed copy of the latest report is in `docs/coverage.md`.
+
+**From the PDF (~22 MB):** `scripts/ingest_pdf.py` reads it page by page in 25-page chunks, extracts section headings and key terms, and produces the same kind of report:
 
 ```bash
 pip install pypdf
@@ -62,7 +75,9 @@ curl -L -o data/introductory-statistics-2e.pdf \
 python scripts/ingest_pdf.py data/introductory-statistics-2e.pdf
 ```
 
-The PDF and extracted text are git-ignored.
+The PDF, the downloaded CNXML, and the extracted text are git-ignored.
+
+**How the book maps onto the game.** Every numbered content section is a lesson. The hands-on lab sections (for example 1.5 Data Collection Experiment, 6.3 Normal Distribution (Lap Times), 13.5 Lab: One-Way ANOVA) and the appendix material the source numbers as 13.6 through 13.13 (review exercises, practice tests, data sets, formula and calculator notes, tables) do not get their own lessons; their skills are exercised by the randomized generators and each unit's Chapter challenge.
 
 ## Adding content
 

@@ -147,6 +147,9 @@ const l4 = lesson("u2.4", "2.4", "Box plots",
     mc(p, "Which of the following is NOT shown directly on a standard box plot?",
       ["The mean", "The median", "The first quartile", "The maximum"],
       "Box plots are built from the five-number summary, which does not include the mean."),
+    mc(p, "Two box plots drawn on the same axis compare the test scores of one class before and after a review session, using the same students each time. This kind of data is called…",
+      ["a paired data set (two values for each individual)", "a stratified sample", "a frequency table", "a bimodal distribution"],
+      "A paired data set has two measurements on each individual. Side-by-side box plots are a good way to compare the two sets of values at a glance."),
   ]);
 
 const l5 = lesson("u2.5", "2.5", "Measures of center: mean, median, and mode",

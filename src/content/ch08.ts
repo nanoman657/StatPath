@@ -5,7 +5,7 @@ const p = "u8";
 
 const l1 = lesson("u8.1", "8.1", "Confidence interval for a mean, σ known",
   "A confidence interval turns a point estimate into a range that probably contains the population parameter. When σ is known, the interval for μ uses the normal distribution.",
-  ["CI = x̄ ± EBM, where EBM (error bound) = z_(α/2)·σ/√n.",
+  ["CI = x̄ ± EBM, where the error bound for a population mean (EBM) = z_(α/2)·σ/√n.",
    "Confidence level CL = 1 − α; α is split between the two tails.",
    "z for 90%: 1.645; 95%: 1.96; 99%: 2.576.",
    "Interpretation: we are CL% confident the interval contains μ. It is NOT the probability μ is inside this particular interval.",
@@ -42,7 +42,7 @@ const l1 = lesson("u8.1", "8.1", "Confidence interval for a mean, σ known",
 
 const l2 = lesson("u8.2", "8.2", "Confidence interval for a mean, σ unknown (Student's t)",
   "In practice σ is rarely known. Using the sample standard deviation s adds uncertainty, so we replace z with the Student's t distribution, which has heavier tails and depends on degrees of freedom.",
-  ["EBM = t_(α/2)·s/√n with df = n − 1; CI = x̄ ± EBM.",
+  ["Student's t-distribution: EBM = t_(α/2)·s/√n with df = n − 1; CI = x̄ ± EBM.",
    "t is wider than z, especially for small n; as df grows, t approaches z.",
    "Requires a roughly normal population or a large sample.",
    "Calculator: invT(area to the left, df) or TInterval."],

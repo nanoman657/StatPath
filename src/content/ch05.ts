@@ -91,6 +91,9 @@ const l3 = lesson("u5.3", "5.3", "The exponential distribution",
       ["P(X < x)", "1 − e^(−mx)"],
       ["Density f(x)", "m·e^(−mx)"],
     ], "All exponential calculations flow from these four formulas."),
+    mc(p, "In X ~ Exp(m), the number m is called the decay parameter (or decay rate). If the mean waiting time is 5 minutes, then m equals…",
+      ["0.2", "5", "25", "0.5"],
+      "The decay parameter is the reciprocal of the mean: m = 1/μ = 1/5 = 0.2. The density m·e^(−mx) 'decays' faster when m is larger."),
   ]);
 
 export const unit5 = unit(5, "Continuous Random Variables", "Probability as area: density functions, and the uniform and exponential distributions.", "📈", "#ff4b4b", [l1, l2, l3]);

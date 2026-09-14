@@ -46,6 +46,9 @@ const l1 = lesson("u1.1", "1.1", "Statistics, probability, and key terms",
       ["x̄", "μ", "σ", "p"],
       "x̄ (x-bar) is the sample mean; μ is the population mean; σ is the population standard deviation; p is a population proportion."),
     G.sampleVsPopulation,
+    mc(p, "Which term describes a variable such as height, age, or number of siblings, whose values are numbers you can meaningfully average?",
+      ["Numerical (quantitative) variable", "Categorical variable", "Parameter", "Population"],
+      "Numerical variables take number values that represent counts or measurements. Categorical (qualitative) variables take labels such as hair color."),
   ]);
 
 const l2 = lesson("u1.2", "1.2", "Data, sampling, and variation",
@@ -104,6 +107,12 @@ const l2 = lesson("u1.2", "1.2", "Data, sampling, and variation",
       "Randomly choose a starting point among the first k members",
       "Select every kth member after the starting point",
     ], "Systematic sampling needs a random start; after that, members are chosen at fixed intervals."),
+    mc(p, "A sample is called representative when…",
+      ["its characteristics closely match those of the population it came from", "it has at least 1,000 members", "it was collected quickly", "every member volunteered"],
+      "Random sampling methods are used precisely because they tend to produce representative samples. Size alone does not make a sample representative."),
+    mc(p, "A gym surveys its members about how much people in the city exercise. What problem does this illustrate?",
+      ["Sampling bias: gym members are not representative of the whole city", "Sampling error", "A leading question", "Nonresponse"],
+      "Sampling bias occurs when the method of selection systematically favors certain outcomes. Gym members exercise more than the typical resident, so the estimate will be too high."),
   ]);
 
 const l3 = lesson("u1.3", "1.3", "Frequency tables and levels of measurement",
@@ -199,6 +208,9 @@ const l4 = lesson("u1.4", "1.4", "Experimental design and ethics",
        "Because they do not use numbers",
        "Because they are always too small"],
       "Without controlled assignment, an association may be due to other differences between the groups rather than the factor being studied."),
+    mc(p, "Forty tomato plants are randomly assigned to receive one of two fertilizers, and each plant's yield is measured. What is the experimental unit?",
+      ["A single tomato plant", "The fertilizer", "The yield", "The 40 plants together"],
+      "The experimental unit is the single individual (person, animal, plant, object) to which a treatment is applied and on which the response is measured."),
   ]);
 
 export const unit1 = unit(1, "Sampling and Data", "Populations, samples, data types, and how to collect data you can trust.", "🔍", "#58cc02", [l1, l2, l3, l4]);

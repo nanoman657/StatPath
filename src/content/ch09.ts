@@ -124,6 +124,9 @@ const l4 = lesson("u9.4", "9.4", "Rare events, p-values, and decisions",
       "Compare the p-value with α and decide",
       "Write the conclusion in context",
     ], "Following the same steps every time keeps tests clear and honest."),
+    mc(p, "The level of significance of a test, α, is best described as…",
+      ["the probability of rejecting H₀ when it is actually true, chosen before the data are examined", "the p-value of the test", "the probability that H₀ is true", "the sample size divided by 100"],
+      "α (commonly 0.05 or 0.01) sets how rare the data must be under H₀ before we reject it. It equals the probability of a Type I error."),
   ]);
 
 const l5 = lesson("u9.5", "9.5", "Full hypothesis tests",
