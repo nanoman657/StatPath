@@ -1,0 +1,70 @@
+import { mc, tf, num, order, lesson, unit } from "./helpers";
+import * as G from "../engine/generators";
+
+const p = "u6";
+
+const l1 = lesson("u6.1", "6.1", "The standard normal distribution",
+  "The normal distribution is the bell curve. Standardizing any normal variable with a z-score converts it to the standard normal N(0, 1), so one table (or calculator) serves every normal problem.",
+  ["X ~ N(μ, σ) is symmetric about μ; mean = median = mode.",
+   "z = (x − μ)/σ; Z ~ N(0, 1). x = μ + zσ.",
+   "Empirical rule: about 68% within 1σ, 95% within 2σ, 99.7% within 3σ.",
+   "Positive z means above the mean; negative z means below."],
+  [
+    G.zScoreFromData, G.valueFromZ, G.empiricalRule, G.empiricalRule,
+    num(p, "Adult heights are N(170, 8) cm. What is the z-score of a person who is 158 cm tall? (2 decimals.)", -1.5,
+      "z = (158 − 170)/8 = −1.5: one and a half standard deviations below the mean.", { tolerance: 0.011 }),
+    mc(p, "Which of these z-scores is the most unusual?",
+      ["z = −3.1", "z = 2.2", "z = 0.4", "z = −1.0"],
+      "The farther |z| is from 0, the more unusual the value. |−3.1| is the largest."),
+    mc(p, "About what percentage of values from a normal distribution lie more than 2 standard deviations from the mean (in either tail)?",
+      ["5%", "32%", "0.3%", "50%"],
+      "95% lie within 2σ, leaving about 5% split between the two tails (2.5% each)."),
+    tf(p, "The standard normal distribution has mean 0 and standard deviation 1.", true,
+      "That is what makes it 'standard'; any normal variable can be converted to it via z-scores."),
+    mc(p, "Test scores are N(500, 100). A score of 650 corresponds to z = 1.5. What does this z-score tell you?",
+      ["The score is 1.5 standard deviations above the mean", "The score is 1.5% above average", "150 students scored higher", "The score is in the 15th percentile"],
+      "z counts standard deviations from the mean; 650 − 500 = 150 = 1.5 × 100."),
+    mc(p, "X ~ N(50, 5). Between which two values do about 99.7% of observations fall?",
+      ["35 and 65", "45 and 55", "40 and 60", "0 and 100"],
+      "μ ± 3σ = 50 ± 15."),
+    mc(p, "Two students take different exams. Ana: 85 on N(75, 5). Ben: 90 on N(80, 10). Who performed better relative to their peers?",
+      ["Ana (z = 2) did better than Ben (z = 1)", "Ben, because 90 > 85", "They performed equally", "Ben (z = 2) did better than Ana (z = 1)"],
+      "z_Ana = (85 − 75)/5 = 2; z_Ben = (90 − 80)/10 = 1. Standardizing makes different scales comparable."),
+    order(p, "Order the steps for comparing values from two different normal distributions.", [
+      "Identify the mean and standard deviation of each distribution",
+      "Compute z = (x − μ)/σ for each value",
+      "Compare the z-scores",
+      "Interpret: the larger z is farther above its mean",
+    ], "z-scores put everything on the same scale."),
+  ]);
+
+const l2 = lesson("u6.2", "6.2", "Using the normal distribution",
+  "Normal probabilities are areas under the bell curve. Find them with a calculator (normalcdf) or z-table, and reverse the process with invNorm to find percentiles and cutoffs.",
+  ["P(X < x): left-tail area. P(X > x) = 1 − P(X < x). P(a < X < b) = area between.",
+   "Calculator: normalcdf(lower, upper, μ, σ); use ±1E99 for infinite bounds.",
+   "Percentile k: invNorm(area to the left, μ, σ), or x = μ + zσ with z from the table.",
+   "Sketch the curve and shade the region before computing."],
+  [
+    G.normalProbability, G.normalProbability, G.normalInverse, G.normalInverse,
+    num(p, "Commute times are N(30, 6) minutes. Find P(commute < 24). (4 decimals.)", 0.1587,
+      "z = (24 − 30)/6 = −1. P(Z < −1) = 0.1587.", { tolerance: 0.002 }),
+    num(p, "Commute times are N(30, 6). Find P(commute > 42). (4 decimals.)", 0.0228,
+      "z = 2. P(Z > 2) = 1 − 0.9772 = 0.0228.", { tolerance: 0.002 }),
+    num(p, "Commute times are N(30, 6). Find P(27 < commute < 36). (4 decimals.)", 0.5328,
+      "z-scores −0.5 and 1. P(−0.5 < Z < 1) = 0.8413 − 0.3085 = 0.5328.", { tolerance: 0.002 }),
+    num(p, "Commute times are N(30, 6). The slowest 10% of commutes take longer than how many minutes? (1 decimal.)", 37.7,
+      "90th percentile: invNorm(0.90) = 1.2816. x = 30 + 1.2816 × 6 = 37.7.", { tolerance: 0.2 }),
+    mc(p, "To find the value that separates the bottom 25% of a normal distribution, you would use…",
+      ["invNorm(0.25, μ, σ)", "normalcdf(0, 0.25, μ, σ)", "invNorm(0.75, μ, σ)", "normalcdf(−1E99, 0.25, μ, σ)"],
+      "invNorm takes an area to the LEFT and returns the x-value; 0.25 to the left is the first quartile."),
+    mc(p, "P(Z < 1.28) ≈ 0.90. Therefore P(Z > −1.28) is…",
+      ["0.90", "0.10", "0.80", "0.20"],
+      "By symmetry, P(Z > −1.28) = P(Z < 1.28) = 0.90."),
+    tf(p, "For X ~ N(100, 15), P(X > 100) = 0.5.", true,
+      "The mean splits a symmetric distribution into two equal halves."),
+    mc(p, "IQ scores are N(100, 15). Which is closest to the proportion of people with IQ above 130?",
+      ["2.3%", "16%", "5%", "0.1%"],
+      "130 is 2σ above the mean; about 2.5% of a normal distribution lies beyond +2σ (exactly 0.0228)."),
+  ]);
+
+export const unit6 = unit(6, "The Normal Distribution", "The bell curve: z-scores, the empirical rule, and finding areas and percentiles.", "🔔", "#2b70c9", [l1, l2]);
