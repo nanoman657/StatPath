@@ -153,3 +153,22 @@ describe("correctAnswerText", () => {
     for (const l of allLessons.slice(0, 3)) for (const p of l.pool) if (p.kind !== "generator") expect(correctAnswerText(p).length).toBeGreaterThan(0);
   });
 });
+
+import { bookSections, chapterPages } from "../src/content/bookPages";
+
+describe("book page index", () => {
+  it("maps every numbered lesson to a section of the textbook with a page range", () => {
+    for (const l of allLessons) {
+      if (l.id.endsWith(".review")) continue;
+      const sec = bookSections[l.section];
+      expect(sec, `${l.id} (${l.section})`).toBeDefined();
+      expect(sec.end).toBeGreaterThanOrEqual(sec.start);
+      expect(sec.url).toMatch(/^https:\/\/openstax\.org\/books\/introductory-statistics-2e\/pages\//);
+    }
+  });
+  it("has increasing page numbers through the book and a range for every chapter", () => {
+    const keys = Object.keys(bookSections);
+    for (let i = 1; i < keys.length; i++) expect(bookSections[keys[i]].start).toBeGreaterThanOrEqual(bookSections[keys[i - 1]].start);
+    for (const u of curriculum.units) expect(chapterPages(u.number)).toBeDefined();
+  });
+});

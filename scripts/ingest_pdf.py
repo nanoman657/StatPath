@@ -1,114 +1,211 @@
 #!/usr/bin/env python3
 """
-Chunk the OpenStax *Introductory Statistics 2e* PDF and extract its structure.
+Chunk the OpenStax *Introductory Statistics 2e* PDF (whole, or split into
+parts) and extract its structure for grounding StatPath.
 
-The PDF is about 22 MB and ~900 pages, so it is processed page by page and
-written out in chunks. The script produces, under data/extracted/:
+Outputs under data/extracted/:
 
   chunks/chunk_NNN.txt   plain text, CHUNK_PAGES pages per file
-  toc.json               every "N.M Title" section heading found, with page
-  key_terms.json         glossary-style "Term: definition" lines per chapter
-  coverage_report.md     which sections in the PDF have (or lack) a lesson in
-                         src/content, so the curriculum can be audited
+  book_pages.json        chapter and section start pages from the table of
+                         contents (printed page numbers)
+  sections/<num>.txt     each section's text, split using the running headers
+                         (only for the pages that were supplied)
+  key_terms.json         "Key Terms" entries per chapter (term names only)
+  coverage_report.md     sections and terms vs. the lessons in src/content
 
 Usage:
-  pip install pypdf
-  python scripts/ingest_pdf.py data/introductory-statistics-2e.pdf
+  pip install pymupdf            # or pypdf
+  python scripts/ingest_pdf.py part1.pdf part2.pdf ...   # parts in order
+  python scripts/ingest_pdf.py book.pdf --write-ts      # also regenerate
+                                                        # src/content/bookPages.ts
 
-Download the book (CC BY 4.0) from:
-  https://assets.openstax.org/oscms-prodcms/media/documents/introductory-statistics-2e_-_WEB.pdf
+The book is CC BY 4.0. Its text is used for auditing only and is not copied
+into the repository (data/ is git-ignored).
 """
 from __future__ import annotations
 
+import argparse
 import json
 import re
 import sys
+from collections import OrderedDict
 from pathlib import Path
 
 CHUNK_PAGES = 25
-SECTION_RE = re.compile(r"^(1[0-3]|[1-9])\.(\d{1,2})\s+([A-Z][^\n]{3,80})$")
-CHAPTER_RE = re.compile(r"^(1[0-3]|[1-9])\s+\|\s+([A-Z][A-Z ,\-]{5,})$")
-TERM_RE = re.compile(r"^([A-Z][A-Za-z' \-()]{2,40})\s+(?:—|–|-)?\s*([a-z][^\n]{20,})$")
+SEC_TOC = re.compile(r"^\s*(1[0-3]|[1-9])\.(\d{1,2})\s+(.+?)\s+(\d{1,3})\s*$")
+HDR_ODD = re.compile(r"^(\d{1,2}\.\d{1,2}) • (.+?)\s+(\d{1,3})\s*$")
+HDR_EVEN = re.compile(r"^(\d{1,3})\s+(\d{1,2}) • (.+?)\s*$")
+HDR_END = re.compile(r"^(\d{1,2}) • (Key Terms|Chapter Review|Formula Review|Practice|Homework|References|Solutions|Bringing It Together: Practice|Bringing It Together: Homework)\s+(\d{1,3})\s*$")
+KEY_TERM = re.compile(r"^([A-Z][A-Za-z'’\- ]{2,45}?)\s+(?:[a-z(]|[A-Z][a-z]+ [a-z])")
 
 
-def load_pdf(path: Path):
+def page_texts(path: Path) -> list[str]:
     try:
-        from pypdf import PdfReader
-    except ImportError:  # pragma: no cover
-        sys.exit("pypdf is required: pip install pypdf")
-    return PdfReader(str(path))
+        import pymupdf  # type: ignore
+        doc = pymupdf.open(str(path))
+        return [page.get_text() for page in doc]
+    except ImportError:
+        pass
+    try:
+        from pypdf import PdfReader  # type: ignore
+    except ImportError:
+        sys.exit("Install pymupdf (preferred) or pypdf: pip install pymupdf")
+    r = PdfReader(str(path))
+    return [(p.extract_text() or "") for p in r.pages]
 
 
-def lesson_sections_in_repo(root: Path) -> set[str]:
-    """Collect section numbers (e.g. '3.2') declared in src/content/*.ts."""
-    found: set[str] = set()
-    for f in (root / "src" / "content").glob("ch*.ts"):
-        for m in re.finditer(r'lesson\("u\d+\.\d+",\s*"(\d+\.\d+)"', f.read_text(encoding="utf-8")):
-            found.add(m.group(1))
+def running_header(text: str) -> tuple[int | None, str | None]:
+    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    for l in lines[-3:]:
+        m = HDR_ODD.match(l) or HDR_END.match(l)
+        if m:
+            return int(m.group(3)), f"{m.group(1)} {m.group(2)}"
+        m = HDR_EVEN.match(l)
+        if m:
+            return int(m.group(1)), f"ch{m.group(2)} {m.group(3)}"
+    return None, None
+
+
+def parse_toc(pages: list[str]) -> tuple[dict[int, dict], dict[str, dict]]:
+    chapters: dict[int, dict] = {}
+    sections: dict[str, dict] = {}
+    for text in pages[:15]:
+        lines = [l.strip() for l in text.splitlines() if l.strip()]
+        for i, l in enumerate(lines):
+            m = SEC_TOC.match(l)
+            if m:
+                sections.setdefault(f"{m.group(1)}.{m.group(2)}", {"title": m.group(3).strip(), "start": int(m.group(4))})
+            m = re.match(r"^Introduction (\d{1,3})$", l)
+            if m and i >= 2 and re.match(r"^\d{1,2}$", lines[i - 1]):
+                chapters[int(lines[i - 1])] = {"title": lines[i - 2].rsplit(" ", 1)[0], "start": int(m.group(1))}
+    order = sorted(sections, key=lambda k: (int(k.split(".")[0]), int(k.split(".")[1])))
+    for i, k in enumerate(order):
+        ch = int(k.split(".")[0])
+        nxt = order[i + 1] if i + 1 < len(order) else None
+        if nxt and int(nxt.split(".")[0]) == ch:
+            end = sections[nxt]["start"] - 1
+        elif ch + 1 in chapters:
+            end = chapters[ch + 1]["start"] - 1
+        else:
+            end = sections[k]["start"]
+        sections[k]["end"] = max(end, sections[k]["start"])
+    return chapters, sections
+
+
+def write_ts(root: Path, chapters: dict[int, dict], sections: dict[str, dict]) -> None:
+    def slug(num: str, title: str) -> str:
+        s = num.replace(".", "-") + "-" + "".join(c if c.isalnum() else "-" for c in title.lower()).strip("-")
+        while "--" in s:
+            s = s.replace("--", "-")
+        return s
+    order = sorted(sections, key=lambda k: (int(k.split(".")[0]), int(k.split(".")[1])))
+    rows = "\n".join(f'  "{k}": {{ title: {json.dumps(sections[k]["title"])}, start: {sections[k]["start"]}, end: {sections[k]["end"]}, url: "https://openstax.org/books/introductory-statistics-2e/pages/{slug(k, sections[k]["title"])}" }},' for k in order)
+    ch = "\n".join(f"  {k}: {v['start']}," for k, v in sorted(chapters.items()))
+    src = f'''/**
+ * Page index for OpenStax *Introductory Statistics 2e* (WEB PDF), generated by
+ * scripts/ingest_pdf.py from the book's table of contents. `start`/`end` are
+ * printed page numbers. The URL points at the same section online.
+ */
+export interface BookSection {{
+  title: string;
+  start: number;
+  end: number;
+  url: string;
+}}
+
+export const BOOK_TITLE = "Introductory Statistics 2e (OpenStax)";
+export const BOOK_URL = "https://openstax.org/books/introductory-statistics-2e";
+
+export const bookSections: Record<string, BookSection> = {{
+{rows}
+}};
+
+export const chapterStart: Record<number, number> = {{
+{ch}
+}};
+
+/** Page range covered by a whole chapter (its numbered sections). */
+export const chapterPages = (n: number): {{ start: number; end: number }} | undefined => {{
+  const secs = Object.entries(bookSections).filter(([k]) => k.startsWith(`${{n}}.`)).map(([, v]) => v);
+  if (!secs.length) return undefined;
+  return {{ start: Math.min(...secs.map((s) => s.start)), end: Math.max(...secs.map((s) => s.end)) }};
+}};
+'''
+    (root / "src" / "content" / "bookPages.ts").write_text(src, encoding="utf-8")
+
+
+def repo_lessons(root: Path) -> dict[str, str]:
+    found: dict[str, str] = {}
+    for f in sorted((root / "src" / "content").glob("ch*.ts")):
+        for m in re.finditer(r'lesson\("u\d+\.\d+",\s*"(\d+\.\d+)",\s*"([^"]+)"', f.read_text(encoding="utf-8")):
+            found[m.group(1)] = m.group(2)
     return found
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) < 2:
-        print(__doc__)
-        return 1
-    pdf_path = Path(argv[1])
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("pdfs", nargs="+", type=Path, help="the PDF, or its parts in order")
+    ap.add_argument("--write-ts", action="store_true", help="regenerate src/content/bookPages.ts from the TOC")
+    args = ap.parse_args(argv[1:])
     root = Path(__file__).resolve().parent.parent
     out = root / "data" / "extracted"
     (out / "chunks").mkdir(parents=True, exist_ok=True)
+    (out / "sections").mkdir(parents=True, exist_ok=True)
 
-    reader = load_pdf(pdf_path)
-    n = len(reader.pages)
-    print(f"Reading {pdf_path.name}: {n} pages, {CHUNK_PAGES} pages per chunk")
+    pages: list[str] = []
+    for p in args.pdfs:
+        t = page_texts(p)
+        print(f"{p.name}: {len(t)} pages")
+        pages += t
+    for i in range(0, len(pages), CHUNK_PAGES):
+        (out / "chunks" / f"chunk_{i // CHUNK_PAGES + 1:03d}.txt").write_text("".join(f"\n\n===== PDF PAGE {i + j + 1} =====\n{t}" for j, t in enumerate(pages[i:i + CHUNK_PAGES])), encoding="utf-8")
 
-    toc: list[dict] = []
-    terms: dict[str, list[dict]] = {}
-    current_chapter = "0"
-    buffer: list[str] = []
-    chunk_idx = 0
+    chapters, sections = parse_toc(pages)
+    if sections:
+        (out / "book_pages.json").write_text(json.dumps({"chapters": chapters, "sections": sections}, indent=1), encoding="utf-8")
+        if args.write_ts:
+            write_ts(root, chapters, sections)
+            print("wrote src/content/bookPages.ts")
+    else:
+        print("No table of contents found in these pages (supply the part containing the front matter to get page ranges).")
 
-    for i in range(n):
-        try:
-            text = reader.pages[i].extract_text() or ""
-        except Exception as e:  # noqa: BLE001
-            text = f"[extraction failed on page {i + 1}: {e}]"
-        buffer.append(f"\n\n===== PAGE {i + 1} =====\n{text}")
+    by_label: OrderedDict[str, list[str]] = OrderedDict()
+    printed: list[int] = []
+    key_terms: dict[str, list[str]] = {}
+    for t in pages:
+        pg, label = running_header(t)
+        if pg is None:
+            continue
+        printed.append(pg)
+        by_label.setdefault(label, []).append(t)
+        m = re.match(r"^(\d{1,2}) Key Terms$", label or "")
+        if m:
+            for line in t.splitlines():
+                km = KEY_TERM.match(line.strip())
+                if km and not line.strip().startswith("Key Terms"):
+                    key_terms.setdefault(m.group(1), []).append(km.group(1).strip())
+    for label, texts in by_label.items():
+        fn = re.sub(r"[^A-Za-z0-9.]+", "_", label)[:60]
+        (out / "sections" / f"{fn}.txt").write_text("\n\n".join(texts), encoding="utf-8")
+    (out / "key_terms.json").write_text(json.dumps(key_terms, indent=1), encoding="utf-8")
 
-        for line in text.splitlines():
-            line = line.strip()
-            ch = CHAPTER_RE.match(line)
-            if ch:
-                current_chapter = ch.group(1)
-            sec = SECTION_RE.match(line)
-            if sec:
-                num = f"{sec.group(1)}.{sec.group(2)}"
-                title = sec.group(3).strip()
-                if not any(t["section"] == num for t in toc):
-                    toc.append({"section": num, "title": title, "page": i + 1})
-            term = TERM_RE.match(line)
-            if term and "KEY TERMS" in text.upper():
-                terms.setdefault(current_chapter, []).append({"term": term.group(1).strip(), "definition": term.group(2).strip(), "page": i + 1})
-
-        if len(buffer) >= CHUNK_PAGES or i == n - 1:
-            chunk_idx += 1
-            (out / "chunks" / f"chunk_{chunk_idx:03d}.txt").write_text("".join(buffer), encoding="utf-8")
-            buffer = []
-            print(f"  wrote chunk {chunk_idx} (through page {i + 1})", end="\r")
-
-    print()
-    toc.sort(key=lambda t: (int(t["section"].split(".")[0]), int(t["section"].split(".")[1])))
-    (out / "toc.json").write_text(json.dumps(toc, indent=2), encoding="utf-8")
-    (out / "key_terms.json").write_text(json.dumps(terms, indent=2), encoding="utf-8")
-
-    have = lesson_sections_in_repo(root)
-    lines = ["# Coverage report", "", f"Sections found in PDF: {len(toc)}", f"Lessons in repo: {len(have)}", "", "| Section | Title | Lesson in StatPath? |", "|---|---|---|"]
-    for t in toc:
-        lines.append(f"| {t['section']} | {t['title']} | {'yes' if t['section'] in have else 'NO'} |")
-    missing = [t for t in toc if t["section"] not in have]
-    lines += ["", f"Missing lessons: {len(missing)}"] + [f"- {t['section']} {t['title']} (p. {t['page']})" for t in missing]
-    (out / "coverage_report.md").write_text("\n".join(lines), encoding="utf-8")
-    print(f"Wrote {chunk_idx} chunks, {len(toc)} sections, {sum(len(v) for v in terms.values())} key terms to {out}")
-    print(f"Coverage: {len(toc) - len(missing)}/{len(toc)} PDF sections have a lesson (see coverage_report.md)")
+    lessons = repo_lessons(root)
+    src_text = "\n".join(f.read_text(encoding="utf-8") for f in (root / "src").rglob("*.ts")).lower()
+    present = {l.split(" ")[0] for l in by_label if re.match(r"^\d+\.\d+ ", l)}
+    lines = ["# Coverage report (from PDF)", ""]
+    if printed:
+        lines.append(f"Pages supplied: printed pp. {min(printed)}–{max(printed)} ({len(pages)} PDF pages).")
+    lines += ["", "| Section | Title | Book pages | In supplied PDF? | StatPath lesson |", "|---|---|---|---|---|"]
+    order = sorted(sections, key=lambda k: (int(k.split(".")[0]), int(k.split(".")[1])))
+    for k in order:
+        s = sections[k]
+        lines.append(f"| {k} | {s['title']} | {s['start']}–{s['end']} | {'yes' if k in present else ''} | {lessons.get(k, '_challenge_')} |")
+    missing_terms = [(c, t) for c, ts in key_terms.items() for t in ts if t.lower() not in src_text]
+    lines += ["", f"Key terms found in supplied chapters: {sum(len(v) for v in key_terms.values())}; not mentioned in src/: {len(missing_terms)}", ""]
+    lines += [f"- ch {c}: {t}" for c, t in missing_terms]
+    (out / "coverage_report.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
+    print(f"Sections in TOC: {len(sections)}; supplied pages cover {len(present)} numbered sections; wrote {out}")
+    print(f"Key terms: {sum(len(v) for v in key_terms.values())} found, {len(missing_terms)} not mentioned in src/ (see coverage_report.md)")
     return 0
 
 

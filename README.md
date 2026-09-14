@@ -14,6 +14,7 @@ The course follows the 13 chapters of **[Introductory Statistics 2e](https://ope
 | **Game loop** | XP, daily goals, streaks, hearts (lost on mistakes, refill over time or with a perfect lesson), crowns per lesson (up to 5), achievements |
 | **Spaced repetition** | Every exercise you answer gets an SM-2 style schedule; missed items come back sooner, and "Practice" modes target due and weak items |
 | **Second chances** | Like Duolingo, a missed exercise is re-queued at the end of the lesson |
+| **Grounded in the book** | Every lesson's tip card links to its section of the textbook with printed page numbers; formulas and conventions follow the book (quartiles as medians of the halves, 1.5·IQR fences, percentile position i = (k/100)(n+1), midpoint means for grouped data) |
 
 Progress is stored in the browser (`localStorage`); there is no backend and no account.
 
@@ -66,13 +67,11 @@ python scripts/ingest_cnxml.py --cache data/cnxml
 
 This downloads the book's collection file and its 102 CNXML modules from `openstax/osbooks-introductory-statistics-bundle`, then writes `data/extracted/toc.json`, `key_terms.json`, and `coverage_report.md`. The report lists every numbered section with the StatPath lesson that covers it and every glossary term that is not mentioned anywhere in `src/`. A committed copy of the latest report is in `docs/coverage.md`.
 
-**From the PDF (~22 MB):** `scripts/ingest_pdf.py` reads it page by page in 25-page chunks, extracts section headings and key terms, and produces the same kind of report:
+**From the PDF (~22 MB, whole or split into parts):** `scripts/ingest_pdf.py` extracts the text (pymupdf or pypdf), writes 25-page chunks, reads the table of contents for every section's printed page range, splits the supplied pages into sections using the running headers, collects each chapter's key terms, and produces the same kind of coverage report. With `--write-ts` it regenerates `src/content/bookPages.ts`, the page index the app shows on every lesson's tip card ("In the book: Section 2.3, pp. 86–93").
 
 ```bash
-pip install pypdf
-curl -L -o data/introductory-statistics-2e.pdf \
-  https://assets.openstax.org/oscms-prodcms/media/documents/introductory-statistics-2e_-_WEB.pdf
-python scripts/ingest_pdf.py data/introductory-statistics-2e.pdf
+pip install pymupdf
+python scripts/ingest_pdf.py part1.pdf part2.pdf --write-ts     # parts in order
 ```
 
 The PDF, the downloaded CNXML, and the extracted text are git-ignored.

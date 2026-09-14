@@ -3,6 +3,7 @@ import type { Exercise, Lesson } from "../engine/types";
 import { type Answer, correctAnswerText, grade } from "../engine/lesson";
 import { ExerciseView } from "./ExerciseView";
 import type { LessonResult } from "../engine/progress";
+import { bookSections, chapterPages, BOOK_TITLE } from "../content/bookPages";
 
 interface Props {
   lesson: Lesson;
@@ -95,6 +96,7 @@ export function LessonPlayer({ lesson, items, hearts, practice, onLoseHeart, onF
             {lesson.keyPoints.map((k, i) => <li key={i}>{k}</li>)}
           </ul>
         </div>
+        <BookRef section={lesson.section} />
         <div className="muted small center">{total} exercises · {practice ? "practice mode (no hearts)" : `${hearts} hearts`}</div>
         <div className="mt"><button className="btn wide" onClick={() => setStage("play")}>Start lesson</button></div>
       </div>
@@ -144,6 +146,24 @@ export function LessonPlayer({ lesson, items, hearts, practice, onLoseHeart, onF
 }
 
 const baseId = (id: string) => id.replace(/^retry:/, "");
+
+/** "Read the book" pointer: the section (or whole chapter for a challenge) with printed page numbers. */
+function BookRef({ section }: { section: string }) {
+  const sec = bookSections[section];
+  const chapterMatch = section.match(/^(\d+)\.R$/);
+  const ch = chapterMatch ? chapterPages(Number(chapterMatch[1])) : undefined;
+  if (!sec && !ch) return null;
+  const pages = sec ? `pp. ${sec.start}–${sec.end}` : `pp. ${ch!.start}–${ch!.end}`;
+  const label = sec ? `Section ${section}: ${sec.title}` : `Chapter ${chapterMatch![1]}`;
+  return (
+    <div className="card bookref">
+      <span className="pill">📖 In the book</span>
+      <div className="small" style={{ marginTop: 6 }}>
+        {sec ? <a href={sec.url} target="_blank" rel="noreferrer">{label}</a> : label}, {pages} of <i>{BOOK_TITLE}</i>.
+      </div>
+    </div>
+  );
+}
 
 const praises = ["Nice!", "Correct!", "Great job!", "Exactly right!", "You got it!", "Excellent!", "Spot on!"];
 const pickPraise = (i: number) => praises[i % praises.length];

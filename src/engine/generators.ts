@@ -720,6 +720,30 @@ export const residualOutlier = gen("g.residual", (rng) => {
   return mc("g.residual", `The standard deviation of the residuals is s = ${s}. Is this point an outlier by the 2s rule?`, isOut ? `Yes: |residual| = ${f(Math.abs(r), 1)} exceeds 2s = ${2 * s}` : `No: |residual| = ${f(Math.abs(r), 1)} does not exceed 2s = ${2 * s}`, [isOut ? `No: |residual| = ${f(Math.abs(r), 1)} does not exceed 2s = ${2 * s}` : `Yes: |residual| = ${f(Math.abs(r), 1)} exceeds 2s = ${2 * s}`, "Yes, because the residual is negative", "No, because x is inside the data range"], `ŷ = ${f(yhat, 1)}, residual = ${f(r, 1)}. A point is flagged when |residual| > 2s = ${2 * s}; here that is ${isOut ? "true" : "false"}.`, rng, ctx);
 });
 
+/** Percentile of a given value: (x + 0.5y)/n × 100, x = values below, y = values equal. */
+export const percentileOfValue = gen("g.percentile-of-value", (rng) => {
+  const n = randInt(rng, 10, 16);
+  const xs = Array.from({ length: n }, () => randInt(rng, 1, 12)).sort((a, b) => a - b);
+  const v = xs[randInt(rng, 2, n - 3)];
+  const below = xs.filter((x) => x < v).length;
+  const equal = xs.filter((x) => x === v).length;
+  const pct = ((below + 0.5 * equal) / n) * 100;
+  return numeric("g.percentile-of-value", `What is the percentile of the value ${v}? (Round to the nearest whole percent.)`, Math.round(pct), `Count x = ${below} values below ${v} and y = ${equal} value${equal === 1 ? "" : "s"} equal to it. Percentile = (x + 0.5y)/n × 100 = (${below} + ${0.5 * equal})/${n} × 100 = ${f(pct, 1)} → ${Math.round(pct)}th percentile.`, { context: `Ordered data (n = ${n}): ${xs.join(", ")}`, tolerance: 1 });
+});
+
+/** Mean of grouped data using interval midpoints: x̄ = Σ(f·m)/Σf. */
+export const groupedMean = gen("g.grouped-mean", (rng) => {
+  const lo = pick(rng, [0, 10, 20, 50]);
+  const w = pick(rng, [5, 10]);
+  const k = randInt(rng, 3, 4);
+  const freqs = Array.from({ length: k }, () => randInt(rng, 2, 9));
+  const rows = freqs.map((fq, i) => ({ a: lo + i * w, b: lo + (i + 1) * w, m: lo + i * w + w / 2, f: fq }));
+  const n = freqs.reduce((a, b) => a + b, 0);
+  const mean = rows.reduce((acc, r) => acc + r.m * r.f, 0) / n;
+  const table = rows.map((r) => `${r.a}–${r.b}: ${r.f}`).join(" | ");
+  return numeric("g.grouped-mean", "Estimate the mean from the grouped frequency table using interval midpoints. (2 decimals.)", S.round(mean, 2), `Midpoints m = ${rows.map((r) => r.m).join(", ")}. x̄ ≈ Σ(f·m)/Σf = (${rows.map((r) => `${r.f}·${r.m}`).join(" + ")})/${n} = ${f(rows.reduce((acc, r) => acc + r.m * r.f, 0), 1)}/${n} = ${f(mean)}.`, { context: `Interval: frequency — ${table}`, tolerance: 0.02 });
+});
+
 export const allGenerators: Generator[] = [
   sampleVsPopulation, samplingMethod, relativeFrequency,
   meanOfData, medianOfData, modeOfData, sampleSDOfData, zScoreFromData, valueFromZ, quartilesIQR, outlierFence, percentileInterpretation,
@@ -735,6 +759,7 @@ export const allGenerators: Generator[] = [
   linearEquation, regressionFromData, correlationStrength, rCritical,
   anovaDF, anovaFRatio, twoVariancesF,
   missingProbability, twoMeansKnownSigma, chiSquareFacts, residualOutlier,
+  percentileOfValue, groupedMean,
 ];
 
 export type { Exercise };

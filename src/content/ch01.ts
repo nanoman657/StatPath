@@ -49,6 +49,9 @@ const l1 = lesson("u1.1", "1.1", "Statistics, probability, and key terms",
     mc(p, "Which term describes a variable such as height, age, or number of siblings, whose values are numbers you can meaningfully average?",
       ["Numerical (quantitative) variable", "Categorical variable", "Parameter", "Population"],
       "Numerical variables take number values that represent counts or measurements. Categorical (qualitative) variables take labels such as hair color."),
+    mc(p, "In a survey of 250 shoppers, 40 said they had used a coupon. The value 40/250 = 0.16 is called a…",
+      ["proportion (a sample statistic)", "parameter", "variable", "population"],
+      "A proportion is the number of successes divided by the total in the sample. Computed from a sample, it is a statistic; the corresponding population value is a parameter."),
   ]);
 
 const l2 = lesson("u1.2", "1.2", "Data, sampling, and variation",
@@ -56,7 +59,7 @@ const l2 = lesson("u1.2", "1.2", "Data, sampling, and variation",
   ["Qualitative (categorical): labels such as color or zip code. Quantitative: counts or measurements.",
    "Quantitative discrete: counted values (number of pets). Quantitative continuous: measured values (weight, time).",
    "Random sampling methods: simple random, stratified, systematic, cluster. Convenience sampling is not random.",
-   "Sampling with vs. without replacement; sampling error vs. nonsampling error.",
+   "Sampling with vs. without replacement. Sampling error: natural sample-to-sample variation. Nonsampling error: human problems such as poor design or data entry mistakes.",
    "Beware bias: nonresponse, self-selection, undercoverage, misleading questions."],
   [
     classify(p, "Classify each variable by data type.", ["Qualitative", "Quantitative discrete", "Quantitative continuous"], [
@@ -113,6 +116,18 @@ const l2 = lesson("u1.2", "1.2", "Data, sampling, and variation",
     mc(p, "A gym surveys its members about how much people in the city exercise. What problem does this illustrate?",
       ["Sampling bias: gym members are not representative of the whole city", "Sampling error", "A leading question", "Nonresponse"],
       "Sampling bias occurs when the method of selection systematically favors certain outcomes. Gym members exercise more than the typical resident, so the estimate will be too high."),
+    classify(p, "Is each problem a sampling error or a nonsampling error?", ["Sampling error", "Nonsampling error"], [
+      ["Two random samples of 40 patients give slightly different mean recovery times", "Sampling error"],
+      ["Respondents exaggerate how often they exercise", "Nonsampling error"],
+      ["A data-entry clerk types 71 instead of 17", "Nonsampling error"],
+      ["A survey question is worded to favor one answer", "Nonsampling error"],
+    ], "Sampling error is the natural variation from one random sample to another. Nonsampling errors are human problems: poor design, biased methods, wrong information, data entry mistakes."),
+    mc(p, "Two well-run studies use different random samples of the same size from the same population. Their data are not identical. What is the most reasonable conclusion?",
+      ["This is expected: different random samples naturally vary (sampling error)", "One of the studies must have made a mistake", "The population must have changed", "Random sampling does not work"],
+      "Different samples give different data. That is not an error in the everyday sense; it is the sampling variability that statistics is built to handle."),
+    mc(p, "A researcher randomly selects a starting house on a street and then interviews the resident of every eighth house. The sampling method is…",
+      ["systematic", "simple random", "stratified", "cluster"],
+      "A random start followed by every nth member is systematic sampling."),
   ]);
 
 const l3 = lesson("u1.3", "1.3", "Frequency tables and levels of measurement",
@@ -154,6 +169,16 @@ const l3 = lesson("u1.3", "1.3", "Frequency tables and levels of measurement",
     mc(p, "A frequency table of exam scores shows a frequency of 6 for the score 85. What does this mean?",
       ["Six students scored exactly 85", "The score 85 is 6% of the total", "Six students scored 85 or lower", "The average score is 85 plus 6"],
       "Frequency counts occurrences of that value. Percentages and cumulative counts are different columns."),
+    classify(p, "Classify each variable by its level of measurement (as in the book's practice set).", ["Nominal", "Ordinal", "Interval", "Ratio"], [
+      ["Social security numbers", "Nominal"],
+      ["Letter grades A, B, C, D, F", "Ordinal"],
+      ["Oven temperatures in °F: 250, 300, 350", "Interval"],
+      ["Distance in miles to the nearest grocery store", "Ratio"],
+      ["Calendar years such as 1066 and 1492", "Interval"],
+    ], "Numbers used only as labels are nominal. Ordered categories are ordinal. Temperature and calendar years have equal intervals but no true zero, so they are interval. Distance has a true zero, so it is ratio."),
+    mc(p, "Survival times in days are grouped into classes 0.5–6.5, 6.5–12.5, 12.5–18.5, … Why do the boundaries end in .5?",
+      ["So that whole-number data values never fall exactly on a boundary between two classes", "Because days are measured in halves", "To make the classes unequal in width", "It is a typographical convention with no purpose"],
+      "Choosing boundaries halfway between possible values puts each observation unambiguously into one class. Each class here has width 6."),
   ]);
 
 const l4 = lesson("u1.4", "1.4", "Experimental design and ethics",
@@ -211,6 +236,12 @@ const l4 = lesson("u1.4", "1.4", "Experimental design and ethics",
     mc(p, "Forty tomato plants are randomly assigned to receive one of two fertilizers, and each plant's yield is measured. What is the experimental unit?",
       ["A single tomato plant", "The fertilizer", "The yield", "The 40 plants together"],
       "The experimental unit is the single individual (person, animal, plant, object) to which a treatment is applied and on which the response is measured."),
+    mc(p, "In an experiment, not telling participants which treatment they are receiving is called…",
+      ["blinding", "random assignment", "informed consent", "clustering"],
+      "Blinding prevents participants' expectations from influencing the response. When the researchers who work with the subjects are also kept unaware, the experiment is double-blind."),
+    mc(p, "Patients who used a memory-training app were also enrolled in an exercise program, while the comparison group was not. Improvement was higher in the app group. What is the problem?",
+      ["The exercise program is a lurking variable, so the improvement cannot be attributed to the app", "The sample was too small", "The app group should not have been measured", "There is no problem; the app works"],
+      "When treatment groups differ in more than the treatment, any difference in outcome is confounded. Properly designed experiments differ only in the imposed treatment."),
   ]);
 
 export const unit1 = unit(1, "Sampling and Data", "Populations, samples, data types, and how to collect data you can trust.", "🔍", "#58cc02", [l1, l2, l3, l4]);

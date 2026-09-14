@@ -197,3 +197,5 @@ input.answer:focus { border-color: var(--blue); }
   .stats { gap: 10px; font-size: 14px; }
   .results .tiles { grid-template-columns: 1fr 1fr 1fr; }
 }
+
+.bookref { padding: 12px 16px; border-style: dashed; }
