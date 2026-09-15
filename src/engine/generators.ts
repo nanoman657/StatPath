@@ -716,8 +716,8 @@ export const residualOutlier = gen("g.residual", (rng) => {
   const q = pick(rng, ["resid", "outlier"] as const);
   const ctx = `Regression line: ŷ = ${a} + ${b}x. A data point has x = ${x}, y = ${y}.`;
   if (q === "resid") return numeric("g.residual", "Find the residual y − ŷ for this point. (1 decimal.)", S.round(r, 1), `ŷ = ${a} + ${b}(${x}) = ${f(yhat, 1)}. Residual = ${y} − ${f(yhat, 1)} = ${f(r, 1)}.`, { context: ctx, tolerance: 0.06 });
-  const isOut = Math.abs(r) > 2 * s;
-  return mc("g.residual", `The standard deviation of the residuals is s = ${s}. Is this point an outlier by the 2s rule?`, isOut ? `Yes: |residual| = ${f(Math.abs(r), 1)} exceeds 2s = ${2 * s}` : `No: |residual| = ${f(Math.abs(r), 1)} does not exceed 2s = ${2 * s}`, [isOut ? `No: |residual| = ${f(Math.abs(r), 1)} does not exceed 2s = ${2 * s}` : `Yes: |residual| = ${f(Math.abs(r), 1)} exceeds 2s = ${2 * s}`, "Yes, because the residual is negative", "No, because x is inside the data range"], `ŷ = ${f(yhat, 1)}, residual = ${f(r, 1)}. A point is flagged when |residual| > 2s = ${2 * s}; here that is ${isOut ? "true" : "false"}.`, rng, ctx);
+  const isOut = Math.abs(r) >= 2 * s;
+  return mc("g.residual", `The standard deviation of the residuals is s = ${s}. Is this point an outlier by the 2s rule?`, isOut ? `Yes: |residual| = ${f(Math.abs(r), 1)} is at least 2s = ${2 * s}` : `No: |residual| = ${f(Math.abs(r), 1)} is less than 2s = ${2 * s}`, [isOut ? `No: |residual| = ${f(Math.abs(r), 1)} is less than 2s = ${2 * s}` : `Yes: |residual| = ${f(Math.abs(r), 1)} is at least 2s = ${2 * s}`, "Yes, because the residual is negative", "No, because x is inside the data range"], `ŷ = ${f(yhat, 1)}, residual = ${f(r, 1)}. The book's rule flags a point when |residual| ≥ 2s = ${2 * s} (equivalently, the point lies above ŷ + 2s or below ŷ − 2s); here that is ${isOut ? "true" : "false"}.`, rng, ctx);
 });
 
 /** Percentile of a given value: (x + 0.5y)/n × 100, x = values below, y = values equal. */
@@ -744,6 +744,55 @@ export const groupedMean = gen("g.grouped-mean", (rng) => {
   return numeric("g.grouped-mean", "Estimate the mean from the grouped frequency table using interval midpoints. (2 decimals.)", S.round(mean, 2), `Midpoints m = ${rows.map((r) => r.m).join(", ")}. x̄ ≈ Σ(f·m)/Σf = (${rows.map((r) => `${r.f}·${r.m}`).join(" + ")})/${n} = ${f(rows.reduce((acc, r) => acc + r.m * r.f, 0), 1)}/${n} = ${f(mean)}.`, { context: `Interval: frequency — ${table}`, tolerance: 0.02 });
 });
 
+/** Cohen's d effect size for two independent means, with pooled standard deviation. */
+export const cohensD = gen("g.cohens-d", (rng) => {
+  const s1 = randInt(rng, 4, 12), s2 = randInt(rng, 4, 12);
+  const n1 = randInt(rng, 10, 40), n2 = randInt(rng, 10, 40);
+  const x1 = randInt(rng, 40, 80);
+  const sp = Math.sqrt(((n1 - 1) * s1 ** 2 + (n2 - 1) * s2 ** 2) / (n1 + n2 - 2));
+  const x2 = S.round(x1 - pick(rng, [0.15, 0.3, 0.5, 0.6, 0.8, 1.0, 1.2]) * sp, 1);
+  const d = (x1 - x2) / sp;
+  const ctx = `Group 1: x̄₁ = ${x1}, s₁ = ${s1}, n₁ = ${n1}. Group 2: x̄₂ = ${x2}, s₂ = ${s2}, n₂ = ${n2}.`;
+  const q = pick(rng, ["d", "size"] as const);
+  const size = Math.abs(d) >= 0.8 ? "large" : Math.abs(d) >= 0.5 ? "medium" : Math.abs(d) >= 0.2 ? "small" : "negligible";
+  if (q === "d") return numeric("g.cohens-d", "Compute Cohen's d = (x̄₁ − x̄₂)/s_pooled, where s_pooled = √(((n₁−1)s₁² + (n₂−1)s₂²)/(n₁+n₂−2)). (2 decimals.)", S.round(d, 2), `s_pooled = √(((${n1 - 1})(${s1}²) + (${n2 - 1})(${s2}²))/(${n1 + n2 - 2})) = ${f(sp, 3)}. d = (${x1} − ${x2})/${f(sp, 3)} = ${f(d)}, a ${size} effect.`, { context: ctx, tolerance: 0.03 });
+  return mc("g.cohens-d", `Cohen's d for these groups is about ${f(d, 2)}. How large is the effect?`, `${size[0].toUpperCase() + size.slice(1)} (guideline: 0.2 small, 0.5 medium, 0.8 large)`, ["Small (guideline: 0.2 small, 0.5 medium, 0.8 large)", "Medium (guideline: 0.2 small, 0.5 medium, 0.8 large)", "Large (guideline: 0.2 small, 0.5 medium, 0.8 large)", "Negligible (guideline: 0.2 small, 0.5 medium, 0.8 large)"].filter((o) => !o.startsWith(size[0].toUpperCase() + size.slice(1))).slice(0, 3), `Cohen's d expresses the difference in means in units of the pooled standard deviation. Common guidelines: 0.2 small, 0.5 medium, 0.8 large. Here |d| = ${f(Math.abs(d), 2)}, so the effect is ${size}. Effect size describes practical importance and is separate from statistical significance.`, rng, ctx);
+});
+
+/** One-way ANOVA with equal group sizes: F = n·(variance of the group means)/(mean of the group variances). */
+export const anovaEqualSizes = gen("g.anova-equal", (rng) => {
+  const k = randInt(rng, 3, 4);
+  const n = randInt(rng, 5, 10);
+  const means = Array.from({ length: k }, () => randInt(rng, 40, 70) + pick(rng, [0, 0.5]));
+  const vars = Array.from({ length: k }, () => randInt(rng, 10, 40));
+  const sx = S.sampleVariance(means);
+  const sp = S.mean(vars);
+  const F = (n * sx) / sp;
+  const ctx = `${k} groups of n = ${n} each. Group means: ${means.join(", ")}. Group variances: ${vars.join(", ")}.`;
+  const q = pick(rng, ["F", "dfnum", "dfden"] as const);
+  if (q === "dfnum") return numeric("g.anova-equal", "What is the numerator degrees of freedom, df(between)?", k - 1, `df(between) = k − 1 = ${k - 1}.`, { context: ctx, tolerance: 0 });
+  if (q === "dfden") return numeric("g.anova-equal", "What is the denominator degrees of freedom, df(within)?", k * n - k, `df(within) = N − k = ${k * n} − ${k} = ${k * n - k}.`, { context: ctx, tolerance: 0 });
+  return numeric("g.anova-equal", "Because the groups are the same size, use F = n·s²_x̄ / (mean of the sample variances). Compute F. (2 decimals.)", S.round(F, 2), `Variance of the ${k} group means: s²_x̄ = ${f(sx, 3)}. Mean of the group variances (pooled variance): ${f(sp, 3)}. F = ${n}·${f(sx, 3)}/${f(sp, 3)} = ${f(F)} with df = (${k - 1}, ${k * n - k}); p-value = ${f(1 - S.fCDF(F, k - 1, k * n - k), 4)}.`, { context: ctx, tolerance: 0.05 });
+});
+
+/** Mean of the F distribution: df2/(df2 − 2) for df2 > 2. */
+export const fDistributionMean = gen("g.f-mean", (rng) => {
+  const df1 = randInt(rng, 2, 8), df2 = pick(rng, [10, 12, 15, 20, 24, 30, 40]);
+  return numeric("g.f-mean", `What is the mean of the F distribution with df = (${df1}, ${df2})? (3 decimals.)`, S.round(df2 / (df2 - 2), 3), `μ = df(denom)/(df(denom) − 2) = ${df2}/${df2 - 2} = ${f(df2 / (df2 - 2), 3)}. The mean depends only on the denominator degrees of freedom and is a little above 1.`, { tolerance: 0.003 });
+});
+
+/** Working backwards from a confidence interval. */
+export const ciBackwards = gen("g.ci-backwards", (rng) => {
+  const xbar = randInt(rng, 20, 200);
+  const ebm = pick(rng, [1.5, 2, 2.5, 3, 4, 5, 6.5, 8]);
+  const lo = xbar - ebm, hi = xbar + ebm;
+  const q = pick(rng, ["ebm", "mean"] as const);
+  const ctx = `A confidence interval for a population mean is (${f(lo, 1)}, ${f(hi, 1)}).`;
+  return q === "ebm"
+    ? numeric("g.ci-backwards", "What is the error bound EBM? (1 decimal.)", ebm, `EBM is half the width of the interval: (${f(hi, 1)} − ${f(lo, 1)})/2 = ${f(ebm, 1)}. Equivalently, upper bound − sample mean.`, { context: ctx, tolerance: 0.06 })
+    : numeric("g.ci-backwards", "What was the sample mean (the point estimate)? (1 decimal.)", xbar, `The point estimate is the midpoint: (${f(lo, 1)} + ${f(hi, 1)})/2 = ${xbar}.`, { context: ctx, tolerance: 0.06 });
+});
+
 export const allGenerators: Generator[] = [
   sampleVsPopulation, samplingMethod, relativeFrequency,
   meanOfData, medianOfData, modeOfData, sampleSDOfData, zScoreFromData, valueFromZ, quartilesIQR, outlierFence, percentileInterpretation,
@@ -759,7 +808,7 @@ export const allGenerators: Generator[] = [
   linearEquation, regressionFromData, correlationStrength, rCritical,
   anovaDF, anovaFRatio, twoVariancesF,
   missingProbability, twoMeansKnownSigma, chiSquareFacts, residualOutlier,
-  percentileOfValue, groupedMean,
+  percentileOfValue, groupedMean, cohensD, anovaEqualSizes, fDistributionMean, ciBackwards,
 ];
 
 export type { Exercise };

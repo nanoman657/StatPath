@@ -6,7 +6,7 @@ const p = "u7";
 const l1 = lesson("u7.1", "7.1", "The central limit theorem for sample means",
   "The central limit theorem (CLT) says that averages of random samples are approximately normally distributed no matter what the population looks like, as long as the sample is large enough. It is the reason the normal distribution is everywhere in inference.",
   ["If samples of size n are drawn from a population with mean μ and SD σ, then X̄ ~ N(μ, σ/√n) approximately.",
-   "σ/√n is the standard error of the mean; larger n means less variability in x̄.",
+   "The distribution of all possible sample means is a sampling distribution; its standard deviation σ/√n is the standard error of the mean. Larger n means less variability in x̄.",
    "n ≥ 30 is a common rule of thumb; if the population is normal, any n works.",
    "z = (x̄ − μ)/(σ/√n) for probabilities about a sample mean."],
   [
@@ -29,6 +29,12 @@ const l1 = lesson("u7.1", "7.1", "The central limit theorem for sample means",
     mc(p, "Which is more likely: a single person's height exceeding 190 cm, or a sample of 50 people having a MEAN height exceeding 190 cm (population mean 175)?",
       ["A single person, because individual values vary more than sample means", "The sample mean, because larger samples give larger values", "They are equally likely", "Cannot be determined"],
       "Means have much smaller spread (σ/√50), so extreme means are far rarer than extreme individuals."),
+    mc(p, "The probability distribution of the sample mean X̄ over all possible random samples of size n is called…",
+      ["the sampling distribution of the sample mean", "the population distribution", "the frequency distribution of the sample", "the standard error"],
+      "A sampling distribution describes how a statistic (here x̄) varies from sample to sample. Its standard deviation is the standard error, σ/√n."),
+    mc(p, "Review times are normal with μ = 4 hours and σ = 1.2 hours. P(3.5 < X < 4.25) for one review is about 0.24, but P(3.5 < X̄ < 4.25) for the mean of 16 reviews is about 0.75. Why is the second probability larger?",
+      ["The sample mean has a much smaller standard deviation, σ/√16 = 0.3, so more of its distribution sits close to μ", "Sixteen reviews take longer", "The mean of a sample is always inside the interval", "The first probability was computed with the wrong formula"],
+      "Averages vary less than individuals. With standard error 0.3 instead of 1.2, the interval from 3.5 to 4.25 captures most of the distribution of X̄."),
   ]);
 
 const l2 = lesson("u7.2", "7.2", "The central limit theorem for sums",
@@ -52,6 +58,9 @@ const l2 = lesson("u7.2", "7.2", "The central limit theorem for sums",
     mc(p, "Which question would be answered with the CLT for sums?",
       ["What is the probability that 40 randomly chosen boxes together weigh more than 850 kg?", "What is the probability that the average box weighs more than 21 kg?", "What is the probability a single box weighs more than 25 kg?", "What is the median box weight?"],
       "Totals of many observations call for the sum version."),
+    mc(p, "For sums, the z-score of an observed total Σx is computed as…",
+      ["z = (Σx − nμ)/(√n·σ)", "z = (Σx − μ)/σ", "z = (Σx − nμ)/(σ/√n)", "z = (Σx − μ)/(√n·σ)"],
+      "Standardize the sum with its own mean nμ and its own standard deviation √n·σ."),
   ]);
 
 const l3 = lesson("u7.3", "7.3", "Using the central limit theorem",

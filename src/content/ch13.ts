@@ -1,4 +1,4 @@
-import { mc, tf, num, match, order, lesson, unit } from "./helpers";
+import { mc, tf, num, match, order, classify, lesson, unit } from "./helpers";
 import * as G from "../engine/generators";
 
 const p = "u13";
@@ -6,7 +6,7 @@ const p = "u13";
 const l1 = lesson("u13.1", "13.1", "One-way ANOVA",
   "Analysis of variance (ANOVA) compares the means of three or more groups at once. Instead of running many t-tests, it asks whether the variation between group means is large relative to the variation within groups.",
   ["H₀: μ₁ = μ₂ = … = μ_k. Hₐ: at least one mean differs (not 'all differ').",
-   "Assumptions: independent random samples, roughly normal populations, equal variances.",
+   "Five assumptions: each population is normal; equal population standard deviations; samples are random and independent; groups may differ in size; one factor (independent variable) and one response (dependent variable).",
    "Compares between-group variance with within-group variance.",
    "Rejecting H₀ says some means differ, not which ones."],
   [
@@ -28,6 +28,16 @@ const l1 = lesson("u13.1", "13.1", "One-way ANOVA",
     mc(p, "The 'one-way' in one-way ANOVA refers to…",
       ["a single factor (grouping variable) being studied", "a one-tailed test", "one observation per group", "one degree of freedom"],
       "One factor with several levels; two-way ANOVA would have two factors."),
+    classify(p, "Which of these are assumptions of one-way ANOVA?", ["Assumption", "Not an assumption"], [
+      ["Each population is approximately normal", "Assumption"],
+      ["The populations have equal standard deviations", "Assumption"],
+      ["Samples are random and independent", "Assumption"],
+      ["All groups must have the same sample size", "Not an assumption"],
+      ["There is one independent (factor) variable and one dependent variable", "Assumption"],
+    ], "Group sizes may differ (unbalanced data); the other four statements are the standard conditions."),
+    mc(p, "Data with the same number of observations in every group are called…",
+      ["balanced", "pooled", "paired", "stratified"],
+      "With balanced data the F ratio simplifies to n·(variance of the group means)/(mean of the group variances)."),
   ]);
 
 const l2 = lesson("u13.2", "13.2", "The F distribution and the F ratio",
@@ -35,7 +45,8 @@ const l2 = lesson("u13.2", "13.2", "The F distribution and the F ratio",
   ["SS(between) measures spread of group means; SS(within) measures spread inside groups.",
    "MS(between) = SS(between)/(k − 1); MS(within) = SS(within)/(N − k).",
    "F = MS(between)/MS(within), with df = (k − 1, N − k).",
-   "Right-tailed test: p-value = P(F > statistic)."],
+   "Right-tailed test: p-value = P(F > statistic).",
+   "Equal group sizes: F = n·s²_x̄ / (mean of the sample variances), where s²_x̄ is the variance of the group means."],
   [
     G.anovaFRatio, G.anovaFRatio, G.anovaFRatio,
     num(p, "Three groups of 8 observations each: SS(between) = 90, SS(within) = 210. Find MS(between).", 45,
@@ -58,13 +69,14 @@ const l2 = lesson("u13.2", "13.2", "The F distribution and the F ratio",
       ["MS(between)", "SS(between)/(k − 1)"],
       ["F", "MS(between)/MS(within)"],
     ], "The ANOVA table is built from these four pieces."),
+    G.anovaEqualSizes, G.anovaEqualSizes,
   ]);
 
 const l3 = lesson("u13.3", "13.3", "Facts about the F distribution",
   "The F distribution is a ratio of two chi-square variables scaled by their degrees of freedom. It has two df parameters, is skewed right, and takes only non-negative values.",
   ["F has numerator df and denominator df; write F ~ F(df₁, df₂).",
    "F ≥ 0, skewed right, approaches normal-ish symmetry as both df grow.",
-   "Mean ≈ df₂/(df₂ − 2) for df₂ > 2 (close to 1 for large df₂).",
+   "Mean μ = df₂/(df₂ − 2) for df₂ > 2 (close to 1 for large df₂). Shape can be mounded or exponential-looking depending on the two df.",
    "ANOVA tests are right-tailed."],
   [
     G.anovaDF, G.anovaFRatio,
@@ -86,6 +98,10 @@ const l3 = lesson("u13.3", "13.3", "Facts about the F distribution",
     mc(p, "An F statistic close to 0 would indicate…",
       ["the group means are nearly identical relative to the within-group spread", "strong evidence that the means differ", "a computational error", "unequal variances"],
       "Tiny between-group variation gives a small F."),
+    G.fDistributionMean, G.fDistributionMean,
+    mc(p, "If the null hypothesis of equal means is true, the numerator of the F ratio (MS between) should be…",
+      ["small compared with the denominator, giving F near 1 and a large p-value", "much larger than the denominator", "exactly zero", "negative"],
+      "Under H₀ the group means vary only by chance, so between-group variation is comparable to within-group variation."),
   ]);
 
 const l4 = lesson("u13.4", "13.4", "Test of two variances",

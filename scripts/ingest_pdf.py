@@ -36,7 +36,10 @@ SEC_TOC = re.compile(r"^\s*(1[0-3]|[1-9])\.(\d{1,2})\s+(.+?)\s+(\d{1,3})\s*$")
 HDR_ODD = re.compile(r"^(\d{1,2}\.\d{1,2}) • (.+?)\s+(\d{1,3})\s*$")
 HDR_EVEN = re.compile(r"^(\d{1,3})\s+(\d{1,2}) • (.+?)\s*$")
 HDR_END = re.compile(r"^(\d{1,2}) • (Key Terms|Chapter Review|Formula Review|Practice|Homework|References|Solutions|Bringing It Together: Practice|Bringing It Together: Homework)\s+(\d{1,3})\s*$")
-KEY_TERM = re.compile(r"^([A-Z][A-Za-z'’\- ]{2,45}?)\s+(?:[a-z(]|[A-Z][a-z]+ [a-z])")
+# A key-term entry is a Title-Case term (small connecting words allowed) followed
+# by a lowercase definition on the same line, e.g. "Error Bound for a Population Mean (EBM) the margin…".
+KEY_TERM = re.compile(r"^((?:[A-Z][A-Za-z'’\-]*|of|for|a|an|the|and|or|to|in|with|vs\.?|\([A-Za-z]+\))(?: (?:[A-Z][A-Za-z'’\-]*|of|for|a|an|the|and|or|to|in|with|vs\.?|\([A-Za-z]+\))){0,6})\s+(?:[a-z(]|[A-Z][a-z]+ [a-z])")
+SENTENCE_STARTERS = {"An", "A", "The", "To", "If", "In", "For", "When", "This", "These", "There", "It", "We", "You", "As", "By", "On", "At"}
 
 
 def page_texts(path: Path) -> list[str]:
@@ -178,12 +181,25 @@ def main(argv: list[str]) -> int:
             continue
         printed.append(pg)
         by_label.setdefault(label, []).append(t)
-        m = re.match(r"^(\d{1,2}) Key Terms$", label or "")
+        m = re.match(r"^(?:ch)?(\d{1,2}) Key Terms$", label or "")
         if m:
-            for line in t.splitlines():
+            # only the glossary itself: stop at the Chapter Review heading that shares the page
+            glossary = t.split("\nChapter Review")[0]
+            for line in glossary.splitlines():
                 km = KEY_TERM.match(line.strip())
                 if km and not line.strip().startswith("Key Terms"):
-                    key_terms.setdefault(m.group(1), []).append(km.group(1).strip())
+                    words = km.group(1).strip().split()
+                    # the definition's first article can be swallowed by the term match; trim trailing small words
+                    while words and words[-1].islower():
+                        words.pop()
+                    if not words or len(words) > 6:
+                        continue
+                    # skip ordinary sentences ("An important parameter…", "To assess whether…")
+                    if words[0] in SENTENCE_STARTERS and (len(words) < 2 or words[1][0].islower()):
+                        continue
+                    if not any(w[0].isupper() and len(w) >= 3 for w in words):
+                        continue
+                    key_terms.setdefault(m.group(1), []).append(" ".join(words))
     for label, texts in by_label.items():
         fn = re.sub(r"[^A-Za-z0-9.]+", "_", label)[:60]
         (out / "sections" / f"{fn}.txt").write_text("\n\n".join(texts), encoding="utf-8")

@@ -29,6 +29,12 @@ const l1 = lesson("u11.1", "11.1", "Facts about the chi-square distribution",
     mc(p, "The chi-square test statistic for a test of a single variance is…",
       ["(n − 1)s²/σ²", "Σ(O − E)²/E", "(x̄ − μ)/(s/√n)", "s₁²/s₂²"],
       "This statistic compares the sample variance with the hypothesized population variance."),
+    mc(p, "A chi-square random variable with df degrees of freedom can be written as…",
+      ["Z₁² + Z₂² + … + Z_df², a sum of squares of df independent standard normal variables", "Z₁ + Z₂ + … + Z_df", "the ratio of two normal variables", "the square root of a normal variable"],
+      "This is why χ² is never negative and why its mean is df: each Z² has mean 1."),
+    mc(p, "For which degrees of freedom does the chi-square curve closely approximate a normal curve, according to the book?",
+      ["df greater than 90", "df greater than 2", "df greater than 30", "It never does"],
+      "The right skew fades as df grows; beyond about 90 degrees of freedom the curve is nearly bell-shaped."),
   ]);
 
 const l2 = lesson("u11.2", "11.2", "Goodness-of-fit test",
@@ -81,6 +87,9 @@ const l3 = lesson("u11.3", "11.3", "Test of independence",
       "Small p → reject independence. Note that dependence does not prove causation."),
     tf(p, "Expected counts in a test of independence are computed under the assumption that the variables are independent.", true,
       "E = (row total)(column total)/n is exactly what independence would predict."),
+    mc(p, "A contingency table is…",
+      ["a table displaying sample values for two factors that may be dependent on one another", "a list of expected counts only", "a table of z-scores", "a histogram of two variables"],
+      "Contingency tables organize joint counts and are the starting point for both conditional probabilities and the test of independence."),
   ]);
 
 const l4 = lesson("u11.4", "11.4", "Test for homogeneity",

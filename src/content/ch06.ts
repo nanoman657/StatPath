@@ -1,4 +1,4 @@
-import { mc, tf, num, order, lesson, unit } from "./helpers";
+import { mc, tf, num, text, order, lesson, unit } from "./helpers";
 import * as G from "../engine/generators";
 
 const p = "u6";
@@ -36,6 +36,14 @@ const l1 = lesson("u6.1", "6.1", "The standard normal distribution",
       "Compare the z-scores",
       "Interpret: the larger z is farther above its mean",
     ], "z-scores put everything on the same scale."),
+    mc(p, "X ~ N(61, 15). What is the median of X?",
+      ["61, because a normal distribution is symmetric so its median equals its mean", "15", "76", "It cannot be determined without data"],
+      "For any normal distribution the mean, median, and mode coincide at μ."),
+    mc(p, "A machine fills bottles with a mean of 12.05 fluid ounces and a standard deviation of 0.01 ounces. Which is the best way to define the random variable X in words?",
+      ["X = the amount of water in one bottle, in fluid ounces", "X = 12.05", "X = the number of bottles filled", "X = the standard deviation of the bottles"],
+      "Defining the random variable in words is the first step of every distribution problem: X is the measured quantity for one individual, here the fill amount of a bottle."),
+    text(p, "In the notation X ~ N(3, 5), what is the value of σ?", ["5"],
+      "X ~ N(μ, σ): the first parameter is the mean (3) and the second is the standard deviation (5)."),
   ]);
 
 const l2 = lesson("u6.2", "6.2", "Using the normal distribution",
@@ -65,6 +73,12 @@ const l2 = lesson("u6.2", "6.2", "Using the normal distribution",
     mc(p, "IQ scores are N(100, 15). Which is closest to the proportion of people with IQ above 130?",
       ["2.3%", "16%", "5%", "0.1%"],
       "130 is 2σ above the mean; about 2.5% of a normal distribution lies beyond +2σ (exactly 0.0228)."),
+    mc(p, "Which calculator command gives P(a < X < b) for X ~ N(μ, σ)?",
+      ["normalcdf(a, b, μ, σ)", "invNorm(a, b, μ, σ)", "normalpdf(a, b)", "binomcdf(a, b, μ)"],
+      "normalcdf takes the lower and upper x-values of the area, then the mean and standard deviation. invNorm goes the other way: it takes an area to the left and returns the x-value (the kth percentile)."),
+    mc(p, "Which command finds the value k such that P(X < k) = 0.30 for X ~ N(μ, σ)?",
+      ["invNorm(0.30, μ, σ)", "normalcdf(0, 0.30, μ, σ)", "invNorm(0.70, μ, σ)", "normalcdf(−1E99, 0.30, μ, σ)"],
+      "invNorm(area to the left, μ, σ) returns the percentile; 0.30 to the left is the 30th percentile."),
   ]);
 
 export const unit6 = unit(6, "The Normal Distribution", "The bell curve: z-scores, the empirical rule, and finding areas and percentiles.", "🔔", "#2b70c9", [l1, l2]);

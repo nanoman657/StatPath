@@ -1,4 +1,4 @@
-import { mc, tf, num, match, order, lesson, unit } from "./helpers";
+import { mc, tf, num, match, order, classify, lesson, unit } from "./helpers";
 import * as G from "../engine/generators";
 
 const p = "u12";
@@ -29,6 +29,15 @@ const l1 = lesson("u12.1", "12.1", "Linear equations",
       "y = a + bx with a = 4 and b = −2."),
     num(p, "A line passes through (2, 10) and (6, 22). What is its slope?", 3,
       "Slope = (22 − 10)/(6 − 2) = 12/4 = 3.", { tolerance: 0.01 }),
+    mc(p, "Is the equation y = 10 + 5x − 3x² linear?",
+      ["No, because of the x² term the graph is a curve, not a straight line", "Yes, because it has a y-intercept", "Yes, because it contains x", "No, because the coefficient 5 is positive"],
+      "A linear equation has the form y = a + bx with x to the first power only."),
+    classify(p, "Which equations are linear?", ["Linear", "Not linear"], [
+      ["y = 6x + 8", "Linear"],
+      ["y + 7 = 3x", "Linear"],
+      ["y − x = 8x²", "Not linear"],
+      ["4y = 8", "Linear"],
+    ], "Rearranged, y + 7 = 3x is y = −7 + 3x and 4y = 8 is y = 2 (slope 0); both are straight lines. Any squared term makes a curve."),
   ]);
 
 const l2 = lesson("u12.2", "12.2", "Scatter plots",
@@ -104,7 +113,8 @@ const l4 = lesson("u12.4", "12.4", "Testing the significance of the correlation 
   ["H₀: ρ = 0 (no linear relationship). Hₐ: ρ ≠ 0.",
    "t = r√((n − 2)/(1 − r²)) with df = n − 2; or compare |r| with the critical value from a table.",
    "If p < α (or |r| > critical value), r is significant and the line may be used for prediction.",
-   "Significance depends on both r and n: a small r can be significant with large n."],
+   "Significance depends on both r and n: a small r can be significant with large n.",
+   "Conditions for regression: Linear relationship, Independent residuals, Normal y-values at each x, Equal variance at each x, Random data. The sample slope b and intercept a estimate the population β and α; s (SD of the residuals) estimates σ."],
   [
     G.rCritical, G.rCritical,
     mc(p, "The null hypothesis when testing the correlation coefficient is…",
@@ -125,6 +135,19 @@ const l4 = lesson("u12.4", "12.4", "Testing the significance of the correlation 
     mc(p, "A significant correlation between ice cream sales and drownings most likely reflects…",
       ["a lurking variable (hot weather) rather than causation", "that ice cream causes drowning", "a calculation error", "that r must be negative"],
       "Correlation shows association; a third variable often explains it."),
+    classify(p, "Match each condition for linear regression to its description.", ["Linear", "Independent", "Normal", "Equal variance", "Random"], [
+      ["The average y changes along a straight line as x changes", "Linear"],
+      ["The residuals do not influence one another", "Independent"],
+      ["For each x, the y values follow a bell-shaped distribution", "Normal"],
+      ["The spread of y is the same at every x", "Equal variance"],
+      ["The data come from a well-designed random sample or experiment", "Random"],
+    ], "These five conditions justify using the t-test for the correlation coefficient and the regression line for prediction."),
+    match(p, "Match each sample quantity to the population quantity it estimates.", [
+      ["b (sample slope)", "β (population slope)"],
+      ["a (sample intercept)", "α (population intercept)"],
+      ["r (sample correlation)", "ρ (population correlation)"],
+      ["s (SD of residuals)", "σ (SD of y about the line)"],
+    ], "Roman letters are sample statistics; Greek letters are the population parameters they estimate."),
   ]);
 
 const l5 = lesson("u12.5", "12.5", "Prediction",
@@ -158,7 +181,7 @@ const l5 = lesson("u12.5", "12.5", "Prediction",
 
 const l6 = lesson("u12.6", "12.6", "Outliers in regression",
   "Outliers are points that fall far from the regression line. They can distort the slope and correlation, so identify them, investigate them, and report how they affect the fit.",
-  ["Rule of thumb: a point is an outlier if its residual exceeds 2s in absolute value, where s = √(SSE/(n − 2)).",
+  ["Rule of thumb: a point is an outlier if |residual| ≥ 2s, where s = √(SSE/(n − 2)) is the standard deviation of the residuals.",
    "Alternatively, draw lines 2s above and below the regression line; points outside are outliers.",
    "Influential points change the slope substantially when removed.",
    "Remove an outlier only with a good reason (data error, different population); always report it."],
@@ -183,6 +206,9 @@ const l6 = lesson("u12.6", "12.6", "Outliers in regression",
     mc(p, "The standard deviation of the residuals, s, is computed with n − 2 in the denominator because…",
       ["two parameters (a and b) were estimated from the data", "there are two variables", "n − 2 makes s smaller", "the residuals sum to 2"],
       "Each estimated parameter uses up a degree of freedom, and the regression line has two."),
+    mc(p, "Graphically, the outlier rule draws two lines parallel to the regression line. Where are they?",
+      ["At ŷ + 2s and ŷ − 2s; points outside them are outliers", "At ŷ + s and ŷ − s", "At the maximum and minimum y", "At Q₁ and Q₃ of y"],
+      "Any point above the upper line or below the lower line has a residual of at least 2s in absolute value."),
   ]);
 
 export const unit12 = unit(12, "Linear Regression and Correlation", "Fit lines to data, measure correlation, test significance, and predict responsibly.", "📉", "#3caea3", [l1, l2, l3, l4, l5, l6]);
