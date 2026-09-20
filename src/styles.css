@@ -199,3 +199,7 @@ input.answer:focus { border-color: var(--blue); }
 }
 
 .bookref { padding: 12px 16px; border-style: dashed; }
+
+.stat.sync { background: none; border: none; cursor: pointer; font-size: 17px; padding: 0 2px; line-height: 1; }
+.stat.sync:disabled { cursor: default; }
+.stat.sync.bad { filter: none; }

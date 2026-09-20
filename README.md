@@ -18,6 +18,26 @@ The course follows the 13 chapters of **[Introductory Statistics 2e](https://ope
 
 Progress is stored in the browser (`localStorage`); there is no backend and no account.
 
+## Syncing across devices
+
+Optional, and off until you set it up. StatPath can keep a copy of your progress in a **secret GitHub Gist** on your own account, so a phone and a laptop stay in step. There is still no server: the browser calls the GitHub API directly.
+
+Open the profile screen and follow the three steps there. In short, create a **classic** token with only the `gist` scope and no expiration, then paste it on each device. Fine-grained tokens are rejected, because the Gists API does not accept them. The token is held in its own `localStorage` key, never written into the synced file, and never sent anywhere but `api.github.com`.
+
+Syncing happens when the app opens and after each finished lesson. The two copies are **merged**, not overwritten, which is the part that matters: a device holding stale state cannot delete a lesson you finished elsewhere. Every field has an unambiguous winner, so no conflict is ever shown to you:
+
+| Field | Rule |
+|---|---|
+| Crowns, best accuracy, attempts, longest streak | take the larger |
+| XP per day | take the larger per day, then recompute the total from it |
+| Current streak | recomputed from the merged daily XP |
+| Achievements | union |
+| Review schedule | the most recent answer for each exercise, so a lapse is never undone by an older pass |
+| Hearts | take the smaller, so syncing cannot refill them |
+| Name and daily goal | from whichever copy changed last |
+
+The merge is commutative and idempotent for all learning data, so sync order does not matter and repeated syncs never drift. `tests/merge.test.ts` and `tests/sync.test.ts` cover this, including that the token is never uploaded.
+
 ## Run it
 
 ```bash

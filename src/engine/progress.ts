@@ -12,6 +12,8 @@ export interface SrsCard {
   due: number; // epoch ms
   lapses: number;
   reps: number;
+  /** Epoch ms of the most recent answer. Absent on cards saved before sync existed. */
+  lastReview?: number;
 }
 
 export interface LessonProgress {
@@ -38,6 +40,8 @@ export interface Progress {
   srs: Record<string, SrsCard>;
   achievements: string[];
   name: string;
+  /** Epoch ms of the last change. Used by the merge to settle setting conflicts. */
+  updatedAt?: number;
 }
 
 export const MAX_HEARTS = 5;
@@ -67,6 +71,7 @@ export const defaultProgress = (): Progress => ({
   srs: {},
   achievements: [],
   name: "Learner",
+  updatedAt: 0,
 });
 
 export const loadProgress = (): Progress => {
@@ -134,11 +139,11 @@ export const reviewCard = (card: SrsCard | undefined, id: string, lessonId: stri
   const c: SrsCard = card ?? { id, lessonId, interval: 0, ease: 2.5, due: now, lapses: 0, reps: 0 };
   const day = 24 * 60 * 60 * 1000;
   if (!correct) {
-    return { ...c, interval: 0, reps: 0, lapses: c.lapses + 1, ease: Math.max(1.3, c.ease - 0.2), due: now + 10 * 60 * 1000 };
+    return { ...c, interval: 0, reps: 0, lapses: c.lapses + 1, ease: Math.max(1.3, c.ease - 0.2), due: now + 10 * 60 * 1000, lastReview: now };
   }
   const reps = c.reps + 1;
   const interval = reps === 1 ? 1 : reps === 2 ? 3 : Math.round(c.interval * c.ease);
-  return { ...c, reps, interval, ease: Math.min(3.0, c.ease + 0.1), due: now + interval * day };
+  return { ...c, reps, interval, ease: Math.min(3.0, c.ease + 0.1), due: now + interval * day, lastReview: now };
 };
 
 export const dueCards = (p: Progress, now: number = Date.now()): SrsCard[] =>
@@ -176,7 +181,7 @@ export const completeLesson = (p: Progress, r: LessonResult, now: number = Date.
   // Perfect lessons restore one heart
   if (r.perfect && next.hearts < MAX_HEARTS) next = { ...next, hearts: next.hearts + 1 };
   const newAchievements = checkAchievements(next).filter((a) => !p.achievements.includes(a));
-  next = { ...next, achievements: [...p.achievements, ...newAchievements] };
+  next = { ...next, achievements: [...p.achievements, ...newAchievements], updatedAt: now };
   return { progress: next, xpGained, newAchievements };
 };
 

@@ -1,5 +1,7 @@
 import { ACHIEVEMENTS, MAX_CROWNS, type Progress, dueCards, isoDay, streakIsAlive, totalCrowns, xpToday } from "../engine/progress";
 import type { Unit } from "../engine/types";
+import { TOKEN_URL, type SyncSettings } from "../engine/sync";
+import { useState } from "react";
 
 interface Props {
   progress: Progress;
@@ -7,9 +9,15 @@ interface Props {
   onSetGoal: (g: number) => void;
   onSetName: (n: string) => void;
   onReset: () => void;
+  sync: SyncSettings;
+  syncing: boolean;
+  syncStatus: string;
+  onConnect: (token: string) => void;
+  onSyncNow: () => void;
+  onDisconnect: () => void;
 }
 
-export function Profile({ progress, units, onSetGoal, onSetName, onReset }: Props) {
+export function Profile({ progress, units, onSetGoal, onSetName, onReset, sync, syncing, syncStatus, onConnect, onSyncNow, onDisconnect }: Props) {
   const totalLessons = units.reduce((a, u) => a + u.lessons.length, 0);
   const done = Object.values(progress.lessons).filter((l) => l.crowns > 0).length;
   const crowns = totalCrowns(progress);
@@ -86,11 +94,90 @@ export function Profile({ progress, units, onSetGoal, onSetName, onReset }: Prop
         })}
       </div>
 
+      <SyncCard sync={sync} syncing={syncing} status={syncStatus} onConnect={onConnect} onSyncNow={onSyncNow} onDisconnect={onDisconnect} />
+
       <div className="card">
         <h3>About</h3>
         <p className="small muted">StatPath's curriculum follows the 13 chapters of <i>Introductory Statistics 2e</i> by OpenStax (Rice University), licensed CC BY 4.0. Progress is stored only in this browser.</p>
         <button className="btn small red" onClick={() => { if (confirm("Reset all progress? This cannot be undone.")) onReset(); }}>Reset progress</button>
       </div>
+    </div>
+  );
+}
+
+/**
+ * Cross-device sync setup. The token is a classic GitHub token limited to the
+ * gist scope; fine-grained tokens are not accepted by the Gists API. It is kept
+ * in this browser only and is never written into the synced file.
+ */
+function SyncCard({ sync, syncing, status, onConnect, onSyncNow, onDisconnect }: {
+  sync: SyncSettings;
+  syncing: boolean;
+  status: string;
+  onConnect: (token: string) => void;
+  onSyncNow: () => void;
+  onDisconnect: () => void;
+}) {
+  const [token, setToken] = useState("");
+  const connected = !!sync.token;
+  return (
+    <div className="card">
+      <h3>Sync across devices</h3>
+      {!connected ? (
+        <>
+          <p className="small muted">
+            Progress lives in this browser only. To carry it between your phone and computer, StatPath can keep a copy
+            in a secret <b>GitHub Gist</b> on your own account. Nothing is sent anywhere else.
+          </p>
+          <ol className="small" style={{ paddingLeft: 20, marginTop: 8 }}>
+            <li>
+              <a href={TOKEN_URL} target="_blank" rel="noreferrer">Create a token</a>. The <b>gist</b> scope is
+              preselected; leave every other box unticked and set <b>Expiration</b> to <b>No expiration</b>.
+            </li>
+            <li>It must be a <b>classic</b> token. Fine-grained tokens cannot access gists.</li>
+            <li>Paste it below, then repeat on your other device with the same token.</li>
+          </ol>
+          <div className="row" style={{ marginTop: 10, gap: 8 }}>
+            <input
+              className="answer"
+              style={{ fontSize: 14, padding: "10px 12px" }}
+              type="password"
+              autoComplete="off"
+              spellCheck={false}
+              placeholder="ghp_…"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+            />
+            <button className="btn small" disabled={!token.trim() || syncing} onClick={() => { onConnect(token); setToken(""); }}>
+              Connect
+            </button>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="row spread wrap">
+            <div>
+              <div className="small">
+                <b>{sync.lastError ? "⚠️ Needs attention" : "☁️ Connected"}</b>
+              </div>
+              <div className="muted small">
+                {sync.lastSyncedAt ? `Last synced ${new Date(sync.lastSyncedAt).toLocaleString()}` : "Not synced yet"}
+                {sync.gistId ? ` · gist ${sync.gistId.slice(0, 8)}` : ""}
+              </div>
+            </div>
+            <div className="row" style={{ gap: 8 }}>
+              <button className="btn small" onClick={onSyncNow} disabled={syncing}>{syncing ? "Syncing…" : "Sync now"}</button>
+              <button className="btn small ghost" onClick={onDisconnect} disabled={syncing}>Disconnect</button>
+            </div>
+          </div>
+          <p className="small muted mt">
+            Syncs when you open StatPath and after each lesson. Work done on two devices is combined rather than
+            overwritten, so nothing is lost if one of them was out of date.
+          </p>
+        </>
+      )}
+      {status ? <div className={"small mt " + (sync.lastError ? "" : "muted")}>{status}</div> : null}
+      {sync.lastError ? <div className="small" style={{ color: "var(--red)" }}>{sync.lastError}</div> : null}
     </div>
   );
 }

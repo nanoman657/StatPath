@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { curriculum, allLessons, findLesson } from "./content";
 import { buildReviewSession, buildSession } from "./engine/lesson";
 import { randomSeed } from "./engine/rng";
@@ -7,6 +7,7 @@ import type { Lesson } from "./engine/types";
 import { LessonPlayer } from "./ui/LessonPlayer";
 import { Path } from "./ui/Path";
 import { Profile } from "./ui/Profile";
+import { SyncError, type SyncSettings, clearSync, defaultSync, loadSync, saveSync, syncNow } from "./engine/sync";
 
 type Screen =
   | { name: "path" }
@@ -19,15 +20,51 @@ export function App() {
   const [progress, setProgress] = useState<Progress>(() => loadProgress());
   const [screen, setScreen] = useState<Screen>({ name: "path" });
   const [, tick] = useState(0);
+  const [sync, setSync] = useState<SyncSettings>(() => loadSync());
+  const [syncing, setSyncing] = useState(false);
+  const [syncStatus, setSyncStatus] = useState("");
 
   useEffect(() => { saveProgress(progress); }, [progress]);
+  useEffect(() => { saveSync(sync); }, [sync]);
+
+  // Latest values for callbacks that must not close over a stale render.
+  const progressRef = useRef(progress);
+  const syncRef = useRef(sync);
+  useEffect(() => { progressRef.current = progress; }, [progress]);
+  useEffect(() => { syncRef.current = sync; }, [sync]);
+
+  /**
+   * Pull the shared copy, merge, push back. Passing the just-updated progress
+   * avoids racing the state update that follows a finished lesson.
+   */
+  const doSync = useCallback(async (p?: Progress) => {
+    const settings = syncRef.current;
+    if (!settings.token) return;
+    setSyncing(true);
+    setSyncStatus("Syncing…");
+    try {
+      const out = await syncNow(p ?? progressRef.current, settings);
+      setProgress(out.progress);
+      setSync(out.settings);
+      setSyncStatus({ created: "Sync set up", pushed: "Synced", pulled: "Updated from your other device", "in-sync": "Up to date" }[out.action]);
+    } catch (e) {
+      const message = e instanceof SyncError ? e.message : "Sync failed.";
+      setSync((prev) => ({ ...prev, lastError: message }));
+      setSyncStatus(message);
+    } finally {
+      setSyncing(false);
+    }
+  }, []);
+
+  // Sync once on open so a device picks up whatever happened elsewhere.
+  useEffect(() => { if (loadSync().token) void doSync(); }, [doSync]);
   // Refill hearts over time and re-render the countdown
   useEffect(() => {
     const t = setInterval(() => { setProgress((p) => refillHearts(p)); tick((n) => n + 1); }, 30_000);
     return () => clearInterval(t);
   }, []);
 
-  const update = (fn: (p: Progress) => Progress) => setProgress((p) => fn(p));
+  const update = (fn: (p: Progress) => Progress) => setProgress((p) => ({ ...fn(p), updatedAt: Date.now() }));
 
   const startLesson = (lessonId: string, practice = false) => {
     const found = findLesson(lessonId);
@@ -80,11 +117,14 @@ export function App() {
       const day = isoDay();
       next = { ...next, xp: next.xp + xp, xpByDay: { ...next.xpByDay, [day]: (next.xpByDay[day] ?? 0) + xp } };
       next = touchStreak(next);
+      next = { ...next, updatedAt: Date.now() };
       setProgress(next);
+      void doSync(next);
       setScreen({ name: "results", result: r, xp, seconds, achievements: [], practice: true });
     } else {
       const out = completeLesson(progress, r);
       setProgress(out.progress);
+      void doSync(out.progress);
       setScreen({ name: "results", result: r, xp: out.xpGained, seconds, achievements: out.newAchievements, practice: false });
     }
     window.scrollTo(0, 0);
@@ -126,6 +166,16 @@ export function App() {
           <span className={"stat streak" + (streakIsAlive(progress) ? "" : " dim")} title="Day streak">🔥 {streakIsAlive(progress) ? progress.streak : 0}</span>
           <span className="stat xp" title="Total XP">⚡ {progress.xp}</span>
           <span className="stat hearts" title={heartsInfo || "Hearts"}>❤️ {progress.hearts}</span>
+          {sync.token ? (
+            <button
+              className={"stat sync" + (sync.lastError ? " bad" : "")}
+              title={syncing ? "Syncing…" : sync.lastError ? sync.lastError : sync.lastSyncedAt ? `Last synced ${new Date(sync.lastSyncedAt).toLocaleTimeString()}` : "Sync"}
+              onClick={() => void doSync()}
+              disabled={syncing}
+            >
+              {syncing ? "⏳" : sync.lastError ? "⚠️" : "☁️"}
+            </button>
+          ) : null}
         </div>
       </header>
 
@@ -185,6 +235,12 @@ export function App() {
           onSetGoal={(g) => update((p) => ({ ...p, dailyGoal: g }))}
           onSetName={(n) => update((p) => ({ ...p, name: n }))}
           onReset={() => setProgress(defaultProgress())}
+          sync={sync}
+          syncing={syncing}
+          syncStatus={syncStatus}
+          onConnect={(token) => { const next = { ...defaultSync(), token: token.trim() }; setSync(next); syncRef.current = next; void doSync(); }}
+          onSyncNow={() => void doSync()}
+          onDisconnect={() => { clearSync(); setSync(defaultSync()); setSyncStatus(""); }}
         />
       )}
 
