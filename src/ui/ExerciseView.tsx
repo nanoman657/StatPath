@@ -35,18 +35,41 @@ function Context({ text }: { text?: string }) {
   return text ? <div className="context">{text}</div> : null;
 }
 
+/**
+ * Keyboard selection for the click-one-option exercises. `keys` maps a
+ * lowercased key name to the option it picks, so a choice can be reachable by
+ * its number and, where it reads naturally, by a letter as well.
+ *
+ * Ignores presses while the answer is revealed, while a modifier is held, and
+ * while the caret is in a field, so typing a numeric answer never triggers it.
+ */
+function useChoiceKeys(keys: Record<string, () => void>, active: boolean) {
+  useEffect(() => {
+    if (!active) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const el = document.activeElement;
+      const tag = el?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (el as HTMLElement | null)?.isContentEditable) return;
+      const pick = keys[e.key.toLowerCase()];
+      if (!pick) return;
+      e.preventDefault();
+      pick();
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [keys, active]);
+}
+
 function MC({ ex, onChange, revealed }: { ex: Extract<Exercise, { kind: "mc" }>; onChange: Props["onChange"]; revealed: boolean }) {
   const [sel, setSel] = useState<number | null>(null);
   useEffect(() => { setSel(null); onChange(null); }, [ex.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickIdx = (i: number) => { if (revealed) return; setSel(i); onChange({ kind: "mc", index: i }); };
-  useEffect(() => {
-    const h = (e: KeyboardEvent) => {
-      const i = parseInt(e.key, 10) - 1;
-      if (!Number.isNaN(i) && i >= 0 && i < ex.choices.length) pickIdx(i);
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  });
+  const keys = useMemo(
+    () => Object.fromEntries(ex.choices.map((_, i) => [String(i + 1), () => pickIdx(i)])),
+    [ex.id, revealed], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  useChoiceKeys(keys, !revealed);
   return (
     <div>
       <Context text={ex.context} />
@@ -72,6 +95,13 @@ function TF({ ex, onChange, revealed }: { ex: Extract<Exercise, { kind: "tf" }>;
   const [sel, setSel] = useState<boolean | null>(null);
   useEffect(() => { setSel(null); onChange(null); }, [ex.id]); // eslint-disable-line react-hooks/exhaustive-deps
   const pickV = (v: boolean) => { if (revealed) return; setSel(v); onChange({ kind: "tf", value: v }); };
+  // Numbered like multiple choice, so 1 and 2 always mean "first" and "second".
+  // T and F still work for anyone who reaches for them.
+  const keys = useMemo(
+    () => ({ "1": () => pickV(true), t: () => pickV(true), "2": () => pickV(false), f: () => pickV(false) }),
+    [ex.id, revealed], // eslint-disable-line react-hooks/exhaustive-deps
+  );
+  useChoiceKeys(keys, !revealed);
   const cls = (v: boolean) => {
     let c = "choice";
     if (revealed) { if (v === ex.answer) c += " correct"; else if (sel === v) c += " wrong"; }
@@ -84,8 +114,8 @@ function TF({ ex, onChange, revealed }: { ex: Extract<Exercise, { kind: "tf" }>;
       <div className="muted small">True or false?</div>
       <div className="prompt">{ex.statement}</div>
       <div className="tf">
-        <button className={cls(true)} onClick={() => pickV(true)} disabled={revealed}><span className="key">T</span> True</button>
-        <button className={cls(false)} onClick={() => pickV(false)} disabled={revealed}><span className="key">F</span> False</button>
+        <button className={cls(true)} onClick={() => pickV(true)} disabled={revealed}><span className="key">1</span> True</button>
+        <button className={cls(false)} onClick={() => pickV(false)} disabled={revealed}><span className="key">2</span> False</button>
       </div>
     </div>
   );
