@@ -69,3 +69,53 @@ jobs:
       - name: Deploy
         id: pages_deploy
         uses: actions/deploy-pages@v4
+
+      # A green deploy only means GitHub accepted the artifact. Confirm the
+      # site actually serves, and that every asset the page references
+      # resolves at the subfolder it was built for.
+      - name: Smoke test the live site
+        env:
+          URL: ${{ steps.pages_deploy.outputs.page_url }}
+        run: |
+          set -uo pipefail
+          echo "Checking $URL"
+          code=000
+          for i in $(seq 1 12); do
+            code=$(curl -sS -o page.html -w '%{http_code}' -L "$URL" || echo 000)
+            if [ "$code" = "200" ]; then break; fi
+            echo "  attempt $i: HTTP $code, retrying in 10s"
+            sleep 10
+          done
+          if [ "$code" != "200" ]; then
+            echo "::error::page returned HTTP $code"
+            exit 1
+          fi
+          if ! grep -q "<title>" page.html; then
+            echo "::error::page has no <title>; it may be a 404 placeholder"
+            head -40 page.html
+            exit 1
+          fi
+          echo "Title: $(grep -o '<title>[^<]*</title>' page.html || echo '(none)')"
+          origin=$(printf '%s' "$URL" | sed -E 's#^(https?://[^/]+).*#\1#')
+          fail=0
+          found=0
+          for a in $(grep -oE '(src|href)="[^"]+\.(js|css)"' page.html | sed -E 's/^[a-z]+="//; s/"$//'); do
+            case "$a" in
+              http*) u="$a" ;;
+              /*)    u="${origin}${a}" ;;
+              *)     u="${URL}${a}" ;;
+            esac
+            c=$(curl -sS -o /dev/null -w '%{http_code}' -L "$u" || echo 000)
+            echo "  $c  $u"
+            found=$((found + 1))
+            if [ "$c" != "200" ]; then fail=1; fi
+          done
+          if [ "$found" = "0" ]; then
+            echo "::error::no js/css assets referenced; the build output looks wrong"
+            exit 1
+          fi
+          if [ "$fail" != "0" ]; then
+            echo "::error::at least one asset did not return 200"
+            exit 1
+          fi
+          echo "Live site OK: $URL ($found assets served)"
