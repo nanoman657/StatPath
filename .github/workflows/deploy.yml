@@ -1,22 +1,22 @@
 name: Test and deploy to GitHub Pages
 
+# This publishes a PROJECT site for this repository only, at
+# https://<owner>.github.io/StatPath/. It cannot modify a user site
+# (the repo named <owner>.github.io) or any other repository's Pages.
+
 on:
   push:
     branches: [main]
   pull_request:
   workflow_dispatch:
 
+# Read-only by default. The deploy job widens this for itself alone.
 permissions:
   contents: read
-  pages: write
-  id-token: write
-
-concurrency:
-  group: pages
-  cancel-in-progress: true
 
 jobs:
   test:
+    name: Test and build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,21 +26,50 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
+      # Also typechecks, via `tsc --noEmit` in the build script.
       - run: npm run build
         env:
           VITE_BASE: /${{ github.event.repository.name }}/
-      - uses: actions/upload-pages-artifact@v3
-        if: github.ref == 'refs/heads/main'
-        with:
-          path: dist
 
   deploy:
+    name: Deploy to GitHub Pages
+    # Only the default branch publishes; pull requests stop after `test`.
     if: github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    # Queue deployments instead of cancelling one that is already publishing.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
     environment:
       name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      url: ${{ steps.pages_deploy.outputs.page_url }}
     steps:
-      - id: deployment
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # Turns Pages on for THIS repository with Actions as the source, so no
+      # manual settings change is needed. Scoped to this repo by the token.
+      - name: Configure Pages
+        id: pages
+        uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      # base_path is the subfolder this site is served from, e.g. /StatPath
+      - name: Build for ${{ steps.pages.outputs.base_path }}/
+        run: npm run build
+        env:
+          VITE_BASE: ${{ steps.pages.outputs.base_path }}/
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+      - name: Deploy
+        id: pages_deploy
         uses: actions/deploy-pages@v4
