@@ -35,6 +35,8 @@ A GitHub Actions workflow (`.github/workflows/deploy.yml`) runs the tests and pu
 
 One manual step is required once, before the first deploy: open Settings, then Pages, and set **Source** to **GitHub Actions**. The workflow cannot do this itself, because the default `GITHUB_TOKEN` is not permitted to create a Pages site.
 
+After publishing, the workflow fetches the live URL and fails unless the page returns 200 and every script and stylesheet it references also returns 200. A green run therefore means the site is actually serving, not merely that the upload was accepted.
+
 The site is a **project site**, served from a subfolder named after the repository:
 
 ```
