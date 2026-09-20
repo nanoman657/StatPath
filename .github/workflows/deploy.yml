@@ -55,18 +55,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      # Turns Pages on for THIS repository with Actions as the source, so no
-      # manual settings change is needed. Scoped to this repo by the token.
-      - name: Configure Pages
-        id: pages
-        uses: actions/configure-pages@v5
-        with:
-          enablement: true
-      # base_path is the subfolder this site is served from, e.g. /StatPath
-      - name: Build for ${{ steps.pages.outputs.base_path }}/
+      # A project site is served from /<repo>/, so assets must be built for
+      # that prefix. Enabling Pages itself is a one-time manual step: the
+      # default GITHUB_TOKEN may not create a Pages site, so set
+      # Settings -> Pages -> Source to "GitHub Actions" once.
+      - name: Build for /${{ github.event.repository.name }}/
         run: npm run build
         env:
-          VITE_BASE: ${{ steps.pages.outputs.base_path }}/
+          VITE_BASE: /${{ github.event.repository.name }}/
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

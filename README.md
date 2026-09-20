@@ -31,7 +31,17 @@ Requires Node 18+.
 
 ## Deploy
 
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) runs the tests and publishes `dist/` to GitHub Pages on every push to `main`. Enable Pages with "GitHub Actions" as the source in the repository settings.
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) runs the tests and publishes `dist/` to GitHub Pages on every push to `main`. Pull requests run the tests and build but never publish.
+
+One manual step is required once, before the first deploy: open Settings, then Pages, and set **Source** to **GitHub Actions**. The workflow cannot do this itself, because the default `GITHUB_TOKEN` is not permitted to create a Pages site.
+
+The site is a **project site**, served from a subfolder named after the repository:
+
+```
+https://<owner>.github.io/StatPath/
+```
+
+That path is the only thing the workflow writes. A user site (the repo named `<owner>.github.io`) and every other repository's Pages are untouched. The Vite base path comes from the deployment's own `base_path`, so renaming the repository or adding a custom domain keeps the asset URLs correct with no edit.
 
 ## Project layout
 
