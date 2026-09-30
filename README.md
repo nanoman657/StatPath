@@ -118,3 +118,7 @@ Add exercises to the relevant `src/content/chNN.ts` using the helpers; the first
 ## License
 
 Code: MIT. Course structure and topic coverage are based on OpenStax *Introductory Statistics 2e* (CC BY 4.0); all exercise text and explanations in this repository are original.
+
+## Also in this repository
+
+`home-inventory/` is a separate, self-contained Python project: a SQLite home inventory (fridge, closets, wardrobe) with an MCP server for AI agents. See [home-inventory/README.md](home-inventory/README.md).

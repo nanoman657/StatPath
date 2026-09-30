@@ -5,3 +5,10 @@ dist/
 data/*.pdf
 data/extracted/
 data/cnxml/
+__pycache__/
+*.egg-info/
+.venv/
+.pytest_cache/
+*.db
+*.db-wal
+*.db-shm
