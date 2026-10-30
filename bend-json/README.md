@@ -130,7 +130,7 @@ any `Num`, and `is_norm` checks the property.
 ## What is proven (`bend PROOF.bend` → ALL PROOFS CHECK)
 
 `LAWS.bend` states the laws using the library's own functions; `PROOF.bend`
-(about 3,500 lines) proves them.
+(about 3,800 lines) proves them.
 
 1. **`unescape(escape(s)) == Some{s}` for every String.** This includes lone
    surrogates and codes past U+10FFFF, because escape keeps every non-control
@@ -148,6 +148,11 @@ any `Num`, and `is_norm` checks the property.
    printer (digits, zeros, escapes, numbers, whole values) is proven to
    commute with append, `f(y ++ acc) == f(y) ++ acc`. That is what makes
    forked halves, printed separately and appended, equal the sequential text.
+6. **`print_rope(v) == print(v)` for every value.** A value's rope flattens to
+   its compact text, and the forked rope of a split list flattens to the
+   items of the whole list, at any fork depth and any split point. The rope
+   places commas by the halves' list shapes, so no length arithmetic is
+   needed.
 
 The proofs work against the actual parser, a character-level state machine.
 `PROOF.bend` follows that machine through every print form and every escape.
@@ -161,8 +166,6 @@ Notes:
 - `bend PROOF.bend --verdict`, the recheck by Bend's Lean-verified kernel, was
   **not run**: it needs a Lean 4.34.0 toolchain, which this environment
   could not run.
-- `print_rope` is tested to equal `print` (and byte-identical on the 1 MB
-  file), but not proven to.
 
 ## Tests
 

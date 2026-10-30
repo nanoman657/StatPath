@@ -57,19 +57,6 @@ def Rope.go(v: V.Json, mode: Nat) -> Rope:
       RCat{RLeaf{T.quote(k, SCon{':', SNil{}})}, RCat{Rope.go(x, 1n),
         RCat{Rope.c(','), Rope.go(V.JObj{y <> t}, 0n)}}}
 
-def Rope.items(xs: List<&2, V.Json>) -> Rope:
-  Rope.go(V.JArr{xs}, 0n)
-
-# the items of l then r, from their ropes a and b
-def Rope.join(l: List<&2, V.Json>, r: List<&2, V.Json>, a: Rope, b: Rope) -> Rope:
-  match l r:
-    case Nil{} r0:
-      b
-    case Con{x, t} Nil{}:
-      a
-    case Con{x, t} Con{y, u}:
-      RCat{a, RCat{Rope.c(','), b}}
-
 # Linear list work: the list is moved, never shared, so parallel lanes
 # touch no reference counts.
 
@@ -100,29 +87,41 @@ def Rope.len(xs: List<&2, V.Json>) -> Nat & List<&2, V.Json>:
     case Con{x, t}:
       Rope.len.cons(x, Rope.len(t))
 
-# the items of l then r, of lengths h and m
-def Rope.join2(h: Nat, m: Nat, a: Rope, b: Rope) -> Rope:
-  match h m:
-    case 0n m0:
-      b
-    case 1n+p 0n:
-      a
-    case 1n+p 1n+q:
-      RCat{a, RCat{Rope.c(','), b}}
+# the items of l then r, each printed whole (a leaf)
+def Rope.leaf(l: List<&2, V.Json>, r: List<&2, V.Json>) -> Rope:
+  match l r:
+    case Nil{} r0:
+      RLeaf{Pr.Pr.items(r0)}
+    case Con{x, t} Nil{}:
+      RLeaf{Pr.Pr.items(x <> t)}
+    case Con{x, t} Con{y, u}:
+      RCat{RLeaf{Pr.Pr.items(x <> t)}, RCat{Rope.c(','), RLeaf{Pr.Pr.items(y <> u)}}}
 
-# lr: a list of length n split at n / 2; forks d more levels
+# the sizes of a list's halves when split at n / 2
+def Rope.lo(+n: Nat) -> Nat:
+  Nat.div(n, 2n)
+
+def Rope.hi(+n: Nat) -> Nat:
+  Nat.sub(n, Nat.div(n, 2n))
+
+# the items of l then r, lr a list split near its middle (n its length);
+# forks d more levels. Commas follow the halves' shapes, so the text is
+# right for any split point; n only balances the work.
 def Rope.par(d: Nat, +n: Nat, lr: List<&2, V.Json> & List<&2, V.Json>) -> Rope:
   match d:
     case 0n:
       (l, r) = lr
-      +h = Nat.div(n, 2n)
-      Rope.join2(h, Nat.sub(n, h), RLeaf{Pr.Pr.items(l)}, RLeaf{Pr.Pr.items(r)})
+      Rope.leaf(l, r)
     case 1n++p:
       (l, r) = lr
-      +h = Nat.div(n, 2n)
-      +m = Nat.sub(n, h)
-      a b = Rope.par(p, h, Rope.split(Nat.div(h, 2n), l)) Rope.par(p, m, Rope.split(Nat.div(m, 2n), r))
-      Rope.join2(h, m, a, b)
+      match l r:
+        case Nil{} r0:
+          Rope.par(p, Rope.hi(n), Rope.split(Nat.div(Rope.hi(n), 2n), r0))
+        case Con{x, t} Nil{}:
+          Rope.par(p, Rope.lo(n), Rope.split(Nat.div(Rope.lo(n), 2n), x <> t))
+        case Con{x, t} Con{y, u}:
+          a b = Rope.par(p, Rope.lo(n), Rope.split(Nat.div(Rope.lo(n), 2n), x <> t)) Rope.par(p, Rope.hi(n), Rope.split(Nat.div(Rope.hi(n), 2n), y <> u))
+          RCat{a, RCat{Rope.c(','), b}}
 
 def Rope.depth() -> Nat:
   4n

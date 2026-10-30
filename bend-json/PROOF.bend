@@ -12,6 +12,7 @@ import ./text.bend as T
 import ./parser.bend as P
 import ./printer.bend as Pr
 import ./SPEC.bend as Spec
+import ./rope.bend as Ro
 import ./LAWS.bend as Laws
 
 # Motives: a type picked by a constructor. A rewrite through one turns a
@@ -3504,3 +3505,195 @@ def Laws.print_par_eq(v):
       {==}
     case V.JObj{ms}:
       {==}
+
+# Law 6: print_rope
+# -----------------
+
+# a value's rope flattens to its text
+def flat_go(v: V.Json, mode: Nat, -acc: String) -> {Ro.Rope.flat(Ro.Rope.go(v, mode), acc) == Pr.Pr.go(v, mode, acc) : String}:
+  match v mode:
+    case V.JNull{} _:
+      {==}
+    case V.JBool{True{}} _:
+      {==}
+    case V.JBool{False{}} _:
+      {==}
+    case V.JNum{+n} _:
+      Equal.sym(String, D.Num.show(n, String.append(SNil{}, acc)), String.append(D.Num.show(n, SNil{}), acc),
+        c_num(n, SNil{}, acc))
+    case V.JStr{+s} _:
+      Equal.sym(String, T.quote(s, String.append(SNil{}, acc)), String.append(T.quote(s, SNil{}), acc),
+        c_quote(s, SNil{}, acc))
+    case V.JArr{+xs} 1n++m:
+      %flat_go(V.JArr{xs}, m, SCon{']', acc}) : {Ro.Rope.flat(Ro.Rope.go(V.JArr{xs}, 1n+m), acc) == SCon{'[', _} : String}
+      {==}
+    case V.JArr{Nil{}} 0n:
+      {==}
+    case V.JArr{+x <> Nil{}} 0n:
+      flat_go(x, 1n, acc)
+    case V.JArr{+x <> (+y <> +t)} 0n:
+      %flat_go(V.JArr{y <> t}, 0n, acc) :
+        {Ro.Rope.flat(Ro.Rope.go(V.JArr{x <> y <> t}, 0n), acc) == Pr.Pr.go(x, 1n, SCon{',', _}) : String}
+      flat_go(x, 1n, SCon{',', Ro.Rope.flat(Ro.Rope.go(V.JArr{y <> t}, 0n), acc)})
+    case V.JObj{+ms} 1n++m:
+      %flat_go(V.JObj{ms}, m, SCon{'}', acc}) : {Ro.Rope.flat(Ro.Rope.go(V.JObj{ms}, 1n+m), acc) == SCon{'{', _} : String}
+      {==}
+    case V.JObj{Nil{}} 0n:
+      {==}
+    case V.JObj{V.Mem{+k, +x} <> Nil{}} 0n:
+      %flat_go(x, 1n, acc) :
+        {Ro.Rope.flat(Ro.Rope.go(V.JObj{V.Mem{k, x} <> Nil{}}, 0n), acc) == T.quote(k, SCon{':', _}) : String}
+      Equal.sym(String, T.quote(k, String.append(SCon{':', SNil{}}, Ro.Rope.flat(Ro.Rope.go(x, 1n), acc))),
+        String.append(T.quote(k, SCon{':', SNil{}}), Ro.Rope.flat(Ro.Rope.go(x, 1n), acc)),
+        c_quote(k, SCon{':', SNil{}}, Ro.Rope.flat(Ro.Rope.go(x, 1n), acc)))
+    case V.JObj{V.Mem{+k, +x} <> (+y <> +t)} 0n:
+      -q = {Ro.Rope.flat(Ro.Rope.go(V.JObj{y <> t}, 0n), acc) : String}
+      %flat_go(V.JObj{y <> t}, 0n, acc) :
+        {Ro.Rope.flat(Ro.Rope.go(V.JObj{V.Mem{k, x} <> (y <> t)}, 0n), acc) == T.quote(k, SCon{':', Pr.Pr.go(x, 1n, SCon{',', _})}) : String}
+      %flat_go(x, 1n, SCon{',', q}) :
+        {Ro.Rope.flat(Ro.Rope.go(V.JObj{V.Mem{k, x} <> (y <> t)}, 0n), acc) == T.quote(k, SCon{':', _}) : String}
+      Equal.sym(String, T.quote(k, String.append(SCon{':', SNil{}}, Ro.Rope.flat(Ro.Rope.go(x, 1n), SCon{',', q}))),
+        String.append(T.quote(k, SCon{':', SNil{}}), Ro.Rope.flat(Ro.Rope.go(x, 1n), SCon{',', q})),
+        c_quote(k, SCon{':', SNil{}}, Ro.Rope.flat(Ro.Rope.go(x, 1n), SCon{',', q})))
+
+# items of l ++ r, l and r nonempty, written in front of acc
+def splitA(t: List<&2, V.Json>, +x: V.Json, +y: V.Json, +u: List<&2, V.Json>, -acc: String) ->
+  {Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> t, y <> u)}, 0n, acc)
+    == Pr.Pr.go(V.JArr{x <> t}, 0n, SCon{',', Pr.Pr.go(V.JArr{y <> u}, 0n, acc)}) : String}:
+  match t:
+    case Nil{}:
+      {==}
+    case Con{+z, +w}:
+      %splitA(w, z, y, u, acc) :
+        {Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> z <> w, y <> u)}, 0n, acc) == Pr.Pr.go(x, 1n, SCon{',', _}) : String}
+      {==}
+
+def splitB(+t: List<&2, V.Json>, +x: V.Json, +y: V.Json, +u: List<&2, V.Json>, -acc: String) ->
+  {Pr.Pr.go(V.JArr{x <> t}, 0n, SCon{',', Pr.Pr.go(V.JArr{y <> u}, 0n, acc)})
+    == Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> t, y <> u)}, 0n, acc) : String}:
+  Equal.sym(String, Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> t, y <> u)}, 0n, acc),
+    Pr.Pr.go(V.JArr{x <> t}, 0n, SCon{',', Pr.Pr.go(V.JArr{y <> u}, 0n, acc)}), splitA(t, x, y, u, acc))
+
+def split_eq(k: Nat, xs: List<&2, V.Json>) ->
+  {(List.take(&2, V.Json, xs, k), List.drop(&2, V.Json, xs, k)) == Ro.Rope.split(k, xs) : List<&2, V.Json> & List<&2, V.Json>}:
+  match k xs:
+    case 0n Nil{}:
+      {==}
+    case 0n Con{x, t}:
+      {==}
+    case 1n+p Nil{}:
+      {==}
+    case 1n+p Con{+x, +t}:
+      %split_eq(p, t) :
+        {(List.take(&2, V.Json, x <> t, 1n+p), List.drop(&2, V.Json, x <> t, 1n+p)) == Ro.Rope.split.cons(x, _) : List<&2, V.Json> & List<&2, V.Json>}
+      {==}
+
+def len_eq(xs: List<&2, V.Json>) -> {(List.length(&2, V.Json, xs), xs) == Ro.Rope.len(xs) : Nat & List<&2, V.Json>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case Con{+x, +t}:
+      %len_eq(t) : {(List.length(&2, V.Json, x <> t), x <> t) == Ro.Rope.len.cons(x, _) : Nat & List<&2, V.Json>}
+      {==}
+
+def leaf_ok(l: List<&2, V.Json>, r: List<&2, V.Json>, -acc: String) ->
+  {Ro.Rope.flat(Ro.Rope.leaf(l, r), acc) == Pr.Pr.go(V.JArr{List.append(&2, V.Json, l, r)}, 0n, acc) : String}:
+  match l r:
+    case Nil{} +r0:
+      Equal.sym(String, Pr.Pr.go(V.JArr{r0}, 0n, String.append(SNil{}, acc)), String.append(Pr.Pr.items(r0), acc),
+        c_go(V.JArr{r0}, 0n, SNil{}, acc))
+    case Con{+x, +t} Nil{}:
+      %lapp_nil(V.Json, x <> t) : {String.append(Pr.Pr.items(x <> t), acc) == Pr.Pr.go(V.JArr{_}, 0n, acc) : String}
+      Equal.sym(String, Pr.Pr.go(V.JArr{x <> t}, 0n, String.append(SNil{}, acc)), String.append(Pr.Pr.items(x <> t), acc),
+        c_go(V.JArr{x <> t}, 0n, SNil{}, acc))
+    case Con{+x, +t} Con{+y, +u}:
+      -q = {Pr.Pr.go(V.JArr{y <> u}, 0n, acc) : String}
+      %splitB(t, x, y, u, acc) : {String.append(Pr.Pr.items(x <> t), SCon{',', String.append(Pr.Pr.items(y <> u), acc)}) == _ : String}
+      %c_go(V.JArr{y <> u}, 0n, SNil{}, acc) : {String.append(Pr.Pr.items(x <> t), SCon{',', _}) == Pr.Pr.go(V.JArr{x <> t}, 0n, SCon{',', q}) : String}
+      Equal.sym(String, Pr.Pr.go(V.JArr{x <> t}, 0n, String.append(SNil{}, SCon{',', q})),
+        String.append(Pr.Pr.items(x <> t), SCon{',', q}), c_go(V.JArr{x <> t}, 0n, SNil{}, SCon{',', q}))
+
+def K2(+n: Nat) -> Nat:
+  Nat.div(n, 2n)
+
+# the forked rope of l then r flattens to the items of l ++ r, for any n
+def rope_par(d: Nat, +n: Nat, +l: List<&2, V.Json>, +r: List<&2, V.Json>, -acc: String) ->
+  {Ro.Rope.flat(Ro.Rope.par(d, n, (l, r)), acc) == Pr.Pr.go(V.JArr{List.append(&2, V.Json, l, r)}, 0n, acc) : String}:
+  match d:
+    case 0n:
+      leaf_ok(l, r, acc)
+    case 1n++p:
+      match l r:
+        case Nil{} +r0:
+          +h = Ro.Rope.hi(n)
+          %split_eq(K2(h), r0) : {Ro.Rope.flat(Ro.Rope.par(p, h, _), acc) == Pr.Pr.go(V.JArr{r0}, 0n, acc) : String}
+          %Equal.sym(List<&2, V.Json>, r0, List.append(&2, V.Json, List.take(&2, V.Json, r0, K2(h)), List.drop(&2, V.Json, r0, K2(h))),
+            ltake_drop(V.Json, r0, K2(h))) :
+            {Ro.Rope.flat(Ro.Rope.par(p, h, (List.take(&2, V.Json, r0, K2(h)), List.drop(&2, V.Json, r0, K2(h)))), acc)
+              == Pr.Pr.go(V.JArr{_}, 0n, acc) : String}
+          rope_par(p, h, List.take(&2, V.Json, r0, K2(h)), List.drop(&2, V.Json, r0, K2(h)), acc)
+        case Con{+x, +t} Nil{}:
+          +h = Ro.Rope.lo(n)
+          %lapp_nil(V.Json, x <> t) : {Ro.Rope.flat(Ro.Rope.par(1n+p, n, (x <> t, Nil{})), acc) == Pr.Pr.go(V.JArr{_}, 0n, acc) : String}
+          %split_eq(K2(h), x <> t) : {Ro.Rope.flat(Ro.Rope.par(p, h, _), acc) == Pr.Pr.go(V.JArr{x <> t}, 0n, acc) : String}
+          %Equal.sym(List<&2, V.Json>, x <> t, List.append(&2, V.Json, List.take(&2, V.Json, x <> t, K2(h)), List.drop(&2, V.Json, x <> t, K2(h))),
+            ltake_drop(V.Json, x <> t, K2(h))) :
+            {Ro.Rope.flat(Ro.Rope.par(p, h, (List.take(&2, V.Json, x <> t, K2(h)), List.drop(&2, V.Json, x <> t, K2(h)))), acc)
+              == Pr.Pr.go(V.JArr{_}, 0n, acc) : String}
+          rope_par(p, h, List.take(&2, V.Json, x <> t, K2(h)), List.drop(&2, V.Json, x <> t, K2(h)), acc)
+        case Con{+x, +t} Con{+y, +u}:
+          +h1 = Ro.Rope.lo(n)
+          +h2 = Ro.Rope.hi(n)
+          +t1 = List.take(&2, V.Json, x <> t, K2(h1))
+          +d1 = List.drop(&2, V.Json, x <> t, K2(h1))
+          +t2 = List.take(&2, V.Json, y <> u, K2(h2))
+          +d2 = List.drop(&2, V.Json, y <> u, K2(h2))
+          -p1 = {Ro.Rope.par(p, h1, (t1, d1)) : Ro.Rope}
+          -L = {Ro.Rope.flat(Ro.RCat{p1, Ro.RCat{Ro.Rope.c(','), Ro.Rope.par(p, h2, (t2, d2))}}, acc) : String}
+          %split_eq(K2(h1), x <> t) :
+            {Ro.Rope.flat(Ro.RCat{Ro.Rope.par(p, h1, _), Ro.RCat{Ro.Rope.c(','), Ro.Rope.par(p, h2, Ro.Rope.split(K2(h2), y <> u))}}, acc)
+              == Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> t, y <> u)}, 0n, acc) : String}
+          %split_eq(K2(h2), y <> u) :
+            {Ro.Rope.flat(Ro.RCat{p1, Ro.RCat{Ro.Rope.c(','), Ro.Rope.par(p, h2, _)}}, acc)
+              == Pr.Pr.go(V.JArr{List.append(&2, V.Json, x <> t, y <> u)}, 0n, acc) : String}
+          %splitB(t, x, y, u, acc) : {L == _ : String}
+          %Equal.sym(List<&2, V.Json>, x <> t, List.append(&2, V.Json, t1, d1), ltake_drop(V.Json, x <> t, K2(h1))) :
+            {L == Pr.Pr.go(V.JArr{_}, 0n, SCon{',', Pr.Pr.go(V.JArr{y <> u}, 0n, acc)}) : String}
+          %rope_par(p, h1, t1, d1, SCon{',', Pr.Pr.go(V.JArr{y <> u}, 0n, acc)}) : {L == _ : String}
+          %Equal.sym(List<&2, V.Json>, y <> u, List.append(&2, V.Json, t2, d2), ltake_drop(V.Json, y <> u, K2(h2))) :
+            {L == Ro.Rope.flat(p1, SCon{',', Pr.Pr.go(V.JArr{_}, 0n, acc)}) : String}
+          %rope_par(p, h2, t2, d2, acc) : {L == Ro.Rope.flat(p1, SCon{',', _}) : String}
+          {==}
+
+def arr_print2(xs: List<&2, V.Json>) -> {SCon{'[', Pr.Pr.go(V.JArr{xs}, 0n, "]")} == Pr.print(V.JArr{xs}) : String}:
+  match xs:
+    case Nil{}:
+      {==}
+    case Con{x, Nil{}}:
+      {==}
+    case Con{x, Con{y, t}}:
+      {==}
+
+def Laws.print_rope_eq(v):
+  match v:
+    case V.JArr{+xs}:
+      +n = List.length(&2, V.Json, xs)
+      -q = {Pr.print(V.JArr{xs}) : String}
+      %len_eq(xs) : {Ro.Rope.flat(Ro.rope.arr(_), SNil{}) == q : String}
+      %split_eq(K2(n), xs) : {SCon{'[', Ro.Rope.flat(Ro.Rope.par(Ro.Rope.depth(), n, _), "]")} == q : String}
+      %Equal.sym(String, Ro.Rope.flat(Ro.Rope.par(Ro.Rope.depth(), n, (List.take(&2, V.Json, xs, K2(n)), List.drop(&2, V.Json, xs, K2(n)))), "]"),
+        Pr.Pr.go(V.JArr{List.append(&2, V.Json, List.take(&2, V.Json, xs, K2(n)), List.drop(&2, V.Json, xs, K2(n)))}, 0n, "]"),
+        rope_par(Ro.Rope.depth(), n, List.take(&2, V.Json, xs, K2(n)), List.drop(&2, V.Json, xs, K2(n)), "]")) :
+        {SCon{'[', _} == q : String}
+      %ltake_drop(V.Json, xs, K2(n)) : {SCon{'[', Pr.Pr.go(V.JArr{_}, 0n, "]")} == q : String}
+      arr_print2(xs)
+    case V.JNull{}:
+      {==}
+    case V.JBool{+b}:
+      flat_go(V.JBool{b}, 1n, SNil{})
+    case V.JNum{+n}:
+      flat_go(V.JNum{n}, 1n, SNil{})
+    case V.JStr{+s}:
+      flat_go(V.JStr{s}, 1n, SNil{})
+    case V.JObj{+ms}:
+      flat_go(V.JObj{ms}, 1n, SNil{})

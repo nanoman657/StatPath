@@ -9,6 +9,7 @@ import ./text.bend as T
 import ./parser.bend as P
 import ./printer.bend as Pr
 import ./SPEC.bend as Spec
+import ./rope.bend as Ro
 
 # LAW 1: escaping round-trips, for every string (any chars, even lone
 # surrogates or codes past U+10FFFF, which escape keeps raw)
@@ -53,3 +54,8 @@ law no_control_pretty:
 law print_par_eq:
   for +v: V.Json
   {Pr.print_par(v) == Pr.print(v) : String}
+
+# LAW 6: the rope printer prints exactly what the compact one does
+law print_rope_eq:
+  for +v: V.Json
+  {Ro.print_rope(v) == Pr.print(v) : String}
