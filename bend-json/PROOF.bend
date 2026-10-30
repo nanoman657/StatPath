@@ -444,3 +444,567 @@ def Laws.escape_roundtrip(s):
   %esc_go(s, SNil{}, SNil{}) : {T.Str.done(_) == Some{s} : Maybe<&2, String>}
   %rev_rev(s, SNil{}) : {Some{_} == Some{s} : Maybe<&2, String>}
   {==}
+
+# Law 4: no raw control characters
+# ---------------------------------
+
+def ge_of_nlt(c: Cmp, e: {Cmp.is_lt(c) == False{} : Bool}) -> {Cmp.is_ge(c) == True{} : Bool}:
+  match c:
+    case LT{}:
+      %e : BM(_, Unit, {Cmp.is_ge(LT{}) == True{} : Bool})
+      Unit{}
+    case EQ{}:
+      {==}
+    case GT{}:
+      {==}
+
+def ka_plain(+x: U32, b: Bool, eb: {U32.is_lt(x, 32) == b : Bool},
+  e: {T.Esc.kind.a(x, b) == T.KPlain{} : T.CKind}) -> {U32.is_lt(x, 32) == False{} : Bool}:
+  match b:
+    case True{}:
+      %e : KM(_, {U32.is_lt(x, 32) == False{} : Bool}, Unit, Unit, Unit)
+      Unit{}
+    case False{}:
+      eb
+
+# a plain char is at least U+0020
+def plain_ge(+x: U32, e: {T.Esc.kind(x) == T.KPlain{} : T.CKind}) ->
+  {U32.is_ge(x, 32) == True{} : Bool}:
+  ge_of_nlt(U32.cmp(x, 32), ka_plain(x, U32.is_lt(x, 32), {==}, e))
+
+# Spec.ctl_free: every lemma takes the claim for the text after it (h) and gives it
+# for the text with the new chars in front
+
+def ctl_ok(b0: Bool, b1: Bool, b2: Bool, b3: Bool, b4: Bool, -r: String, h: {Spec.ctl_free(r) == True{} : Bool}) ->
+  {Spec.ctl_free(T.Esc.ctl(Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n)), r)) == True{} : Bool}:
+  match b0 b1 b2 b3 b4:
+    case False{} False{} False{} False{} False{}:
+      h
+    case False{} False{} False{} False{} True{}:
+      h
+    case False{} False{} False{} True{} False{}:
+      h
+    case False{} False{} False{} True{} True{}:
+      h
+    case False{} False{} True{} False{} False{}:
+      h
+    case False{} False{} True{} False{} True{}:
+      h
+    case False{} False{} True{} True{} False{}:
+      h
+    case False{} False{} True{} True{} True{}:
+      h
+    case False{} True{} False{} False{} False{}:
+      h
+    case False{} True{} False{} False{} True{}:
+      h
+    case False{} True{} False{} True{} False{}:
+      h
+    case False{} True{} False{} True{} True{}:
+      h
+    case False{} True{} True{} False{} False{}:
+      h
+    case False{} True{} True{} False{} True{}:
+      h
+    case False{} True{} True{} True{} False{}:
+      h
+    case False{} True{} True{} True{} True{}:
+      h
+    case True{} False{} False{} False{} False{}:
+      h
+    case True{} False{} False{} False{} True{}:
+      h
+    case True{} False{} False{} True{} False{}:
+      h
+    case True{} False{} False{} True{} True{}:
+      h
+    case True{} False{} True{} False{} False{}:
+      h
+    case True{} False{} True{} False{} True{}:
+      h
+    case True{} False{} True{} True{} False{}:
+      h
+    case True{} False{} True{} True{} True{}:
+      h
+    case True{} True{} False{} False{} False{}:
+      h
+    case True{} True{} False{} False{} True{}:
+      h
+    case True{} True{} False{} True{} False{}:
+      h
+    case True{} True{} False{} True{} True{}:
+      h
+    case True{} True{} True{} False{} False{}:
+      h
+    case True{} True{} True{} False{} True{}:
+      h
+    case True{} True{} True{} True{} False{}:
+      h
+    case True{} True{} True{} True{} True{}:
+      h
+
+def char_k_ok(+x: U32, k: T.CKind, e: {T.Esc.kind(x) == k : T.CKind}, -r: String,
+  h: {Spec.ctl_free(r) == True{} : Bool}) -> {Spec.ctl_free(T.Esc.char.k(x, k, r)) == True{} : Bool}:
+  match k:
+    case T.KPlain{}:
+      %Equal.sym(Bool, U32.is_ge(x, 32), True{}, plain_ge(x, e)) : {Bool.and(_, Spec.ctl_free(r)) == True{} : Bool}
+      h
+    case T.KQuote{}:
+      h
+    case T.KBack{}:
+      h
+    case T.KCtl{}:
+      ctl_split(y => {Spec.ctl_free(T.Esc.ctl(y, r)) == True{} : Bool},
+        b0 => b1 => b2 => b3 => b4 => ctl_ok(b0, b1, b2, b3, b4, r, h), x)(e)
+
+def char_ok(c: Char, -r: String, h: {Spec.ctl_free(r) == True{} : Bool}) -> {Spec.ctl_free(T.Esc.char(c, r)) == True{} : Bool}:
+  match c:
+    case Chr{+x}:
+      char_k_ok(x, T.Esc.kind(x), {==}, r, h)
+
+def esc_ok(s: String, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(T.Esc.go(s, acc)) == True{} : Bool}:
+  match s:
+    case SNil{}:
+      h
+    case SCon{c, +t}:
+      char_ok(c, T.Esc.go(t, acc), esc_ok(t, acc, h))
+
+def digit_ok(d: D.Digit, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) ->
+  {Spec.ctl_free(SCon{D.Digit.to_char(d), acc}) == True{} : Bool}:
+  match d:
+    case D.D0{}:
+      h
+    case D.D1{}:
+      h
+    case D.D2{}:
+      h
+    case D.D3{}:
+      h
+    case D.D4{}:
+      h
+    case D.D5{}:
+      h
+    case D.D6{}:
+      h
+    case D.D7{}:
+      h
+    case D.D8{}:
+      h
+    case D.D9{}:
+      h
+
+def dshow_ok(c: List<&2, D.Digit>, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) ->
+  {Spec.ctl_free(D.Dec.show(c, acc)) == True{} : Bool}:
+  match c:
+    case Nil{}:
+      h
+    case +d <> t:
+      dshow_ok(t, SCon{D.Digit.to_char(d), acc}, digit_ok(d, acc, h))
+
+def zeros_ok(n: Nat, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Str.zeros(n, acc)) == True{} : Bool}:
+  match n:
+    case 0n:
+      h
+    case 1n+p:
+      zeros_ok(p, acc, h)
+
+def sign_ok(neg: Bool, -s: String, h: {Spec.ctl_free(s) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.sign(neg, s)) == True{} : Bool}:
+  match neg:
+    case True{}:
+      h
+    case False{}:
+      h
+
+def esign_ok(neg: Bool, -s: String, h: {Spec.ctl_free(s) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.esign(neg, s)) == True{} : Bool}:
+  match neg:
+    case True{}:
+      h
+    case False{}:
+      h
+
+def exp_ok(+c: List<&2, D.Digit>, +eneg: Bool, +e: List<&2, D.Digit>, -acc: String,
+  h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.exp(c, eneg, e, acc)) == True{} : Bool}:
+  dshow_ok(c, SCon{'e', D.Num.show.esign(eneg, D.Dec.show(e, acc))},
+    esign_ok(eneg, D.Dec.show(e, acc), dshow_ok(e, acc, h)))
+
+def pos_fit_ok(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, fit: Bool,
+  h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.pos.fit(c, e, acc, fit)) == True{} : Bool}:
+  match fit:
+    case True{}:
+      dshow_ok(c, D.Str.zeros(D.Dec.to_nat(e), acc), zeros_ok(D.Dec.to_nat(e), acc, h))
+    case False{}:
+      exp_ok(c, False{}, e, acc, h)
+
+def pos_ok(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, small: Bool,
+  h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.pos(c, e, acc, small)) == True{} : Bool}:
+  match small:
+    case True{}:
+      pos_fit_ok(c, e, acc, Nat.is_le(Nat.add(List.length(&2, D.Digit, c),
+        D.Dec.to_nat(e)), 21n), h)
+    case False{}:
+      exp_ok(c, False{}, e, acc, h)
+
+def neg_zeros_ok(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  -acc: String, fit: Bool, h: {Spec.ctl_free(acc) == True{} : Bool}) ->
+  {Spec.ctl_free(D.Num.show.neg.zeros(c, e, k, l, acc, fit)) == True{} : Bool}:
+  match fit:
+    case True{}:
+      zeros_ok(Nat.sub(k, l), D.Dec.show(c, acc), dshow_ok(c, acc, h))
+    case False{}:
+      exp_ok(c, True{}, e, acc, h)
+
+def neg_point_ok(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  -acc: String, inside: Bool, h: {Spec.ctl_free(acc) == True{} : Bool}) ->
+  {Spec.ctl_free(D.Num.show.neg.point(c, e, k, l, acc, inside)) == True{} : Bool}:
+  match inside:
+    case True{}:
+      dshow_ok(List.drop(&2, D.Digit, c, k),
+        SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), acc)},
+        dshow_ok(List.take(&2, D.Digit, c, k), acc, h))
+    case False{}:
+      neg_zeros_ok(c, e, k, l, acc, Nat.is_le(Nat.sub(k, l), 5n), h)
+
+def neg_ok(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, small: Bool,
+  h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.neg(c, e, acc, small)) == True{} : Bool}:
+  match small:
+    case True{}:
+      neg_point_ok(c, e, D.Dec.to_nat(e), List.length(&2, D.Digit, c), acc,
+        Nat.is_lt(D.Dec.to_nat(e), List.length(&2, D.Digit, c)), h)
+    case False{}:
+      exp_ok(c, True{}, e, acc, h)
+
+def body_ok(+c: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, -acc: String,
+  h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show.body(c, eneg, e, acc)) == True{} : Bool}:
+  match eneg e:
+    case False{} Nil{}:
+      dshow_ok(c, acc, h)
+    case False{} Con{+x, +t}:
+      pos_ok(c, x <> t, acc, Nat.is_le(List.length(&2, D.Digit, x <> t), 2n), h)
+    case True{} +m:
+      neg_ok(c, m, acc, Nat.is_le(List.length(&2, D.Digit, m), 6n), h)
+
+def num_ok(n: D.Num, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) -> {Spec.ctl_free(D.Num.show(n, acc)) == True{} : Bool}:
+  match n:
+    case D.Num{neg, Nil{}, eneg, e}:
+      h
+    case D.Num{neg, +x <> +t, +eneg, +e}:
+      sign_ok(neg, D.Num.show.body(x <> t, eneg, e, acc),
+        body_ok(x <> t, eneg, e, acc, h))
+
+# Spec.ctl_free_nl: every lemma takes the claim for the text after it (h) and gives it
+# for the text with the new chars in front
+
+def ctl_ok_nl(b0: Bool, b1: Bool, b2: Bool, b3: Bool, b4: Bool, -r: String, h: {Spec.ctl_free_nl(r) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(T.Esc.ctl(Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n)), r)) == True{} : Bool}:
+  match b0 b1 b2 b3 b4:
+    case False{} False{} False{} False{} False{}:
+      h
+    case False{} False{} False{} False{} True{}:
+      h
+    case False{} False{} False{} True{} False{}:
+      h
+    case False{} False{} False{} True{} True{}:
+      h
+    case False{} False{} True{} False{} False{}:
+      h
+    case False{} False{} True{} False{} True{}:
+      h
+    case False{} False{} True{} True{} False{}:
+      h
+    case False{} False{} True{} True{} True{}:
+      h
+    case False{} True{} False{} False{} False{}:
+      h
+    case False{} True{} False{} False{} True{}:
+      h
+    case False{} True{} False{} True{} False{}:
+      h
+    case False{} True{} False{} True{} True{}:
+      h
+    case False{} True{} True{} False{} False{}:
+      h
+    case False{} True{} True{} False{} True{}:
+      h
+    case False{} True{} True{} True{} False{}:
+      h
+    case False{} True{} True{} True{} True{}:
+      h
+    case True{} False{} False{} False{} False{}:
+      h
+    case True{} False{} False{} False{} True{}:
+      h
+    case True{} False{} False{} True{} False{}:
+      h
+    case True{} False{} False{} True{} True{}:
+      h
+    case True{} False{} True{} False{} False{}:
+      h
+    case True{} False{} True{} False{} True{}:
+      h
+    case True{} False{} True{} True{} False{}:
+      h
+    case True{} False{} True{} True{} True{}:
+      h
+    case True{} True{} False{} False{} False{}:
+      h
+    case True{} True{} False{} False{} True{}:
+      h
+    case True{} True{} False{} True{} False{}:
+      h
+    case True{} True{} False{} True{} True{}:
+      h
+    case True{} True{} True{} False{} False{}:
+      h
+    case True{} True{} True{} False{} True{}:
+      h
+    case True{} True{} True{} True{} False{}:
+      h
+    case True{} True{} True{} True{} True{}:
+      h
+
+def char_k_ok_nl(+x: U32, k: T.CKind, e: {T.Esc.kind(x) == k : T.CKind}, -r: String,
+  h: {Spec.ctl_free_nl(r) == True{} : Bool}) -> {Spec.ctl_free_nl(T.Esc.char.k(x, k, r)) == True{} : Bool}:
+  match k:
+    case T.KPlain{}:
+      %Equal.sym(Bool, U32.is_ge(x, 32), True{}, plain_ge(x, e)) : {Bool.and(Bool.or(_, U32.is_eq(x, 10)), Spec.ctl_free_nl(r)) == True{} : Bool}
+      h
+    case T.KQuote{}:
+      h
+    case T.KBack{}:
+      h
+    case T.KCtl{}:
+      ctl_split(y => {Spec.ctl_free_nl(T.Esc.ctl(y, r)) == True{} : Bool},
+        b0 => b1 => b2 => b3 => b4 => ctl_ok_nl(b0, b1, b2, b3, b4, r, h), x)(e)
+
+def char_ok_nl(c: Char, -r: String, h: {Spec.ctl_free_nl(r) == True{} : Bool}) -> {Spec.ctl_free_nl(T.Esc.char(c, r)) == True{} : Bool}:
+  match c:
+    case Chr{+x}:
+      char_k_ok_nl(x, T.Esc.kind(x), {==}, r, h)
+
+def esc_ok_nl(s: String, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(T.Esc.go(s, acc)) == True{} : Bool}:
+  match s:
+    case SNil{}:
+      h
+    case SCon{c, +t}:
+      char_ok_nl(c, T.Esc.go(t, acc), esc_ok_nl(t, acc, h))
+
+def digit_ok_nl(d: D.Digit, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(SCon{D.Digit.to_char(d), acc}) == True{} : Bool}:
+  match d:
+    case D.D0{}:
+      h
+    case D.D1{}:
+      h
+    case D.D2{}:
+      h
+    case D.D3{}:
+      h
+    case D.D4{}:
+      h
+    case D.D5{}:
+      h
+    case D.D6{}:
+      h
+    case D.D7{}:
+      h
+    case D.D8{}:
+      h
+    case D.D9{}:
+      h
+
+def dshow_ok_nl(c: List<&2, D.Digit>, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(D.Dec.show(c, acc)) == True{} : Bool}:
+  match c:
+    case Nil{}:
+      h
+    case +d <> t:
+      dshow_ok_nl(t, SCon{D.Digit.to_char(d), acc}, digit_ok_nl(d, acc, h))
+
+def zeros_ok_nl(n: Nat, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Str.zeros(n, acc)) == True{} : Bool}:
+  match n:
+    case 0n:
+      h
+    case 1n+p:
+      zeros_ok_nl(p, acc, h)
+
+def sign_ok_nl(neg: Bool, -s: String, h: {Spec.ctl_free_nl(s) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.sign(neg, s)) == True{} : Bool}:
+  match neg:
+    case True{}:
+      h
+    case False{}:
+      h
+
+def esign_ok_nl(neg: Bool, -s: String, h: {Spec.ctl_free_nl(s) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.esign(neg, s)) == True{} : Bool}:
+  match neg:
+    case True{}:
+      h
+    case False{}:
+      h
+
+def exp_ok_nl(+c: List<&2, D.Digit>, +eneg: Bool, +e: List<&2, D.Digit>, -acc: String,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.exp(c, eneg, e, acc)) == True{} : Bool}:
+  dshow_ok_nl(c, SCon{'e', D.Num.show.esign(eneg, D.Dec.show(e, acc))},
+    esign_ok_nl(eneg, D.Dec.show(e, acc), dshow_ok_nl(e, acc, h)))
+
+def pos_fit_ok_nl(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, fit: Bool,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.pos.fit(c, e, acc, fit)) == True{} : Bool}:
+  match fit:
+    case True{}:
+      dshow_ok_nl(c, D.Str.zeros(D.Dec.to_nat(e), acc), zeros_ok_nl(D.Dec.to_nat(e), acc, h))
+    case False{}:
+      exp_ok_nl(c, False{}, e, acc, h)
+
+def pos_ok_nl(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, small: Bool,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.pos(c, e, acc, small)) == True{} : Bool}:
+  match small:
+    case True{}:
+      pos_fit_ok_nl(c, e, acc, Nat.is_le(Nat.add(List.length(&2, D.Digit, c),
+        D.Dec.to_nat(e)), 21n), h)
+    case False{}:
+      exp_ok_nl(c, False{}, e, acc, h)
+
+def neg_zeros_ok_nl(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  -acc: String, fit: Bool, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(D.Num.show.neg.zeros(c, e, k, l, acc, fit)) == True{} : Bool}:
+  match fit:
+    case True{}:
+      zeros_ok_nl(Nat.sub(k, l), D.Dec.show(c, acc), dshow_ok_nl(c, acc, h))
+    case False{}:
+      exp_ok_nl(c, True{}, e, acc, h)
+
+def neg_point_ok_nl(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  -acc: String, inside: Bool, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(D.Num.show.neg.point(c, e, k, l, acc, inside)) == True{} : Bool}:
+  match inside:
+    case True{}:
+      dshow_ok_nl(List.drop(&2, D.Digit, c, k),
+        SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), acc)},
+        dshow_ok_nl(List.take(&2, D.Digit, c, k), acc, h))
+    case False{}:
+      neg_zeros_ok_nl(c, e, k, l, acc, Nat.is_le(Nat.sub(k, l), 5n), h)
+
+def neg_ok_nl(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -acc: String, small: Bool,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.neg(c, e, acc, small)) == True{} : Bool}:
+  match small:
+    case True{}:
+      neg_point_ok_nl(c, e, D.Dec.to_nat(e), List.length(&2, D.Digit, c), acc,
+        Nat.is_lt(D.Dec.to_nat(e), List.length(&2, D.Digit, c)), h)
+    case False{}:
+      exp_ok_nl(c, True{}, e, acc, h)
+
+def body_ok_nl(+c: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, -acc: String,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show.body(c, eneg, e, acc)) == True{} : Bool}:
+  match eneg e:
+    case False{} Nil{}:
+      dshow_ok_nl(c, acc, h)
+    case False{} Con{+x, +t}:
+      pos_ok_nl(c, x <> t, acc, Nat.is_le(List.length(&2, D.Digit, x <> t), 2n), h)
+    case True{} +m:
+      neg_ok_nl(c, m, acc, Nat.is_le(List.length(&2, D.Digit, m), 6n), h)
+
+def num_ok_nl(n: D.Num, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) -> {Spec.ctl_free_nl(D.Num.show(n, acc)) == True{} : Bool}:
+  match n:
+    case D.Num{neg, Nil{}, eneg, e}:
+      h
+    case D.Num{neg, +x <> +t, +eneg, +e}:
+      sign_ok_nl(neg, D.Num.show.body(x <> t, eneg, e, acc),
+        body_ok_nl(x <> t, eneg, e, acc, h))
+
+# the compact printer, by the same descent as Pr.go
+def go_ok(v: V.Json, mode: Nat, -acc: String, h: {Spec.ctl_free(acc) == True{} : Bool}) ->
+  {Spec.ctl_free(Pr.Pr.go(v, mode, acc)) == True{} : Bool}:
+  match v mode:
+    case V.JNull{} _:
+      h
+    case V.JBool{True{}} _:
+      h
+    case V.JBool{False{}} _:
+      h
+    case V.JNum{n} _:
+      num_ok(n, acc, h)
+    case V.JStr{s} _:
+      esc_ok(s, SCon{'"', acc}, h)
+    case V.JArr{xs} 1n+m:
+      go_ok(V.JArr{xs}, m, SCon{']', acc}, h)
+    case V.JArr{Nil{}} 0n:
+      h
+    case V.JArr{x <> Nil{}} 0n:
+      go_ok(x, 1n, acc, h)
+    case V.JArr{x <> (+y <> +t)} 0n:
+      go_ok(x, 1n, SCon{',', Pr.Pr.go(V.JArr{y <> t}, 0n, acc)},
+        go_ok(V.JArr{y <> t}, 0n, acc, h))
+    case V.JObj{ms} 1n+m:
+      go_ok(V.JObj{ms}, m, SCon{'}', acc}, h)
+    case V.JObj{Nil{}} 0n:
+      h
+    case V.JObj{V.Mem{k, +x} <> Nil{}} 0n:
+      esc_ok(k, SCon{'"', SCon{':', Pr.Pr.go(x, 1n, acc)}}, go_ok(x, 1n, acc, h))
+    case V.JObj{V.Mem{k, +x} <> (+y <> +t)} 0n:
+      esc_ok(k, SCon{'"', SCon{':', Pr.Pr.go(x, 1n, SCon{',', Pr.Pr.go(V.JObj{y <> t}, 0n, acc)})}},
+        go_ok(x, 1n, SCon{',', Pr.Pr.go(V.JObj{y <> t}, 0n, acc)},
+          go_ok(V.JObj{y <> t}, 0n, acc, h)))
+
+def Laws.no_control_compact(v):
+  go_ok(v, 1n, SNil{}, {==})
+
+def spaces_ok(n: Nat, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(Pr.Pr.spaces(n, acc)) == True{} : Bool}:
+  match n:
+    case 0n:
+      h
+    case 1n+p:
+      spaces_ok(p, acc, h)
+
+def nl_ok(+ind: Nat, +lvl: Nat, -acc: String, h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(Pr.Pr.nl(ind, lvl, acc)) == True{} : Bool}:
+  spaces_ok(Nat.mul(lvl, ind), acc, h)
+
+# the pretty printer, by the same descent as Pr.pp
+def pp_ok(v: V.Json, mode: Nat, +ind: Nat, +lvl: Nat, -acc: String,
+  h: {Spec.ctl_free_nl(acc) == True{} : Bool}) ->
+  {Spec.ctl_free_nl(Pr.Pr.pp(v, mode, ind, lvl, acc)) == True{} : Bool}:
+  match v mode:
+    case V.JNull{} _:
+      h
+    case V.JBool{True{}} _:
+      h
+    case V.JBool{False{}} _:
+      h
+    case V.JNum{n} _:
+      num_ok_nl(n, acc, h)
+    case V.JStr{s} _:
+      esc_ok_nl(s, SCon{'"', acc}, h)
+    case V.JArr{Nil{}} 1n+m:
+      h
+    case V.JArr{+x <> +t} 1n+m:
+      pp_ok(V.JArr{x <> t}, m, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', acc}),
+        nl_ok(ind, lvl, SCon{']', acc}, h))
+    case V.JArr{Nil{}} 0n:
+      h
+    case V.JArr{+x <> Nil{}} 0n:
+      nl_ok(ind, lvl, Pr.Pr.pp(x, 1n, ind, lvl, acc), pp_ok(x, 1n, ind, lvl, acc, h))
+    case V.JArr{+x <> (+y <> +t)} 0n:
+      nl_ok(ind, lvl, Pr.Pr.pp(x, 1n, ind, lvl, SCon{',', Pr.Pr.pp(V.JArr{y <> t}, 0n, ind, lvl, acc)}),
+        pp_ok(x, 1n, ind, lvl, SCon{',', Pr.Pr.pp(V.JArr{y <> t}, 0n, ind, lvl, acc)},
+          pp_ok(V.JArr{y <> t}, 0n, ind, lvl, acc, h)))
+    case V.JObj{Nil{}} 1n+m:
+      h
+    case V.JObj{+x <> +t} 1n+m:
+      pp_ok(V.JObj{x <> t}, m, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', acc}),
+        nl_ok(ind, lvl, SCon{'}', acc}, h))
+    case V.JObj{Nil{}} 0n:
+      h
+    case V.JObj{V.Mem{+k, +x} <> Nil{}} 0n:
+      nl_ok(ind, lvl, T.quote(k, SCon{':', SCon{' ', Pr.Pr.pp(x, 1n, ind, lvl, acc)}}),
+        esc_ok_nl(k, SCon{'"', SCon{':', SCon{' ', Pr.Pr.pp(x, 1n, ind, lvl, acc)}}},
+          pp_ok(x, 1n, ind, lvl, acc, h)))
+    case V.JObj{V.Mem{+k, +x} <> (+y <> +t)} 0n:
+      nl_ok(ind, lvl, T.quote(k, SCon{':', SCon{' ', Pr.Pr.pp(x, 1n, ind, lvl,
+          SCon{',', Pr.Pr.pp(V.JObj{y <> t}, 0n, ind, lvl, acc)})}}),
+        esc_ok_nl(k, SCon{'"', SCon{':', SCon{' ', Pr.Pr.pp(x, 1n, ind, lvl,
+            SCon{',', Pr.Pr.pp(V.JObj{y <> t}, 0n, ind, lvl, acc)})}}},
+          pp_ok(x, 1n, ind, lvl, SCon{',', Pr.Pr.pp(V.JObj{y <> t}, 0n, ind, lvl, acc)},
+            pp_ok(V.JObj{y <> t}, 0n, ind, lvl, acc, h))))
+
+def Laws.no_control_pretty(ind, v):
+  pp_ok(v, 1n, ind, 0n, SNil{}, {==})
