@@ -1008,3 +1008,684 @@ def pp_ok(v: V.Json, mode: Nat, +ind: Nat, +lvl: Nat, -acc: String,
 
 def Laws.no_control_pretty(ind, v):
   pp_ok(v, 1n, ind, 0n, SNil{}, {==})
+
+# Law 2: numbers
+# --------------
+# The parser reads a number in SNum states; R(s, st) is a run from st.
+
+def R(s: String, st: P.St) -> P.Out:
+  P.P.run(s, P.Go{st})
+
+def SN(c: P.Ctx, ns: P.NumSt) -> P.St:
+  P.SNum{c, ns}
+
+def NZ(d: D.Digit) -> Data:
+  match d:
+    case D.D0{}:
+      Empty
+    case _:
+      Unit
+
+# not the lone digit 0, after which a digit is a leading zero
+def NotZ(a: List<&2, D.Digit>) -> Data:
+  match a:
+    case Con{h, Nil{}}:
+      NZ(h)
+    case _:
+      Unit
+
+# a char that the number machine passes on as a step
+def num_go(-c: P.Ctx, -ns: P.NumSt, -ch: Char, -ns2: P.NumSt,
+  e: {P.N.step(ns, ch) == P.NGo{ns2} : P.NRes}, -rest: String) ->
+  {R(rest, SN(c, ns2)) == R(SCon{ch, rest}, SN(c, ns)) : P.Out}:
+  %Equal.sym(P.NRes, P.N.step(ns, ch), P.NGo{ns2}, e) :
+    {R(rest, SN(c, ns2)) == P.P.run(rest, P.P.num(c, ch, _)) : P.Out}
+  {==}
+
+def int_one(neg: Bool, h: D.Digit, -d: D.Digit, nz: NZ(h)) ->
+  {P.N.int.one(neg, h, d) == P.NGo{P.NInt{neg, [d, h]}} : P.NRes}:
+  match h:
+    case D.D0{}:
+      Empty.absurd({P.N.int.one(neg, D.D0{}, d) == P.NGo{P.NInt{neg, [d, D.D0{}]}} : P.NRes}, nz)
+    case D.D1{}:
+      {==}
+    case D.D2{}:
+      {==}
+    case D.D3{}:
+      {==}
+    case D.D4{}:
+      {==}
+    case D.D5{}:
+      {==}
+    case D.D6{}:
+      {==}
+    case D.D7{}:
+      {==}
+    case D.D8{}:
+      {==}
+    case D.D9{}:
+      {==}
+
+def int_digit(neg: Bool, a: List<&2, D.Digit>, -d: D.Digit, nz: NotZ(a)) ->
+  {P.N.int.digit(neg, a, d) == P.NGo{P.NInt{neg, d <> a}} : P.NRes}:
+  match a:
+    case Nil{}:
+      {==}
+    case Con{h, Nil{}}:
+      int_one(neg, h, d, nz)
+    case Con{h, Con{x, y}}:
+      {==}
+
+def digit_int(+neg: Bool, +a: List<&2, D.Digit>, d: D.Digit, nz: NotZ(a)) ->
+  {P.N.step(P.NInt{neg, a}, D.Digit.to_char(d)) == P.NGo{P.NInt{neg, d <> a}} : P.NRes}:
+  match d:
+    case D.D0{}:
+      int_digit(neg, a, D.D0{}, nz)
+    case D.D1{}:
+      int_digit(neg, a, D.D1{}, nz)
+    case D.D2{}:
+      int_digit(neg, a, D.D2{}, nz)
+    case D.D3{}:
+      int_digit(neg, a, D.D3{}, nz)
+    case D.D4{}:
+      int_digit(neg, a, D.D4{}, nz)
+    case D.D5{}:
+      int_digit(neg, a, D.D5{}, nz)
+    case D.D6{}:
+      int_digit(neg, a, D.D6{}, nz)
+    case D.D7{}:
+      int_digit(neg, a, D.D7{}, nz)
+    case D.D8{}:
+      int_digit(neg, a, D.D8{}, nz)
+    case D.D9{}:
+      int_digit(neg, a, D.D9{}, nz)
+
+def digit_frac(-neg: Bool, -a: List<&2, D.Digit>, -fl: Nat, d: D.Digit) ->
+  {P.N.step(P.NFrac{neg, a, fl}, D.Digit.to_char(d)) == P.NGo{P.NFrac{neg, d <> a, 1n+fl}} : P.NRes}:
+  match d:
+    case D.D0{}:
+      {==}
+    case D.D1{}:
+      {==}
+    case D.D2{}:
+      {==}
+    case D.D3{}:
+      {==}
+    case D.D4{}:
+      {==}
+    case D.D5{}:
+      {==}
+    case D.D6{}:
+      {==}
+    case D.D7{}:
+      {==}
+    case D.D8{}:
+      {==}
+    case D.D9{}:
+      {==}
+
+def digit_exp(-neg: Bool, -a: List<&2, D.Digit>, -fl: Nat, -eneg: Bool, -e: List<&2, D.Digit>,
+  d: D.Digit) ->
+  {P.N.step(P.NExpD{neg, a, fl, eneg, e}, D.Digit.to_char(d))
+    == P.NGo{P.NExpD{neg, a, fl, eneg, d <> e}} : P.NRes}:
+  match d:
+    case D.D0{}:
+      {==}
+    case D.D1{}:
+      {==}
+    case D.D2{}:
+      {==}
+    case D.D3{}:
+      {==}
+    case D.D4{}:
+      {==}
+    case D.D5{}:
+      {==}
+    case D.D6{}:
+      {==}
+    case D.D7{}:
+      {==}
+    case D.D8{}:
+      {==}
+    case D.D9{}:
+      {==}
+
+def notz_app(t: List<&2, D.Digit>, -a0: D.Digit, -a1: List<&2, D.Digit>, nz: NotZ(a0 <> a1)) ->
+  NotZ(List.append(&2, D.Digit, t, a0 <> a1)):
+  match t:
+    case Nil{}:
+      nz
+    case Con{x, Nil{}}:
+      Unit{}
+    case Con{x, Con{y, z}}:
+      Unit{}
+
+# int digits onto a nonempty acc
+def rint(c: List<&2, D.Digit>, +neg: Bool, +a0: D.Digit, +a1: List<&2, D.Digit>,
+  +nz: NotZ(a0 <> a1), -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NInt{neg, List.append(&2, D.Digit, c, a0 <> a1)}))
+    == R(D.Dec.show(c, rest), SN(ctx, P.NInt{neg, a0 <> a1})) : P.Out}:
+  match c:
+    case Nil{}:
+      {==}
+    case Con{+d, +t}:
+      %rint(t, neg, a0, a1, nz, ctx, SCon{D.Digit.to_char(d), rest}) :
+        {R(rest, SN(ctx, P.NInt{neg, List.append(&2, D.Digit, d <> t, a0 <> a1)})) == _ : P.Out}
+      num_go(ctx, P.NInt{neg, List.append(&2, D.Digit, t, a0 <> a1)}, D.Digit.to_char(d),
+        P.NInt{neg, d <> List.append(&2, D.Digit, t, a0 <> a1)},
+        digit_int(neg, List.append(&2, D.Digit, t, a0 <> a1), d, notz_app(t, a0, a1, nz)), rest)
+
+def rfrac(c: List<&2, D.Digit>, +neg: Bool, +a: List<&2, D.Digit>, +fl: Nat, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, c, a),
+    Nat.add(List.length(&2, D.Digit, c), fl)}))
+    == R(D.Dec.show(c, rest), SN(ctx, P.NFrac{neg, a, fl})) : P.Out}:
+  match c:
+    case Nil{}:
+      {==}
+    case Con{+d, +t}:
+      %rfrac(t, neg, a, fl, ctx, SCon{D.Digit.to_char(d), rest}) :
+        {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, d <> t, a),
+          Nat.add(List.length(&2, D.Digit, d <> t), fl)})) == _ : P.Out}
+      num_go(ctx, P.NFrac{neg, List.append(&2, D.Digit, t, a), Nat.add(List.length(&2, D.Digit, t), fl)},
+        D.Digit.to_char(d), P.NFrac{neg, d <> List.append(&2, D.Digit, t, a),
+        1n+Nat.add(List.length(&2, D.Digit, t), fl)},
+        digit_frac(neg, List.append(&2, D.Digit, t, a), Nat.add(List.length(&2, D.Digit, t), fl), d),
+        rest)
+
+def rexp(c: List<&2, D.Digit>, +neg: Bool, +a: List<&2, D.Digit>, +fl: Nat, +eneg: Bool,
+  +e: List<&2, D.Digit>, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NExpD{neg, a, fl, eneg, List.append(&2, D.Digit, c, e)}))
+    == R(D.Dec.show(c, rest), SN(ctx, P.NExpD{neg, a, fl, eneg, e})) : P.Out}:
+  match c:
+    case Nil{}:
+      {==}
+    case Con{+d, +t}:
+      %rexp(t, neg, a, fl, eneg, e, ctx, SCon{D.Digit.to_char(d), rest}) :
+        {R(rest, SN(ctx, P.NExpD{neg, a, fl, eneg, List.append(&2, D.Digit, d <> t, e)})) == _ : P.Out}
+      num_go(ctx, P.NExpD{neg, a, fl, eneg, List.append(&2, D.Digit, t, e)}, D.Digit.to_char(d),
+        P.NExpD{neg, a, fl, eneg, d <> List.append(&2, D.Digit, t, e)},
+        digit_exp(neg, a, fl, eneg, List.append(&2, D.Digit, t, e), d), rest)
+
+# n zero digits in front of xs
+def Dz(n: Nat, xs: List<&2, D.Digit>) -> List<&2, D.Digit>:
+  match n:
+    case 0n:
+      xs
+    case 1n+p:
+      D.D0{} <> Dz(p, xs)
+
+def zc(p: Nat, -a: List<&2, D.Digit>) ->
+  {D.D0{} <> Dz(p, a) == Dz(p, D.D0{} <> a) : List<&2, D.Digit>}:
+  match p:
+    case 0n:
+      {==}
+    case 1n+q:
+      %zc(q, a) : {D.D0{} <> D.D0{} <> Dz(q, a) == D.D0{} <> _ : List<&2, D.Digit>}
+      {==}
+
+def add_succ(p: Nat, -q: Nat) -> {1n+Nat.add(p, q) == Nat.add(p, 1n+q) : Nat}:
+  match p:
+    case 0n:
+      {==}
+    case 1n+r:
+      %add_succ(r, q) : {2n+Nat.add(r, q) == 1n+_ : Nat}
+      {==}
+
+def rzint(k: Nat, +neg: Bool, +a0: D.Digit, +a1: List<&2, D.Digit>, nz: NotZ(a0 <> a1),
+  -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NInt{neg, Dz(k, a0 <> a1)}))
+    == R(D.Str.zeros(k, rest), SN(ctx, P.NInt{neg, a0 <> a1})) : P.Out}:
+  match k:
+    case 0n:
+      {==}
+    case 1n++p:
+      %num_go(ctx, P.NInt{neg, a0 <> a1}, '0', P.NInt{neg, D.D0{} <> a0 <> a1},
+        digit_int(neg, a0 <> a1, D.D0{}, nz), D.Str.zeros(p, rest)) :
+        {R(rest, SN(ctx, P.NInt{neg, Dz(1n+p, a0 <> a1)})) == _ : P.Out}
+      %rzint(p, neg, D.D0{}, a0 <> a1, Unit{}, ctx, rest) :
+        {R(rest, SN(ctx, P.NInt{neg, Dz(1n+p, a0 <> a1)})) == _ : P.Out}
+      %zc(p, a0 <> a1) :
+        {R(rest, SN(ctx, P.NInt{neg, Dz(1n+p, a0 <> a1)})) == R(rest, SN(ctx, P.NInt{neg, _})) : P.Out}
+      {==}
+
+def rzfrac(m: Nat, +neg: Bool, +a: List<&2, D.Digit>, +fl: Nat, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NFrac{neg, Dz(m, a), Nat.add(m, fl)}))
+    == R(D.Str.zeros(m, rest), SN(ctx, P.NFrac{neg, a, fl})) : P.Out}:
+  match m:
+    case 0n:
+      {==}
+    case 1n++p:
+      %num_go(ctx, P.NFrac{neg, a, fl}, '0', P.NFrac{neg, D.D0{} <> a, 1n+fl},
+        digit_frac(neg, a, fl, D.D0{}), D.Str.zeros(p, rest)) :
+        {R(rest, SN(ctx, P.NFrac{neg, Dz(1n+p, a), Nat.add(1n+p, fl)})) == _ : P.Out}
+      %rzfrac(p, neg, D.D0{} <> a, 1n+fl, ctx, rest) :
+        {R(rest, SN(ctx, P.NFrac{neg, Dz(1n+p, a), Nat.add(1n+p, fl)})) == _ : P.Out}
+      %zc(p, a) :
+        {R(rest, SN(ctx, P.NFrac{neg, Dz(1n+p, a), Nat.add(1n+p, fl)}))
+          == R(rest, SN(ctx, P.NFrac{neg, _, Nat.add(p, 1n+fl)})) : P.Out}
+      %add_succ(p, fl) :
+        {R(rest, SN(ctx, P.NFrac{neg, Dz(1n+p, a), Nat.add(1n+p, fl)}))
+          == R(rest, SN(ctx, P.NFrac{neg, D.D0{} <> Dz(p, a), _})) : P.Out}
+      {==}
+
+# where a number's first digit is read: after '-', or as a value's start
+def Start(neg: Bool, close: Bool, c: P.Ctx) -> P.St:
+  match neg:
+    case True{}:
+      P.SNum{c, P.NSign{True{}}}
+    case False{}:
+      P.SVal{close, c}
+
+def start_digit(neg: Bool, -close: Bool, -c: P.Ctx, d: D.Digit) ->
+  {P.P.step(Start(neg, close, c), D.Digit.to_char(d)) == P.Go{P.SNum{c, P.NInt{neg, [d]}}} : P.Step}:
+  match neg d:
+    case True{} D.D0{}:
+      {==}
+    case True{} D.D1{}:
+      {==}
+    case True{} D.D2{}:
+      {==}
+    case True{} D.D3{}:
+      {==}
+    case True{} D.D4{}:
+      {==}
+    case True{} D.D5{}:
+      {==}
+    case True{} D.D6{}:
+      {==}
+    case True{} D.D7{}:
+      {==}
+    case True{} D.D8{}:
+      {==}
+    case True{} D.D9{}:
+      {==}
+    case False{} D.D0{}:
+      {==}
+    case False{} D.D1{}:
+      {==}
+    case False{} D.D2{}:
+      {==}
+    case False{} D.D3{}:
+      {==}
+    case False{} D.D4{}:
+      {==}
+    case False{} D.D5{}:
+      {==}
+    case False{} D.D6{}:
+      {==}
+    case False{} D.D7{}:
+      {==}
+    case False{} D.D8{}:
+      {==}
+    case False{} D.D9{}:
+      {==}
+
+def nz_last(x: D.Digit, h: {D.Dec.is_norm([x]) == True{} : Bool}) -> NZ(x):
+  match x:
+    case D.D0{}:
+      %h : BM(_, Empty, Unit)
+      Unit{}
+    case D.D1{}:
+      Unit{}
+    case D.D2{}:
+      Unit{}
+    case D.D3{}:
+      Unit{}
+    case D.D4{}:
+      Unit{}
+    case D.D5{}:
+      Unit{}
+    case D.D6{}:
+      Unit{}
+    case D.D7{}:
+      Unit{}
+    case D.D8{}:
+      Unit{}
+    case D.D9{}:
+      Unit{}
+
+def nz_tail(x: D.Digit, y: List<&2, D.Digit>, h: {D.Dec.is_norm(x <> y) == True{} : Bool}) ->
+  NotZ(x <> y):
+  match y:
+    case Nil{}:
+      nz_last(x, h)
+    case Con{a, b}:
+      Unit{}
+
+# the int digits of a normalized c (top digit nonzero) from the number's start
+def rsign(c1: List<&2, D.Digit>, +c0: D.Digit, +neg: Bool, +close: Bool,
+  +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NInt{neg, c0 <> c1}))
+    == R(D.Dec.show(c0 <> c1, rest), Start(neg, close, ctx)) : P.Out}:
+  match c1:
+    case Nil{}:
+      %Equal.sym(P.Step, P.P.step(Start(neg, close, ctx), D.Digit.to_char(c0)),
+        P.Go{SN(ctx, P.NInt{neg, [c0]})}, start_digit(neg, close, ctx, c0)) :
+        {R(rest, SN(ctx, P.NInt{neg, [c0]})) == P.P.run(rest, _) : P.Out}
+      {==}
+    case Con{+x, +y}:
+      %rsign(y, x, neg, close, h, ctx, SCon{D.Digit.to_char(c0), rest}) :
+        {R(rest, SN(ctx, P.NInt{neg, c0 <> x <> y})) == _ : P.Out}
+      num_go(ctx, P.NInt{neg, x <> y}, D.Digit.to_char(c0), P.NInt{neg, c0 <> x <> y},
+        digit_int(neg, x <> y, c0, nz_tail(x, y, h)), rest)
+
+# The state the parser is in after each print form
+# -------------------------------------------------
+
+def NS.exp(c: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, neg: Bool) -> P.NumSt:
+  P.NExpD{neg, c, 0n, eneg, List.append(&2, D.Digit, e, Nil{})}
+
+def NS.pos.fit(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, neg: Bool, fit: Bool) -> P.NumSt:
+  match fit:
+    case True{}:
+      P.NInt{neg, Dz(D.Dec.to_nat(e), c)}
+    case False{}:
+      NS.exp(c, False{}, e, neg)
+
+def NS.pos(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, neg: Bool, small: Bool) -> P.NumSt:
+  match small:
+    case True{}:
+      NS.pos.fit(c, e, neg, Nat.is_le(Nat.add(List.length(&2, D.Digit, c), D.Dec.to_nat(e)), 21n))
+    case False{}:
+      NS.exp(c, False{}, e, neg)
+
+def NS.neg.zeros(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat, neg: Bool,
+  fit: Bool) -> P.NumSt:
+  match fit:
+    case True{}:
+      P.NFrac{neg, List.append(&2, D.Digit, c, Dz(Nat.sub(k, l), [D.D0{}])),
+        Nat.add(List.length(&2, D.Digit, c), Nat.add(Nat.sub(k, l), 0n))}
+    case False{}:
+      NS.exp(c, True{}, e, neg)
+
+def NS.neg.point(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat, neg: Bool,
+  inside: Bool) -> P.NumSt:
+  match inside:
+    case True{}:
+      P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k), List.drop(&2, D.Digit, c, k)),
+        Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)}
+    case False{}:
+      NS.neg.zeros(c, e, k, l, neg, Nat.is_le(Nat.sub(k, l), 5n))
+
+def NS.neg(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, neg: Bool, small: Bool) -> P.NumSt:
+  match small:
+    case True{}:
+      NS.neg.point(c, e, D.Dec.to_nat(e), List.length(&2, D.Digit, c), neg,
+        Nat.is_lt(D.Dec.to_nat(e), List.length(&2, D.Digit, c)))
+    case False{}:
+      NS.exp(c, True{}, e, neg)
+
+def NS.body(+c: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, neg: Bool) -> P.NumSt:
+  match eneg e:
+    case False{} Nil{}:
+      P.NInt{neg, c}
+    case False{} Con{+x, +t}:
+      NS.pos(c, x <> t, neg, Nat.is_le(List.length(&2, D.Digit, x <> t), 2n))
+    case True{} +m:
+      NS.neg(c, m, neg, Nat.is_le(List.length(&2, D.Digit, m), 6n))
+
+def NS(n: D.Num) -> P.NumSt:
+  match n:
+    case D.Num{neg, Nil{}, eneg, e}:
+      P.NInt{False{}, [D.D0{}]}
+    case D.Num{neg, +x <> +t, eneg, e}:
+      NS.body(x <> t, eneg, e, neg)
+
+# Each print form runs to its state
+# ---------------------------------
+
+def run_esign(+eneg: Bool, +neg: Bool, +c: List<&2, D.Digit>, +e: List<&2, D.Digit>,
+  -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NExpD{neg, c, 0n, eneg, List.append(&2, D.Digit, e, Nil{})}))
+    == R(D.Num.show.esign(eneg, D.Dec.show(e, rest)), SN(ctx, P.NExp{neg, c, 0n})) : P.Out}:
+  match eneg:
+    case True{}:
+      %num_go(ctx, P.NExp{neg, c, 0n}, '-', P.NExpD{neg, c, 0n, True{}, Nil{}}, {==},
+        D.Dec.show(e, rest)) :
+        {R(rest, SN(ctx, P.NExpD{neg, c, 0n, True{}, List.append(&2, D.Digit, e, Nil{})})) == _ : P.Out}
+      rexp(e, neg, c, 0n, True{}, Nil{}, ctx, rest)
+    case False{}:
+      %num_go(ctx, P.NExp{neg, c, 0n}, '+', P.NExpD{neg, c, 0n, False{}, Nil{}}, {==},
+        D.Dec.show(e, rest)) :
+        {R(rest, SN(ctx, P.NExpD{neg, c, 0n, False{}, List.append(&2, D.Digit, e, Nil{})})) == _ : P.Out}
+      rexp(e, neg, c, 0n, False{}, Nil{}, ctx, rest)
+
+def run_exp(+c0: D.Digit, +c1: List<&2, D.Digit>, +eneg: Bool, +e: List<&2, D.Digit>, +neg: Bool,
+  +close: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, NS.exp(c0 <> c1, eneg, e, neg)))
+    == R(D.Num.show.exp(c0 <> c1, eneg, e, rest), Start(neg, close, ctx)) : P.Out}:
+  %rsign(c1, c0, neg, close, h, ctx, SCon{'e', D.Num.show.esign(eneg, D.Dec.show(e, rest))}) :
+    {R(rest, SN(ctx, NS.exp(c0 <> c1, eneg, e, neg))) == _ : P.Out}
+  %num_go(ctx, P.NInt{neg, c0 <> c1}, 'e', P.NExp{neg, c0 <> c1, 0n}, {==},
+    D.Num.show.esign(eneg, D.Dec.show(e, rest))) :
+    {R(rest, SN(ctx, NS.exp(c0 <> c1, eneg, e, neg))) == _ : P.Out}
+  run_esign(eneg, neg, c0 <> c1, e, ctx, rest)
+
+def run_pos_fit(+c0: D.Digit, +c1: List<&2, D.Digit>, +e: List<&2, D.Digit>, +neg: Bool,
+  +close: Bool, fit: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, NS.pos.fit(c0 <> c1, e, neg, fit)))
+    == R(D.Num.show.pos.fit(c0 <> c1, e, rest, fit), Start(neg, close, ctx)) : P.Out}:
+  match fit:
+    case True{}:
+      %rsign(c1, c0, neg, close, h, ctx, D.Str.zeros(D.Dec.to_nat(e), rest)) :
+        {R(rest, SN(ctx, NS.pos.fit(c0 <> c1, e, neg, True{}))) == _ : P.Out}
+      rzint(D.Dec.to_nat(e), neg, c0, c1, nz_tail(c0, c1, h), ctx, rest)
+    case False{}:
+      run_exp(c0, c1, False{}, e, neg, close, h, ctx, rest)
+
+def run_pos(+c0: D.Digit, +c1: List<&2, D.Digit>, +e: List<&2, D.Digit>, +neg: Bool,
+  +close: Bool, small: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, NS.pos(c0 <> c1, e, neg, small)))
+    == R(D.Num.show.pos(c0 <> c1, e, rest, small), Start(neg, close, ctx)) : P.Out}:
+  match small:
+    case True{}:
+      run_pos_fit(c0, c1, e, neg, close, Nat.is_le(Nat.add(List.length(&2, D.Digit, c0 <> c1),
+        D.Dec.to_nat(e)), 21n), h, ctx, rest)
+    case False{}:
+      run_exp(c0, c1, False{}, e, neg, close, h, ctx, rest)
+
+def run_neg_zeros(+c0: D.Digit, +c1: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  +neg: Bool, +close: Bool, fit: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool},
+  -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, NS.neg.zeros(c0 <> c1, e, k, l, neg, fit)))
+    == R(D.Num.show.neg.zeros(c0 <> c1, e, k, l, rest, fit), Start(neg, close, ctx)) : P.Out}:
+  match fit:
+    case True{}:
+      %Equal.sym(P.Step, P.P.step(Start(neg, close, ctx), D.Digit.to_char(D.D0{})),
+        P.Go{SN(ctx, P.NInt{neg, [D.D0{}]})}, start_digit(neg, close, ctx, D.D0{})) :
+        {R(rest, SN(ctx, NS.neg.zeros(c0 <> c1, e, k, l, neg, True{})))
+          == P.P.run(SCon{'.', D.Str.zeros(Nat.sub(k, l), D.Dec.show(c0 <> c1, rest))}, _) : P.Out}
+      %num_go(ctx, P.NInt{neg, [D.D0{}]}, '.', P.NFrac{neg, [D.D0{}], 0n}, {==},
+        D.Str.zeros(Nat.sub(k, l), D.Dec.show(c0 <> c1, rest))) :
+        {R(rest, SN(ctx, NS.neg.zeros(c0 <> c1, e, k, l, neg, True{}))) == _ : P.Out}
+      %rzfrac(Nat.sub(k, l), neg, [D.D0{}], 0n, ctx, D.Dec.show(c0 <> c1, rest)) :
+        {R(rest, SN(ctx, NS.neg.zeros(c0 <> c1, e, k, l, neg, True{}))) == _ : P.Out}
+      rfrac(c0 <> c1, neg, Dz(Nat.sub(k, l), [D.D0{}]), Nat.add(Nat.sub(k, l), 0n), ctx, rest)
+    case False{}:
+      run_exp(c0, c1, True{}, e, neg, close, h, ctx, rest)
+
+def BNil(xs: List<&2, D.Digit>, t: Type, f: Type) -> Type:
+  match xs:
+    case Nil{}:
+      t
+    case Con{a, b}:
+      f
+
+# below the length, dropping k digits leaves some
+law drop_ne:
+  for +c: List<&2, D.Digit>
+  for +k: Nat
+  for hl: {Nat.is_lt(k, List.length(&2, D.Digit, c)) == True{} : Bool}
+  exs dh: D.Digit
+  exs dt: List<&2, D.Digit>
+  {List.drop(&2, D.Digit, c, k) == dh <> dt : List<&2, D.Digit>}
+
+def drop_ne(c, k, hl):
+  match c k:
+    case Nil{} 0n:
+      %hl : BM(_, Sigma<&1, &1, D.Digit, dh => Sigma<&1, &1, List<&2, D.Digit>,
+        dt => {List.drop(&2, D.Digit, Nil{}, 0n) == dh <> dt : List<&2, D.Digit>}>>, Unit)
+      Unit{}
+    case Nil{} 1n+p:
+      %hl : BM(_, Sigma<&1, &1, D.Digit, dh => Sigma<&1, &1, List<&2, D.Digit>,
+        dt => {List.drop(&2, D.Digit, Nil{}, 1n+p) == dh <> dt : List<&2, D.Digit>}>>, Unit)
+      Unit{}
+    case Con{x, t} 0n:
+      (x, t, {==})
+    case Con{x, t} 1n+p:
+      drop_ne(t, p, hl)
+
+def drop_norm(c: List<&2, D.Digit>, k: Nat, h: {D.Dec.is_norm(c) == True{} : Bool}) ->
+  {D.Dec.is_norm(List.drop(&2, D.Digit, c, k)) == True{} : Bool}:
+  match c k:
+    case Nil{} k0:
+      {==}
+    case Con{x, t} 0n:
+      h
+    case Con{x, Nil{}} 1n+p:
+      {==}
+    case Con{x, Con{y, z}} 1n+p:
+      drop_norm(y <> z, p, h)
+
+def run_point.at(+c: List<&2, D.Digit>, +k: Nat, +dh: D.Digit, +dt: List<&2, D.Digit>,
+  +neg: Bool, +close: Bool, +hd: {D.Dec.is_norm(dh <> dt) == True{} : Bool}, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k), dh <> dt),
+    Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)}))
+    == R(D.Dec.show(dh <> dt, SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), rest)}),
+      Start(neg, close, ctx)) : P.Out}:
+  %rsign(dt, dh, neg, close, hd, ctx, SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), rest)}) :
+    {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k), dh <> dt),
+      Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)})) == _ : P.Out}
+  %num_go(ctx, P.NInt{neg, dh <> dt}, '.', P.NFrac{neg, dh <> dt, 0n}, {==},
+    D.Dec.show(List.take(&2, D.Digit, c, k), rest)) :
+    {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k), dh <> dt),
+      Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)})) == _ : P.Out}
+  rfrac(List.take(&2, D.Digit, c, k), neg, dh <> dt, 0n, ctx, rest)
+
+def run_point(+c: List<&2, D.Digit>, +k: Nat, +neg: Bool, +close: Bool,
+  +h: {D.Dec.is_norm(c) == True{} : Bool},
+  w: Sigma<&1, &1, D.Digit, dh => Sigma<&1, &1, List<&2, D.Digit>,
+    dt => {List.drop(&2, D.Digit, c, k) == dh <> dt : List<&2, D.Digit>}>>,
+  -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k),
+    List.drop(&2, D.Digit, c, k)), Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)}))
+    == R(D.Dec.show(List.drop(&2, D.Digit, c, k), SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), rest)}),
+      Start(neg, close, ctx)) : P.Out}:
+  (+dh, w2) = w
+  (+dt, +eq) = w2
+  +hd = Equal.trans(Bool, D.Dec.is_norm(dh <> dt), D.Dec.is_norm(List.drop(&2, D.Digit, c, k)), True{},
+    Equal.sym(Bool, D.Dec.is_norm(List.drop(&2, D.Digit, c, k)), D.Dec.is_norm(dh <> dt),
+      Equal.cong(List<&2, D.Digit>, Bool, x => D.Dec.is_norm(x), List.drop(&2, D.Digit, c, k), dh <> dt, eq)),
+    drop_norm(c, k, h))
+  %Equal.sym(List<&2, D.Digit>, List.drop(&2, D.Digit, c, k), dh <> dt, eq) :
+    {R(rest, SN(ctx, P.NFrac{neg, List.append(&2, D.Digit, List.take(&2, D.Digit, c, k), _),
+      Nat.add(List.length(&2, D.Digit, List.take(&2, D.Digit, c, k)), 0n)}))
+      == R(D.Dec.show(_, SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), rest)}),
+        Start(neg, close, ctx)) : P.Out}
+  run_point.at(c, k, dh, dt, neg, close, hd, ctx, rest)
+
+def run_neg_point(+c0: D.Digit, +c1: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat,
+  +neg: Bool, +close: Bool, inside: Bool,
+  ei: {Nat.is_lt(k, List.length(&2, D.Digit, c0 <> c1)) == inside : Bool},
+  +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, NS.neg.point(c0 <> c1, e, k, l, neg, inside)))
+    == R(D.Num.show.neg.point(c0 <> c1, e, k, l, rest, inside), Start(neg, close, ctx)) : P.Out}:
+  match inside:
+    case True{}:
+      run_point(c0 <> c1, k, neg, close, h, drop_ne(c0 <> c1, k, ei), ctx, rest)
+    case False{}:
+      run_neg_zeros(c0, c1, e, k, l, neg, close, Nat.is_le(Nat.sub(k, l), 5n), h, ctx, rest)
+
+def run_neg(+c0: D.Digit, +c1: List<&2, D.Digit>, +e: List<&2, D.Digit>, +neg: Bool,
+  +close: Bool, small: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, NS.neg(c0 <> c1, e, neg, small)))
+    == R(D.Num.show.neg(c0 <> c1, e, rest, small), Start(neg, close, ctx)) : P.Out}:
+  match small:
+    case True{}:
+      run_neg_point(c0, c1, e, D.Dec.to_nat(e), List.length(&2, D.Digit, c0 <> c1), neg, close,
+        Nat.is_lt(D.Dec.to_nat(e), List.length(&2, D.Digit, c0 <> c1)), {==}, h, ctx, rest)
+    case False{}:
+      run_exp(c0, c1, True{}, e, neg, close, h, ctx, rest)
+
+def run_body(+c0: D.Digit, +c1: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, +neg: Bool,
+  +close: Bool, +h: {D.Dec.is_norm(c0 <> c1) == True{} : Bool}, -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, NS.body(c0 <> c1, eneg, e, neg)))
+    == R(D.Num.show.body(c0 <> c1, eneg, e, rest), Start(neg, close, ctx)) : P.Out}:
+  match eneg e:
+    case False{} Nil{}:
+      rsign(c1, c0, neg, close, h, ctx, rest)
+    case False{} Con{+x, +t}:
+      run_pos(c0, c1, x <> t, neg, close, Nat.is_le(List.length(&2, D.Digit, x <> t), 2n), h, ctx, rest)
+    case True{} +m:
+      run_neg(c0, c1, m, neg, close, Nat.is_le(List.length(&2, D.Digit, m), 6n), h, ctx, rest)
+
+def run_sign(neg: Bool, -close: Bool, -ctx: P.Ctx, -b: String) ->
+  {R(b, Start(neg, close, ctx)) == R(D.Num.show.sign(neg, b), P.SVal{close, ctx}) : P.Out}:
+  match neg:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
+def and_true(a: Bool, b: Bool, e: {Bool.and(a, b) == True{} : Bool}) ->
+  {a == True{} : Bool} & {b == True{} : Bool}:
+  match a:
+    case True{}:
+      ({==}, e)
+    case False{}:
+      %e : BM(_, {False{} == True{} : Bool} & {b == True{} : Bool}, Unit)
+      Unit{}
+
+# what is_norm says about a nonzero number
+def NormF(x: D.Digit, t: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>) -> Type:
+  NZ(x) & {D.Dec.is_norm(x <> t) == True{} : Bool} & {D.Num.is_norm.exp(eneg, e) == True{} : Bool}
+
+def norm_split(x: D.Digit, +t: List<&2, D.Digit>, -neg: Bool, +eneg: Bool, +e: List<&2, D.Digit>,
+  h: {D.Num.is_norm(D.Num{neg, x <> t, eneg, e}) == True{} : Bool}) -> NormF(x, t, eneg, e):
+  match x:
+    case D.D0{}:
+      %h : BM(_, NormF(D.D0{}, t, eneg, e), Unit)
+      Unit{}
+    case D.D1{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D1{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D2{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D2{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D3{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D3{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D4{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D4{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D5{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D5{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D6{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D6{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D7{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D7{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D8{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D8{} <> t), D.Num.is_norm.exp(eneg, e), h))
+    case D.D9{}:
+      (Unit{}, and_true(D.Dec.is_norm(D.D9{} <> t), D.Num.is_norm.exp(eneg, e), h))
+
+def run_num.at(+x: D.Digit, +t: List<&2, D.Digit>, +neg: Bool, +eneg: Bool, +e: List<&2, D.Digit>,
+  +close: Bool, f: NormF(x, t, eneg, e), -ctx: P.Ctx, -rest: String) ->
+  {R(rest, SN(ctx, NS(D.Num{neg, x <> t, eneg, e}))) == R(D.Num.show(D.Num{neg, x <> t, eneg, e}, rest),
+    P.SVal{close, ctx}) : P.Out}:
+  (nz, hs) = f
+  (hc, he) = hs
+  %run_sign(neg, close, ctx, D.Num.show.body(x <> t, eneg, e, rest)) :
+    {R(rest, SN(ctx, NS(D.Num{neg, x <> t, eneg, e}))) == _ : P.Out}
+  run_body(x, t, eneg, e, neg, close, hc, ctx, rest)
+
+# a normalized number's text runs the parser from a value's start to NS(n)
+def run_num(n: D.Num, +close: Bool, h: {D.Num.is_norm(n) == True{} : Bool}, -ctx: P.Ctx,
+  -rest: String) ->
+  {R(rest, SN(ctx, NS(n))) == R(D.Num.show(n, rest), P.SVal{close, ctx}) : P.Out}:
+  match n:
+    case D.Num{neg, Nil{}, eneg, e}:
+      {==}
+    case D.Num{+neg, +x <> +t, +eneg, +e}:
+      run_num.at(x, t, neg, eneg, e, close, norm_split(x, t, neg, eneg, e, h), ctx, rest)

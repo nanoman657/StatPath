@@ -65,10 +65,18 @@ type Out is Data:
 # Numbers
 # -------
 
+def N.int.one(neg: Bool, h: D.Digit, d: D.Digit) -> NRes:
+  match h:
+    case D.D0{}:
+      NBad{"leading zero in number"}
+    case o:
+      NGo{NInt{neg, [d, o]}}
+
+# a digit after the int digits so far; after a lone 0 it is a leading zero
 def N.int.digit(neg: Bool, acc: List<&2, D.Digit>, d: D.Digit) -> NRes:
   match acc:
-    case Con{D.D0{}, Nil{}}:
-      NBad{"leading zero in number"}
+    case Con{h, Nil{}}:
+      N.int.one(neg, h, d)
     case o:
       NGo{NInt{neg, d <> o}}
 
