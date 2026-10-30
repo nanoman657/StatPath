@@ -2214,3 +2214,684 @@ def Laws.number_roundtrip(n, h):
   %fin_g(NS(n), n, good_num(n, h)) :
     {P.parse_number.of(P.P.eof.num(_, String.length(Pr.print_number(n)))) == Some{n} : Maybe<&2, D.Num>}
   {==}
+
+# Law 3: values
+# -------------
+
+# SVStr: the parser's own loop over an escaped string
+def ctl_caseP(b0: Bool, b1: Bool, b2: Bool, b3: Bool, b4: Bool, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n))}, acc}}})
+    == R(T.Esc.ctl(Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n)), rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}:
+  match b0 b1 b2 b3 b4:
+    case False{} False{} False{} False{} False{}:
+      {==}
+    case False{} False{} False{} False{} True{}:
+      {==}
+    case False{} False{} False{} True{} False{}:
+      {==}
+    case False{} False{} False{} True{} True{}:
+      {==}
+    case False{} False{} True{} False{} False{}:
+      {==}
+    case False{} False{} True{} False{} True{}:
+      {==}
+    case False{} False{} True{} True{} False{}:
+      {==}
+    case False{} False{} True{} True{} True{}:
+      {==}
+    case False{} True{} False{} False{} False{}:
+      {==}
+    case False{} True{} False{} False{} True{}:
+      {==}
+    case False{} True{} False{} True{} False{}:
+      {==}
+    case False{} True{} False{} True{} True{}:
+      {==}
+    case False{} True{} True{} False{} False{}:
+      {==}
+    case False{} True{} True{} False{} True{}:
+      {==}
+    case False{} True{} True{} True{} False{}:
+      {==}
+    case False{} True{} True{} True{} True{}:
+      {==}
+    case True{} False{} False{} False{} False{}:
+      {==}
+    case True{} False{} False{} False{} True{}:
+      {==}
+    case True{} False{} False{} True{} False{}:
+      {==}
+    case True{} False{} False{} True{} True{}:
+      {==}
+    case True{} False{} True{} False{} False{}:
+      {==}
+    case True{} False{} True{} False{} True{}:
+      {==}
+    case True{} False{} True{} True{} False{}:
+      {==}
+    case True{} False{} True{} True{} True{}:
+      {==}
+    case True{} True{} False{} False{} False{}:
+      {==}
+    case True{} True{} False{} False{} True{}:
+      {==}
+    case True{} True{} False{} True{} False{}:
+      {==}
+    case True{} True{} False{} True{} True{}:
+      {==}
+    case True{} True{} True{} False{} False{}:
+      {==}
+    case True{} True{} True{} False{} True{}:
+      {==}
+    case True{} True{} True{} True{} False{}:
+      {==}
+    case True{} True{} True{} True{} True{}:
+      {==}
+
+def char_kP(+x: U32, k: T.CKind, e: {T.Esc.kind(x) == k : T.CKind}, -c: P.Ctx, -acc: String,
+  -rest: String) ->
+  {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{x}, acc}}})
+    == R(T.Esc.char.k(x, k, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}:
+  match k:
+    case T.KPlain{}:
+      %Equal.sym(T.CKind, T.Esc.kind(x), T.KPlain{}, e) :
+        {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{x}, acc}}}) == P.P.run(rest, P.P.vstr(c, T.Str.raw(acc, x, _))) : P.Out}
+      {==}
+    case T.KQuote{}:
+      %Equal.sym(U32, x, 34, kind_quote(x, e)) :
+        {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{_}, acc}}})
+          == R(T.Esc.char.k(x, T.KQuote{}, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}
+      {==}
+    case T.KBack{}:
+      %Equal.sym(U32, x, 92, kind_back(x, e)) :
+        {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{_}, acc}}})
+          == R(T.Esc.char.k(x, T.KBack{}, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}
+      {==}
+    case T.KCtl{}:
+      ctl_split(y => {R(rest, P.SVStr{c, T.StrBody{SCon{Chr{y}, acc}}})
+          == R(T.Esc.ctl(y, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out},
+        b0 => b1 => b2 => b3 => b4 => ctl_caseP(b0, b1, b2, b3, b4, c, acc, rest), x)(e)
+
+def char_lP(ch: Char, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SVStr{c, T.StrBody{SCon{ch, acc}}}) == R(T.Esc.char(ch, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}:
+  match ch:
+    case Chr{+x}:
+      char_kP(x, T.Esc.kind(x), {==}, c, acc, rest)
+
+def esc_goP(s: String, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SVStr{c, T.StrBody{String.reverse.go(s, acc)}})
+    == R(T.Esc.go(s, rest), P.SVStr{c, T.StrBody{acc}}) : P.Out}:
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+ch, t}:
+      %char_lP(ch, c, acc, T.Esc.go(t, rest)) :
+        {R(rest, P.SVStr{c, T.StrBody{String.reverse.go(SCon{ch, t}, acc)}}) == _ : P.Out}
+      esc_goP(t, c, SCon{ch, acc}, rest)
+
+# SKStr: the parser's own loop over an escaped string
+def ctl_caseP_k(b0: Bool, b1: Bool, b2: Bool, b3: Bool, b4: Bool, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n))}, acc}}})
+    == R(T.Esc.ctl(Lo5(b0, b1, b2, b3, b4, False{}, Word.zero(26n)), rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}:
+  match b0 b1 b2 b3 b4:
+    case False{} False{} False{} False{} False{}:
+      {==}
+    case False{} False{} False{} False{} True{}:
+      {==}
+    case False{} False{} False{} True{} False{}:
+      {==}
+    case False{} False{} False{} True{} True{}:
+      {==}
+    case False{} False{} True{} False{} False{}:
+      {==}
+    case False{} False{} True{} False{} True{}:
+      {==}
+    case False{} False{} True{} True{} False{}:
+      {==}
+    case False{} False{} True{} True{} True{}:
+      {==}
+    case False{} True{} False{} False{} False{}:
+      {==}
+    case False{} True{} False{} False{} True{}:
+      {==}
+    case False{} True{} False{} True{} False{}:
+      {==}
+    case False{} True{} False{} True{} True{}:
+      {==}
+    case False{} True{} True{} False{} False{}:
+      {==}
+    case False{} True{} True{} False{} True{}:
+      {==}
+    case False{} True{} True{} True{} False{}:
+      {==}
+    case False{} True{} True{} True{} True{}:
+      {==}
+    case True{} False{} False{} False{} False{}:
+      {==}
+    case True{} False{} False{} False{} True{}:
+      {==}
+    case True{} False{} False{} True{} False{}:
+      {==}
+    case True{} False{} False{} True{} True{}:
+      {==}
+    case True{} False{} True{} False{} False{}:
+      {==}
+    case True{} False{} True{} False{} True{}:
+      {==}
+    case True{} False{} True{} True{} False{}:
+      {==}
+    case True{} False{} True{} True{} True{}:
+      {==}
+    case True{} True{} False{} False{} False{}:
+      {==}
+    case True{} True{} False{} False{} True{}:
+      {==}
+    case True{} True{} False{} True{} False{}:
+      {==}
+    case True{} True{} False{} True{} True{}:
+      {==}
+    case True{} True{} True{} False{} False{}:
+      {==}
+    case True{} True{} True{} False{} True{}:
+      {==}
+    case True{} True{} True{} True{} False{}:
+      {==}
+    case True{} True{} True{} True{} True{}:
+      {==}
+
+def char_kP_k(+x: U32, k: T.CKind, e: {T.Esc.kind(x) == k : T.CKind}, -c: P.Ctx, -acc: String,
+  -rest: String) ->
+  {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{x}, acc}}})
+    == R(T.Esc.char.k(x, k, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}:
+  match k:
+    case T.KPlain{}:
+      %Equal.sym(T.CKind, T.Esc.kind(x), T.KPlain{}, e) :
+        {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{x}, acc}}}) == P.P.run(rest, P.P.kstr(c, T.Str.raw(acc, x, _))) : P.Out}
+      {==}
+    case T.KQuote{}:
+      %Equal.sym(U32, x, 34, kind_quote(x, e)) :
+        {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{_}, acc}}})
+          == R(T.Esc.char.k(x, T.KQuote{}, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}
+      {==}
+    case T.KBack{}:
+      %Equal.sym(U32, x, 92, kind_back(x, e)) :
+        {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{_}, acc}}})
+          == R(T.Esc.char.k(x, T.KBack{}, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}
+      {==}
+    case T.KCtl{}:
+      ctl_split(y => {R(rest, P.SKStr{c, T.StrBody{SCon{Chr{y}, acc}}})
+          == R(T.Esc.ctl(y, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out},
+        b0 => b1 => b2 => b3 => b4 => ctl_caseP_k(b0, b1, b2, b3, b4, c, acc, rest), x)(e)
+
+def char_lP_k(ch: Char, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SKStr{c, T.StrBody{SCon{ch, acc}}}) == R(T.Esc.char(ch, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}:
+  match ch:
+    case Chr{+x}:
+      char_kP_k(x, T.Esc.kind(x), {==}, c, acc, rest)
+
+def esc_goP_k(s: String, -c: P.Ctx, -acc: String, -rest: String) ->
+  {R(rest, P.SKStr{c, T.StrBody{String.reverse.go(s, acc)}})
+    == R(T.Esc.go(s, rest), P.SKStr{c, T.StrBody{acc}}) : P.Out}:
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+ch, t}:
+      %char_lP_k(ch, c, acc, T.Esc.go(t, rest)) :
+        {R(rest, P.SKStr{c, T.StrBody{String.reverse.go(SCon{ch, t}, acc)}}) == _ : P.Out}
+      esc_goP_k(t, c, SCon{ch, acc}, rest)
+
+# a string value: quote, escaped body, quote
+def str_val(+s: String, -close: Bool, -c: P.Ctx, -rest: String) ->
+  {R(rest, P.SDone{c, V.JStr{s}}) == R(T.quote(s, rest), P.SVal{close, c}) : P.Out}:
+  %esc_goP(s, c, SNil{}, SCon{'"', rest}) : {R(rest, P.SDone{c, V.JStr{s}}) == _ : P.Out}
+  %rev_rev(s, SNil{}) : {R(rest, P.SDone{c, V.JStr{s}}) == R(rest, P.SDone{c, V.JStr{_}}) : P.Out}
+  {==}
+
+# a key: the same, ending at the colon
+def key_str(+s: String, -close: Bool, -c: P.Ctx, -rest: String) ->
+  {R(rest, P.SColon{c, s}) == R(T.quote(s, rest), P.SKey{close, c}) : P.Out}:
+  %esc_goP_k(s, c, SNil{}, SCon{'"', rest}) : {R(rest, P.SColon{c, s}) == _ : P.Out}
+  %rev_rev(s, SNil{}) : {R(rest, P.SColon{c, s}) == R(rest, P.SColon{c, _}) : P.Out}
+  {==}
+
+# the char after a value in printed text, and that text's rest
+type Dl is Data:
+  DComma{}
+  DBrack{}
+  DBrace{}
+  DNl{}
+
+def Dl.ch(d: Dl) -> Char:
+  match d:
+    case DComma{}:
+      ','
+    case DBrack{}:
+      ']'
+    case DBrace{}:
+      '}'
+    case DNl{}:
+      '\n'
+
+type Rest is Data:
+  REnd{}
+  RDl{d: Dl, r: String}
+
+def Rest.str(rr: Rest) -> String:
+  match rr:
+    case REnd{}:
+      SNil{}
+    case RDl{d, r}:
+      SCon{Dl.ch(d), r}
+
+# where a value leaves the parser: a number is still open
+def Pend(v: V.Json, c: P.Ctx) -> P.St:
+  match v:
+    case V.JNum{n}:
+      SN(c, NS(n))
+    case o:
+      P.SDone{c, o}
+
+def end_int(-neg: Bool, -acc: List<&2, D.Digit>, d: Dl) ->
+  {P.NEnd{MK(P.NInt{neg, acc})} == P.N.step(P.NInt{neg, acc}, Dl.ch(d)) : P.NRes}:
+  match d:
+    case DComma{}:
+      {==}
+    case DBrack{}:
+      {==}
+    case DBrace{}:
+      {==}
+    case DNl{}:
+      {==}
+
+def end_frac(-neg: Bool, -acc: List<&2, D.Digit>, -f: Nat, d: Dl) ->
+  {P.NEnd{MK(P.NFrac{neg, acc, 1n+f})} == P.N.step(P.NFrac{neg, acc, 1n+f}, Dl.ch(d)) : P.NRes}:
+  match d:
+    case DComma{}:
+      {==}
+    case DBrack{}:
+      {==}
+    case DBrace{}:
+      {==}
+    case DNl{}:
+      {==}
+
+def end_exp(-neg: Bool, -acc: List<&2, D.Digit>, -fl: Nat, -eneg: Bool, -x: D.Digit,
+  -t: List<&2, D.Digit>, d: Dl) ->
+  {P.NEnd{MK(P.NExpD{neg, acc, fl, eneg, x <> t})}
+    == P.N.step(P.NExpD{neg, acc, fl, eneg, x <> t}, Dl.ch(d)) : P.NRes}:
+  match d:
+    case DComma{}:
+      {==}
+    case DBrack{}:
+      {==}
+    case DBrace{}:
+      {==}
+    case DNl{}:
+      {==}
+
+def end_ready(ns: P.NumSt, d: Dl, r: Ready(ns)) -> {P.NEnd{MK(ns)} == P.N.step(ns, Dl.ch(d)) : P.NRes}:
+  match ns:
+    case P.NSign{neg}:
+      Empty.absurd({P.NEnd{MK(P.NSign{neg})} == P.N.step(P.NSign{neg}, Dl.ch(d)) : P.NRes}, r)
+    case P.NInt{neg, acc}:
+      end_int(neg, acc, d)
+    case P.NFrac{neg, acc, 0n}:
+      Empty.absurd({P.NEnd{MK(P.NFrac{neg, acc, 0n})} == P.N.step(P.NFrac{neg, acc, 0n}, Dl.ch(d)) : P.NRes}, r)
+    case P.NFrac{neg, acc, 1n+f}:
+      end_frac(neg, acc, f, d)
+    case P.NExp{neg, acc, fl}:
+      Empty.absurd({P.NEnd{MK(P.NExp{neg, acc, fl})} == P.N.step(P.NExp{neg, acc, fl}, Dl.ch(d)) : P.NRes}, r)
+    case P.NExpD{neg, acc, fl, eneg, Nil{}}:
+      Empty.absurd({P.NEnd{MK(P.NExpD{neg, acc, fl, eneg, Nil{}})} == P.N.step(P.NExpD{neg, acc, fl, eneg, Nil{}}, Dl.ch(d)) : P.NRes}, r)
+    case P.NExpD{neg, acc, fl, eneg, Con{x, t}}:
+      end_exp(neg, acc, fl, eneg, x, t, d)
+
+def end_g(+ns: P.NumSt, -n: D.Num, d: Dl, g: Good(ns, n)) -> {P.NEnd{n} == P.N.step(ns, Dl.ch(d)) : P.NRes}:
+  (r, eq) = g
+  %Equal.sym(D.Num, n, MK(ns), eq) : {P.NEnd{_} == P.N.step(ns, Dl.ch(d)) : P.NRes}
+  end_ready(ns, d, r)
+
+# a delimiter after a value acts as after any complete value
+def pend_dl(v: V.Json, -c: P.Ctx, +d: Dl, -rest: String, h: {V.Json.is_norm(v) == True{} : Bool}) ->
+  {P.P.run(rest, P.P.after(c, v, Dl.ch(d))) == R(SCon{Dl.ch(d), rest}, Pend(v, c)) : P.Out}:
+  match v:
+    case V.JNull{}:
+      {==}
+    case V.JBool{b}:
+      {==}
+    case V.JNum{+n}:
+      %end_g(NS(n), n, d, good_num(n, h)) :
+        {P.P.run(rest, P.P.after(c, V.JNum{n}, Dl.ch(d))) == P.P.run(rest, P.P.num(c, Dl.ch(d), _)) : P.Out}
+      {==}
+    case V.JStr{x}:
+      {==}
+    case V.JArr{xs}:
+      {==}
+    case V.JObj{ms}:
+      {==}
+
+# the end of input after a value
+def eof_pend(v: V.Json, -r: Nat, h: {V.Json.is_norm(v) == True{} : Bool}, +len: Nat) ->
+  {Done{v} == P.P.eof(Pend(v, P.Ctx{Nil{}, r}), len) : Result<&2, &2, P.Err, V.Json>}:
+  match v:
+    case V.JNull{}:
+      {==}
+    case V.JBool{b}:
+      {==}
+    case V.JNum{+n}:
+      %fin_g(NS(n), n, good_num(n, h)) :
+        {Done{V.JNum{n}} == P.P.eof.num(_, len) : Result<&2, &2, P.Err, V.Json>}
+      {==}
+    case V.JStr{x}:
+      {==}
+    case V.JArr{xs}:
+      {==}
+    case V.JObj{ms}:
+      {==}
+
+def le_zero(c: Nat) -> {Nat.is_le(0n, c) == True{} : Bool}:
+  match c:
+    case 0n:
+      {==}
+    case 1n+p:
+      {==}
+
+def le_max(a: Nat, b: Nat, c: Nat, h: {Nat.is_le(Nat.max(a, b), c) == True{} : Bool}) ->
+  {Nat.is_le(a, c) == True{} : Bool} & {Nat.is_le(b, c) == True{} : Bool}:
+  match a b c:
+    case 0n b0 0n:
+      ({==}, h)
+    case 0n b0 1n+q:
+      ({==}, h)
+    case 1n+p 0n c0:
+      (h, le_zero(c0))
+    case 1n+p 1n+q 0n:
+      %h : BM(_, {Nat.is_le(1n+p, 0n) == True{} : Bool} & {Nat.is_le(1n+q, 0n) == True{} : Bool}, Unit)
+      Unit{}
+    case 1n+p 1n+q 1n+r:
+      le_max(p, q, r, h)
+
+def lrev(-A: Data, xs: List<&2, A>, -acc: List<&2, A>) ->
+  {List.reverse.go(&2, A, acc, xs) == List.reverse(&2, A, List.reverse.go(&2, A, xs, acc)) : List<&2, A>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case Con{h, t}:
+      lrev(A, t, h <> acc)
+
+# The claim, by the printer's mode
+# --------------------------------
+# mode 1n: a value read from SVal ends in Pend(v). mode 0n: the items of a
+# nonempty array (object), read after its '[' ('{') up to its ']' ('}'),
+# close the frame on top of the stack.
+
+def ICA(x: V.Json, t: List<&2, V.Json>, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match stk:
+    case Con{P.FArr{acc}, s2}:
+      {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json, List.reverse.go(&2, V.Json, x <> t, acc))}})
+        == R(Pr.Pr.go(V.JArr{x <> t}, 0n, SCon{']', Rest.str(rr)}), P.SVal{close, P.Ctx{P.FArr{acc} <> s2, room}}) : P.Out}
+    case _:
+      Unit
+
+def ICO(m: V.Member, t: List<&2, V.Member>, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match stk:
+    case Con{P.FObj{items, k0}, s2}:
+      {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member, List.reverse.go(&2, V.Member, m <> t, items))}})
+        == R(Pr.Pr.go(V.JObj{m <> t}, 0n, SCon{'}', Rest.str(rr)}), P.SKey{close, P.Ctx{P.FObj{items, k0} <> s2, room}}) : P.Out}
+    case _:
+      Unit
+
+def IC(v: V.Json, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match v:
+    case V.JArr{Con{x, t}}:
+      ICA(x, t, close, stk, room, rr)
+    case V.JObj{Con{m, t}}:
+      ICO(m, t, close, stk, room, rr)
+    case _:
+      Unit
+
+def Room(mode: Nat, room: Nat) -> Nat:
+  match mode:
+    case 0n:
+      1n+room
+    case _:
+      room
+
+def VC(v: V.Json, mode: Nat, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match mode:
+    case 0n:
+      IC(v, close, stk, room, rr)
+    case 1n:
+      {R(Rest.str(rr), Pend(v, P.Ctx{stk, room})) == R(Pr.Pr.go(v, 1n, Rest.str(rr)), P.SVal{close, P.Ctx{stk, room}}) : P.Out}
+    case 2n+k:
+      Unit
+
+def NormH(v: V.Json) -> Data:
+  {V.Json.is_norm(v) == True{} : Bool}
+
+def DepH(v: V.Json, n: Nat) -> Data:
+  {Nat.is_le(V.Json.depth(v), n) == True{} : Bool}
+
+def dep_arr(+x: V.Json, +t: List<&2, V.Json>, +n: Nat, h: DepH(V.JArr{x <> t}, n)) ->
+  {Nat.is_le(1n+V.Json.depth(x), n) == True{} : Bool} & DepH(V.JArr{t}, n):
+  le_max(1n+V.Json.depth(x), V.Json.depth(V.JArr{t}), n, h)
+
+def dep_obj(-k: String, +x: V.Json, +t: List<&2, V.Member>, +n: Nat, h: DepH(V.JObj{V.Mem{k, x} <> t}, n)) ->
+  {Nat.is_le(1n+V.Json.depth(x), n) == True{} : Bool} & DepH(V.JObj{t}, n):
+  le_max(1n+V.Json.depth(x), V.Json.depth(V.JObj{t}), n, h)
+
+# the helpers take the induction hypotheses as arguments
+
+def arr_empty(-close: Bool, -stk: List<&2, P.Frame>, room: Nat, -rr: Rest, h: DepH(V.JArr{Nil{}}, room)) ->
+  VC(V.JArr{Nil{}}, 1n, close, stk, room, rr):
+  match room:
+    case 0n:
+      %h : BM(_, VC(V.JArr{Nil{}}, 1n, close, stk, 0n, rr), Unit)
+      Unit{}
+    case 1n+r:
+      {==}
+
+def obj_empty(-close: Bool, -stk: List<&2, P.Frame>, room: Nat, -rr: Rest, h: DepH(V.JObj{Nil{}}, room)) ->
+  VC(V.JObj{Nil{}}, 1n, close, stk, room, rr):
+  match room:
+    case 0n:
+      %h : BM(_, VC(V.JObj{Nil{}}, 1n, close, stk, 0n, rr), Unit)
+      Unit{}
+    case 1n+r:
+      {==}
+
+def arr_open(+x: V.Json, t: List<&2, V.Json>, -close: Bool, +stk: List<&2, P.Frame>, +r: Nat, +rr: Rest) ->
+  IC(V.JArr{x <> t}, True{}, P.FArr{Nil{}} <> stk, r, rr) -> VC(V.JArr{x <> t}, 1n, close, stk, 1n+r, rr):
+  match t:
+    case Nil{}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> Nil{}}}) == _ : P.Out}
+        %lrev(V.Json, x <> Nil{}, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> Nil{}}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{_}}) : P.Out}
+        {==})
+    case Con{+y, +w}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> y <> w}}) == _ : P.Out}
+        %lrev(V.Json, x <> y <> w, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> y <> w}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{_}}) : P.Out}
+        {==})
+
+def obj_open(+k: String, +x: V.Json, t: List<&2, V.Member>, -close: Bool, +stk: List<&2, P.Frame>, +r: Nat, +rr: Rest) ->
+  IC(V.JObj{V.Mem{k, x} <> t}, True{}, P.FObj{Nil{}, SNil{}} <> stk, r, rr) -> VC(V.JObj{V.Mem{k, x} <> t}, 1n, close, stk, 1n+r, rr):
+  match t:
+    case Nil{}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> Nil{}}}) == _ : P.Out}
+        %lrev(V.Member, V.Mem{k, x} <> Nil{}, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> Nil{}}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{_}}) : P.Out}
+        {==})
+    case Con{+y, +w}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> y <> w}}) == _ : P.Out}
+        %lrev(V.Member, V.Mem{k, x} <> y <> w, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> y <> w}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{_}}) : P.Out}
+        {==})
+
+def arr_last(+x: V.Json, +acc: List<&2, V.Json>, +s2: List<&2, P.Frame>, +close: Bool, +room: Nat, +rr: Rest, +hx: NormH(x),
+  ih: VC(x, 1n, close, P.FArr{acc} <> s2, room, RDl{DBrack{}, Rest.str(rr)})) ->
+  ICA(x, Nil{}, close, P.FArr{acc} <> s2, room, rr):
+  %ih : {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json, x <> acc)}}) == _ : P.Out}
+  pend_dl(x, P.Ctx{P.FArr{acc} <> s2, room}, DBrack{}, Rest.str(rr), hx)
+
+def arr_next(+x: V.Json, +y: V.Json, +t: List<&2, V.Json>, +acc: List<&2, V.Json>, +s2: List<&2, P.Frame>, +close: Bool, +room: Nat,
+  +rr: Rest, +hx: NormH(x),
+  ihx: VC(x, 1n, close, P.FArr{acc} <> s2, room,
+    RDl{DComma{}, Pr.Pr.go(V.JArr{y <> t}, 0n, SCon{']', Rest.str(rr)})}),
+  iht: ICA(y, t, False{}, P.FArr{x <> acc} <> s2, room, rr)) ->
+  ICA(x, y <> t, close, P.FArr{acc} <> s2, room, rr):
+  %ihx : {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json,
+    List.reverse.go(&2, V.Json, x <> y <> t, acc))}}) == _ : P.Out}
+  %pend_dl(x, P.Ctx{P.FArr{acc} <> s2, room}, DComma{},
+    Pr.Pr.go(V.JArr{y <> t}, 0n, SCon{']', Rest.str(rr)}), hx) :
+    {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json,
+      List.reverse.go(&2, V.Json, x <> y <> t, acc))}}) == _ : P.Out}
+  iht
+
+def obj_last(+k: String, +x: V.Json, +items: List<&2, V.Member>, -k0: String, +s2: List<&2, P.Frame>,
+  +close: Bool, +room: Nat, +rr: Rest, +hx: NormH(x),
+  ih: VC(x, 1n, False{}, P.FObj{items, k} <> s2, room, RDl{DBrace{}, Rest.str(rr)})) ->
+  ICO(V.Mem{k, x}, Nil{}, close, P.FObj{items, k0} <> s2, room, rr):
+  %key_str(k, close, P.Ctx{P.FObj{items, k0} <> s2, room}, SCon{':', Pr.Pr.go(x, 1n, SCon{'}', Rest.str(rr)})}) :
+    {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member, V.Mem{k, x} <> items)}}) == _ : P.Out}
+  %ih : {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member, V.Mem{k, x} <> items)}}) == _ : P.Out}
+  pend_dl(x, P.Ctx{P.FObj{items, k} <> s2, room}, DBrace{}, Rest.str(rr), hx)
+
+def obj_next(+k: String, +x: V.Json, +m2: V.Member, +t: List<&2, V.Member>, +items: List<&2, V.Member>,
+  -k0: String, +s2: List<&2, P.Frame>, +close: Bool, +room: Nat, +rr: Rest, +hx: NormH(x),
+  ihx: VC(x, 1n, False{}, P.FObj{items, k} <> s2, room,
+    RDl{DComma{}, Pr.Pr.go(V.JObj{m2 <> t}, 0n, SCon{'}', Rest.str(rr)})}),
+  iht: ICO(m2, t, False{}, P.FObj{V.Mem{k, x} <> items, SNil{}} <> s2, room, rr)) ->
+  ICO(V.Mem{k, x}, m2 <> t, close, P.FObj{items, k0} <> s2, room, rr):
+  %key_str(k, close, P.Ctx{P.FObj{items, k0} <> s2, room}, SCon{':', Pr.Pr.go(x, 1n,
+    SCon{',', Pr.Pr.go(V.JObj{m2 <> t}, 0n, SCon{'}', Rest.str(rr)})})}) :
+    {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member,
+      List.reverse.go(&2, V.Member, V.Mem{k, x} <> m2 <> t, items))}}) == _ : P.Out}
+  %ihx : {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member,
+      List.reverse.go(&2, V.Member, V.Mem{k, x} <> m2 <> t, items))}}) == _ : P.Out}
+  %pend_dl(x, P.Ctx{P.FObj{items, k} <> s2, room}, DComma{},
+    Pr.Pr.go(V.JObj{m2 <> t}, 0n, SCon{'}', Rest.str(rr)}), hx) :
+    {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member,
+      List.reverse.go(&2, V.Member, V.Mem{k, x} <> m2 <> t, items))}}) == _ : P.Out}
+  iht
+
+def fst(-A: Type, -B: Type, p: A & B) -> A:
+  (a, b) = p
+  a
+
+def snd(-A: Type, -B: Type, p: A & B) -> B:
+  (a, b) = p
+  b
+
+def deg(+x: V.Json, +n: Nat, h: {Nat.is_le(1n+V.Json.depth(x), 1n+n) == True{} : Bool}) -> DepH(x, n):
+  h
+
+# the value lemma: every printed value, item list and member list parses
+def VL(v: V.Json, mode: Nat, +close: Bool, +stk: List<&2, P.Frame>, +room: Nat, +rr: Rest,
+  +hn: NormH(v), +hd: DepH(v, Room(mode, room))) -> VC(v, mode, close, stk, room, rr):
+  match v mode:
+    case v0 2n+k:
+      Unit{}
+    case V.JNull{} 1n:
+      {==}
+    case V.JNull{} 0n:
+      Unit{}
+    case V.JBool{True{}} 1n:
+      {==}
+    case V.JBool{False{}} 1n:
+      {==}
+    case V.JBool{b} 0n:
+      Unit{}
+    case V.JNum{+n} 1n:
+      run_num(n, close, hn, P.Ctx{stk, room}, Rest.str(rr))
+    case V.JNum{n} 0n:
+      Unit{}
+    case V.JStr{+s} 1n:
+      str_val(s, close, P.Ctx{stk, room}, Rest.str(rr))
+    case V.JStr{s} 0n:
+      Unit{}
+    case V.JArr{Nil{}} 1n:
+      arr_empty(close, stk, room, rr, hd)
+    case V.JArr{Nil{}} 0n:
+      Unit{}
+    case V.JArr{+x <> +t} 1n:
+      match room:
+        case 0n:
+          %fst({Nat.is_le(1n+V.Json.depth(x), 0n) == True{} : Bool}, DepH(V.JArr{t}, 0n),
+            dep_arr(x, t, 0n, hd)) : BM(_, VC(V.JArr{x <> t}, 1n, close, stk, 0n, rr), Unit)
+          Unit{}
+        case 1n++r:
+          arr_open(x, t, close, stk, r, rr)(VL(V.JArr{x <> t}, 0n, True{}, P.FArr{Nil{}} <> stk, r, rr, hn, hd))
+    case V.JArr{+x <> Nil{}} 0n:
+      match stk:
+        case Con{P.FArr{+acc}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JArr{Nil{}}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{Nil{}}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{Nil{}}, 1n+room),
+            dep_arr(x, Nil{}, 1n+room, hd)))
+          arr_last(x, acc, s2, close, room, rr, hx,
+            VL(x, 1n, close, P.FArr{acc} <> s2, room, RDl{DBrack{}, Rest.str(rr)}, hx, hdx))
+        case Nil{}:
+          Unit{}
+        case Con{P.FObj{a, b}, s2}:
+          Unit{}
+    case V.JArr{+x <> (+y <> +t)} 0n:
+      match stk:
+        case Con{P.FArr{+acc}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JArr{y <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{y <> t}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{y <> t}, 1n+room), dep_arr(x, y <> t, 1n+room, hd)))
+          arr_next(x, y, t, acc, s2, close, room, rr, hx,
+            VL(x, 1n, close, P.FArr{acc} <> s2, room,
+              RDl{DComma{}, Pr.Pr.go(V.JArr{y <> t}, 0n, SCon{']', Rest.str(rr)})}, hx, hdx),
+            VL(V.JArr{y <> t}, 0n, False{}, P.FArr{x <> acc} <> s2, room, rr,
+              snd(NormH(x), NormH(V.JArr{y <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{y <> t}), hn)),
+              snd({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{y <> t}, 1n+room), dep_arr(x, y <> t, 1n+room, hd))))
+        case Nil{}:
+          Unit{}
+        case Con{P.FObj{a, b}, s2}:
+          Unit{}
+    case V.JObj{Nil{}} 1n:
+      obj_empty(close, stk, room, rr, hd)
+    case V.JObj{Nil{}} 0n:
+      Unit{}
+    case V.JObj{V.Mem{+k, +x} <> +t} 1n:
+      match room:
+        case 0n:
+          %fst({Nat.is_le(1n+V.Json.depth(x), 0n) == True{} : Bool}, DepH(V.JObj{t}, 0n),
+            dep_obj(k, x, t, 0n, hd)) : BM(_, VC(V.JObj{V.Mem{k, x} <> t}, 1n, close, stk, 0n, rr), Unit)
+          Unit{}
+        case 1n++r:
+          obj_open(k, x, t, close, stk, r, rr)(VL(V.JObj{V.Mem{k, x} <> t}, 0n, True{},
+            P.FObj{Nil{}, SNil{}} <> stk, r, rr, hn, hd))
+    case V.JObj{V.Mem{+k, +x} <> Nil{}} 0n:
+      match stk:
+        case Con{P.FObj{+items, +k0}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JObj{Nil{}}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{Nil{}}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{Nil{}}, 1n+room),
+            dep_obj(k, x, Nil{}, 1n+room, hd)))
+          obj_last(k, x, items, k0, s2, close, room, rr, hx,
+            VL(x, 1n, False{}, P.FObj{items, k} <> s2, room, RDl{DBrace{}, Rest.str(rr)}, hx, hdx))
+        case Nil{}:
+          Unit{}
+        case Con{P.FArr{a}, s2}:
+          Unit{}
+    case V.JObj{V.Mem{+k, +x} <> (+m2 <> +t)} 0n:
+      match stk:
+        case Con{P.FObj{+items, +k0}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JObj{m2 <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{m2 <> t}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{m2 <> t}, 1n+room), dep_obj(k, x, m2 <> t, 1n+room, hd)))
+          obj_next(k, x, m2, t, items, k0, s2, close, room, rr, hx,
+            VL(x, 1n, False{}, P.FObj{items, k} <> s2, room,
+              RDl{DComma{}, Pr.Pr.go(V.JObj{m2 <> t}, 0n, SCon{'}', Rest.str(rr)})}, hx, hdx),
+            VL(V.JObj{m2 <> t}, 0n, False{}, P.FObj{V.Mem{k, x} <> items, SNil{}} <> s2, room, rr,
+              snd(NormH(x), NormH(V.JObj{m2 <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{m2 <> t}), hn)),
+              snd({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{m2 <> t}, 1n+room), dep_obj(k, x, m2 <> t, 1n+room, hd))))
+        case Nil{}:
+          Unit{}
+        case Con{P.FArr{a}, s2}:
+          Unit{}
+
+def Laws.roundtrip_compact(v, h1, h2):
+  %VL(v, 1n, False{}, Nil{}, 512n, REnd{}, h1, h2) :
+    {P.P.out(_, String.length(Pr.print(v))) == Done{v} : Result<&2, &2, P.Err, V.Json>}
+  %eof_pend(v, 512n, h1, String.length(Pr.print(v))) : {_ == Done{v} : Result<&2, &2, P.Err, V.Json>}
+  {==}

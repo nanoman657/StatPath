@@ -26,7 +26,7 @@ law number_roundtrip:
 # are normalized and it nests no deeper than the parser allows
 law roundtrip_compact:
   for +v: V.Json
-  for h1: {V.Json.is_norm(v) == True{} : Bool}
+  for +h1: {V.Json.is_norm(v) == True{} : Bool}
   for h2: {Nat.is_le(V.Json.depth(v), P.default_depth()) == True{} : Bool}
   {P.parse(Pr.print(v)) == Done{v} : Result<&2, &2, P.Err, V.Json>}
 
@@ -34,7 +34,7 @@ law roundtrip_compact:
 law roundtrip_pretty:
   for +ind: Nat
   for +v: V.Json
-  for h1: {V.Json.is_norm(v) == True{} : Bool}
+  for +h1: {V.Json.is_norm(v) == True{} : Bool}
   for h2: {Nat.is_le(V.Json.depth(v), P.default_depth()) == True{} : Bool}
   {P.parse(Pr.pretty(ind, v)) == Done{v} : Result<&2, &2, P.Err, V.Json>}
 
