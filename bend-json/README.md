@@ -12,10 +12,12 @@ value.bend    the Json value, get / at / is_eq / depth / is_norm
 text.bend     string escaping and the string decoder
 parser.bend   parse, parse_with, parse_number
 printer.bend  print, pretty, print_number, print_par
+rope.bend     print_rope, rope, Rope.write: output as a rope of chunks
 utf8.bend     strict UTF-8 bytes -> String (for reading files)
 LAWS.bend     the laws        PROOF.bend  their proofs   SPEC.bend  law helpers
 tests.bend    the test table  corpus.bend JSONTestSuite runner
-bench.bend    timings         example.bend usage         gen_bench.py bench input
+bench.bend    timings         wbench.bend file-output timings
+example.bend  usage           gen_bench.py bench input
 ```
 
 ## API
@@ -128,7 +130,7 @@ any `Num`, and `is_norm` checks the property.
 ## What is proven (`bend PROOF.bend` → ALL PROOFS CHECK)
 
 `LAWS.bend` states the laws using the library's own functions; `PROOF.bend`
-(about 3,200 lines) proves them.
+(about 3,500 lines) proves them.
 
 1. **`unescape(escape(s)) == Some{s}` for every String.** This includes lone
    surrogates and codes past U+10FFFF, because escape keeps every non-control
@@ -142,6 +144,10 @@ any `Num`, and `is_norm` checks the property.
    unnormalized number reads back as its normalized form.
 4. **Compact output has no char below U+0020; pretty output has none except
    `\n`.**
+5. **`print_par(v) == print(v)` for every value.** Every accumulator-style
+   printer (digits, zeros, escapes, numbers, whole values) is proven to
+   commute with append, `f(y ++ acc) == f(y) ++ acc`. That is what makes
+   forked halves, printed separately and appended, equal the sequential text.
 
 The proofs work against the actual parser, a character-level state machine.
 `PROOF.bend` follows that machine through every print form and every escape.
@@ -155,19 +161,20 @@ Notes:
 - `bend PROOF.bend --verdict`, the recheck by Bend's Lean-verified kernel, was
   **not run**: it needs a Lean 4.34.0 toolchain, which this environment
   could not run.
-- `print_par` is tested to equal `print`, but not proven to.
+- `print_rope` is tested to equal `print` (and byte-identical on the 1 MB
+  file), but not proven to.
 
 ## Tests
 
-`bend tests.bend` checks 170 cases: literals, structure, escapes, surrogate
+`bend tests.bend` checks 171 cases: literals, structure, escapes, surrogate
 pairs, numbers and their formats, about 60 rejections with exact error
 positions, the 512 and 513 depth limits, `get` returning the last match, U32,
-Nat and F32 conversions (F32 against IEEE bit patterns), round trips and
-`print_par`. The native build gives identical results:
+Nat and F32 conversions (F32 against IEEE bit patterns), round trips, and
+`print_par` / `print_rope` equal to `print` (one case a 900-item array). The native build gives identical results:
 
 ```
-bend tests.bend                                    -> tests: 170 passed, 0 failed
-bend tests.bend -o tests && ./tests                -> tests: 170 passed, 0 failed
+bend tests.bend                                    -> tests: 171 passed, 0 failed
+bend tests.bend -o tests && ./tests                -> tests: 171 passed, 0 failed
 ```
 
 The JSONTestSuite `test_parsing` corpus (`corpus.bend <dir> <files…>`; files
@@ -188,21 +195,42 @@ The JS and native output is byte-identical.
 ## Timings
 
 Measured on a 1,017,347-byte file (3,600 mixed records from `gen_bench.py`)
-on a 4-core Linux VM. Times are in milliseconds; the native column is the
-median of three runs.
+on a 4-core Linux VM. Times are in milliseconds; native times are medians of
+nine runs, which vary by about ±20% on this VM.
 
 | | JS (`bend bench.bend f`) | native, 1 thread | native, 4 threads |
 |---|---|---|---|
 | parse | 430–600 | 100 | 100 |
-| print (compact) | 170–260 | 46 | 46 |
-| pretty | 240–320 | 78 | 75–93 |
-| print_par | 210–300 | 96 | 80 |
+| print (compact) | 170–260 | 54 | 57 |
+| pretty | 240–320 | 64 | 70 |
+| print_par | 210–300 | 83 | 58 |
+| fresh parse + print | | 141 | 140 |
+| fresh parse + print_rope | | 151 | 130 |
 
-`print_par` splits a top-level array into balanced halves (2 levels) and forks
-them, but it is **not faster** than `print`. Strings are linked lists, so
-joining the halves costs a copy the fork never wins back; deeper splits were
-slower still (171 ms at 10 levels). Use `print`. Parsing is a single
-sequential state machine.
+Writing the compact text to a file (`wbench.bend`, medians of seven, after
+subtracting the parse's ~111 ms):
+
+| | 1 thread | 4 threads |
+|---|---|---|
+| print, then one File.write | ≈30 ms | ≈33 ms |
+| rope, Rope.write chunk by chunk | ≈36 ms | ≈20 ms |
+
+Parallel printing hardly pays here, and the reason is the string
+representation. A String is a linked list of chars, so joining two printed
+halves copies the left one. Bend's runtime itself scales well on this VM (a
+pure compute fork tree ran 3.3× faster on 4 threads).
+
+- **`print_par`** forks the top-level array into 4 chunks and appends them.
+  On 4 threads it ties `print`.
+- **`print_rope`** (`rope.bend`) joins halves in O(1) with rope nodes, and
+  splits lists by moving their cells, so parallel lanes share no reference
+  counts. Building the rope scales with threads, but producing a String still
+  needs one sequential pass that copies every char. That leaves it about 10%
+  faster than `print` on 4 threads, within this VM's noise.
+- **`Rope.write`** skips that last copy by writing the chunks straight to a
+  file. That is the one clear win: about 1.6× faster output on 4 threads.
+
+Parsing is a single sequential state machine.
 
 ## Known limitations
 

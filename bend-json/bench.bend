@@ -11,6 +11,7 @@ import ./value.bend as V
 import ./parser.bend as P
 import ./printer.bend as Pr
 import ./utf8.bend as U
+import ./rope.bend as Ro
 
 def read_bytes.got(q: File & Result<&1, &1, U32 & String, List<&2, U32>>) ->
   IO(List<&2, U32>):
@@ -58,8 +59,15 @@ def run(+s: String) -> IO(Unit):
     +t3 : Nat <- IO.now()
     IO.print("par:     " ++ Nat.show(String.length(Pr.print_par(v))) ++ " chars")
     +t4 : Nat <- IO.now()
+    IO.print("rope:    same as print: " ++ Bool.show(String.eq(Ro.print_rope(v), Pr.print(v))))
+    +t5 : Nat <- IO.now()
+    IO.print("fresh parse + print: " ++ Nat.show(String.length(Pr.print(Result.default(&2, &2, P.Err, V.Json, P.parse(s), V.JNull{})))))
+    +t6 : Nat <- IO.now()
+    IO.print("fresh parse + rope:  " ++ Nat.show(String.length(Ro.print_rope(Result.default(&2, &2, P.Err, V.Json, P.parse(s), V.JNull{})))))
+    +t7 : Nat <- IO.now()
     IO.print("times: parse " ++ ms(t0, t1) ++ ", print " ++ ms(t1, t2) ++ ", pretty "
-      ++ ms(t2, t3) ++ ", print_par " ++ ms(t3, t4))
+      ++ ms(t2, t3) ++ ", print_par " ++ ms(t3, t4) ++ ", fresh parse+print " ++ ms(t5, t6)
+      ++ ", fresh parse+rope " ++ ms(t6, t7))
 
 def start(args: List<String>) -> IO(Unit):
   match args:

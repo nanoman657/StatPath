@@ -10,6 +10,7 @@ import ./value.bend as V
 import ./text.bend as T
 import ./parser.bend as P
 import ./printer.bend as Pr
+import ./rope.bend as Ro
 
 type Case is Data:
   Case{name: String, got: String, want: String}
@@ -50,7 +51,8 @@ def rt.at(+input: String, r: Result<&2, &2, P.Err, V.Json>) -> Case:
 def par.at(+input: String, r: Result<&2, &2, P.Err, V.Json>) -> Case:
   match r:
     case Done{+v}:
-      Case{"print_par " ++ input, Bool.show(String.eq(Pr.print_par(v), Pr.print(v))), "True"}
+      Case{"print_par/rope " ++ input, Bool.show(String.eq(Pr.print_par(v), Pr.print(v))
+        && String.eq(Ro.print_rope(v), Pr.print(v))), "True"}
     case Fail{e}:
       Case{"print_par " ++ input, "parse failed", "True"}
 
@@ -238,6 +240,7 @@ def cases_4() -> List<&2, Case>:
   par("[1,2]") <>
   par("[1,[2,3],{\"a\":[]},\"x\",null,true,false,1.5,-2e-9,[[[]]],{},4,5,6,7,8,9,10]") <>
   par("{\"a\":[1,2]}") <>
+  par("[" ++ String.join(List.replicate(String, 300n, "[1,\"x\",{\"k\":[2.5]}]"), ",") ++ "]") <>
   par("7") <>
   esc("") <>
   esc("plain") <>
