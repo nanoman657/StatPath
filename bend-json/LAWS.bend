@@ -19,7 +19,7 @@ law escape_roundtrip:
 # LAW 2: a normalized number prints to text that parses back to it
 law number_roundtrip:
   for +n: D.Num
-  for  h: {D.Num.is_norm(n) == True{} : Bool}
+  for +h: {D.Num.is_norm(n) == True{} : Bool}
   {P.parse_number(Pr.print_number(n)) == Some{n} : Maybe<&2, D.Num>}
 
 # LAW 3a: the compact text of a value parses back to it, when its numbers
