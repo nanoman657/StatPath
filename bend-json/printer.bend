@@ -117,33 +117,39 @@ def print_number(n: D.Num) -> String:
 # The text equals print's (tests.bend checks it); nested values print
 # sequentially inside each leaf.
 
-def Pr.halve(+xs: List<&2, V.Json>) -> List<&2, V.Json> & List<&2, V.Json>:
-  +n = Nat.div(List.length(&2, V.Json, xs), 2n)
-  (List.take(&2, V.Json, xs, n), List.drop(&2, V.Json, xs, n))
+# the items text of a list
+def Pr.items(xs: List<&2, V.Json>) -> String:
+  Pr.go(V.JArr{xs}, 0n, SNil{})
 
-# the items of two halves: an empty text is an empty half
-def Pr.join(a: String, b: String) -> String:
-  match a b:
-    case SNil{} y:
-      y
-    case x SNil{}:
-      x
-    case SCon{h, t} SCon{h2, t2}:
-      String.append(SCon{h, t}, SCon{',', SCon{h2, t2}})
+# the items of l then r, given their texts a and b
+def Pr.joinl(l: List<&2, V.Json>, r: List<&2, V.Json>, a: String, b: String) -> String:
+  match l r:
+    case Nil{} r0:
+      b
+    case Con{x, t} Nil{}:
+      a
+    case Con{x, t} Con{y, u}:
+      String.append(a, SCon{',', b})
 
-def Pr.par.go(d: Nat, lr: List<&2, V.Json> & List<&2, V.Json>) -> String:
+# the items of l ++ r: d more levels of balanced, forked halves
+def Pr.par.go(d: Nat, +l: List<&2, V.Json>, +r: List<&2, V.Json>) -> String:
   match d:
     case 0n:
-      (l, r) = lr
-      Pr.join(Pr.go(V.JArr{l}, 0n, SNil{}), Pr.go(V.JArr{r}, 0n, SNil{}))
+      Pr.joinl(l, r, Pr.items(l), Pr.items(r))
     case 1n++p:
-      (l, r) = lr
-      a b = Pr.par.go(p, Pr.halve(l)) Pr.par.go(p, Pr.halve(r))
-      Pr.join(a, b)
+      +hl = Nat.div(List.length(&2, V.Json, l), 2n)
+      +hr = Nat.div(List.length(&2, V.Json, r), 2n)
+      a b = Pr.par.go(p, List.take(&2, V.Json, l, hl), List.drop(&2, V.Json, l, hl)) Pr.par.go(p, List.take(&2, V.Json, r, hr), List.drop(&2, V.Json, r, hr))
+      Pr.joinl(l, r, a, b)
+
+def Pr.par.depth() -> Nat:
+  2n
 
 def print_par(v: V.Json) -> String:
   match v:
-    case V.JArr{xs}:
-      SCon{'[', String.append(Pr.par.go(2n, Pr.halve(xs)), "]")}
+    case V.JArr{+xs}:
+      +h = Nat.div(List.length(&2, V.Json, xs), 2n)
+      SCon{'[', String.append(Pr.par.go(Pr.par.depth(), List.take(&2, V.Json, xs, h),
+        List.drop(&2, V.Json, xs, h)), "]")}
     case o:
       print(o)

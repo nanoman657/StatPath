@@ -48,3 +48,8 @@ law no_control_pretty:
   for +ind: Nat
   for v: V.Json
   {Spec.ctl_free_nl(Pr.pretty(ind, v)) == True{} : Bool}
+
+# LAW 5: the parallel printer prints exactly what the compact one does
+law print_par_eq:
+  for +v: V.Json
+  {Pr.print_par(v) == Pr.print(v) : String}

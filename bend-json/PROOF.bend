@@ -3173,3 +3173,334 @@ def Laws.roundtrip_pretty(ind, v, h1, h2):
     {P.P.out(_, String.length(Pr.pretty(ind, v))) == Done{v} : Result<&2, &2, P.Err, V.Json>}
   %eof_pend(v, 512n, h1, String.length(Pr.pretty(ind, v))) : {_ == Done{v} : Result<&2, &2, P.Err, V.Json>}
   {==}
+
+# Law 5: print_par
+# ----------------
+# Every printer writes in front of an accumulator; each such f commutes
+# with append: f(y ++ acc) == f(y) ++ acc. print_par appends whole texts,
+# so this is what makes it agree with print.
+
+def app_assoc(a: String, -b: String, -c: String) ->
+  {String.append(a, String.append(b, c)) == String.append(String.append(a, b), c) : String}:
+  match a:
+    case SNil{}:
+      {==}
+    case SCon{+h, t}:
+      Equal.cong(String, String, z => SCon{h, z}, String.append(t, String.append(b, c)),
+        String.append(String.append(t, b), c), app_assoc(t, b, c))
+
+def c_dshow(c: List<&2, D.Digit>, -y: String, -acc: String) -> {D.Dec.show(c, String.append(y, acc)) == String.append(D.Dec.show(c, y), acc) : String}:
+  match c:
+    case Nil{}:
+      {==}
+    case Con{+d, t}:
+      c_dshow(t, SCon{D.Digit.to_char(d), y}, acc)
+
+def c_zeros(k: Nat, -y: String, -acc: String) -> {D.Str.zeros(k, String.append(y, acc)) == String.append(D.Str.zeros(k, y), acc) : String}:
+  match k:
+    case 0n:
+      {==}
+    case 1n+p:
+      Equal.cong(String, String, z => SCon{'0', z}, D.Str.zeros(p, String.append(y, acc)),
+        String.append(D.Str.zeros(p, y), acc), c_zeros(p, y, acc))
+
+def c_ctl_r(+x: U32, -y: String, -acc: String, b: Bool) -> {T.Esc.ctl.r(x, String.append(y, acc), b) == String.append(T.Esc.ctl.r(x, y, b), acc) : String}:
+  match b:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
+def c_ctl_f(+x: U32, -y: String, -acc: String, b: Bool) -> {T.Esc.ctl.f(x, String.append(y, acc), b) == String.append(T.Esc.ctl.f(x, y, b), acc) : String}:
+  match b:
+    case True{}:
+      {==}
+    case False{}:
+      c_ctl_r(x, y, acc, U32.is_eq(x, 13))
+
+def c_ctl_n(+x: U32, -y: String, -acc: String, b: Bool) -> {T.Esc.ctl.n(x, String.append(y, acc), b) == String.append(T.Esc.ctl.n(x, y, b), acc) : String}:
+  match b:
+    case True{}:
+      {==}
+    case False{}:
+      c_ctl_f(x, y, acc, U32.is_eq(x, 12))
+
+def c_ctl_t(+x: U32, -y: String, -acc: String, b: Bool) -> {T.Esc.ctl.t(x, String.append(y, acc), b) == String.append(T.Esc.ctl.t(x, y, b), acc) : String}:
+  match b:
+    case True{}:
+      {==}
+    case False{}:
+      c_ctl_n(x, y, acc, U32.is_eq(x, 10))
+
+def c_ctl_b(+x: U32, -y: String, -acc: String, b: Bool) -> {T.Esc.ctl.b(x, String.append(y, acc), b) == String.append(T.Esc.ctl.b(x, y, b), acc) : String}:
+  match b:
+    case True{}:
+      {==}
+    case False{}:
+      c_ctl_t(x, y, acc, U32.is_eq(x, 9))
+
+def c_char_k(+x: U32, k: T.CKind, -y: String, -acc: String) -> {T.Esc.char.k(x, k, String.append(y, acc)) == String.append(T.Esc.char.k(x, k, y), acc) : String}:
+  match k:
+    case T.KPlain{}:
+      {==}
+    case T.KQuote{}:
+      {==}
+    case T.KBack{}:
+      {==}
+    case T.KCtl{}:
+      c_ctl_b(x, y, acc, U32.is_eq(x, 8))
+
+def c_char(c: Char, -y: String, -acc: String) -> {T.Esc.char(c, String.append(y, acc)) == String.append(T.Esc.char(c, y), acc) : String}:
+  match c:
+    case Chr{+x}:
+      c_char_k(x, T.Esc.kind(x), y, acc)
+
+def c_esc(s: String, -y: String, -acc: String) -> {T.Esc.go(s, String.append(y, acc)) == String.append(T.Esc.go(s, y), acc) : String}:
+  match s:
+    case SNil{}:
+      {==}
+    case SCon{+c, t}:
+      %c_char(c, T.Esc.go(t, y), acc) : {T.Esc.go(SCon{c, t}, String.append(y, acc)) == _ : String}
+      Equal.cong(String, String, z => T.Esc.char(c, z), T.Esc.go(t, String.append(y, acc)),
+        String.append(T.Esc.go(t, y), acc), c_esc(t, y, acc))
+
+def c_quote(+s: String, -y: String, -acc: String) -> {T.quote(s, String.append(y, acc)) == String.append(T.quote(s, y), acc) : String}:
+  Equal.cong(String, String, z => SCon{'"', z}, T.Esc.go(s, SCon{'"', String.append(y, acc)}),
+    String.append(T.Esc.go(s, SCon{'"', y}), acc), c_esc(s, SCon{'"', y}, acc))
+
+def c_sign(neg: Bool, -b: String, -acc: String) ->
+  {D.Num.show.sign(neg, String.append(b, acc)) == String.append(D.Num.show.sign(neg, b), acc) : String}:
+  match neg:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
+def c_esign(neg: Bool, -b: String, -acc: String) ->
+  {D.Num.show.esign(neg, String.append(b, acc)) == String.append(D.Num.show.esign(neg, b), acc) : String}:
+  match neg:
+    case True{}:
+      {==}
+    case False{}:
+      {==}
+
+def c_exp(+c: List<&2, D.Digit>, +eneg: Bool, +e: List<&2, D.Digit>, -y: String, -acc: String) ->
+  {D.Num.show.exp(c, eneg, e, String.append(y, acc)) == String.append(D.Num.show.exp(c, eneg, e, y), acc) : String}:
+  %c_dshow(c, SCon{'e', D.Num.show.esign(eneg, D.Dec.show(e, y))}, acc) :
+    {D.Num.show.exp(c, eneg, e, String.append(y, acc)) == _ : String}
+  %c_esign(eneg, D.Dec.show(e, y), acc) :
+    {D.Num.show.exp(c, eneg, e, String.append(y, acc)) == D.Dec.show(c, SCon{'e', _}) : String}
+  %c_dshow(e, y, acc) :
+    {D.Num.show.exp(c, eneg, e, String.append(y, acc)) == D.Dec.show(c, SCon{'e', D.Num.show.esign(eneg, _)}) : String}
+  {==}
+
+def c_pos_fit(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -y: String, -acc: String, fit: Bool) ->
+  {D.Num.show.pos.fit(c, e, String.append(y, acc), fit) == String.append(D.Num.show.pos.fit(c, e, y, fit), acc) : String}:
+  match fit:
+    case True{}:
+      %c_dshow(c, D.Str.zeros(D.Dec.to_nat(e), y), acc) :
+        {D.Num.show.pos.fit(c, e, String.append(y, acc), True{}) == _ : String}
+      %c_zeros(D.Dec.to_nat(e), y, acc) :
+        {D.Num.show.pos.fit(c, e, String.append(y, acc), True{}) == D.Dec.show(c, _) : String}
+      {==}
+    case False{}:
+      c_exp(c, False{}, e, y, acc)
+
+def c_pos(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -y: String, -acc: String, small: Bool) ->
+  {D.Num.show.pos(c, e, String.append(y, acc), small) == String.append(D.Num.show.pos(c, e, y, small), acc) : String}:
+  match small:
+    case True{}:
+      c_pos_fit(c, e, y, acc, Nat.is_le(Nat.add(List.length(&2, D.Digit, c), D.Dec.to_nat(e)), 21n))
+    case False{}:
+      c_exp(c, False{}, e, y, acc)
+
+def c_neg_zeros(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat, -y: String, -acc: String, fit: Bool) ->
+  {D.Num.show.neg.zeros(c, e, k, l, String.append(y, acc), fit) == String.append(D.Num.show.neg.zeros(c, e, k, l, y, fit), acc) : String}:
+  match fit:
+    case True{}:
+      %c_zeros(Nat.sub(k, l), D.Dec.show(c, y), acc) :
+        {D.Num.show.neg.zeros(c, e, k, l, String.append(y, acc), True{}) == SCon{'0', SCon{'.', _}} : String}
+      %c_dshow(c, y, acc) :
+        {D.Num.show.neg.zeros(c, e, k, l, String.append(y, acc), True{}) == SCon{'0', SCon{'.', D.Str.zeros(Nat.sub(k, l), _)}} : String}
+      {==}
+    case False{}:
+      c_exp(c, True{}, e, y, acc)
+
+def c_neg_point(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, +k: Nat, +l: Nat, -y: String, -acc: String, inside: Bool) ->
+  {D.Num.show.neg.point(c, e, k, l, String.append(y, acc), inside) == String.append(D.Num.show.neg.point(c, e, k, l, y, inside), acc) : String}:
+  match inside:
+    case True{}:
+      %c_dshow(List.drop(&2, D.Digit, c, k), SCon{'.', D.Dec.show(List.take(&2, D.Digit, c, k), y)}, acc) :
+        {D.Num.show.neg.point(c, e, k, l, String.append(y, acc), True{}) == _ : String}
+      %c_dshow(List.take(&2, D.Digit, c, k), y, acc) :
+        {D.Num.show.neg.point(c, e, k, l, String.append(y, acc), True{}) == D.Dec.show(List.drop(&2, D.Digit, c, k), SCon{'.', _}) : String}
+      {==}
+    case False{}:
+      c_neg_zeros(c, e, k, l, y, acc, Nat.is_le(Nat.sub(k, l), 5n))
+
+def c_neg(+c: List<&2, D.Digit>, +e: List<&2, D.Digit>, -y: String, -acc: String, small: Bool) ->
+  {D.Num.show.neg(c, e, String.append(y, acc), small) == String.append(D.Num.show.neg(c, e, y, small), acc) : String}:
+  match small:
+    case True{}:
+      c_neg_point(c, e, D.Dec.to_nat(e), List.length(&2, D.Digit, c), y, acc,
+        Nat.is_lt(D.Dec.to_nat(e), List.length(&2, D.Digit, c)))
+    case False{}:
+      c_exp(c, True{}, e, y, acc)
+
+def c_body(+c: List<&2, D.Digit>, eneg: Bool, e: List<&2, D.Digit>, -y: String, -acc: String) ->
+  {D.Num.show.body(c, eneg, e, String.append(y, acc)) == String.append(D.Num.show.body(c, eneg, e, y), acc) : String}:
+  match eneg e:
+    case False{} Nil{}:
+      c_dshow(c, y, acc)
+    case False{} Con{+x, +t}:
+      c_pos(c, x <> t, y, acc, Nat.is_le(List.length(&2, D.Digit, x <> t), 2n))
+    case True{} +m:
+      c_neg(c, m, y, acc, Nat.is_le(List.length(&2, D.Digit, m), 6n))
+
+def c_num(n: D.Num, -y: String, -acc: String) -> {D.Num.show(n, String.append(y, acc)) == String.append(D.Num.show(n, y), acc) : String}:
+  match n:
+    case D.Num{neg, Nil{}, eneg, e}:
+      {==}
+    case D.Num{+neg, +x <> +t, +eneg, +e}:
+      %c_sign(neg, D.Num.show.body(x <> t, eneg, e, y), acc) :
+        {D.Num.show(D.Num{neg, x <> t, eneg, e}, String.append(y, acc)) == _ : String}
+      %c_body(x <> t, eneg, e, y, acc) :
+        {D.Num.show(D.Num{neg, x <> t, eneg, e}, String.append(y, acc)) == D.Num.show.sign(neg, _) : String}
+      {==}
+
+def c_go(v: V.Json, mode: Nat, -y: String, -acc: String) -> {Pr.Pr.go(v, mode, String.append(y, acc)) == String.append(Pr.Pr.go(v, mode, y), acc) : String}:
+  match v mode:
+    case V.JNull{} _:
+      app_assoc("null", y, acc)
+    case V.JBool{True{}} _:
+      app_assoc("true", y, acc)
+    case V.JBool{False{}} _:
+      app_assoc("false", y, acc)
+    case V.JNum{n} _:
+      c_num(n, y, acc)
+    case V.JStr{+s} _:
+      c_quote(s, y, acc)
+    case V.JArr{+xs} 1n++m:
+      %c_go(V.JArr{xs}, m, SCon{']', y}, acc) : {Pr.Pr.go(V.JArr{xs}, 1n+m, String.append(y, acc)) == SCon{'[', _} : String}
+      {==}
+    case V.JArr{Nil{}} 0n:
+      {==}
+    case V.JArr{+x <> Nil{}} 0n:
+      c_go(x, 1n, y, acc)
+    case V.JArr{+x <> (+z <> +t)} 0n:
+      %c_go(x, 1n, SCon{',', Pr.Pr.go(V.JArr{z <> t}, 0n, y)}, acc) :
+        {Pr.Pr.go(V.JArr{x <> z <> t}, 0n, String.append(y, acc)) == _ : String}
+      %c_go(V.JArr{z <> t}, 0n, y, acc) :
+        {Pr.Pr.go(V.JArr{x <> z <> t}, 0n, String.append(y, acc)) == Pr.Pr.go(x, 1n, SCon{',', _}) : String}
+      {==}
+    case V.JObj{+ms} 1n++m:
+      %c_go(V.JObj{ms}, m, SCon{'}', y}, acc) : {Pr.Pr.go(V.JObj{ms}, 1n+m, String.append(y, acc)) == SCon{'{', _} : String}
+      {==}
+    case V.JObj{Nil{}} 0n:
+      {==}
+    case V.JObj{V.Mem{+k, +x} <> Nil{}} 0n:
+      %c_quote(k, SCon{':', Pr.Pr.go(x, 1n, y)}, acc) :
+        {Pr.Pr.go(V.JObj{V.Mem{k, x} <> Nil{}}, 0n, String.append(y, acc)) == _ : String}
+      %c_go(x, 1n, y, acc) :
+        {Pr.Pr.go(V.JObj{V.Mem{k, x} <> Nil{}}, 0n, String.append(y, acc)) == T.quote(k, SCon{':', _}) : String}
+      {==}
+    case V.JObj{V.Mem{+k, +x} <> (+z <> +t)} 0n:
+      %c_quote(k, SCon{':', Pr.Pr.go(x, 1n, SCon{',', Pr.Pr.go(V.JObj{z <> t}, 0n, y)})}, acc) :
+        {Pr.Pr.go(V.JObj{V.Mem{k, x} <> (z <> t)}, 0n, String.append(y, acc)) == _ : String}
+      %c_go(x, 1n, SCon{',', Pr.Pr.go(V.JObj{z <> t}, 0n, y)}, acc) :
+        {Pr.Pr.go(V.JObj{V.Mem{k, x} <> (z <> t)}, 0n, String.append(y, acc)) == T.quote(k, SCon{':', _}) : String}
+      %c_go(V.JObj{z <> t}, 0n, y, acc) :
+        {Pr.Pr.go(V.JObj{V.Mem{k, x} <> (z <> t)}, 0n, String.append(y, acc)) == T.quote(k, SCon{':', Pr.Pr.go(x, 1n, SCon{',', _})}) : String}
+      {==}
+
+def lapp_nil(-A: Data, xs: List<&2, A>) -> {xs == List.append(&2, A, xs, Nil{}) : List<&2, A>}:
+  match xs:
+    case Nil{}:
+      {==}
+    case Con{+h, +t}:
+      Equal.cong(List<&2, A>, List<&2, A>, z => h <> z, t, List.append(&2, A, t, Nil{}), lapp_nil(A, t))
+
+def ltake_drop(-A: Data, xs: List<&2, A>, k: Nat) ->
+  {xs == List.append(&2, A, List.take(&2, A, xs, k), List.drop(&2, A, xs, k)) : List<&2, A>}:
+  match xs k:
+    case Nil{} k0:
+      {==}
+    case Con{x, t} 0n:
+      {==}
+    case Con{+x, +t} 1n++p:
+      Equal.cong(List<&2, A>, List<&2, A>, z => x <> z, t,
+        List.append(&2, A, List.take(&2, A, t, p), List.drop(&2, A, t, p)), ltake_drop(A, t, p))
+
+# the items of l ++ r are joined from the items of l and of r
+def split(l: List<&2, V.Json>, +r: List<&2, V.Json>) ->
+  {Pr.Pr.items(List.append(&2, V.Json, l, r)) == Pr.Pr.joinl(l, r, Pr.Pr.items(l), Pr.Pr.items(r)) : String}:
+  match l r:
+    case Nil{} r0:
+      {==}
+    case Con{+x, +t} Nil{}:
+      %lapp_nil(V.Json, x <> t) : {Pr.Pr.items(_) == Pr.Pr.items(x <> t) : String}
+      {==}
+    case Con{+x, Nil{}} Con{+w, +u}:
+      c_go(x, 1n, SNil{}, SCon{',', Pr.Pr.items(w <> u)})
+    case Con{+x, Con{+z, +t}} Con{+w, +u}:
+      %c_go(x, 1n, SCon{',', Pr.Pr.items(z <> t)}, SCon{',', Pr.Pr.items(w <> u)}) :
+        {Pr.Pr.items(List.append(&2, V.Json, x <> z <> t, w <> u)) == _ : String}
+      %split(z <> t, w <> u) :
+        {Pr.Pr.items(List.append(&2, V.Json, x <> z <> t, w <> u)) == Pr.Pr.go(x, 1n, SCon{',', _}) : String}
+      {==}
+
+def HL(xs: List<&2, V.Json>) -> Nat:
+  Nat.div(List.length(&2, V.Json, xs), 2n)
+
+# however deep the split, par.go prints the items of l ++ r
+def par_go(d: Nat, +l: List<&2, V.Json>, +r: List<&2, V.Json>) ->
+  {Pr.Pr.joinl(l, r, Pr.Pr.items(l), Pr.Pr.items(r)) == Pr.Pr.par.go(d, l, r) : String}:
+  match d:
+    case 0n:
+      {==}
+    case 1n++p:
+      +tl = List.take(&2, V.Json, l, HL(l))
+      +dl = List.drop(&2, V.Json, l, HL(l))
+      +tr = List.take(&2, V.Json, r, HL(r))
+      +dr = List.drop(&2, V.Json, r, HL(r))
+      +g = {Pr.Pr.joinl(l, r, Pr.Pr.items(l), Pr.Pr.items(r)) : String}
+      %par_go(p, tl, dl) : {g == Pr.Pr.joinl(l, r, _, Pr.Pr.par.go(p, tr, dr)) : String}
+      %split(tl, dl) : {g == Pr.Pr.joinl(l, r, _, Pr.Pr.par.go(p, tr, dr)) : String}
+      %ltake_drop(V.Json, l, HL(l)) : {g == Pr.Pr.joinl(l, r, Pr.Pr.items(_), Pr.Pr.par.go(p, tr, dr)) : String}
+      %par_go(p, tr, dr) : {g == Pr.Pr.joinl(l, r, Pr.Pr.items(l), _) : String}
+      %split(tr, dr) : {g == Pr.Pr.joinl(l, r, Pr.Pr.items(l), _) : String}
+      %ltake_drop(V.Json, r, HL(r)) : {g == Pr.Pr.joinl(l, r, Pr.Pr.items(l), Pr.Pr.items(_)) : String}
+      {==}
+
+def arr_print(xs: List<&2, V.Json>) ->
+  {SCon{'[', String.append(Pr.Pr.items(xs), "]")} == Pr.print(V.JArr{xs}) : String}:
+  match xs:
+    case Nil{}:
+      {==}
+    case Con{+x, Nil{}}:
+      %c_go(V.JArr{[x]}, 0n, SNil{}, "]") : {SCon{'[', _} == Pr.print(V.JArr{[x]}) : String}
+      {==}
+    case Con{+x, Con{+y, +t}}:
+      %c_go(V.JArr{x <> y <> t}, 0n, SNil{}, "]") : {SCon{'[', _} == Pr.print(V.JArr{x <> y <> t}) : String}
+      {==}
+
+def Laws.print_par_eq(v):
+  match v:
+    case V.JArr{+xs}:
+      +t = List.take(&2, V.Json, xs, HL(xs))
+      +dd = List.drop(&2, V.Json, xs, HL(xs))
+      +q = {Pr.print(V.JArr{xs}) : String}
+      %par_go(Pr.Pr.par.depth(), t, dd) : {SCon{'[', String.append(_, "]")} == q : String}
+      %split(t, dd) : {SCon{'[', String.append(_, "]")} == q : String}
+      %ltake_drop(V.Json, xs, HL(xs)) : {SCon{'[', String.append(Pr.Pr.items(_), "]")} == q : String}
+      arr_print(xs)
+    case V.JNull{}:
+      {==}
+    case V.JBool{b}:
+      {==}
+    case V.JNum{n}:
+      {==}
+    case V.JStr{s}:
+      {==}
+    case V.JObj{ms}:
+      {==}
