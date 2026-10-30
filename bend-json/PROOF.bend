@@ -2895,3 +2895,281 @@ def Laws.roundtrip_compact(v, h1, h2):
     {P.P.out(_, String.length(Pr.print(v))) == Done{v} : Result<&2, &2, P.Err, V.Json>}
   %eof_pend(v, 512n, h1, String.length(Pr.print(v))) : {_ == Done{v} : Result<&2, &2, P.Err, V.Json>}
   {==}
+
+# Law 3b: pretty text
+# -------------------
+
+def ws_val(n: Nat, -close: Bool, -c: P.Ctx, -r: String) ->
+  {R(r, P.SVal{close, c}) == R(Pr.Pr.spaces(n, r), P.SVal{close, c}) : P.Out}:
+  match n:
+    case 0n:
+      {==}
+    case 1n+p:
+      ws_val(p, close, c, r)
+
+def ws_key(n: Nat, -close: Bool, -c: P.Ctx, -r: String) ->
+  {R(r, P.SKey{close, c}) == R(Pr.Pr.spaces(n, r), P.SKey{close, c}) : P.Out}:
+  match n:
+    case 0n:
+      {==}
+    case 1n+p:
+      ws_key(p, close, c, r)
+
+def ws_done(n: Nat, -c: P.Ctx, -v: V.Json, -r: String) ->
+  {R(r, P.SDone{c, v}) == R(Pr.Pr.spaces(n, r), P.SDone{c, v}) : P.Out}:
+  match n:
+    case 0n:
+      {==}
+    case 1n+p:
+      ws_done(p, c, v, r)
+
+# the claims: items sit at level 1n+lvl, their closer at lvl
+def ICAp(x: V.Json, t: List<&2, V.Json>, ind: Nat, lvl: Nat, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match stk:
+    case Con{P.FArr{acc}, s2}:
+      {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json, List.reverse.go(&2, V.Json, x <> t, acc))}})
+        == R(Pr.Pr.pp(V.JArr{x <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', Rest.str(rr)})),
+          P.SVal{close, P.Ctx{P.FArr{acc} <> s2, room}}) : P.Out}
+    case _:
+      Unit
+
+def ICOp(m: V.Member, t: List<&2, V.Member>, ind: Nat, lvl: Nat, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match stk:
+    case Con{P.FObj{items, k0}, s2}:
+      {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member, List.reverse.go(&2, V.Member, m <> t, items))}})
+        == R(Pr.Pr.pp(V.JObj{m <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', Rest.str(rr)})),
+          P.SKey{close, P.Ctx{P.FObj{items, k0} <> s2, room}}) : P.Out}
+    case _:
+      Unit
+
+def ICp(v: V.Json, ind: Nat, lvl: Nat, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match v:
+    case V.JArr{Con{x, t}}:
+      ICAp(x, t, ind, lvl, close, stk, room, rr)
+    case V.JObj{Con{m, t}}:
+      ICOp(m, t, ind, lvl, close, stk, room, rr)
+    case _:
+      Unit
+
+def VCp(v: V.Json, mode: Nat, ind: Nat, lvl: Nat, close: Bool, stk: List<&2, P.Frame>, room: Nat, rr: Rest) -> Type:
+  match mode:
+    case 0n:
+      ICp(v, ind, lvl, close, stk, room, rr)
+    case 1n:
+      {R(Rest.str(rr), Pend(v, P.Ctx{stk, room})) == R(Pr.Pr.pp(v, 1n, ind, lvl, Rest.str(rr)), P.SVal{close, P.Ctx{stk, room}}) : P.Out}
+    case 2n+k:
+      Unit
+
+def arr_empty_p(-ind: Nat, -lvl: Nat, -close: Bool, -stk: List<&2, P.Frame>, room: Nat, -rr: Rest, h: DepH(V.JArr{Nil{}}, room)) ->
+  VCp(V.JArr{Nil{}}, 1n, ind, lvl, close, stk, room, rr):
+  match room:
+    case 0n:
+      %h : BM(_, VCp(V.JArr{Nil{}}, 1n, ind, lvl, close, stk, 0n, rr), Unit)
+      Unit{}
+    case 1n+r:
+      {==}
+
+def obj_empty_p(-ind: Nat, -lvl: Nat, -close: Bool, -stk: List<&2, P.Frame>, room: Nat, -rr: Rest, h: DepH(V.JObj{Nil{}}, room)) ->
+  VCp(V.JObj{Nil{}}, 1n, ind, lvl, close, stk, room, rr):
+  match room:
+    case 0n:
+      %h : BM(_, VCp(V.JObj{Nil{}}, 1n, ind, lvl, close, stk, 0n, rr), Unit)
+      Unit{}
+    case 1n+r:
+      {==}
+
+def arr_open_p(+x: V.Json, t: List<&2, V.Json>, +ind: Nat, +lvl: Nat, -close: Bool, +stk: List<&2, P.Frame>, +r: Nat, +rr: Rest) ->
+  ICp(V.JArr{x <> t}, ind, lvl, True{}, P.FArr{Nil{}} <> stk, r, rr) -> VCp(V.JArr{x <> t}, 1n, ind, lvl, close, stk, 1n+r, rr):
+  match t:
+    case Nil{}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> Nil{}}}) == _ : P.Out}
+        %lrev(V.Json, x <> Nil{}, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> Nil{}}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{_}}) : P.Out}
+        {==})
+    case Con{+y, +w}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> y <> w}}) == _ : P.Out}
+        %lrev(V.Json, x <> y <> w, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{x <> y <> w}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JArr{_}}) : P.Out}
+        {==})
+
+def obj_open_p(+k: String, +x: V.Json, t: List<&2, V.Member>, +ind: Nat, +lvl: Nat, -close: Bool, +stk: List<&2, P.Frame>, +r: Nat, +rr: Rest) ->
+  ICp(V.JObj{V.Mem{k, x} <> t}, ind, lvl, True{}, P.FObj{Nil{}, SNil{}} <> stk, r, rr) -> VCp(V.JObj{V.Mem{k, x} <> t}, 1n, ind, lvl, close, stk, 1n+r, rr):
+  match t:
+    case Nil{}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> Nil{}}}) == _ : P.Out}
+        %lrev(V.Member, V.Mem{k, x} <> Nil{}, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> Nil{}}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{_}}) : P.Out}
+        {==})
+    case Con{+y, +w}:
+      ih => (%ih : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> y <> w}}) == _ : P.Out}
+        %lrev(V.Member, V.Mem{k, x} <> y <> w, Nil{}) : {R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{V.Mem{k, x} <> y <> w}})
+          == R(Rest.str(rr), P.SDone{P.Ctx{stk, 1n+r}, V.JObj{_}}) : P.Out}
+        {==})
+
+def arr_last_p(+x: V.Json, +acc: List<&2, V.Json>, +s2: List<&2, P.Frame>, +ind: Nat, +lvl: Nat, +close: Bool, +room: Nat, +rr: Rest,
+  +hx: NormH(x),
+  ih: VCp(x, 1n, ind, 1n+lvl, close, P.FArr{acc} <> s2, room, RDl{DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{']', Rest.str(rr)})})) ->
+  ICAp(x, Nil{}, ind, lvl, close, P.FArr{acc} <> s2, room, rr):
+  +c = {P.Ctx{P.FArr{acc} <> s2, room} : P.Ctx}
+  +L = {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json, x <> acc)}}) : P.Out}
+  %ws_val(Nat.mul(1n+lvl, ind), close, c, Pr.Pr.pp(x, 1n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', Rest.str(rr)}))) : {L == _ : P.Out}
+  %ih : {L == _ : P.Out}
+  %pend_dl(x, c, DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{']', Rest.str(rr)}), hx) : {L == _ : P.Out}
+  %ws_done(Nat.mul(lvl, ind), c, x, SCon{']', Rest.str(rr)}) : {L == _ : P.Out}
+  {==}
+
+def arr_next_p(+x: V.Json, +y: V.Json, +t: List<&2, V.Json>, +acc: List<&2, V.Json>, +s2: List<&2, P.Frame>, +ind: Nat, +lvl: Nat, +close: Bool,
+  +room: Nat, +rr: Rest, +hx: NormH(x),
+  ihx: VCp(x, 1n, ind, 1n+lvl, close, P.FArr{acc} <> s2, room,
+    RDl{DComma{}, Pr.Pr.pp(V.JArr{y <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', Rest.str(rr)}))}),
+  iht: ICAp(y, t, ind, lvl, False{}, P.FArr{x <> acc} <> s2, room, rr)) ->
+  ICAp(x, y <> t, ind, lvl, close, P.FArr{acc} <> s2, room, rr):
+  +c = {P.Ctx{P.FArr{acc} <> s2, room} : P.Ctx}
+  +g = {Pr.Pr.pp(V.JArr{y <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', Rest.str(rr)})) : String}
+  +L = {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JArr{List.reverse(&2, V.Json,
+    List.reverse.go(&2, V.Json, x <> y <> t, acc))}}) : P.Out}
+  %ws_val(Nat.mul(1n+lvl, ind), close, c, Pr.Pr.pp(x, 1n, ind, 1n+lvl, SCon{',', g})) : {L == _ : P.Out}
+  %ihx : {L == _ : P.Out}
+  %pend_dl(x, c, DComma{}, g, hx) : {L == _ : P.Out}
+  iht
+
+def obj_last_p(+k: String, +x: V.Json, +items: List<&2, V.Member>, +k0: String, +s2: List<&2, P.Frame>, +ind: Nat, +lvl: Nat,
+  +close: Bool, +room: Nat, +rr: Rest, +hx: NormH(x),
+  ih: VCp(x, 1n, ind, 1n+lvl, False{}, P.FObj{items, k} <> s2, room, RDl{DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{'}', Rest.str(rr)})})) ->
+  ICOp(V.Mem{k, x}, Nil{}, ind, lvl, close, P.FObj{items, k0} <> s2, room, rr):
+  +c0 = {P.Ctx{P.FObj{items, k0} <> s2, room} : P.Ctx}
+  +c = {P.Ctx{P.FObj{items, k} <> s2, room} : P.Ctx}
+  +X = {Pr.Pr.pp(x, 1n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', Rest.str(rr)})) : String}
+  +L = {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member, V.Mem{k, x} <> items)}}) : P.Out}
+  %ws_key(Nat.mul(1n+lvl, ind), close, c0, T.quote(k, SCon{':', SCon{' ', X}})) : {L == _ : P.Out}
+  %key_str(k, close, c0, SCon{':', SCon{' ', X}}) : {L == _ : P.Out}
+  %ih : {L == _ : P.Out}
+  %pend_dl(x, c, DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{'}', Rest.str(rr)}), hx) : {L == _ : P.Out}
+  %ws_done(Nat.mul(lvl, ind), c, x, SCon{'}', Rest.str(rr)}) : {L == _ : P.Out}
+  {==}
+
+def obj_next_p(+k: String, +x: V.Json, +m2: V.Member, +t: List<&2, V.Member>, +items: List<&2, V.Member>, +k0: String, +s2: List<&2, P.Frame>,
+  +ind: Nat, +lvl: Nat, +close: Bool, +room: Nat, +rr: Rest, +hx: NormH(x),
+  ihx: VCp(x, 1n, ind, 1n+lvl, False{}, P.FObj{items, k} <> s2, room,
+    RDl{DComma{}, Pr.Pr.pp(V.JObj{m2 <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', Rest.str(rr)}))}),
+  iht: ICOp(m2, t, ind, lvl, False{}, P.FObj{V.Mem{k, x} <> items, SNil{}} <> s2, room, rr)) ->
+  ICOp(V.Mem{k, x}, m2 <> t, ind, lvl, close, P.FObj{items, k0} <> s2, room, rr):
+  +c0 = {P.Ctx{P.FObj{items, k0} <> s2, room} : P.Ctx}
+  +c = {P.Ctx{P.FObj{items, k} <> s2, room} : P.Ctx}
+  +g = {Pr.Pr.pp(V.JObj{m2 <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', Rest.str(rr)})) : String}
+  +X = {Pr.Pr.pp(x, 1n, ind, 1n+lvl, SCon{',', g}) : String}
+  +L = {R(Rest.str(rr), P.SDone{P.Ctx{s2, 1n+room}, V.JObj{List.reverse(&2, V.Member,
+    List.reverse.go(&2, V.Member, V.Mem{k, x} <> m2 <> t, items))}}) : P.Out}
+  %ws_key(Nat.mul(1n+lvl, ind), close, c0, T.quote(k, SCon{':', SCon{' ', X}})) : {L == _ : P.Out}
+  %key_str(k, close, c0, SCon{':', SCon{' ', X}}) : {L == _ : P.Out}
+  %ihx : {L == _ : P.Out}
+  %pend_dl(x, c, DComma{}, g, hx) : {L == _ : P.Out}
+  iht
+
+def VLp(v: V.Json, mode: Nat, +ind: Nat, +lvl: Nat, +close: Bool, +stk: List<&2, P.Frame>, +room: Nat,
+  +rr: Rest, +hn: NormH(v), +hd: DepH(v, Room(mode, room))) -> VCp(v, mode, ind, lvl, close, stk, room, rr):
+  match v mode:
+    case v0 2n+k:
+      Unit{}
+    case V.JNull{} 1n:
+      {==}
+    case V.JNull{} 0n:
+      Unit{}
+    case V.JBool{True{}} 1n:
+      {==}
+    case V.JBool{False{}} 1n:
+      {==}
+    case V.JBool{b} 0n:
+      Unit{}
+    case V.JNum{+n} 1n:
+      run_num(n, close, hn, P.Ctx{stk, room}, Rest.str(rr))
+    case V.JNum{n} 0n:
+      Unit{}
+    case V.JStr{+s} 1n:
+      str_val(s, close, P.Ctx{stk, room}, Rest.str(rr))
+    case V.JStr{s} 0n:
+      Unit{}
+    case V.JArr{Nil{}} 1n:
+      arr_empty_p(ind, lvl, close, stk, room, rr, hd)
+    case V.JArr{Nil{}} 0n:
+      Unit{}
+    case V.JArr{+x <> +t} 1n:
+      match room:
+        case 0n:
+          %fst({Nat.is_le(1n+V.Json.depth(x), 0n) == True{} : Bool}, DepH(V.JArr{t}, 0n),
+            dep_arr(x, t, 0n, hd)) : BM(_, VCp(V.JArr{x <> t}, 1n, ind, lvl, close, stk, 0n, rr), Unit)
+          Unit{}
+        case 1n++r:
+          arr_open_p(x, t, ind, lvl, close, stk, r, rr)(VLp(V.JArr{x <> t}, 0n, ind, lvl, True{},
+            P.FArr{Nil{}} <> stk, r, rr, hn, hd))
+    case V.JArr{+x <> Nil{}} 0n:
+      match stk:
+        case Con{P.FArr{+acc}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JArr{Nil{}}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{Nil{}}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{Nil{}}, 1n+room), dep_arr(x, Nil{}, 1n+room, hd)))
+          arr_last_p(x, acc, s2, ind, lvl, close, room, rr, hx,
+            VLp(x, 1n, ind, 1n+lvl, close, P.FArr{acc} <> s2, room, RDl{DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{']', Rest.str(rr)})}, hx, hdx))
+        case Nil{}:
+          Unit{}
+        case Con{P.FObj{a, b}, s2}:
+          Unit{}
+    case V.JArr{+x <> (+y <> +t)} 0n:
+      match stk:
+        case Con{P.FArr{+acc}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JArr{y <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{y <> t}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{y <> t}, 1n+room), dep_arr(x, y <> t, 1n+room, hd)))
+          arr_next_p(x, y, t, acc, s2, ind, lvl, close, room, rr, hx,
+            VLp(x, 1n, ind, 1n+lvl, close, P.FArr{acc} <> s2, room,
+              RDl{DComma{}, Pr.Pr.pp(V.JArr{y <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{']', Rest.str(rr)}))}, hx, hdx),
+            VLp(V.JArr{y <> t}, 0n, ind, lvl, False{}, P.FArr{x <> acc} <> s2, room, rr,
+              snd(NormH(x), NormH(V.JArr{y <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JArr{y <> t}), hn)),
+              snd({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JArr{y <> t}, 1n+room), dep_arr(x, y <> t, 1n+room, hd))))
+        case Nil{}:
+          Unit{}
+        case Con{P.FObj{a, b}, s2}:
+          Unit{}
+    case V.JObj{Nil{}} 1n:
+      obj_empty_p(ind, lvl, close, stk, room, rr, hd)
+    case V.JObj{Nil{}} 0n:
+      Unit{}
+    case V.JObj{V.Mem{+k, +x} <> +t} 1n:
+      match room:
+        case 0n:
+          %fst({Nat.is_le(1n+V.Json.depth(x), 0n) == True{} : Bool}, DepH(V.JObj{t}, 0n),
+            dep_obj(k, x, t, 0n, hd)) : BM(_, VCp(V.JObj{V.Mem{k, x} <> t}, 1n, ind, lvl, close, stk, 0n, rr), Unit)
+          Unit{}
+        case 1n++r:
+          obj_open_p(k, x, t, ind, lvl, close, stk, r, rr)(VLp(V.JObj{V.Mem{k, x} <> t}, 0n, ind, lvl,
+            True{}, P.FObj{Nil{}, SNil{}} <> stk, r, rr, hn, hd))
+    case V.JObj{V.Mem{+k, +x} <> Nil{}} 0n:
+      match stk:
+        case Con{P.FObj{+items, +k0}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JObj{Nil{}}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{Nil{}}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{Nil{}}, 1n+room), dep_obj(k, x, Nil{}, 1n+room, hd)))
+          obj_last_p(k, x, items, k0, s2, ind, lvl, close, room, rr, hx,
+            VLp(x, 1n, ind, 1n+lvl, False{}, P.FObj{items, k} <> s2, room, RDl{DNl{}, Pr.Pr.spaces(Nat.mul(lvl, ind), SCon{'}', Rest.str(rr)})}, hx, hdx))
+        case Nil{}:
+          Unit{}
+        case Con{P.FArr{a}, s2}:
+          Unit{}
+    case V.JObj{V.Mem{+k, +x} <> (+m2 <> +t)} 0n:
+      match stk:
+        case Con{P.FObj{+items, +k0}, +s2}:
+          +hx = fst(NormH(x), NormH(V.JObj{m2 <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{m2 <> t}), hn))
+          +hdx = deg(x, room, fst({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{m2 <> t}, 1n+room), dep_obj(k, x, m2 <> t, 1n+room, hd)))
+          obj_next_p(k, x, m2, t, items, k0, s2, ind, lvl, close, room, rr, hx,
+            VLp(x, 1n, ind, 1n+lvl, False{}, P.FObj{items, k} <> s2, room,
+              RDl{DComma{}, Pr.Pr.pp(V.JObj{m2 <> t}, 0n, ind, 1n+lvl, Pr.Pr.nl(ind, lvl, SCon{'}', Rest.str(rr)}))}, hx, hdx),
+            VLp(V.JObj{m2 <> t}, 0n, ind, lvl, False{}, P.FObj{V.Mem{k, x} <> items, SNil{}} <> s2, room, rr,
+              snd(NormH(x), NormH(V.JObj{m2 <> t}), and_true(V.Json.is_norm(x), V.Json.is_norm(V.JObj{m2 <> t}), hn)),
+              snd({Nat.is_le(1n+V.Json.depth(x), 1n+room) == True{} : Bool}, DepH(V.JObj{m2 <> t}, 1n+room), dep_obj(k, x, m2 <> t, 1n+room, hd))))
+        case Nil{}:
+          Unit{}
+        case Con{P.FArr{a}, s2}:
+          Unit{}
+
+def Laws.roundtrip_pretty(ind, v, h1, h2):
+  %VLp(v, 1n, ind, 0n, False{}, Nil{}, 512n, REnd{}, h1, h2) :
+    {P.P.out(_, String.length(Pr.pretty(ind, v))) == Done{v} : Result<&2, &2, P.Err, V.Json>}
+  %eof_pend(v, 512n, h1, String.length(Pr.pretty(ind, v))) : {_ == Done{v} : Result<&2, &2, P.Err, V.Json>}
+  {==}
