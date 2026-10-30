@@ -130,7 +130,7 @@ any `Num`, and `is_norm` checks the property.
 ## What is proven (`bend PROOF.bend` → ALL PROOFS CHECK)
 
 `LAWS.bend` states the laws using the library's own functions; `PROOF.bend`
-(about 3,800 lines) proves them.
+(about 3,700 lines) proves them.
 
 1. **`unescape(escape(s)) == Some{s}` for every String.** This includes lone
    surrogates and codes past U+10FFFF, because escape keeps every non-control
