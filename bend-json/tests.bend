@@ -47,6 +47,16 @@ def rt.at(+input: String, r: Result<&2, &2, P.Err, V.Json>) -> Case:
     case Fail{e}:
       Case{"roundtrip " ++ input, "parse failed", "True"}
 
+def par.at(+input: String, r: Result<&2, &2, P.Err, V.Json>) -> Case:
+  match r:
+    case Done{+v}:
+      Case{"print_par " ++ input, Bool.show(String.eq(Pr.print_par(v), Pr.print(v))), "True"}
+    case Fail{e}:
+      Case{"print_par " ++ input, "parse failed", "True"}
+
+def par(+input: String) -> Case:
+  par.at(input, P.parse(input))
+
 def rt(+input: String) -> Case:
   rt.at(input, P.parse(input))
 
@@ -223,6 +233,12 @@ def cases_3() -> List<&2, Case>:
   Nil{}
 
 def cases_4() -> List<&2, Case>:
+  par("[]") <>
+  par("[1]") <>
+  par("[1,2]") <>
+  par("[1,[2,3],{\"a\":[]},\"x\",null,true,false,1.5,-2e-9,[[[]]],{},4,5,6,7,8,9,10]") <>
+  par("{\"a\":[1,2]}") <>
+  par("7") <>
   esc("") <>
   esc("plain") <>
   esc("q\"b\\s/") <>

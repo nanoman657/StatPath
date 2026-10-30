@@ -109,3 +109,41 @@ def pretty(+ind: Nat, v: V.Json) -> String:
 # the JSON text of a number
 def print_number(n: D.Num) -> String:
   D.Num.show(n, SNil{})
+
+# Parallel
+# --------
+# print_par prints a top-level array in balanced halves, d levels deep,
+# each pair of halves forked as one parallel call and joined with a comma.
+# The text equals print's (tests.bend checks it); nested values print
+# sequentially inside each leaf.
+
+def Pr.halve(+xs: List<&2, V.Json>) -> List<&2, V.Json> & List<&2, V.Json>:
+  +n = Nat.div(List.length(&2, V.Json, xs), 2n)
+  (List.take(&2, V.Json, xs, n), List.drop(&2, V.Json, xs, n))
+
+# the items of two halves: an empty text is an empty half
+def Pr.join(a: String, b: String) -> String:
+  match a b:
+    case SNil{} y:
+      y
+    case x SNil{}:
+      x
+    case SCon{h, t} SCon{h2, t2}:
+      String.append(SCon{h, t}, SCon{',', SCon{h2, t2}})
+
+def Pr.par.go(d: Nat, lr: List<&2, V.Json> & List<&2, V.Json>) -> String:
+  match d:
+    case 0n:
+      (l, r) = lr
+      Pr.join(Pr.go(V.JArr{l}, 0n, SNil{}), Pr.go(V.JArr{r}, 0n, SNil{}))
+    case 1n++p:
+      (l, r) = lr
+      a b = Pr.par.go(p, Pr.halve(l)) Pr.par.go(p, Pr.halve(r))
+      Pr.join(a, b)
+
+def print_par(v: V.Json) -> String:
+  match v:
+    case V.JArr{xs}:
+      SCon{'[', String.append(Pr.par.go(2n, Pr.halve(xs)), "]")}
+    case o:
+      print(o)
