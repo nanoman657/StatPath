@@ -50,8 +50,8 @@ from the primes and the expected digests from Python's `hashlib` and `hmac`.
 | SHA-256, 1,017,347 bytes | 258 ms | 19 ms |
 
 Hashing is about 4 MB/s on JS and 53 MB/s natively. The JS figure is with the
-tail-recursive message pass. The first version overflowed the JS stack above
-about 32 KB.
+tail-recursive message pass. The first version overflowed the JS stack somewhere
+between 16 KB and 64 KB.
 
 ## Limits and cautions
 
