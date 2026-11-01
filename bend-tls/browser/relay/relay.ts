@@ -13,7 +13,7 @@ import M from "../core/tcp_transitions.mjs";
 
 export const OP = {
   CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
-  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16, CLOSED: 17,
 } as const;
 export const MAX_BODY = 65535;
 // bytes a connection may hold in the relay: sent by the page, not yet taken by the socket
@@ -481,6 +481,8 @@ export function startRelay(
         s.conns.delete(id);
         end(conn);
       }
+      // the page's id is free once it has this answer (PROTOCOL.md)
+      if (s.known[id]) sendFrame(s, OP.CLOSED, id);
       return;
     }
     s.ws.close(1002, "unknown op");

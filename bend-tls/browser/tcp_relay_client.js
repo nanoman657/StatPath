@@ -15,7 +15,7 @@ import M from "./core/tcp_transitions.mjs";
 
 export const OP = {
   CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
-  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16, CLOSED: 17,
 };
 export const MAX_BODY = 65535;
 export const SEND_WINDOW = 131072;
@@ -88,6 +88,7 @@ export class RelayTcp {
     this.connecting = new Map();  // id -> callback of its connect
     this.lastError = new Map();   // id -> the TcpError that ended it, while the id is not reused
     this.lost = null;             // the TcpError once the WebSocket has closed
+    this.closing = new Set();     // ids the page has closed, until the relay's CLOSED: not reused yet
     this.authWaiter = null;       // { resolve, reject } until the relay accepts the token
   }
 
@@ -235,6 +236,8 @@ export class RelayTcp {
     const c = this.conns.get(id);
     if (!c) return;
     const err = new TcpError(9, "the connection is closed");
+    // the id is not reused, and the frames for it are dropped, until the relay's CLOSED (PROTOCOL.md)
+    this.closing.add(id);
     this.#die(id, c, err);
     if (this.ws && this.ws.readyState === 1) this.ws.send(encodeFrame(OP.CLOSE, id));
   }
@@ -246,7 +249,7 @@ export class RelayTcp {
 
   // a free id: 0..255 that the page is not using
   #freeId() {
-    for (let id = 0; id < 256; id++) if (!this.conns.has(id)) return id;
+    for (let id = 0; id < 256; id++) if (!this.conns.has(id) && !this.closing.has(id)) return id;
     throw new TcpError(24, "Too many open files");
   }
 
@@ -330,7 +333,20 @@ export class RelayTcp {
   #message(bytes) {
     const f = decodeFrame(bytes);
     if (!f) return; // a frame that does not fit is ignored; the relay closes the socket on its own errors
+    if (f.op === OP.AUTHOK) {
+      const w = this.authWaiter;
+      this.authWaiter = null;
+      if (w) w.resolve();
+      return;
+    }
     const id = f.id;
+    if (f.op === OP.CLOSED) {
+      this.closing.delete(id);
+      return;
+    }
+    // the frames for a closed id are the relay's, sent before it processed the CLOSE: they are for the
+    // old connection, and the id has no connection now
+    if (this.closing.has(id)) return;
     const c = this.conns.get(id);
     switch (f.op) {
       case OP.OK: {
@@ -387,12 +403,6 @@ export class RelayTcp {
         this.#wake(c);
         return;
       }
-      case OP.AUTHOK: {
-        const w = this.authWaiter;
-        this.authWaiter = null;
-        if (w) w.resolve();
-        return;
-      }
       default:
         return;
     }
@@ -407,6 +417,7 @@ export class RelayTcp {
   #lost() {
     const err = new TcpError(5, "relay connection closed");
     this.lost = err;
+    this.closing.clear(); // no CLOSED will come now
     for (const [id, c] of [...this.conns]) this.#die(id, c, err);
   }
 }

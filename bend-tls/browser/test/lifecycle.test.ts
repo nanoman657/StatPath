@@ -50,7 +50,11 @@ test("a connect that fails after its id was closed and reused does not fail the 
   ws.send(encodeFrame(OP.CONNECT, 1, connectBody(dead, "127.0.0.1")));
   ws.send(encodeFrame(OP.CLOSE, 1));
   ws.send(encodeFrame(OP.CONNECT, 1, connectBody(other.port, "127.0.0.1")));
-  // the second connection must be OK; nothing for the first may reach the page after its CLOSE
+  // the CLOSE is answered with CLOSED; then the second connection must be OK. Nothing for the first
+  // connection may reach the page after its CLOSE: no FAIL, and no OK.
+  const closed = decodeFrame(await next());
+  expect(closed?.op).toBe(OP.CLOSED);
+  expect(closed?.id).toBe(1);
   const first = decodeFrame(await next());
   expect(first?.op).toBe(OP.OK);
   expect(first?.id).toBe(1);

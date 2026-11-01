@@ -25,6 +25,8 @@ Output: for each trace, one line per frame or session event, then a line "end":
   ok ID | data ID N | eof ID | written ID COUNT FLAG | fail ID ERRNO | wsclose CODE
 -/
 
+import Std.Data.HashSet
+
 set_option linter.deprecated false
 set_option linter.unusedSimpArgs false
 
@@ -43,10 +45,12 @@ structure Conn where
   rd : Nat
   gr : Nat
   peerClosed : Bool
+  deriving Repr
 
 structure Slot where
   known : Bool
   conn : Option Conn
+  deriving Repr
 
 structure St where
   nextGen : Nat
@@ -59,8 +63,9 @@ inductive Out where
   | eof (id : Nat)
   | written (id c f : Nat)
   | fail (id e : Nat)
+  | closed (id : Nat)
   | wsclose (code : Nat)
-  deriving DecidableEq
+  deriving DecidableEq, Repr
 
 inductive Sk where
   | open_
@@ -69,6 +74,7 @@ inductive Sk where
   | peerclose
   | error (e : Nat)
   | drain (a : Nat)
+  deriving Repr
 
 inductive Ev where
   | connect (id : Nat)
@@ -78,6 +84,7 @@ inductive Ev where
   | read (id k : Nat)
   | close (id : Nat)
   | sock (id g : Nat) (k : Sk)
+  deriving Repr
 
 def St.slot (s : St) (id : Nat) : Slot := s.slots id
 
@@ -170,10 +177,12 @@ def denyStep (s : St) (id : Nat) : St × List Out :=
   | some _ => protoClose s 1002
   | none => (s, [Out.fail id 13])
 
+-- a CLOSE is answered with CLOSED once the id has been used (PROTOCOL.md): the connection, if any, is dropped
 def closeStep (s : St) (id : Nat) : St × List Out :=
+  let outs : List Out := if (s.slot id).known then [Out.closed id] else []
   match (s.slot id).conn with
-  | none => (s, [])
-  | some _ => (setConn s id none, [])
+  | none => (s, outs)
+  | some _ => (setConn s id none, outs)
 
 def step (cap : Nat) (s : St) (e : Ev) : St × List Out :=
   if s.closed.isSome then (s, []) else
@@ -706,6 +715,7 @@ def outId : Out → Option Nat
   | .eof id => some id
   | .written id _ _ => some id
   | .fail id _ => some id
+  | .closed id => some id
   | .wsclose _ => none
 
 -- the events that use an id without reusing it: everything but CONNECT and DENY
@@ -843,7 +853,8 @@ theorem step_slot_ne (cap : Nat) (s : St) (e : Ev) (i : Nat) (h : evId e ≠ i) 
 -- a free event for an id with no connection does nothing but (at most) close the session
 theorem step_none_shape (cap : Nat) (s : St) (e : Ev) (hf : IsFreeEv e)
     (hn : (s.slot (evId e)).conn = none) :
-    (step cap s e).1.slots = s.slots ∧ ((step cap s e).2 = [] ∨ (step cap s e).2 = [Out.wsclose 1002]) := by
+    (step cap s e).1.slots = s.slots ∧
+      ∀ o ∈ (step cap s e).2, o = Out.wsclose 1002 ∨ ∃ i, o = Out.closed i ∧ i = evId e := by
   unfold step
   by_cases hc : s.closed.isSome = true
   · rw [if_pos hc]
@@ -869,7 +880,9 @@ theorem step_none_shape (cap : Nat) (s : St) (e : Ev) (hf : IsFreeEv e)
       all_goals simp [protoClose]
     | close id =>
       simp only [evId] at hn
-      simp [closeStep, hn]
+      simp only [closeStep, hn]
+      split
+      all_goals simp [evId]
     | sock id g k =>
       simp only [evId] at hn
       simp [sockStep, hn]
@@ -877,7 +890,7 @@ theorem step_none_shape (cap : Nat) (s : St) (e : Ev) (hf : IsFreeEv e)
 -- the frames of a trace never name an id that is free at its start, unless the trace connects or denies it
 theorem freed_run (cap : Nat) (id : Nat) (es : List Ev) :
     ∀ (s : St), (s.slot id).conn = none → (∀ e ∈ es, evId e = id → IsFreeEv e) →
-      ∀ o ∈ (run cap s es).2, outId o ≠ some id := by
+      ∀ o ∈ (run cap s es).2, outId o ≠ some id ∨ o = Out.closed id := by
   induction es with
   | nil =>
     intro s _ _ o ho
@@ -891,13 +904,12 @@ theorem freed_run (cap : Nat) (id : Nat) (es : List Ev) :
     · by_cases heq : evId e = id
       · have hF := hfree e (by simp) heq
         have hn' : (s.slot (evId e)).conn = none := by rw [heq]; exact hn
-        rcases (step_none_shape cap s e hF hn').2 with h | h
-        · rw [h] at h1
-          simp at h1
-        · rw [h] at h1
-          simp at h1
-          subst h1
+        rcases (step_none_shape cap s e hF hn').2 o h1 with h | ⟨i, hi, hie⟩
+        · subst h
           simp [outId]
+        · subst hi
+          right
+          rw [hie, heq]
       · have key := List.all_eq_true.mp (step_outs_id cap s e) o h1
         cases ho' : outId o with
         | none => simp [ho']
@@ -914,6 +926,213 @@ theorem freed_run (cap : Nat) (id : Nat) (es : List Ev) :
         · rw [step_slot_ne cap s e id heq]
           exact hn
       exact ih (step cap s e).1 hstate (fun e' he' => hfree e' (by simp [he']) ) o h2
+
+-- ================================================================================================
+-- The page's side, composed with the relay: the page client's connections (core: tcp_relay_client.js), the
+-- two queues of frames between them, and a search over every interleaving up to a depth.
+-- ================================================================================================
+
+namespace Client
+
+-- the page's connection: the number of its CONNECT (the sequence number), and whether it is open
+structure PConn where
+  seq : Nat
+  isOpen : Bool
+  deriving Repr
+
+structure PSlot where
+  conn : Option PConn
+  -- the id was closed by the page, and the relay's CLOSED has not come: the id is not reused (variant "fixed")
+  closing : Bool
+  deriving Repr
+
+-- the composed system. toRelay: the page's frames, each with the page's CONNECT sequence number (0 for the
+-- others). toPage: the relay's frames, each with the relay generation of the connection that sent it. genOf:
+-- the relay generation given to each page CONNECT. bad: the page applied a frame to a connection that did not
+-- send it (the generation of the frame is not the generation of the page's connection).
+structure Sys where
+  rs : Relay.St
+  page : Nat → PSlot
+  nextSeq : Nat
+  toRelay : List (Relay.Ev × Nat)
+  toPage : List (Relay.Out × Nat)
+  genOf : List (Nat × Nat)
+  bad : Bool
+  -- true: the page keeps a closed id closing until the relay's CLOSED (the protocol of PROTOCOL.md);
+  -- false: the page reuses a closed id at once (the protocol before the fix)
+  fixed : Bool
+
+def cap : Nat := Relay.DEFAULT_CAP
+
+def setP (f : Nat → PSlot) (id : Nat) (x : PSlot) : Nat → PSlot :=
+  fun i => if i = id then x else f i
+
+def initSys (fixed : Bool) : Sys :=
+  { rs := Relay.init, page := fun _ => { conn := none, closing := false }, nextSeq := 1,
+    toRelay := [], toPage := [], genOf := [], bad := false, fixed := fixed }
+
+-- the relay generation a frame of the relay's step belongs to (the connection before the step)
+def tagOf (rs : Relay.St) (e : Relay.Ev) : Nat :=
+  match e with
+  | .connect _ => rs.nextGen
+  | _ => match (rs.slot (Relay.evId e)).conn with
+    | some c => c.gen
+    | none => 0
+
+-- ---- the page's calls ----
+
+def doConnect (v : Sys) (id : Nat) : Option Sys :=
+  if (v.page id).conn.isSome || (v.fixed && (v.page id).closing) then none
+  else some { v with
+    nextSeq := v.nextSeq + 1,
+    page := setP v.page id { conn := some { seq := v.nextSeq, isOpen := false }, closing := (v.page id).closing },
+    toRelay := v.toRelay ++ [(Relay.Ev.connect id, v.nextSeq)] }
+
+def doClose (v : Sys) (id : Nat) : Option Sys :=
+  match (v.page id).conn with
+  | none => none
+  | some _ => some { v with
+      page := setP v.page id { conn := none, closing := v.fixed },
+      toRelay := v.toRelay ++ [(Relay.Ev.close id, 0)] }
+
+def doSend (v : Sys) (id n : Nat) : Option Sys :=
+  match (v.page id).conn with
+  | some c => if c.isOpen then some { v with toRelay := v.toRelay ++ [(Relay.Ev.send id n, 0)] } else none
+  | none => none
+
+def doRead (v : Sys) (id k : Nat) : Option Sys :=
+  match (v.page id).conn with
+  | some c => if c.isOpen then some { v with toRelay := v.toRelay ++ [(Relay.Ev.read id k, 0)] } else none
+  | none => none
+
+-- ---- the relay ----
+
+-- the relay takes the oldest frame of the page
+def doRelay (v : Sys) : Option Sys :=
+  match v.toRelay with
+  | [] => none
+  | (e, p) :: rest =>
+    let t := tagOf v.rs e
+    let r := Relay.step cap v.rs e
+    let genOf' := match e with
+      | .connect _ => if p > 0 then (p, v.rs.nextGen) :: v.genOf else v.genOf
+      | _ => v.genOf
+    some { v with rs := r.1, toRelay := rest, toPage := v.toPage ++ r.2.map (fun o => (o, t)), genOf := genOf' }
+
+-- a socket of the relay does something (the environment)
+def doEnv (v : Sys) (e : Relay.Ev) : Option Sys :=
+  let t := tagOf v.rs e
+  let r := Relay.step cap v.rs e
+  some { v with rs := r.1, toPage := v.toPage ++ r.2.map (fun o => (o, t)) }
+
+-- ---- the page takes the oldest frame of the relay ----
+
+def gotGen (v : Sys) (c : PConn) : Option Nat :=
+  (v.genOf.find? (fun q => q.1 == c.seq)).map (fun q => q.2)
+
+-- the frame of generation t must belong to the connection of the page: the relay's generation for the
+-- page's connect (its sequence number) must be t, and it must already be known
+def checkFrame (v : Sys) (c : PConn) (t : Nat) : Sys :=
+  match gotGen v c with
+  | some g => if g == t then v else { v with bad := true }
+  | none => { v with bad := true }
+
+def applyFrame (v : Sys) (o : Relay.Out) (t : Nat) : Sys :=
+  match o with
+  | .closed id =>
+    if v.fixed then { v with page := setP v.page id { (v.page id) with closing := false } } else v
+  | .ok id =>
+    let sl := v.page id
+    if sl.closing then v
+    else match sl.conn with
+      | some c =>
+        if c.isOpen then v
+        else
+          let v' := checkFrame v c t
+          { v' with page := setP v'.page id { sl with conn := some { c with isOpen := true } } }
+      | none => v
+  | .data id _ =>
+    let sl := v.page id
+    if sl.closing then v
+    else match sl.conn with
+      | some c => if c.isOpen then checkFrame v c t else v
+      | none => v
+  | .eof id =>
+    let sl := v.page id
+    if sl.closing then v
+    else match sl.conn with
+      | some c => if c.isOpen then checkFrame v c t else v
+      | none => v
+  | .written id _ _ =>
+    let sl := v.page id
+    if sl.closing then v
+    else match sl.conn with
+      | some c => if c.isOpen then checkFrame v c t else v
+      | none => v
+  | .fail id _ =>
+    let sl := v.page id
+    if sl.closing then v
+    else match sl.conn with
+      | some c =>
+        let v' := checkFrame v c t
+        { v' with page := setP v'.page id { sl with conn := none } }
+      | none => v
+  | .wsclose _ => v
+
+def doPage (v : Sys) : Option Sys :=
+  match v.toPage with
+  | [] => none
+  | (o, t) :: rest => some (applyFrame { v with toPage := rest } o t)
+
+-- ---- the search ----
+
+def actions (v : Sys) : List (String × Option Sys) :=
+  [ ("connect 0", doConnect v 0), ("connect 1", doConnect v 1),
+    ("close 0", doClose v 0), ("close 1", doClose v 1),
+    ("send 0 1", doSend v 0 1), ("read 0 131072", doRead v 0 131072),
+    ("relay", doRelay v), ("page", doPage v) ] ++
+  ((List.range 2).flatMap (fun id =>
+    (List.range 3).flatMap (fun g =>
+      [ (s!"sock {id} {g+1} open", Relay.Ev.sock id (g+1) Relay.Sk.open_),
+        (s!"sock {id} {g+1} data 1", Relay.Ev.sock id (g+1) (Relay.Sk.data 1)),
+        (s!"sock {id} {g+1} eof", Relay.Ev.sock id (g+1) Relay.Sk.eof),
+        (s!"sock {id} {g+1} error 111", Relay.Ev.sock id (g+1) (Relay.Sk.error 111)),
+        (s!"sock {id} {g+1} drain 1", Relay.Ev.sock id (g+1) (Relay.Sk.drain 1)) ]))).map
+    (fun (name, e) => (name, doEnv v e))
+
+def keyOf (v : Sys) : String :=
+  let ids := List.range 2
+  s!"{repr v.rs.nextGen}|{repr v.rs.closed}|{ids.map (fun i => repr (v.rs.slot i))}|" ++
+  s!"{ids.map (fun i => repr (v.page i))}|{v.nextSeq}|{repr v.toRelay}|{repr v.toPage}|" ++
+  s!"{repr v.genOf}|{v.bad}"
+
+-- the search: every interleaving, up to depth steps, each state once. Returns the first violation, with the
+-- steps that reach it, or none within the depth.
+def search (fixed : Bool) (depth : Nat) : Option (List String) × Nat := Id.run do
+  let init := initSys fixed
+  let mut frontier : Array (Sys × List String) := #[(init, [])]
+  let mut visited : Std.HashSet String := {}
+  visited := visited.insert (keyOf init)
+  let mut found : Option (List String) := none
+  for _ in [0:depth] do
+    if found.isSome then break
+    let mut next : Array (Sys × List String) := #[]
+    for (v, tr) in frontier do
+      if found.isSome then break
+      for (name, act) in actions v do
+        match act with
+        | none => pure ()
+        | some v' =>
+          let k := keyOf v'
+          if !visited.contains k then
+            visited := visited.insert k
+            if v'.bad then
+              if found.isNone then found := some (tr ++ [name])
+            else next := next.push (v', tr ++ [name])
+    frontier := next
+  return (found, visited.size)
+
+end Client
 
 -- ================================================================================================
 -- The executable: the trace on stdin, the frames on stdout
@@ -968,6 +1187,7 @@ def showOut : Out → String
   | .eof id => s!"eof {id}"
   | .written id c f => s!"written {id} {c} {f}"
   | .fail id e => s!"fail {id} {e}"
+  | .closed id => s!"closed {id}"
   | .wsclose c => s!"wsclose {c}"
 
 end Relay
@@ -985,7 +1205,7 @@ def emitTrace (cap : Nat) (evs : Array Ev) : IO Unit := do
     IO.println (showOut o)
   IO.println "end"
 
-def main : IO UInt32 := do
+def traceMode : IO UInt32 := do
   let lines ← readLines (← IO.getStdin) #[]
   let mut cap := DEFAULT_CAP
   let mut evs : Array Ev := #[]
@@ -1014,3 +1234,25 @@ def main : IO UInt32 := do
     return 1
   if started then emitTrace cap evs
   return 0
+
+-- `lean --run Relay.lean search old|fixed DEPTH`: the composed search of the page and the relay, up to DEPTH
+-- steps; anything else: the traces on stdin (the conformance test's mode)
+def main (args : List String) : IO UInt32 := do
+  match args with
+  | ["search", mode, d] =>
+    match d.toNat? with
+    | some depth =>
+      let (found, n) := Client.search (mode == "fixed") depth
+      match found with
+      | some tr =>
+        IO.println s!"VIOLATION ({mode}): {tr.length} steps, {n} states searched"
+        for x in tr do
+          IO.println s!"  {x}"
+        return 1
+      | none =>
+        IO.println s!"no violation ({mode}) within {depth} steps: {n} states searched"
+        return 0
+    | none =>
+      IO.println "BAD"
+      return 1
+  | _ => traceMode

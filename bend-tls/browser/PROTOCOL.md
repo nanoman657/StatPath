@@ -32,6 +32,7 @@ closes the WebSocket (code 1002).
 | 12 | DATA    | relay->page | data read from the connection                              |
 | 13 | EOF     | relay->page | none; the remote end has finished sending                  |
 | 14 | WRITTEN | relay->page | count (4 bytes, big-endian), then a flag byte: 1 answers a DISCARD, 0 does not |
+| 17 | CLOSED  | relay->page | none; answers a CLOSE: the relay has dropped the connection, and the id is free |
 
 ## Authentication and the origin
 
@@ -48,8 +49,14 @@ closes the WebSocket (code 1002).
 - An id is free until the page sends CONNECT for it, and is used until the page sends CLOSE or
   receives FAIL. The page must not reuse an id before then.
 - The page sends SEND, DISCARD and READ only after OK. Before OK, a SEND is a protocol error.
-- The relay sends FAIL at most once per id, and frees the id after it.
-- After CLOSE, the relay sends nothing more for that id.
+- The relay sends FAIL at most once per id, and frees the id after it. The page does not send a CLOSE
+  for an id whose FAIL it has received.
+- CLOSE is answered with CLOSED, once the relay has dropped the connection, for every id the WebSocket has
+  connected (a CLOSE for a connection the relay has already failed is answered too). After CLOSE, the relay
+  sends nothing for that id but the CLOSED.
+- After a CLOSE the page has sent, the id is closing until its CLOSED arrives. The page does not reuse a
+  closing id, and drops the frames for it (they are the relay's, sent before it processed the CLOSE). Only
+  after CLOSED is the id free. A FAIL, not a CLOSE, is what frees an id on the page's side without a CLOSED.
 - Payloads are at most 65535 bytes. The page splits larger writes; the relay splits large reads.
 
 ### Counts and the send window
@@ -103,9 +110,14 @@ A connection counts the bytes of SEND data from its connect: the first SEND byte
 
 ### Frames for a freed id
 
-The page sends frames for an id before it sees the FAIL or the CLOSE that freed the id. The relay
-drops a SEND, DISCARD or READ for an id that was connected and has been freed. An id this WebSocket
-never connected is a protocol error (1002).
+The page sends frames for an id before it sees the FAIL that freed the id. The relay drops a SEND,
+DISCARD or READ for an id that was connected and has been freed. An id this WebSocket never connected is a
+protocol error (1002).
+
+Frames still in flight for a closed connection: the relay sends its frames for a connection before it
+processes the page's CLOSE, so they can arrive after the page has sent that CLOSE. Those frames are for the
+old connection. The page does not reuse the id until CLOSED (above), so it can tell them apart, and it drops
+them. Without CLOSED, a frame of the old connection could reach a new one that reuses the id.
 
 ## Errors
 

@@ -234,6 +234,8 @@ function lineOf(f: { op: number; id: number; body: Uint8Array }): string {
     }
     case OP.FAIL:
       return `fail ${f.id} ${(f.body[0] << 8) | f.body[1]}`;
+    case OP.CLOSED:
+      return `closed ${f.id}`;
     default:
       return `unknown ${f.op}`;
   }
@@ -378,7 +380,7 @@ test.skipIf(LEAN === null)(
         kinds.set(key, (kinds.get(key) ?? 0) + 1);
       }
     }
-    const want = ["ok", "data", "eof", "written 0", "written 1", "fail 5", "fail 13", "fail 27", "fail 32", "fail 111", "wsclose"];
+    const want = ["ok", "data", "eof", "written 0", "written 1", "fail 5", "fail 13", "fail 27", "fail 32", "fail 111", "closed", "wsclose"];
     for (const k of want) expect(kinds.get(k) ?? 0, `frames of kind ${k}`).toBeGreaterThan(0);
     const staleOps = traces.reduce((n, t) => n + t.stale, 0);
     expect(staleOps).toBeGreaterThan(0);

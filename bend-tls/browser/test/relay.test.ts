@@ -169,12 +169,15 @@ test("many connections at once, each echoes its own bytes", async () => {
   echo.stop();
 });
 
-test("an id is reused after it is closed", async () => {
+test("an id is reused once the relay has confirmed its close", async () => {
   const echo = echoServer();
   const r = relay([{ host: "127.0.0.1", ports: [echo.port] }]);
   const net = await client(r.url);
   const first = await net.connect("127.0.0.1", echo.port);
   net.close(first);
+  // the id is free when the relay's CLOSED has arrived (PROTOCOL.md): until then it is not handed out again
+  const until = Date.now() + 5000;
+  while (net.closing.size > 0 && Date.now() < until) await new Promise((res) => setTimeout(res, 5));
   const second = await net.connect("127.0.0.1", echo.port);
   expect(second).toBe(first);
   await net.send(second, new TextEncoder().encode("again"));
