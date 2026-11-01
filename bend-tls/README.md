@@ -53,6 +53,7 @@ bend x509_tests.bend            -> x509: 17 passed, 0 failed
 bend x509_ext_tests.bend        -> x509-ext: 23 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
+bend fuzz_tls_tests.bend        -> fuzz-tls: 234 passed, 0 failed
 bend tls_tests.bend             -> tls: 22 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
@@ -88,6 +89,7 @@ Several modules are generated; the source is the file with the `_body` or the
 | `ed25519.bend` | `ed25519_body.bend` | `python3 -I gen_ed25519.py` |
 | `p384.bend` | `p256_body.bend` | `python3 -I gen_p384.py` |
 | `fuzz_tests.bend` | `gen_fuzz_tests.py` | `python3 -I gen_fuzz_tests.py` (fresh random keys each run) |
+| `fuzz_tls_tests.bend` | `gen_fuzz_tls_tests.py` | `python3 -I gen_fuzz_tls_tests.py` |
 | `*_tests.bend` | `gen_*_tests.py` | `python3 -I gen_X_tests.py` |
 
 Bend requires definitions in dependency order, so the generated files that
@@ -179,7 +181,10 @@ more than the client reads, is refused with `the stream was cut`.
   long-form length with more than six bytes overflowed the 2^48 Nat (a runtime
   fault, a denial of service); bytes after a certificate or an ECDSA signature were
   ignored; and a CertificateVerify length prefix was not checked. Each now has a
-  regression case.
+  regression case. `fuzz_tls_tests.bend` does the same for the record layer and the
+  message parsers: a mutated sealed record must not open (both suites), mutated
+  ServerHello and Certificate bodies must parse to bounded values, and random keys
+  and signatures of the right lengths must verify False for P-256, P-384 and Ed25519.
 - The harness fails when a value is wrong. This was checked by planting a wrong
   expected value.
 
