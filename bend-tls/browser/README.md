@@ -97,7 +97,8 @@ code (`R <= G` where the code checks `credit > 0`), so the proof covers the code
 - Progress: that a send completes or a read returns. The laws say nothing about liveness.
 - Timing: whether a `try_` call answers Ready or Wait before its deadline. The laws give the shape of
   each answer for the relay's count, not when it arrives.
-- The Lean recheck (`--verdict`) of these laws: not run (the toolchain download is blocked).
+- The Lean recheck (`--verdict`) is run for every proof file (see "The Lean recheck" below); its result
+  is that the kernel accepts each file, and the false claim is rejected.
 
 ## The page's TCP operations
 
@@ -168,8 +169,6 @@ goes to the page, not a file descriptor, and a system call throws, since a page 
 - **Output and effects outside TCP.** A page's output is text (`#bend-output`, or
   `globalThis.bend_stdout`). The file, process and environment effects are not in a page: a program
   that calls them fails there.
-- **The Lean recheck** (`bend frame_proof.bend --verdict`) is not run: the Lean toolchain download is
-  blocked by the sandbox's network policy.
 - Listen and accept are not in the protocol.
 - The relay is ready for real use as `RELAY.md` describes; what it does not do is listed there, and
   the open decisions are in `DECISIONS.md`.
@@ -212,4 +211,28 @@ Not proven:
 - The timing and liveness of anything: that a send completes, that a read returns, when a `try_` answers.
 - Bun's socket and WebSocket behaviour beyond the assumptions above, and the glue (the event handlers
   that call the model), which is tested, not proven.
-- The Lean recheck (`--verdict`), which is blocked by the sandbox.
+- The Lean recheck is done (see below), but it checks Bend's kernel's proofs, not the compiler.
+
+## The Lean recheck
+
+`bend <file>.bend --verdict` checks the file with Bend's own checker, then rechecks every proof with
+BendTT, the kernel that is written in Lean (`bendtt.lean`). The kernel is built once, with Lean 4.34.0,
+and cached in `~/.bend/bendtt/`.
+
+The Lean toolchain comes from GitHub, not from the Lean project's own download host: that host is
+refused by this sandbox's network policy, and GitHub is not. The archive is the release asset
+`lean-4.34.0-linux.tar.zst` from github.com/leanprover/lean4 (580 MB). It was unpacked into
+`~/.elan/toolchains/leanprover--lean4---v4.34.0/`, where Bend looks for it. Its checksum was not verified
+against a published value, so the trust is in the TLS connection to GitHub and the release itself.
+
+Results (`--verdict`, Lean 4.34.0):
+
+| File | Result |
+|------|--------|
+| `frame_proof.bend`, `frame_arith.bend` | ALL PROOFS CHECK (kernel accepts) |
+| `tcp_contract_proof.bend` | ALL PROOFS CHECK |
+| `core/tcp_transitions.bend`, `core/tcp_model.bend` | ALL PROOFS CHECK |
+| `tcp_contract_false.bend` | SOME PROOFS FAIL (the claim is false; rejected before the kernel) |
+
+The kernel's check is an independent recheck of the proofs, not of the code generator: the JavaScript
+the relay runs is still produced by Bend's compiler, which no check here covers.
