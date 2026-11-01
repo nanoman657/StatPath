@@ -11,14 +11,19 @@ def lst(b):
 def vec(n, b):
     return len(b).to_bytes(n, "big") + b
 
-def client_hello(rnd, pub, pubp, pubq, host):
+def share(group, key):
+    return bytes([0, group]) + vec(2, key)
+
+def client_hello(rnd, entries, host, cookie=b""):
     host = host.encode()
     exts = b""
-    exts += b"\x00\x2b" + vec(2, bytes([3, 4]) if False else bytes([2, 3, 4]))          # supported_versions
-    exts += b"\x00\x0a" + vec(2, vec(2, b"\x00\x1d\x00\x17\x00\x18"))                       # supported_groups: x25519, secp256r1, secp384r1
-    exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01\x04\x03\x08\x07\x05\x03"))                       # signature_algorithms
-    exts += b"\x00\x33" + vec(2, vec(2, b"\x00\x1d" + vec(2, pub) + b"\x00\x17" + vec(2, pubp) + b"\x00\x18" + vec(2, pubq)))  # key_share
-    exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                        # server_name
+    exts += b"\x00\x2b" + vec(2, bytes([2, 3, 4]))                                    # supported_versions
+    exts += b"\x00\x0a" + vec(2, vec(2, b"\x00\x1d\x00\x17\x00\x18"))               # supported_groups: x25519, secp256r1, secp384r1
+    exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01\x04\x03\x08\x07\x05\x03"))  # signature_algorithms
+    exts += b"\x00\x33" + vec(2, vec(2, entries))                                     # key_share
+    exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                      # server_name
+    if cookie:
+        exts += b"\x00\x2c" + vec(2, vec(2, cookie))                                  # cookie
     body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))
     return b"\x01" + len(body).to_bytes(3, "big") + body
 
@@ -38,7 +43,11 @@ def rb(n):
 out = []
 for i, host in enumerate(["example.test", "a.b", "www.example.test"]):
     rnd, pub, pubp, pubq = rb(32), rb(32), b"\x04" + rb(64), b"\x04" + rb(96)
-    out.append(f'  kcase("clienthello-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, {lst(pub)}, {lst(pubp)}, {lst(pubq)}, {lst(host.encode())})), "{client_hello(rnd, pub, pubp, pubq, host).hex()}") <>')
+    # the first ClientHello: x25519 and secp256r1 key shares, no cookie
+    out.append(f'  kcase("clienthello-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, T.tls.cat(T.tls.share(29, {lst(pub)}), T.tls.share(23, {lst(pubp)})), {lst(host.encode())}, Nil{{}})), "{client_hello(rnd, share(29, pub) + share(23, pubp), host, b'').hex()}") <>')
+    # the second ClientHello after a HelloRetryRequest: the secp384r1 share and a cookie
+    cookie = rb(8)
+    out.append(f'  kcase("clienthello-retry-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, T.tls.share(24, {lst(pubq)}), {lst(host.encode())}, {lst(cookie)})), "{client_hello(rnd, share(24, pubq), host, cookie).hex()}") <>')
 for i, (pt_len, seq, ctype) in enumerate([(0, 0, 22), (5, 0, 23), (40, 7, 22), (300, 65536, 23)]):
     key, iv, pt = rb(32), rb(12), rb(pt_len)
     out.append(f'  kcase("seal-{i}", S.hex_of(T.tls.seal({lst(key)}, {lst(iv)}, {seq}n, {ctype}, {lst(pt)})), "{seal(key, iv, seq, ctype, pt).hex()}") <>')
@@ -69,6 +78,24 @@ sh384 = server_hello(sh_rnd, sh384_pub, group=0x18)
 cert_a, cert_b = rb(300), rb(120)
 cert_msg = certificate([cert_a, cert_b])
 fin_msg = hs(20, rb(32))
+# HelloRetryRequest (RFC 8446 4.1.4): its random is the SHA-256 of "HelloRetryRequest"; it
+# selects a group in key_share (2 bytes only) and may carry a cookie
+import hashlib as _hl
+HRR_RANDOM = _hl.sha256(b"HelloRetryRequest").digest()
+hrr_cookie = rb(8)
+hrr_exts = b"\x00\x2b" + vec(2, bytes([3, 4])) + b"\x00\x33" + vec(2, b"\x00\x18")
+hrr_msg = hs(2, b"\x03\x03" + HRR_RANDOM + b"\x00" + b"\x13\x01" + b"\x00" + vec(2, hrr_exts))
+hrr_cookie_msg = hs(2, b"\x03\x03" + HRR_RANDOM + b"\x00" + b"\x13\x01" + b"\x00"
+                    + vec(2, hrr_exts + b"\x00\x2c" + vec(2, vec(2, hrr_cookie))))
+share_key = rb(40)
+out += [
+    f'  kcase("hrr-random", S.hex_of(T.tls.hrr_random()), "{HRR_RANDOM.hex()}") <>',
+    f'  kcase("hrr-sh-random", S.hex_of(T.tls.sh.random(hm_body(T.tls.hm({lst(hrr_msg)})))), "{HRR_RANDOM.hex()}") <>',
+    f'  kcase("hrr-group-24", Nat.show(T.tls.sh.group(hm_body(T.tls.hm({lst(hrr_msg)})))), "24") <>',
+    f'  kcase("hrr-cookie", S.hex_of(List.drop(&2, U32, T.tls.ext(T.tls.sh.exts(hm_body(T.tls.hm({lst(hrr_cookie_msg)}))), 44n), 2n)), "{hrr_cookie.hex()}") <>',
+    f'  kcase("hrr-no-cookie", Nat.show(List.length(&2, U32, T.tls.ext(T.tls.sh.exts(hm_body(T.tls.hm({lst(hrr_msg)}))), 44n))), "0") <>',
+    f'  kcase("share-24", S.hex_of(T.tls.share(24, {lst(share_key)})), "{share(24, share_key).hex()}") <>',
+]
 out += [
     f'  kcase("sh-cipher", Nat.show(T.tls.sh.cipher(hm_body(T.tls.hm({lst(sh)})))), "4867") <>',
     f'  kcase("sh-key", S.hex_of(T.tls.sh.key(hm_body(T.tls.hm({lst(sh)})))), "{sh_pub.hex()}") <>',

@@ -19,6 +19,7 @@ import ./p384.bend as Q
 import ./tls.bend as T
 import ./handshake.bend as H
 import ./x509.bend as C
+import ./rsa.bend as R
 
 # Randomness
 # ----------
@@ -314,17 +315,19 @@ def hello.sh(+m: T.HM) -> SH:
     case T.HM{+t, +body, +rest}:
       SH{T.tls.hs(t, body), T.tls.sh.key(body), hello.alg(T.tls.sh.cipher(body)), T.tls.sh.group(body)}
 
-# a ServerHello for one of our suites, with a group we offered
+# a ServerHello for one of our suites: a HelloRetryRequest selects secp384r1 (24), and a
+# ServerHello one of the groups of the first ClientHello's key shares
 def hello.ok(+m: T.HM) -> Bool:
   match m:
     case T.HM{+t, +body, +rest}:
-      Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)), hello.group_ok(T.tls.sh.group(body))))
+      Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)),
+        Bool.pick(Bool, hello.is_hrr(body), Nat.is_eq(T.tls.sh.group(body), 24n), hello.group_ok(T.tls.sh.group(body)))))
 
 # the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301) and TLS_CHACHA20_POLY1305_SHA256 (0x1303)
 def hello.suite_ok(+c: Nat) -> Bool:
   Bool.or(Nat.is_eq(c, 4865n), Nat.is_eq(c, 4867n))
 
-# the groups we offer: x25519 (29), secp256r1 (23) and secp384r1 (24)
+# the groups of the first ClientHello's key shares: x25519 (29) and secp256r1 (23)
 def hello.group_ok(+g: Nat) -> Bool:
   Bool.or(Nat.is_eq(g, 29n), Bool.or(Nat.is_eq(g, 23n), Nat.is_eq(g, 24n)))
 
@@ -333,12 +336,11 @@ def hello.alg(+c: Nat) -> Nat:
   Bool.pick(Nat, Nat.is_eq(c, 4865n), 16n, 32n)
 
 # the private scalars: privs is the secp256r1 scalar (32 bytes) then the secp384r1 scalar (48 bytes)
-# the ClientHello message: an x25519 key share from priv (the base point is 9), a secp256r1
-# key share and a secp384r1 key share (each 04 || x || y)
+# the ClientHello message: an x25519 key share from priv (the base point is 9) and a secp256r1
+# key share (04 || x || y). The secp384r1 key share is sent only if a HelloRetryRequest selects it.
 def hello.msg(+priv: List<&2, U32>, +privs: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
-  T.tls.client_hello(rnd, X.x25519(priv, T.tls.cat((9 : U32) <> Nil{}, T.tls.zeros(31n))),
-    List.append(&2, U32, 4 <> Nil{}, P.p256.base_mul(hello.p256_scalar(privs))),
-    List.append(&2, U32, 4 <> Nil{}, Q.p384.base_mul(hello.p384_scalar(privs))), host)
+  T.tls.client_hello(rnd, T.tls.cat(T.tls.share(29, X.x25519(priv, T.tls.cat((9 : U32) <> Nil{}, T.tls.zeros(31n)))),
+    T.tls.share(23, List.append(&2, U32, 4 <> Nil{}, P.p256.base_mul(hello.p256_scalar(privs))))), host, Nil{})
 
 def hello.p256_scalar(+privs: List<&2, U32>) -> List<&2, U32>:
   List.take(&2, U32, privs, 32n)
@@ -364,9 +366,123 @@ def hello.at(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +pr
   +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match ok:
     case True{}:
-      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, now, host)
+      hello.kind(hello.hrr_of(T.tls.hm(List.drop(&2, U32, rec, 5n))), s, rest, rec, priv, privs, ch, der, now, host)
     case False{}:
       hello.bad(s)
+
+# a ServerHello that is a HelloRetryRequest (RFC 8446 4.1.4): its random is a fixed value
+def hello.is_hrr(+body: List<&2, U32>) -> Bool:
+  R.rsa.eqb(T.tls.sh.random(body), T.tls.hrr_random())
+
+def hello.hrr_of(+m: T.HM) -> Bool:
+  match m:
+    case T.HM{+t, +body, +rest}:
+      hello.is_hrr(body)
+
+def hello.kind(hrr: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  match hrr:
+    case True{}:
+      hello.retry(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, now, host)
+    case False{}:
+      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, now, host)
+
+# a HelloRetryRequest that selects secp384r1, the one group we sent no key share for: the second
+# ClientHello sends that key share and echoes the cookie. Any other group is refused.
+def hello.retry(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privs: List<&2, U32>,
+  +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  match sh:
+    case SH{+raw, +pub, +alg, +group}:
+      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, priv, privs, ch, der, now, host)
+
+def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  match is384:
+    case True{}:
+      hello.retry.send(s, rest, hrr, priv, privs, ch, der, now, host)
+    case False{}:
+      hello.bad(s)
+
+# the second ClientHello, sent; then the next record, which must be the ServerHello
+def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  do IO<Unit>:
+    +ch2 : List<&2, U32> = hello.msg2(privs, hello.random(ch), host, hello.cookie(hrr))
+    +pre : List<&2, U32> = T.tls.cat(hello.synth(ch), T.tls.cat(hrr, ch2))
+    s1 : Socket <- io.send(s, T.tls.plain(22, ch2))
+    t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, rest)
+    hello.round2.first(t, priv, privs, pre, der, now, host)
+
+def hello.round2.first(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
+  +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  (s, pr) = t
+  (rest, rec) = pr
+  hello.round2.check(s, rest, rec, priv, privs, pre, der, now, host)
+
+def hello.round2.check(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  hello.round2.at(U32.is_eq(T.tls.tag(rec), 20), s, rest, rec, priv, privs, pre, der, now, host)
+
+# after the second ClientHello, one change_cipher_spec record (sent for middlebox compatibility)
+# is skipped; the record after it must be the ServerHello
+def hello.round2.at(is_ccs: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  match is_ccs:
+    case True{}:
+      do IO<Unit>:
+        t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, rest)
+        hello.round2.second(t, priv, privs, pre, der, now, host)
+    case False{}:
+      hello.round2.check2(s, rest, rec, priv, privs, pre, der, now, host)
+
+def hello.round2.second(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
+  +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  (s, pr) = t
+  (rest, rec) = pr
+  hello.round2.check2(s, rest, rec, priv, privs, pre, der, now, host)
+
+def hello.round2.check2(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  hello.at2(Bool.and(U32.is_eq(T.tls.tag(rec), 22), hello.ok2(T.tls.hm(List.drop(&2, U32, rec, 5n)))),
+    s, rest, rec, priv, privs, pre, der, now, host)
+
+def hello.at2(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  match ok:
+    case True{}:
+      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, pre, der, now, host)
+    case False{}:
+      hello.bad(s)
+
+# the ServerHello after a HelloRetryRequest: one of our suites, secp384r1, and not a HelloRetryRequest again
+def hello.ok2(+m: T.HM) -> Bool:
+  match m:
+    case T.HM{+t, +body, +rest}:
+      Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)),
+        Bool.and(Nat.is_eq(T.tls.sh.group(body), 24n), Bool.pick(Bool, hello.is_hrr(body), False{}, True{}))))
+
+# the transcript before the ServerHello after a HelloRetryRequest (RFC 8446 4.4.1): the first
+# ClientHello as a message_hash message (type 254, a 3-byte length of the SHA-256 digest, the digest)
+def hello.synth(+ch: List<&2, U32>) -> List<&2, U32>:
+  T.tls.cat(254 <> 0 <> 0 <> 32 <> Nil{}, S.sha256_bytes(ch))
+
+# the random of a ClientHello: after its header (4 bytes) and its version (2 bytes)
+def hello.random(+ch: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, List.drop(&2, U32, ch, 6n), 32n)
+
+# the cookie of a HelloRetryRequest (its raw message): without the 2-byte length; Nil when none
+def hello.cookie(+raw: List<&2, U32>) -> List<&2, U32>:
+  hello.cookie.at(T.tls.hm(raw))
+
+def hello.cookie.at(+m: T.HM) -> List<&2, U32>:
+  match m:
+    case T.HM{+t, +body, +rest}:
+      List.drop(&2, U32, T.tls.ext(T.tls.sh.exts(body), 44n), 2n)
+
+# the second ClientHello: the same random, the secp384r1 key share alone, and the cookie
+def hello.msg2(+privs: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>, +cookie: List<&2, U32>) -> List<&2, U32>:
+  T.tls.client_hello(rnd, T.tls.share(24, List.append(&2, U32, 4 <> Nil{}, Q.p384.base_mul(hello.p384_scalar(privs)))),
+    host, cookie)
 
 def hello.derive(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privs: List<&2, U32>,
   +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):

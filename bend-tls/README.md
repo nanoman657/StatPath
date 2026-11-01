@@ -54,7 +54,7 @@ bend x509_ext_tests.bend        -> x509-ext: 41 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
-bend tls_tests.bend             -> tls: 24 passed, 0 failed
+bend tls_tests.bend             -> tls: 33 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 120 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 120 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
@@ -215,9 +215,10 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 - **Two cipher suites.** `TLS_AES_128_GCM_SHA256` and
   `TLS_CHACHA20_POLY1305_SHA256`. `TLS_AES_256_GCM_SHA384` is not implemented:
   it needs SHA-384 in the transcript hash and the key schedule.
-- **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). There is no
-  P-521 or X448, and no HelloRetryRequest, so a server that requires another group
-  fails.
+- **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). The first
+  ClientHello carries x25519 and P-256 key shares; a server that wants P-384 sends a
+  HelloRetryRequest, and the client answers with a P-384 key share (and the cookie,
+  if any). There is no P-521 or X448, and a server that wants another group fails.
 - **Certificates.** RSA (verified with SHA-256, PSS or PKCS#1 v1.5), ECDSA on P-256
   with SHA-256, ECDSA on P-384 with SHA-384 (or SHA-256), and Ed25519. P-521 ECDSA,
   Ed448, and RSA with hashes other than SHA-256 are not verified.
@@ -255,7 +256,6 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 1. **`TLS_AES_256_GCM_SHA384`,** with SHA-384 in the transcript hash and the key
    schedule (HKDF-SHA384, HMAC-SHA384, AES-256 keys). The P-384 key agreement and
    certificates are done; this suite is an extension of the same code.
-2. **HelloRetryRequest,** so a server that wants another group can be served.
-3. **Constant-time arithmetic,** and a review before any use with real secrets.
-4. **Revocation, name constraints, and the anchor's path length** in the
-   certificate checks.
+2. **Constant-time arithmetic,** and a review before any use with real secrets.
+3. **Revocation** (CRL, OCSP). The client does not fetch either, and no CRL is given to
+   it, so a revoked certificate is accepted.

@@ -72,22 +72,46 @@ def tls.plain(ctype: U32, +body: List<&2, U32>) -> List<&2, U32>:
 # ClientHello (RFC 8446 section 4.1.2) with TLS_CHACHA20_POLY1305_SHA256, x25519
 # key share, supported_versions, supported_groups, signature_algorithms
 # (rsa_pss_rsae_sha256 and rsa_pkcs1_sha256) and the server name
-def tls.key_share(+pub: List<&2, U32>, +pubp: List<&2, U32>, +pubq: List<&2, U32>) -> List<&2, U32>:
-  tls.cat(0 <> 51 <> Nil{}, tls.vec(2n, tls.vec(2n, tls.cat(0 <> 29 <> Nil{}, tls.cat(tls.vec(2n, pub),
-    tls.cat(0 <> 23 <> Nil{}, tls.cat(tls.vec(2n, pubp), tls.cat(0 <> 24 <> Nil{}, tls.vec(2n, pubq)))))))))
+# a key share entry (RFC 8446 4.2.8): the group (its low byte; the high byte is 0) and the key
+def tls.share(group: U32, +key: List<&2, U32>) -> List<&2, U32>:
+  tls.cat(0 <> group <> Nil{}, tls.vec(2n, key))
+
+# the key_share extension (type 51) of the entries, already encoded
+def tls.key_share(+entries: List<&2, U32>) -> List<&2, U32>:
+  tls.cat(0 <> 51 <> Nil{}, tls.vec(2n, tls.vec(2n, entries)))
 
 def tls.server_name(+host: List<&2, U32>) -> List<&2, U32>:
   tls.cat(0 <> 0 <> Nil{}, tls.vec(2n, tls.vec(2n, 0 <> tls.vec(2n, host))))
 
-def tls.exts(+pub: List<&2, U32>, +pubp: List<&2, U32>, +pubq: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
+# the cookie extension (type 44) echoed from a HelloRetryRequest; none when there was no cookie
+def tls.cookie_ext(+cookie: List<&2, U32>) -> List<&2, U32>:
+  match cookie:
+    case Nil{}:
+      Nil{}
+    case _:
+      tls.cat(0 <> 44 <> Nil{}, tls.vec(2n, tls.vec(2n, cookie)))
+
+# the extensions of a ClientHello: supported_versions, supported_groups (x25519, secp256r1,
+# secp384r1), signature_algorithms, key_share (the entries), server_name and the cookie
+def tls.exts(+entries: List<&2, U32>, +host: List<&2, U32>, +cookie: List<&2, U32>) -> List<&2, U32>:
   tls.cat(0 <> 43 <> 0 <> 3 <> 2 <> 3 <> 4 <> Nil{}, tls.cat(0 <> 10 <> 0 <> 8 <> 0 <> 6 <> 0 <> 29 <> 0 <> 23 <> 0 <> 24 <> Nil{},
     tls.cat(0 <> 13 <> 0 <> 12 <> 0 <> 10 <> 8 <> 4 <> 4 <> 1 <> 4 <> 3 <> 8 <> 7 <> 5 <> 3 <> Nil{},
-    tls.cat(tls.key_share(pub, pubp, pubq), tls.server_name(host)))))
+    tls.cat(tls.key_share(entries), tls.cat(tls.server_name(host), tls.cookie_ext(cookie))))))
 
-def tls.client_hello(+random: List<&2, U32>, +pub: List<&2, U32>, +pubp: List<&2, U32>, +pubq: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
+# a ClientHello with the given key share entries (a secp256r1 entry, a secp384r1 entry ...)
+def tls.client_hello(+random: List<&2, U32>, +entries: List<&2, U32>, +host: List<&2, U32>, +cookie: List<&2, U32>) -> List<&2, U32>:
   tls.hs(1, tls.cat(3 <> 3 <> Nil{}, tls.cat(random, tls.cat(0 <> Nil{},
     tls.cat(tls.vec(2n, 19 <> 1 <> 19 <> 3 <> Nil{}), tls.cat(1 <> 0 <> Nil{},
-    tls.vec(2n, tls.exts(pub, pubp, pubq, host))))))))
+    tls.vec(2n, tls.exts(entries, host, cookie))))))))
+
+# the random of a ServerHello: after the 2-byte version, 32 bytes
+def tls.sh.random(+body: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, List.drop(&2, U32, body, 2n), 32n)
+
+# the random of a HelloRetryRequest (RFC 8446 4.1.3): the SHA-256 of "HelloRetryRequest"
+def tls.hrr_random() -> List<&2, U32>:
+  207 <> 33 <> 173 <> 116 <> 229 <> 154 <> 97 <> 17 <> 190 <> 29 <> 140 <> 2 <> 30 <> 101 <> 184 <> 145 <> 194 <> 162 <> 17 <> 22 <> 122 <> 187 <> 140 <> 94 <> 7 <> 158 <> 9 <> 226 <> 200 <> 168 <> 51 <> 156 <> Nil{}
+
 
 # Reading the server's messages
 # -----------------------------
