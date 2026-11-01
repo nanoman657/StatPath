@@ -98,7 +98,7 @@ rep("The constants come from gen_p256.py, which checks them against cryptography
 rep("P0(), 16n)", "P0(), 24n)", 3)
 rep("N0(), 16n)", "N0(), 24n)", 1)
 rep("zeros(17n)", "zeros(25n)", 1)
-rep("zeros(18n)", "zeros(26n)", 1)
+rep("zeros(18n)", "zeros(26n)", 3)
 rep("k, 16n))", "k, 24n))", 1)
 rep("p256.bytes.le(x), 32n)", "p256.bytes.le(x), 48n)", 1)
 rep("Nat.is_eq(List.length(&2, U32, qx), 32n), Nat.is_eq(List.length(&2, U32, qy), 32n)",

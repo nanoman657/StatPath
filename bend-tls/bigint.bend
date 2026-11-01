@@ -46,12 +46,21 @@ def bi.subb(a: List<&2, Nat>, b: List<&2, Nat>, +borrow: Nat) -> List<&2, Nat> &
           bi.subb.cons(Nat.sub(Nat.add(x, 65536n), Nat.add(y, borrow)),
             bi.subb(xt, yt, Nat.sub(1n, Nat.div(Nat.sub(Nat.add(x, 65536n), Nat.add(y, borrow)), 65536n))))
 
+# x where s is 1, y where s is 0, limb by limb with no branch on s: x * s + y * (1 - s)
+def bi.sel(+s: Nat, +x: List<&2, Nat>, +y: List<&2, Nat>) -> List<&2, Nat>:
+  match x:
+    case Nil{}:
+      Nil{}
+    case +u <> ut:
+      match y:
+        case Nil{}:
+          Nil{}
+        case +v <> vt:
+          (Nat.add(Nat.mul(u, s), Nat.mul(v, Nat.sub(1n, s))) : Nat) <> bi.sel(s, ut, vt)
+
+# the borrow decides with no branch: a when there was a borrow (bo = 1), else d
 def bi.csub.choose(a: List<&2, Nat>, d: List<&2, Nat>, bo: Nat) -> List<&2, Nat>:
-  match bo:
-    case 0n:
-      d
-    case 1n+_:
-      a
+  bi.sel(bo, a, d)
 
 def bi.csub.pick(a: List<&2, Nat>, r: List<&2, Nat> & Nat) -> List<&2, Nat>:
   (d, bo) = r

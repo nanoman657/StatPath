@@ -165,25 +165,22 @@ def fe.cB2(+w: FE, g: FE & Nat) -> FE:
   (+gg, t) = g
   fe.cB3(w, fe.hi255(gg), gg)
 
-def fe.cB3(+w: FE, h: Nat, +gg: FE) -> FE:
-  match h:
-    case 0n:
-      w
-    case 1n+_:
-      fe.low255(gg)
+def fe.cB3(+w: FE, +h: Nat, +gg: FE) -> FE:
+  fe.sel(h, w, fe.low255(gg))
 
 # repeat the carry until the top carry is zero, so the value is below 2^256
+# four folds, always: a zero carry folds nothing, so the same steps run for every value
 def fe.cfold(fuel: Nat, r: FE & Nat) -> FE:
   match fuel:
     case 0n:
-      fe.zero()
+      fe.cA(fe.first(r))
     case 1n+p:
       (y, +t) = r
-      match t:
-        case 0n:
-          fe.cA(y)
-        case 1n+_:
-          fe.cfold(p, fe.carrynw(fe.addl0(y, Nat.mul(38n, t))))
+      fe.cfold(p, fe.carrynw(fe.addl0(y, Nat.mul(38n, t))))
+
+def fe.first(g: FE & Nat) -> FE:
+  (y, t) = g
+  y
 
 # x mod p, canonical: limbs below 2^16 and the value below p
 def fe.canon(+x: FE) -> FE:
@@ -222,12 +219,13 @@ def fe.pow.step(b: Nat, +x: FE, +r2: FE) -> FE:
 def fe.inv(+z: FE) -> FE:
   fe.pow(P2_BITS, z, fe.one())
 
-def fe.pick(s: Nat, +a: FE, +b: FE) -> FE:
-  match s:
-    case 0n:
-      a
-    case 1n+_:
-      b
+# a when s is 0, b when s is 1, with no branch: each limb is a * (1 - s) + b * s
+def fe.sel(+s: Nat, +a: FE, +b: FE) -> FE:
+  match a:
+    case FE{APAT}:
+      match b:
+        case FE{BPAT}:
+          FE{SEL_RES}
 
 # the Montgomery ladder state: x2, z2, x3, z3, and the swap bit
 type LS is Data:
@@ -298,7 +296,7 @@ def x25519(k: List<&2, U32>, u: List<&2, U32>) -> List<&2, U32>:
 def x25519.out(st: LS) -> List<&2, U32>:
   match st:
     case LS{+x2, +z2, +x3, +z3, +swap}:
-      x25519.tou32(fe.bytes(fe.canon(fe.mul(fe.pick(swap, x2, x3), fe.inv(fe.pick(swap, z2, z3))))))
+      x25519.tou32(fe.bytes(fe.canon(fe.mul(fe.sel(swap, x2, x3), fe.inv(fe.sel(swap, z2, z3))))))
 """
 
 def bend_list(xs):
@@ -317,10 +315,10 @@ P2_BITS = [((P - 2) >> i) & 1 for i in range(254, -1, -1)]
 # the ladder body, with the same named values as RFC 7748 section 5
 LADDER = [
     "  +sw = Nat.mod(Nat.add(swap, b), 2n)",
-    "  +X2 = fe.pick(sw, x2, x3)",
-    "  +X3 = fe.pick(sw, x3, x2)",
-    "  +Z2 = fe.pick(sw, z2, z3)",
-    "  +Z3 = fe.pick(sw, z3, z2)",
+    "  +X2 = fe.sel(sw, x2, x3)",
+    "  +X3 = fe.sel(sw, x3, x2)",
+    "  +Z2 = fe.sel(sw, z2, z3)",
+    "  +Z3 = fe.sel(sw, z3, z2)",
     "  +A = fe.add(X2, Z2)",
     "  +AA = fe.sq(A)",
     "  +B = fe.sub(X2, Z2)",
@@ -346,6 +344,7 @@ src = TEMPLATE
 subs = {
     "ZFIELDS": ", ".join(f"l{i}: Nat" for i in range(N)),
     "ZEROS": fe_ctor(ZEROS),
+    "SEL_RES": fe_ctor([f"(a{i} * Nat.sub(1n, s) + b{i} * s : Nat)" for i in range(N)]),
     "ONES": fe_ctor(ONES),
     "APAT": pat("a"),
     "BPAT": pat("b"),

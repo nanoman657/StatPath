@@ -33,49 +33,11 @@ def sbox_value(x):
 SBOX = [sbox_value(x) for x in range(256)]
 assert SBOX[0x00] == 0x63 and SBOX[0x01] == 0x7c and SBOX[0x53] == 0xed and SBOX[0xff] == 0x16
 
-def node(p):
-    return "aes.sbox" + ("." + p if p else "")
-
-def pick(p):
-    return "aes.sbpk" + ("." + p if p else "")
-
-def tree(lo, hi, p, out):
-    # the function for the values [lo, hi) at path p, and the ones below it
-    if hi - lo == 2:
-        mid = lo + 1
-        out.append(f"""def {node(p)}(+x: U32) -> U32:
-  {pick(p)}(U32.is_lt(x, {mid}), x)
-
-def {pick(p)}(c: Bool, +x: U32) -> U32:
-  match c:
-    case True{{}}:
-      {SBOX[lo]}
-    case False{{}}:
-      {SBOX[lo + 1]}
-""")
-        return
-    mid = (lo + hi) // 2
-    out.append(f"""def {node(p)}(+x: U32) -> U32:
-  {pick(p)}(U32.is_lt(x, {mid}), x)
-
-def {pick(p)}(c: Bool, x: U32) -> U32:
-  match c:
-    case True{{}}:
-      {node(p + "L")}(x)
-    case False{{}}:
-      {node(p + "R")}(x)
-""")
-    tree(lo, mid, p + "L", out)
-    tree(mid, hi, p + "R", out)
-
-out = []
-tree(0, 256, "", out)
-sbox = "\n".join(out)
 body = open("aes_body.bend").read()
-assert body.count("#@@SBOX@@") == 1
+assert "#@@SBOX@@" not in body
 import sys
 sys.path.insert(0, __file__.rsplit("/", 1)[0] if "/" in __file__ else ".")
 from bendsort import sort_defs
 # the compiler needs each definition after the ones it uses: sort as sortfile.py does
-open("aes.bend", "w").write(sort_defs(body.replace("#@@SBOX@@", sbox)))
-print("aes.bend: S-box tree with", len(out) * 2, "functions")
+open("aes.bend", "w").write(sort_defs(body))
+print("aes.bend: S-box by inversion and the affine map")

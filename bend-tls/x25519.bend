@@ -187,14 +187,19 @@ def fe.low255(+x: FE) -> FE:
       FE{x0, x1, x2, x3, x4, x5, x6, x7, x8, x9, x10, x11, x12, x13, x14, Nat.mod(x15, 32768n)}
 
 # x (limbs exact, value below 2^256) reduced once: fold bit 255 as 19
-def fe.cB3(+w: FE, h: Nat, +gg: FE) -> FE:
-  match h:
-    case 0n:
-      w
-    case 1n+_:
-      fe.low255(gg)
+def fe.sel(+s: Nat, +a: FE, +b: FE) -> FE:
+  match a:
+    case FE{+a0, +a1, +a2, +a3, +a4, +a5, +a6, +a7, +a8, +a9, +a10, +a11, +a12, +a13, +a14, +a15}:
+      match b:
+        case FE{+b0, +b1, +b2, +b3, +b4, +b5, +b6, +b7, +b8, +b9, +b10, +b11, +b12, +b13, +b14, +b15}:
+          FE{(a0 * Nat.sub(1n, s) + b0 * s : Nat), (a1 * Nat.sub(1n, s) + b1 * s : Nat), (a2 * Nat.sub(1n, s) + b2 * s : Nat), (a3 * Nat.sub(1n, s) + b3 * s : Nat), (a4 * Nat.sub(1n, s) + b4 * s : Nat), (a5 * Nat.sub(1n, s) + b5 * s : Nat), (a6 * Nat.sub(1n, s) + b6 * s : Nat), (a7 * Nat.sub(1n, s) + b7 * s : Nat), (a8 * Nat.sub(1n, s) + b8 * s : Nat), (a9 * Nat.sub(1n, s) + b9 * s : Nat), (a10 * Nat.sub(1n, s) + b10 * s : Nat), (a11 * Nat.sub(1n, s) + b11 * s : Nat), (a12 * Nat.sub(1n, s) + b12 * s : Nat), (a13 * Nat.sub(1n, s) + b13 * s : Nat), (a14 * Nat.sub(1n, s) + b14 * s : Nat), (a15 * Nat.sub(1n, s) + b15 * s : Nat)}
+
+# the Montgomery ladder state: x2, z2, x3, z3, and the swap bit
+def fe.cB3(+w: FE, +h: Nat, +gg: FE) -> FE:
+  fe.sel(h, w, fe.low255(gg))
 
 # repeat the carry until the top carry is zero, so the value is below 2^256
+# four folds, always: a zero carry folds nothing, so the same steps run for every value
 def fe.cB2(+w: FE, g: FE & Nat) -> FE:
   (+gg, t) = g
   fe.cB3(w, fe.hi255(gg), gg)
@@ -210,19 +215,19 @@ def fe.cA2(r: FE & Nat) -> FE:
 def fe.cA(+y: FE) -> FE:
   fe.cA2(fe.carrynw(fe.addl0(fe.low255(y), Nat.mul(19n, fe.hi255(y)))))
 
+def fe.first(g: FE & Nat) -> FE:
+  (y, t) = g
+  y
+
+# x mod p, canonical: limbs below 2^16 and the value below p
 def fe.cfold(fuel: Nat, r: FE & Nat) -> FE:
   match fuel:
     case 0n:
-      fe.zero()
+      fe.cA(fe.first(r))
     case 1n+p:
       (y, +t) = r
-      match t:
-        case 0n:
-          fe.cA(y)
-        case 1n+_:
-          fe.cfold(p, fe.carrynw(fe.addl0(y, Nat.mul(38n, t))))
+      fe.cfold(p, fe.carrynw(fe.addl0(y, Nat.mul(38n, t))))
 
-# x mod p, canonical: limbs below 2^16 and the value below p
 def fe.canon(+x: FE) -> FE:
   fe.cfold(4n, fe.carrynw(fe.norm(x)))
 
@@ -259,14 +264,7 @@ def fe.pow(bits: List<&2, Nat>, +x: FE, +r: FE) -> FE:
 def fe.inv(+z: FE) -> FE:
   fe.pow([1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 1n, 0n, 1n, 0n, 1n, 1n], z, fe.one())
 
-def fe.pick(s: Nat, +a: FE, +b: FE) -> FE:
-  match s:
-    case 0n:
-      a
-    case 1n+_:
-      b
-
-# the Montgomery ladder state: x2, z2, x3, z3, and the swap bit
+# a when s is 0, b when s is 1, with no branch: each limb is a * (1 - s) + b * s
 type LS is Data:
   LS{x2: FE, z2: FE, x3: FE, z3: FE, swap: Nat}
 
@@ -275,10 +273,10 @@ def ladder.step(+b: Nat, +st: LS, +u: FE) -> LS:
   match st:
     case LS{+x2, +z2, +x3, +z3, +swap}:
         +sw = Nat.mod(Nat.add(swap, b), 2n)
-        +X2 = fe.pick(sw, x2, x3)
-        +X3 = fe.pick(sw, x3, x2)
-        +Z2 = fe.pick(sw, z2, z3)
-        +Z3 = fe.pick(sw, z3, z2)
+        +X2 = fe.sel(sw, x2, x3)
+        +X3 = fe.sel(sw, x3, x2)
+        +Z2 = fe.sel(sw, z2, z3)
+        +Z3 = fe.sel(sw, z3, z2)
         +A = fe.add(X2, Z2)
         +AA = fe.sq(A)
         +B = fe.sub(X2, Z2)
@@ -348,7 +346,7 @@ def x25519.scalar_bits(k: List<&2, U32>) -> List<&2, Nat>:
 def x25519.out(st: LS) -> List<&2, U32>:
   match st:
     case LS{+x2, +z2, +x3, +z3, +swap}:
-      x25519.tou32(fe.bytes(fe.canon(fe.mul(fe.pick(swap, x2, x3), fe.inv(fe.pick(swap, z2, z3))))))
+      x25519.tou32(fe.bytes(fe.canon(fe.mul(fe.sel(swap, x2, x3), fe.inv(fe.sel(swap, z2, z3))))))
 
 def x25519(k: List<&2, U32>, u: List<&2, U32>) -> List<&2, U32>:
   +uu = fe.of_bytes(x25519.tonat(u))

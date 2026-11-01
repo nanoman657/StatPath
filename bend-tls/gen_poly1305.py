@@ -120,16 +120,21 @@ def pl.addl0(+x: F, +c: Nat) -> F:
       F{{(x0 + c : Nat), x1, x2, x3, x4, x5, x6, x7, x8, x9}}
 
 # y < 2^130 is below p, or in [p, 2^130) and then y + 5 carries out of limb 9
-def pl.canon.choose(+y: F, +gy: F, gt: Nat) -> F:
-  match gt:
-    case 0n:
-      y
-    case 1n+_:
-      gy
+# gy where s is 1, y where s is 0, limb by limb with no branch: a * (1 - s) + b * s
+def pl.sel(+s: Nat, +y: F, +gy: F) -> F:
+  match y:
+    case F{{{fields("a")}}}:
+      match gy:
+        case F{{{fields("b")}}}:
+          F{{{", ".join(f"(a{i} * Nat.sub(1n, s) + b{i} * s : Nat)" for i in range(L))}}}
 
 def pl.canon.pick(+y: F, g: F & Nat) -> F:
   (gy, gt) = g
-  pl.canon.choose(y, gy, gt)
+  pl.sel(gt, y, gy)
+
+def pl.first(g: F & Nat) -> F:
+  (y, t) = g
+  y
 
 def pl.canon.sub(+y: F) -> F:
   pl.canon.pick(y, pl.carrynw(pl.addl0(y, 5n)))
@@ -139,14 +144,10 @@ def pl.canon.sub(+y: F) -> F:
 def pl.canon.iter(fuel: Nat, r: F & Nat) -> F:
   match fuel:
     case 0n:
-      pl.zero()
+      pl.canon.sub(pl.first(r))
     case 1n+p:
       (y, +t) = r
-      match t:
-        case 0n:
-          pl.canon.sub(y)
-        case 1n+_:
-          pl.canon.iter(p, pl.carrynw(pl.addl0(y, Nat.mul(5n, t))))
+      pl.canon.iter(p, pl.carrynw(pl.addl0(y, Nat.mul(5n, t))))
 
 def pl.canon(+x: F) -> F:
   pl.canon.iter(4n, pl.carrynw(pl.norm(x)))

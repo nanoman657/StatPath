@@ -85,5 +85,9 @@ block = "\n".join(lines)
 
 body = open("p256_body.bend").read()
 assert body.count("#@@CONST@@") == 1
-open("p256.bend", "w").write(body.replace("#@@CONST@@", block))
+import sys
+sys.path.insert(0, __file__.rsplit("/", 1)[0] if "/" in __file__ else ".")
+from bendsort import sort_defs
+# the compiler needs each definition after the ones it uses: sort as sortfile.py does
+open("p256.bend", "w").write(sort_defs(body.replace("#@@CONST@@", block)))
 print("p256.bend: constants checked (curve, generator, 2G, kG, nG = infinity)")

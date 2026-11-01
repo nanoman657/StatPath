@@ -1,7 +1,7 @@
 # p384.bend: NIST P-384 (secp384r1) for ECDSA verification and ECDH. Generated from p256_body.bend by gen_p384.py. Values
 # are 18-limb lists of 16-bit limbs (bigint.bend), least significant first. Field
-# values are in Montgomery form (x * 2^256 mod p). Points are Jacobian (X, Y, Z),
-# affine (x, y) = (X / Z^2, Y / Z^3), with Z = 0 for the point at infinity.
+# values are in Montgomery form (x * 2^256 mod p). Points are projective (X : Y : Z),
+# affine (x, y) = (X / Z, Y / Z), with (0 : 1 : 0) the point at infinity.
 # The constants come from gen_p384.py, which checks them against cryptography.
 # p384.bend is generated: python3 -I gen_p384.py
 
@@ -124,141 +124,81 @@ def p384.tom(+x: List<&2, Nat>) -> List<&2, Nat>:
 def p384.fromm(+x: List<&2, Nat>) -> List<&2, Nat>:
   B.bi.mont(x, 1n <> B.bi.zeros(25n), p384.P(), p384.P0(), 24n)
 
-# Points (Jacobian)
-# -----------------
+# Points (projective)
+# --------------------
 
+# A point is (X : Y : Z), with affine (x, y) = (X / Z, Y / Z); the point at infinity is (0 : 1 : 0).
+# The complete addition formulas of Renes, Costello and Batina (2016, algorithm 1, for a = -3) add
+# any two points, doubling and infinity included, with no case split on the data.
 type JP is Data:
   JP{x: List<&2, Nat>, y: List<&2, Nat>, z: List<&2, Nat>}
 
 def p384.inf() -> JP:
-  JP{p384.ONE_P(), p384.ONE_P(), B.bi.zeros(26n)}
+  JP{B.bi.zeros(26n), p384.ONE_P(), B.bi.zeros(26n)}
 
-# doubling (dbl-2001-b, a = -3)
-def p384.pdbl.go(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>) -> JP:
-  +delta : List<&2, Nat> = p384.sqr(z)
-  +gamma : List<&2, Nat> = p384.sqr(y)
-  +beta : List<&2, Nat> = p384.mul(x, gamma)
-  +alpha : List<&2, Nat> = p384.f3(p384.mul(p384.sub(x, delta), p384.add(x, delta)))
-  +x3 : List<&2, Nat> = p384.sub(p384.sqr(alpha), p384.f8(beta))
-  +z3 : List<&2, Nat> = p384.sub(p384.sub(p384.sqr(p384.add(y, z)), gamma), delta)
-  +y3 : List<&2, Nat> = p384.sub(p384.mul(alpha, p384.sub(p384.f4(beta), x3)), p384.f8(p384.sqr(gamma)))
-  JP{x3, y3, z3}
+# 3b, the curve constant b times three, in Montgomery form
+def p384.b3() -> List<&2, Nat>:
+  p384.add(p384.BM(), p384.add(p384.BM(), p384.BM()))
 
-# P + Q for an affine Q = (qx, qy) (madd-2007-bl)
+# -3x mod p
+def p384.neg3(+x: List<&2, Nat>) -> List<&2, Nat>:
+  p384.sub(B.bi.zeros(26n), p384.add(p384.f2(x), x))
+
+# P + Q for any two points (algorithm 1 of the paper, with its names: t0 .. t5 and the sums)
+def p384.cadd.go(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>, +x2: List<&2, Nat>,
+  +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
+  +t0 : List<&2, Nat> = p384.mul(x1, x2)
+  +t1 : List<&2, Nat> = p384.mul(y1, y2)
+  +t2 : List<&2, Nat> = p384.mul(z1, z2)
+  +t3 : List<&2, Nat> = p384.sub(p384.mul(p384.add(x1, y1), p384.add(x2, y2)), p384.add(t0, t1))
+  +t4 : List<&2, Nat> = p384.sub(p384.mul(p384.add(x1, z1), p384.add(x2, z2)), p384.add(t0, t2))
+  +t5 : List<&2, Nat> = p384.sub(p384.mul(p384.add(y1, z1), p384.add(y2, z2)), p384.add(t1, t2))
+  +x3a : List<&2, Nat> = p384.mul(p384.b3(), t2)
+  +z3a : List<&2, Nat> = p384.add(p384.neg3(t4), x3a)
+  +x3b : List<&2, Nat> = p384.sub(t1, z3a)
+  +z3b : List<&2, Nat> = p384.add(t1, z3a)
+  +y3a : List<&2, Nat> = p384.mul(x3b, z3b)
+  +t1a : List<&2, Nat> = p384.add(p384.f2(t0), t0)
+  +t2a : List<&2, Nat> = p384.neg3(t2)
+  +t4a : List<&2, Nat> = p384.mul(p384.b3(), t4)
+  +t1b : List<&2, Nat> = p384.add(t1a, t2a)
+  +t2b : List<&2, Nat> = p384.neg3(p384.sub(t0, t2a))
+  +t4b : List<&2, Nat> = p384.add(t4a, t2b)
+  +t0a : List<&2, Nat> = p384.mul(t1b, t4b)
+  +y3b : List<&2, Nat> = p384.add(y3a, t0a)
+  +t0b : List<&2, Nat> = p384.mul(t5, t4b)
+  +x3c : List<&2, Nat> = p384.sub(p384.mul(t3, x3b), t0b)
+  +t0c : List<&2, Nat> = p384.mul(t3, t1b)
+  +z3c : List<&2, Nat> = p384.add(p384.mul(t5, z3b), t0c)
+  JP{x3c, y3b, z3c}
+
+# P + P
+def p384.cadd(+p: JP, +q: JP) -> JP:
+  match p:
+    case JP{+x1, +y1, +z1}:
+      match q:
+        case JP{+x2, +y2, +z2}:
+          p384.cadd.go(x1, y1, z1, x2, y2, z2)
+
 def p384.pdbl(+p: JP) -> JP:
-  match p:
-    case JP{+x, +y, +z}:
-      p384.pdbl.go(x, y, z)
+  p384.cadd(p, p)
 
-def p384.madd.fin(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>, +h: List<&2, Nat>,
-  +r: List<&2, Nat>, +z1z1: List<&2, Nat>) -> JP:
-  +hh : List<&2, Nat> = p384.sqr(h)
-  +i : List<&2, Nat> = p384.f4(hh)
-  +j : List<&2, Nat> = p384.mul(h, i)
-  +v : List<&2, Nat> = p384.mul(x, i)
-  +x3 : List<&2, Nat> = p384.sub(p384.sub(p384.sqr(r), j), p384.f2(v))
-  +y3 : List<&2, Nat> = p384.sub(p384.mul(r, p384.sub(v, x3)), p384.f2(p384.mul(y, j)))
-  +z3 : List<&2, Nat> = p384.sub(p384.sub(p384.sqr(p384.add(z, h)), z1z1), hh)
-  JP{x3, y3, z3}
-
-# P + Q for Jacobian P and Q (add-2007-bl)
-def p384.same(r0: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>) -> JP:
-  match r0:
-    case True{}:
-      p384.pdbl(JP{x, y, z})
-    case False{}:
-      p384.inf()
-
-def p384.madd.case(h0: Bool, r0: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>) -> JP:
-  match h0:
-    case True{}:
-      p384.same(r0, x, y, z)
-    case False{}:
-      p384.madd.fin(x, y, z, h, r, z1z1)
-
-# the same x: the same point doubles, the opposite one is infinity
-def p384.madd.gen(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  +z1z1 : List<&2, Nat> = p384.sqr(z)
-  +u2 : List<&2, Nat> = p384.mul(qx, z1z1)
-  +s2 : List<&2, Nat> = p384.mul(qy, p384.mul(z, z1z1))
-  +h : List<&2, Nat> = p384.sub(u2, x)
-  +r : List<&2, Nat> = p384.f2(p384.sub(s2, y))
-  p384.madd.case(p384.is0(h), p384.is0(r), x, y, z, h, r, z1z1)
-
-def p384.madd.go(zinf: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  match zinf:
-    case True{}:
-      JP{qx, qy, p384.ONE_P()}
-    case False{}:
-      p384.madd.gen(x, y, z, qx, qy)
-
+# P + Q for an affine Q = (qx, qy) in Montgomery form
 def p384.madd(+p: JP, +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  match p:
-    case JP{+x, +y, +z}:
-      p384.madd.go(p384.is0(z), x, y, z, qx, qy)
+  p384.cadd(p, JP{qx, qy, p384.ONE_P()})
 
-def p384.padd.fin(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>, +z2: List<&2, Nat>,
-  +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>, +z2z2: List<&2, Nat>,
-  +u1: List<&2, Nat>, +s1: List<&2, Nat>) -> JP:
-  +i : List<&2, Nat> = p384.f4(p384.sqr(h))
-  +j : List<&2, Nat> = p384.mul(h, i)
-  +v : List<&2, Nat> = p384.mul(u1, i)
-  +x3 : List<&2, Nat> = p384.sub(p384.sub(p384.sqr(r), j), p384.f2(v))
-  +y3 : List<&2, Nat> = p384.sub(p384.mul(r, p384.sub(v, x3)), p384.f2(p384.mul(s1, j)))
-  +z3 : List<&2, Nat> = p384.mul(p384.sub(p384.sub(p384.sqr(p384.add(z1, z2)), z1z1), z2z2), h)
-  JP{x3, y3, z3}
+# a when s is 1, b when s is 0, with no branch on s
+def p384.sel(+s: Nat, +a: JP, +b: JP) -> JP:
+  match a:
+    case JP{+x1, +y1, +z1}:
+      match b:
+        case JP{+x2, +y2, +z2}:
+          JP{B.bi.sel(s, x1, x2), B.bi.sel(s, y1, y2), B.bi.sel(s, z1, z2)}
 
 # Scalar multiplication
 # ---------------------
 
 # the bits of the low 256 bits of a limb list, most significant first
-def p384.padd.case(h0: Bool, r0: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +z2: List<&2, Nat>, +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>,
-  +z2z2: List<&2, Nat>, +u1: List<&2, Nat>, +s1: List<&2, Nat>) -> JP:
-  match h0:
-    case True{}:
-      p384.same(r0, x1, y1, z1)
-    case False{}:
-      p384.padd.fin(x1, y1, z1, z2, h, r, z1z1, z2z2, u1, s1)
-
-def p384.padd.gen(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  +z1z1 : List<&2, Nat> = p384.sqr(z1)
-  +z2z2 : List<&2, Nat> = p384.sqr(z2)
-  +u1 : List<&2, Nat> = p384.mul(x1, z2z2)
-  +u2 : List<&2, Nat> = p384.mul(x2, z1z1)
-  +s1 : List<&2, Nat> = p384.mul(y1, p384.mul(z2, z2z2))
-  +s2 : List<&2, Nat> = p384.mul(y2, p384.mul(z1, z1z1))
-  +h : List<&2, Nat> = p384.sub(u2, u1)
-  +r : List<&2, Nat> = p384.f2(p384.sub(s2, s1))
-  p384.padd.case(p384.is0(h), p384.is0(r), x1, y1, z1, z2, h, r, z1z1, z2z2, u1, s1)
-
-def p384.padd.two(z2inf: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  match z2inf:
-    case True{}:
-      JP{x1, y1, z1}
-    case False{}:
-      p384.padd.gen(x1, y1, z1, x2, y2, z2)
-
-def p384.padd.go(z1inf: Bool, z2inf: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  match z1inf:
-    case True{}:
-      JP{x2, y2, z2}
-    case False{}:
-      p384.padd.two(z2inf, x1, y1, z1, x2, y2, z2)
-
-def p384.padd(+p1: JP, +p2: JP) -> JP:
-  match p1:
-    case JP{+x1, +y1, +z1}:
-      match p2:
-        case JP{+x2, +y2, +z2}:
-          p384.padd.go(p384.is0(z1), p384.is0(z2), x1, y1, z1, x2, y2, z2)
-
 def p384.bits.go(fuel: Nat, +v: Nat, +pw: Nat) -> List<&2, Nat>:
   match fuel:
     case 0n:
@@ -266,7 +206,8 @@ def p384.bits.go(fuel: Nat, +v: Nat, +pw: Nat) -> List<&2, Nat>:
     case 1n+q:
       Nat.mod(Nat.div(v, pw), 2n) <> p384.bits.go(q, v, Nat.div(pw, 2n))
 
-# k * (qx, qy), by double-and-add over the bits of k (most significant first)
+# k * (qx, qy), by double-and-add over the bits of k (most significant first): each bit doubles,
+# adds Q, and keeps the sum when the bit is 1. The choice is a select, not a branch on the bit.
 def p384.bits16(+v: Nat) -> List<&2, Nat>:
   p384.bits.go(16n, v, 32768n)
 
@@ -282,11 +223,7 @@ def p384.bits(+k: List<&2, Nat>) -> List<&2, Nat>:
   p384.bits.limbs(List.reverse(&2, Nat, List.take(&2, Nat, k, 24n)))
 
 def p384.step(+acc: JP, +qx: List<&2, Nat>, +qy: List<&2, Nat>, b: Nat) -> JP:
-  match b:
-    case 0n:
-      p384.pdbl(acc)
-    case _:
-      p384.madd(p384.pdbl(acc), qx, qy)
+  p384.sel(b, p384.madd(p384.pdbl(acc), qx, qy), p384.pdbl(acc))
 
 # Arithmetic mod n (the group order), in Montgomery form
 # -------------------------------------------------------
@@ -330,7 +267,7 @@ def p384.pow.step(+acc: List<&2, Nat>, +base: List<&2, Nat>, b: Nat) -> List<&2,
     case _:
       p384.mul(p384.mul(acc, acc), base)
 
-# the affine coordinates (x, y) = (X / Z^2, Y / Z^3) as 64 big-endian bytes, x then y
+# the affine coordinates (x, y) = (X / Z, Y / Z) as 64 big-endian bytes, x then y
 def p384.pow.go(bits: List<&2, Nat>, +acc: List<&2, Nat>, +base: List<&2, Nat>) -> List<&2, Nat>:
   match bits:
     case Nil{}:
@@ -353,9 +290,8 @@ def p384.bytes_be(+x: List<&2, Nat>) -> List<&2, U32>:
   List.reverse(&2, U32, List.take(&2, U32, p384.bytes.le(x), 48n))
 
 def p384.affine.go(+x: List<&2, Nat>, +y: List<&2, Nat>, +zi: List<&2, Nat>) -> List<&2, U32>:
-  +zi2 : List<&2, Nat> = p384.sqr(zi)
-  List.append(&2, U32, p384.bytes_be(p384.fromm(p384.mul(x, zi2))),
-    p384.bytes_be(p384.fromm(p384.mul(y, p384.mul(zi2, zi)))))
+  List.append(&2, U32, p384.bytes_be(p384.fromm(p384.mul(x, zi))),
+    p384.bytes_be(p384.fromm(p384.mul(y, zi))))
 
 # k G as 64 bytes (x then y), for a 32-byte big-endian k below n
 def p384.affine(+pt: JP) -> List<&2, U32>:
@@ -463,7 +399,7 @@ def p384.verify.cmp4(small: Bool, c2: Bool) -> Bool:
       False{}
 
 def p384.verify.cmp3(+x: List<&2, Nat>, +z: List<&2, Nat>, +rn: List<&2, Nat>) -> Bool:
-  p384.verify.cmp4(p384.lt(rn, p384.P()), p384.eqn(x, p384.mul(p384.sqr(z), p384.tom(rn))))
+  p384.verify.cmp4(p384.lt(rn, p384.P()), p384.eqn(x, p384.mul(z, p384.tom(rn))))
 
 def p384.verify.cmp2(c1: Bool, +x: List<&2, Nat>, +z: List<&2, Nat>, +rl: List<&2, Nat>) -> Bool:
   match c1:
@@ -477,7 +413,7 @@ def p384.verify.cmp(zinf: Bool, +x: List<&2, Nat>, +z: List<&2, Nat>, +rl: List<
     case True{}:
       False{}
     case False{}:
-      p384.verify.cmp2(p384.eqn(x, p384.mul(p384.sqr(z), p384.tom(rl))), x, z, rl)
+      p384.verify.cmp2(p384.eqn(x, p384.mul(z, p384.tom(rl))), x, z, rl)
 
 def p384.verify.hit(+pt: JP, +rl: List<&2, Nat>) -> Bool:
   match pt:
@@ -493,11 +429,11 @@ def p384.verify.check(ok: Bool, +pt: JP, +rl: List<&2, Nat>) -> Bool:
 
 def p384.verify.point.at(+wm: List<&2, Nat>, +rl: List<&2, Nat>, +el: List<&2, Nat>,
   +xm: List<&2, Nat>, +ym: List<&2, Nat>) -> JP:
-  p384.padd(p384.smul(p384.bits(p384.nmul(el, wm)), p384.GXM(), p384.GYM()),
+  p384.cadd(p384.smul(p384.bits(p384.nmul(el, wm)), p384.GXM(), p384.GYM()),
     p384.smul(p384.bits(p384.nmul(rl, wm)), xm, ym))
 
 # the signature holds when the point is not infinity and its x coordinate, mod n,
-# is r: x = r or (when r + n < p) x = r + n, checked as X == r Z^2 in Jacobian form
+# is r: x = r or (when r + n < p) x = r + n, checked as X == r Z in projective form
 def p384.verify.point(+rl: List<&2, Nat>, +sl: List<&2, Nat>, +el: List<&2, Nat>,
   +xm: List<&2, Nat>, +ym: List<&2, Nat>) -> JP:
   p384.verify.point.at(p384.npow(p384.bits(p384.NM2()), p384.nmul(sl, p384.R2N())), rl, el, xm, ym)

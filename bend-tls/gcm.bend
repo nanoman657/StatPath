@@ -53,32 +53,30 @@ def gcm.shr(+v: List<&2, U32>, carry: U32) -> List<&2, U32>:
     case +x <> t:
       U32.or(U32.shrn(x, 1n), U32.shln(carry, 7n)) <> gcm.shr(t, U32.and(x, 1))
 
-# the reduction: the bit shifted out of a field element, from the least
-# significant end, xors 0xe1 into the first byte (GCM 6.3)
-def gcm.xor_first(+v: List<&2, U32>) -> List<&2, U32>:
+# the reduction (GCM 6.3): the bit shifted out of a field element, from the least significant
+# end (bit, 0 or 1), xors 0xe1 into the first byte: a multiplication by the bit, with no branch
+def gcm.reduce(+bit: U32, +v: List<&2, U32>) -> List<&2, U32>:
   match v:
     case +x <> t:
-      U32.xor(x, 225) <> t
+      U32.xor(x, U32.mul(bit, 225)) <> t
     case Nil{}:
       Nil{}
 
-def gcm.reduce(c: Bool, +v: List<&2, U32>) -> List<&2, U32>:
-  match c:
-    case True{}:
-      gcm.xor_first(v)
-    case False{}:
-      v
-
 # v times x in the field: one bit shifted right, reduced if the bit is set
 def gcm.shr1(+v: List<&2, U32>) -> List<&2, U32>:
-  gcm.reduce(U32.is_eq(U32.and(AES.aes.at(v, 15n), 1), 1), gcm.shr(v, 0))
+  gcm.reduce(U32.and(AES.aes.at(v, 15n), 1), gcm.shr(v, 0))
 
-def gcm.cond(c: Bool, +a: List<&2, U32>, +b: List<&2, U32>) -> List<&2, U32>:
-  match c:
-    case True{}:
-      a
-    case False{}:
-      b
+# a where bit is 1, b where it is 0, byte by byte, with no branch: a * bit + b * (1 - bit)
+def gcm.cond(+bit: U32, +a: List<&2, U32>, +b: List<&2, U32>) -> List<&2, U32>:
+  match a:
+    case Nil{}:
+      Nil{}
+    case +x <> t:
+      match b:
+        case Nil{}:
+          Nil{}
+        case +y <> u:
+          U32.add(U32.mul(x, bit), U32.mul(y, U32.xor(bit, 1))) <> gcm.cond(bit, t, u)
 
 # the field product x * y (GCM Algorithm 1): for each bit of x from the most
 # significant (bit k of the 128, byte k / 8, bit 7 - k mod 8), z gets v when the
@@ -89,7 +87,7 @@ def gcm.mul.go(fuel: Nat, +k: Nat, +x: List<&2, U32>, +z: List<&2, U32>, +v: Lis
       z
     case 1n+p:
       gcm.mul.go(p, Nat.add(k, 1n), x,
-        gcm.cond(U32.is_eq(U32.and(U32.shrn(AES.aes.at(x, Nat.div(k, 8n)), Nat.sub(7n, Nat.mod(k, 8n))), 1), 1),
+        gcm.cond(U32.and(U32.shrn(AES.aes.at(x, Nat.div(k, 8n)), Nat.sub(7n, Nat.mod(k, 8n))), 1),
           AES.aes.xor(z, v), z),
         gcm.shr1(v))
 

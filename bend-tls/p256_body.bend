@@ -1,7 +1,7 @@
 # p256.bend: NIST P-256 (secp256r1) for ECDSA verification with SHA-256. Values
 # are 18-limb lists of 16-bit limbs (bigint.bend), least significant first. Field
-# values are in Montgomery form (x * 2^256 mod p). Points are Jacobian (X, Y, Z),
-# affine (x, y) = (X / Z^2, Y / Z^3), with Z = 0 for the point at infinity.
+# values are in Montgomery form (x * 2^256 mod p). Points are projective (X : Y : Z),
+# affine (x, y) = (X / Z, Y / Z), with (0 : 1 : 0) the point at infinity.
 # The constants come from gen_p256.py, which checks them against cryptography.
 # p256.bend is generated: python3 -I gen_p256.py
 
@@ -86,136 +86,76 @@ def p256.tom(+x: List<&2, Nat>) -> List<&2, Nat>:
 def p256.fromm(+x: List<&2, Nat>) -> List<&2, Nat>:
   B.bi.mont(x, 1n <> B.bi.zeros(17n), p256.P(), p256.P0(), 16n)
 
-# Points (Jacobian)
-# -----------------
+# Points (projective)
+# --------------------
 
+# A point is (X : Y : Z), with affine (x, y) = (X / Z, Y / Z); the point at infinity is (0 : 1 : 0).
+# The complete addition formulas of Renes, Costello and Batina (2016, algorithm 1, for a = -3) add
+# any two points, doubling and infinity included, with no case split on the data.
 type JP is Data:
   JP{x: List<&2, Nat>, y: List<&2, Nat>, z: List<&2, Nat>}
 
 def p256.inf() -> JP:
-  JP{p256.ONE_P(), p256.ONE_P(), B.bi.zeros(18n)}
+  JP{B.bi.zeros(18n), p256.ONE_P(), B.bi.zeros(18n)}
 
-# doubling (dbl-2001-b, a = -3)
-def p256.pdbl(+p: JP) -> JP:
+# 3b, the curve constant b times three, in Montgomery form
+def p256.b3() -> List<&2, Nat>:
+  p256.add(p256.BM(), p256.add(p256.BM(), p256.BM()))
+
+# -3x mod p
+def p256.neg3(+x: List<&2, Nat>) -> List<&2, Nat>:
+  p256.sub(B.bi.zeros(18n), p256.add(p256.f2(x), x))
+
+# P + Q for any two points (algorithm 1 of the paper, with its names: t0 .. t5 and the sums)
+def p256.cadd(+p: JP, +q: JP) -> JP:
   match p:
-    case JP{+x, +y, +z}:
-      p256.pdbl.go(x, y, z)
-
-def p256.pdbl.go(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>) -> JP:
-  +delta : List<&2, Nat> = p256.sqr(z)
-  +gamma : List<&2, Nat> = p256.sqr(y)
-  +beta : List<&2, Nat> = p256.mul(x, gamma)
-  +alpha : List<&2, Nat> = p256.f3(p256.mul(p256.sub(x, delta), p256.add(x, delta)))
-  +x3 : List<&2, Nat> = p256.sub(p256.sqr(alpha), p256.f8(beta))
-  +z3 : List<&2, Nat> = p256.sub(p256.sub(p256.sqr(p256.add(y, z)), gamma), delta)
-  +y3 : List<&2, Nat> = p256.sub(p256.mul(alpha, p256.sub(p256.f4(beta), x3)), p256.f8(p256.sqr(gamma)))
-  JP{x3, y3, z3}
-
-# P + Q for an affine Q = (qx, qy) (madd-2007-bl)
-def p256.madd(+p: JP, +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  match p:
-    case JP{+x, +y, +z}:
-      p256.madd.go(p256.is0(z), x, y, z, qx, qy)
-
-def p256.madd.go(zinf: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  match zinf:
-    case True{}:
-      JP{qx, qy, p256.ONE_P()}
-    case False{}:
-      p256.madd.gen(x, y, z, qx, qy)
-
-def p256.madd.gen(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
-  +z1z1 : List<&2, Nat> = p256.sqr(z)
-  +u2 : List<&2, Nat> = p256.mul(qx, z1z1)
-  +s2 : List<&2, Nat> = p256.mul(qy, p256.mul(z, z1z1))
-  +h : List<&2, Nat> = p256.sub(u2, x)
-  +r : List<&2, Nat> = p256.f2(p256.sub(s2, y))
-  p256.madd.case(p256.is0(h), p256.is0(r), x, y, z, h, r, z1z1)
-
-def p256.madd.case(h0: Bool, r0: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>,
-  +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>) -> JP:
-  match h0:
-    case True{}:
-      p256.same(r0, x, y, z)
-    case False{}:
-      p256.madd.fin(x, y, z, h, r, z1z1)
-
-# the same x: the same point doubles, the opposite one is infinity
-def p256.same(r0: Bool, +x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>) -> JP:
-  match r0:
-    case True{}:
-      p256.pdbl(JP{x, y, z})
-    case False{}:
-      p256.inf()
-
-def p256.madd.fin(+x: List<&2, Nat>, +y: List<&2, Nat>, +z: List<&2, Nat>, +h: List<&2, Nat>,
-  +r: List<&2, Nat>, +z1z1: List<&2, Nat>) -> JP:
-  +hh : List<&2, Nat> = p256.sqr(h)
-  +i : List<&2, Nat> = p256.f4(hh)
-  +j : List<&2, Nat> = p256.mul(h, i)
-  +v : List<&2, Nat> = p256.mul(x, i)
-  +x3 : List<&2, Nat> = p256.sub(p256.sub(p256.sqr(r), j), p256.f2(v))
-  +y3 : List<&2, Nat> = p256.sub(p256.mul(r, p256.sub(v, x3)), p256.f2(p256.mul(y, j)))
-  +z3 : List<&2, Nat> = p256.sub(p256.sub(p256.sqr(p256.add(z, h)), z1z1), hh)
-  JP{x3, y3, z3}
-
-# P + Q for Jacobian P and Q (add-2007-bl)
-def p256.padd(+p1: JP, +p2: JP) -> JP:
-  match p1:
     case JP{+x1, +y1, +z1}:
-      match p2:
+      match q:
         case JP{+x2, +y2, +z2}:
-          p256.padd.go(p256.is0(z1), p256.is0(z2), x1, y1, z1, x2, y2, z2)
+          p256.cadd.go(x1, y1, z1, x2, y2, z2)
 
-def p256.padd.go(z1inf: Bool, z2inf: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  match z1inf:
-    case True{}:
-      JP{x2, y2, z2}
-    case False{}:
-      p256.padd.two(z2inf, x1, y1, z1, x2, y2, z2)
+def p256.cadd.go(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>, +x2: List<&2, Nat>,
+  +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
+  +t0 : List<&2, Nat> = p256.mul(x1, x2)
+  +t1 : List<&2, Nat> = p256.mul(y1, y2)
+  +t2 : List<&2, Nat> = p256.mul(z1, z2)
+  +t3 : List<&2, Nat> = p256.sub(p256.mul(p256.add(x1, y1), p256.add(x2, y2)), p256.add(t0, t1))
+  +t4 : List<&2, Nat> = p256.sub(p256.mul(p256.add(x1, z1), p256.add(x2, z2)), p256.add(t0, t2))
+  +t5 : List<&2, Nat> = p256.sub(p256.mul(p256.add(y1, z1), p256.add(y2, z2)), p256.add(t1, t2))
+  +x3a : List<&2, Nat> = p256.mul(p256.b3(), t2)
+  +z3a : List<&2, Nat> = p256.add(p256.neg3(t4), x3a)
+  +x3b : List<&2, Nat> = p256.sub(t1, z3a)
+  +z3b : List<&2, Nat> = p256.add(t1, z3a)
+  +y3a : List<&2, Nat> = p256.mul(x3b, z3b)
+  +t1a : List<&2, Nat> = p256.add(p256.f2(t0), t0)
+  +t2a : List<&2, Nat> = p256.neg3(t2)
+  +t4a : List<&2, Nat> = p256.mul(p256.b3(), t4)
+  +t1b : List<&2, Nat> = p256.add(t1a, t2a)
+  +t2b : List<&2, Nat> = p256.neg3(p256.sub(t0, t2a))
+  +t4b : List<&2, Nat> = p256.add(t4a, t2b)
+  +t0a : List<&2, Nat> = p256.mul(t1b, t4b)
+  +y3b : List<&2, Nat> = p256.add(y3a, t0a)
+  +t0b : List<&2, Nat> = p256.mul(t5, t4b)
+  +x3c : List<&2, Nat> = p256.sub(p256.mul(t3, x3b), t0b)
+  +t0c : List<&2, Nat> = p256.mul(t3, t1b)
+  +z3c : List<&2, Nat> = p256.add(p256.mul(t5, z3b), t0c)
+  JP{x3c, y3b, z3c}
 
-def p256.padd.two(z2inf: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  match z2inf:
-    case True{}:
-      JP{x1, y1, z1}
-    case False{}:
-      p256.padd.gen(x1, y1, z1, x2, y2, z2)
+# P + P
+def p256.pdbl(+p: JP) -> JP:
+  p256.cadd(p, p)
 
-def p256.padd.gen(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +x2: List<&2, Nat>, +y2: List<&2, Nat>, +z2: List<&2, Nat>) -> JP:
-  +z1z1 : List<&2, Nat> = p256.sqr(z1)
-  +z2z2 : List<&2, Nat> = p256.sqr(z2)
-  +u1 : List<&2, Nat> = p256.mul(x1, z2z2)
-  +u2 : List<&2, Nat> = p256.mul(x2, z1z1)
-  +s1 : List<&2, Nat> = p256.mul(y1, p256.mul(z2, z2z2))
-  +s2 : List<&2, Nat> = p256.mul(y2, p256.mul(z1, z1z1))
-  +h : List<&2, Nat> = p256.sub(u2, u1)
-  +r : List<&2, Nat> = p256.f2(p256.sub(s2, s1))
-  p256.padd.case(p256.is0(h), p256.is0(r), x1, y1, z1, z2, h, r, z1z1, z2z2, u1, s1)
+# P + Q for an affine Q = (qx, qy) in Montgomery form
+def p256.madd(+p: JP, +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
+  p256.cadd(p, JP{qx, qy, p256.ONE_P()})
 
-def p256.padd.case(h0: Bool, r0: Bool, +x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>,
-  +z2: List<&2, Nat>, +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>,
-  +z2z2: List<&2, Nat>, +u1: List<&2, Nat>, +s1: List<&2, Nat>) -> JP:
-  match h0:
-    case True{}:
-      p256.same(r0, x1, y1, z1)
-    case False{}:
-      p256.padd.fin(x1, y1, z1, z2, h, r, z1z1, z2z2, u1, s1)
-
-def p256.padd.fin(+x1: List<&2, Nat>, +y1: List<&2, Nat>, +z1: List<&2, Nat>, +z2: List<&2, Nat>,
-  +h: List<&2, Nat>, +r: List<&2, Nat>, +z1z1: List<&2, Nat>, +z2z2: List<&2, Nat>,
-  +u1: List<&2, Nat>, +s1: List<&2, Nat>) -> JP:
-  +i : List<&2, Nat> = p256.f4(p256.sqr(h))
-  +j : List<&2, Nat> = p256.mul(h, i)
-  +v : List<&2, Nat> = p256.mul(u1, i)
-  +x3 : List<&2, Nat> = p256.sub(p256.sub(p256.sqr(r), j), p256.f2(v))
-  +y3 : List<&2, Nat> = p256.sub(p256.mul(r, p256.sub(v, x3)), p256.f2(p256.mul(s1, j)))
-  +z3 : List<&2, Nat> = p256.mul(p256.sub(p256.sub(p256.sqr(p256.add(z1, z2)), z1z1), z2z2), h)
-  JP{x3, y3, z3}
+# a when s is 1, b when s is 0, with no branch on s
+def p256.sel(+s: Nat, +a: JP, +b: JP) -> JP:
+  match a:
+    case JP{+x1, +y1, +z1}:
+      match b:
+        case JP{+x2, +y2, +z2}:
+          JP{B.bi.sel(s, x1, x2), B.bi.sel(s, y1, y2), B.bi.sel(s, z1, z2)}
 
 # Scalar multiplication
 # ---------------------
@@ -242,7 +182,8 @@ def p256.bits.go(fuel: Nat, +v: Nat, +pw: Nat) -> List<&2, Nat>:
     case 1n+q:
       Nat.mod(Nat.div(v, pw), 2n) <> p256.bits.go(q, v, Nat.div(pw, 2n))
 
-# k * (qx, qy), by double-and-add over the bits of k (most significant first)
+# k * (qx, qy), by double-and-add over the bits of k (most significant first): each bit doubles,
+# adds Q, and keeps the sum when the bit is 1. The choice is a select, not a branch on the bit.
 def p256.smul(bits: List<&2, Nat>, +qx: List<&2, Nat>, +qy: List<&2, Nat>) -> JP:
   p256.smul.go(bits, p256.inf(), qx, qy)
 
@@ -254,11 +195,7 @@ def p256.smul.go(bits: List<&2, Nat>, +acc: JP, +qx: List<&2, Nat>, +qy: List<&2
       p256.smul.go(t, p256.step(acc, qx, qy, b), qx, qy)
 
 def p256.step(+acc: JP, +qx: List<&2, Nat>, +qy: List<&2, Nat>, b: Nat) -> JP:
-  match b:
-    case 0n:
-      p256.pdbl(acc)
-    case _:
-      p256.madd(p256.pdbl(acc), qx, qy)
+  p256.sel(b, p256.madd(p256.pdbl(acc), qx, qy), p256.pdbl(acc))
 
 # Arithmetic mod n (the group order), in Montgomery form
 # -------------------------------------------------------
@@ -302,16 +239,15 @@ def p256.pow.step(+acc: List<&2, Nat>, +base: List<&2, Nat>, b: Nat) -> List<&2,
     case _:
       p256.mul(p256.mul(acc, acc), base)
 
-# the affine coordinates (x, y) = (X / Z^2, Y / Z^3) as 64 big-endian bytes, x then y
+# the affine coordinates (x, y) = (X / Z, Y / Z) as 64 big-endian bytes, x then y
 def p256.affine(+pt: JP) -> List<&2, U32>:
   match pt:
     case JP{+x, +y, +z}:
       p256.affine.go(x, y, p256.pow(p256.bits(p256.PM2()), z))
 
 def p256.affine.go(+x: List<&2, Nat>, +y: List<&2, Nat>, +zi: List<&2, Nat>) -> List<&2, U32>:
-  +zi2 : List<&2, Nat> = p256.sqr(zi)
-  List.append(&2, U32, p256.bytes_be(p256.fromm(p256.mul(x, zi2))),
-    p256.bytes_be(p256.fromm(p256.mul(y, p256.mul(zi2, zi)))))
+  List.append(&2, U32, p256.bytes_be(p256.fromm(p256.mul(x, zi))),
+    p256.bytes_be(p256.fromm(p256.mul(y, zi))))
 
 # k G as 64 bytes (x then y), for a 32-byte big-endian k below n
 def p256.base_mul(+k: List<&2, U32>) -> List<&2, U32>:
@@ -434,11 +370,11 @@ def p256.verify.point(+rl: List<&2, Nat>, +sl: List<&2, Nat>, +el: List<&2, Nat>
 
 def p256.verify.point.at(+wm: List<&2, Nat>, +rl: List<&2, Nat>, +el: List<&2, Nat>,
   +xm: List<&2, Nat>, +ym: List<&2, Nat>) -> JP:
-  p256.padd(p256.smul(p256.bits(p256.nmul(el, wm)), p256.GXM(), p256.GYM()),
+  p256.cadd(p256.smul(p256.bits(p256.nmul(el, wm)), p256.GXM(), p256.GYM()),
     p256.smul(p256.bits(p256.nmul(rl, wm)), xm, ym))
 
 # the signature holds when the point is not infinity and its x coordinate, mod n,
-# is r: x = r or (when r + n < p) x = r + n, checked as X == r Z^2 in Jacobian form
+# is r: x = r or (when r + n < p) x = r + n, checked as X == r Z in projective form
 def p256.verify.check(ok: Bool, +pt: JP, +rl: List<&2, Nat>) -> Bool:
   match ok:
     case True{}:
@@ -456,7 +392,7 @@ def p256.verify.cmp(zinf: Bool, +x: List<&2, Nat>, +z: List<&2, Nat>, +rl: List<
     case True{}:
       False{}
     case False{}:
-      p256.verify.cmp2(p256.eqn(x, p256.mul(p256.sqr(z), p256.tom(rl))), x, z, rl)
+      p256.verify.cmp2(p256.eqn(x, p256.mul(z, p256.tom(rl))), x, z, rl)
 
 def p256.verify.cmp2(c1: Bool, +x: List<&2, Nat>, +z: List<&2, Nat>, +rl: List<&2, Nat>) -> Bool:
   match c1:
@@ -466,7 +402,7 @@ def p256.verify.cmp2(c1: Bool, +x: List<&2, Nat>, +z: List<&2, Nat>, +rl: List<&
       p256.verify.cmp3(x, z, B.bi.addk(rl, p256.N(), 1n, 0n))
 
 def p256.verify.cmp3(+x: List<&2, Nat>, +z: List<&2, Nat>, +rn: List<&2, Nat>) -> Bool:
-  p256.verify.cmp4(p256.lt(rn, p256.P()), p256.eqn(x, p256.mul(p256.sqr(z), p256.tom(rn))))
+  p256.verify.cmp4(p256.lt(rn, p256.P()), p256.eqn(x, p256.mul(z, p256.tom(rn))))
 
 def p256.verify.cmp4(small: Bool, c2: Bool) -> Bool:
   match small:
