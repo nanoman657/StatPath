@@ -209,6 +209,102 @@ def x509.octet.find(fuel: Nat, +bs: List<&2, U32>, ok: Bool) -> List<&2, U32>:
           x509.octet.find(p, List.drop(&2, U32, bs, A.asn1.total(bs)),
             U32.is_eq(A.asn1.tag(List.drop(&2, U32, bs, A.asn1.total(bs))), 4))
 
+# the extension with OID oid among exts (the extension list content): is it the first one
+def x509.ext.is(+exts: List<&2, U32>, +oid: List<&2, U32>) -> Bool:
+  match exts:
+    case Nil{}:
+      False{}
+    case _:
+      R.rsa.eqb(x509.valof(A.asn1.nth(0n, x509.valof(A.asn1.read(exts)))), oid)
+
+# the content of the extnValue OCTET STRING of the extension with OID oid, or Nil
+def x509.nonempty(+xs: List<&2, U32>) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case _:
+      True{}
+
+# the bytes before the first '.' (46), and the bytes after it (the '.' itself dropped)
+def x509.ext.by(fuel: Nat, +exts: List<&2, U32>, +oid: List<&2, U32>, ok: Bool, more: Bool) -> List<&2, U32>:
+  match fuel:
+    case 0n:
+      Nil{}
+    case 1n+p:
+      match ok:
+        case True{}:
+          x509.octet.find(1000000n, x509.valof(A.asn1.read(exts)), False{})
+        case False{}:
+          match more:
+            case True{}:
+              x509.ext.by(p, List.drop(&2, U32, exts, A.asn1.total(exts)), oid,
+                x509.ext.is(List.drop(&2, U32, exts, A.asn1.total(exts)), oid),
+                x509.nonempty(List.drop(&2, U32, exts, A.asn1.total(exts))))
+            case False{}:
+              Nil{}
+
+# basicConstraints (2.5.29.19) and keyUsage (2.5.29.15)
+def x509.ext.value(+exts: List<&2, U32>, +oid: List<&2, U32>) -> List<&2, U32>:
+  x509.ext.by(1000000n, exts, oid, x509.ext.is(exts, oid), x509.nonempty(exts))
+
+# more says whether exts has an element (the caller checks, so exts is not matched here)
+def x509.oid_bc() -> List<&2, U32>:
+  85 <> 29 <> 19 <> Nil{}
+
+def x509.oid_ku() -> List<&2, U32>:
+  85 <> 29 <> 15 <> Nil{}
+
+# cA is TRUE: basicConstraints is a SEQUENCE whose first element is a BOOLEAN TRUE
+# (a missing extension, or a missing cA, means not a CA)
+def x509.true_at(boolean: Bool, +seq: List<&2, U32>) -> Bool:
+  match boolean:
+    case True{}:
+      R.rsa.eqb(x509.valof(A.asn1.read(seq)), 255 <> Nil{})
+    case False{}:
+      False{}
+
+# keyUsage, when present, must include keyCertSign (the bit 0x04 of the first flag byte)
+def x509.is_ca.seq(+seq: List<&2, U32>) -> Bool:
+  match seq:
+    case Nil{}:
+      False{}
+    case _:
+      x509.true_at(U32.is_eq(A.asn1.tag(seq), 1), seq)
+
+def x509.is_ca.at(+bc: List<&2, U32>) -> Bool:
+  match bc:
+    case Nil{}:
+      False{}
+    case _:
+      x509.is_ca.seq(x509.valof(A.asn1.read(bc)))
+
+def x509.is_ca(+der: List<&2, U32>) -> Bool:
+  x509.is_ca.at(x509.ext.value(x509.exts(der), x509.oid_bc()))
+
+def x509.head(+xs: List<&2, U32>) -> U32:
+  match xs:
+    case Nil{}:
+      0
+    case x <> t:
+      x
+
+# a CA may issue certificates: basicConstraints cA, and keyCertSign if keyUsage is present
+def x509.ku_ok.bits(+bits: List<&2, U32>) -> Bool:
+  U32.is_eq(U32.and(x509.head(List.drop(&2, U32, bits, 1n)), 4), 4)
+
+def x509.ku_ok.at(+ku: List<&2, U32>) -> Bool:
+  match ku:
+    case Nil{}:
+      True{}
+    case _:
+      x509.ku_ok.bits(x509.valof(A.asn1.read(ku)))
+
+def x509.ku_ok(+der: List<&2, U32>) -> Bool:
+  x509.ku_ok.at(x509.ext.value(x509.exts(der), x509.oid_ku()))
+
+def x509.issuer_ok(+der: List<&2, U32>) -> Bool:
+  Bool.and(x509.is_ca(der), x509.ku_ok(der))
+
 # the SAN extension's OID content: 2.5.29.17
 def x509.san_oid() -> List<&2, U32>:
   85 <> 29 <> 17 <> Nil{}
@@ -267,13 +363,46 @@ def x509.lower(+xs: List<&2, U32>) -> List<&2, U32>:
       x509.lowerc(x) <> x509.lower(t)
 
 # the certificate names the host (exact match on a DNS name, ASCII case-insensitive)
+def x509.split_dot.cons(x: U32, r: List<&2, U32> & List<&2, U32>) -> List<&2, U32> & List<&2, U32>:
+  (l, rr) = r
+  (x <> l, rr)
+
+def x509.split_dot(+bs: List<&2, U32>) -> List<&2, U32> & List<&2, U32>:
+  match bs:
+    case Nil{}:
+      (Nil{}, Nil{})
+    case 46 <> t:
+      (Nil{}, t)
+    case x <> t:
+      x509.split_dot.cons(x, x509.split_dot(t))
+
+def x509.wild.check(+label: List<&2, U32>, +hrest: List<&2, U32>, +name: List<&2, U32>) -> Bool:
+  Bool.and(x509.nonempty(label), Bool.and(x509.nonempty(hrest), R.rsa.eqb(hrest, List.drop(&2, U32, name, 2n))))
+
+def x509.wild.split(lr: List<&2, U32> & List<&2, U32>, +name: List<&2, U32>) -> Bool:
+  (label, hrest) = lr
+  x509.wild.check(label, hrest, name)
+
+def x509.wild.at(star: Bool, +name: List<&2, U32>, +host: List<&2, U32>) -> Bool:
+  match star:
+    case True{}:
+      x509.wild.split(x509.split_dot(host), name)
+    case False{}:
+      False{}
+
+def x509.wild.match(+name: List<&2, U32>, +host: List<&2, U32>) -> Bool:
+  x509.wild.at(R.rsa.eqb(List.take(&2, U32, name, 2n), 42 <> 46 <> Nil{}), name, host)
+
 def x509.names_host(+host: List<&2, U32>, +names: List<&2, List<&2, U32>>) -> Bool:
   match names:
     case Nil{}:
       False{}
     case n <> rest:
-      Bool.or(R.rsa.eqb(x509.lower(n), x509.lower(host)), x509.names_host(host, rest))
+      Bool.or(R.rsa.eqb(x509.lower(n), x509.lower(host)),
+        Bool.or(x509.wild.match(x509.lower(n), x509.lower(host)), x509.names_host(host, rest)))
 
+# a wildcard name *.rest (in the leftmost label only) names a host whose first label is
+# not empty and whose remaining labels are rest
 def x509.host_ok(+der: List<&2, U32>, +host: List<&2, U32>) -> Bool:
   x509.names_host(host, x509.dns_names(der))
 
@@ -449,7 +578,7 @@ def x509.sigok(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
 
 # ECDSA certificates are checked by the P-256 verifier, RSA ones by the RSA path
 def x509.anchor.match(+c: List<&2, U32>, +a: List<&2, U32>, now: Nat) -> Bool:
-  Bool.or(R.rsa.eqb(c, a), Bool.and(x509.valid(c, now), x509.sigok(c, a)))
+  Bool.or(R.rsa.eqb(c, a), Bool.and(x509.valid(c, now), Bool.and(x509.issuer_ok(a), x509.sigok(c, a))))
 
 def x509.anchor.any(+c: List<&2, U32>, anchors: List<&2, List<&2, U32>>, +now: Nat) -> Bool:
   match anchors:
@@ -469,7 +598,7 @@ def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32
         case Nil{}:
           x509.anchor.any(c, anchors, now)
         case +n <> more:
-          Bool.and(x509.valid(c, now), Bool.and(x509.sigok(c, n), x509.chain.ok(rest, anchors, now)))
+          Bool.and(x509.valid(c, now), Bool.and(x509.sigok(c, n), Bool.and(x509.issuer_ok(n), x509.chain.ok(rest, anchors, now))))
 
 # the server authentication check: the leaf (first in chain) names host, and the
 # chain verifies against the anchors at time now (Unix seconds)
