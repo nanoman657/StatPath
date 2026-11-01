@@ -93,3 +93,7 @@ def finished_key(+secret: List<&2, U32>) -> List<&2, U32>:
 # the verify_data of a Finished message over the transcript hash
 def finished_mac(+secret: List<&2, U32>, +transcript: List<&2, U32>) -> List<&2, U32>:
   H.hmac(finished_key(secret), transcript)
+
+# the 32-byte record key of a traffic secret, for TLS_CHACHA20_POLY1305_SHA256
+def traffic_key32(+secret: List<&2, U32>) -> List<&2, U32>:
+  expand_label(secret, "key", Nil{}, 32n)

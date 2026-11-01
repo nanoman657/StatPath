@@ -1,7 +1,8 @@
 # bend-tls
 
-TLS 1.3 in pure Bend 2, built up one verified layer at a time. Nothing here
-uses `@unsafe` or foreign code. Only the first layers exist so far.
+TLS 1.3 in pure Bend 2. Nothing here uses `@unsafe` or foreign code. The
+client completes a real handshake with `openssl s_server` and fetches a page,
+but it implements one cipher suite and RSA certificates only. See "Limits".
 
 ## Status
 
@@ -9,26 +10,81 @@ uses `@unsafe` or foreign code. Only the first layers exist so far.
 |---|---|---|
 | SHA-256 (FIPS 180-4) | `sha256.bend` | done, tested |
 | HMAC-SHA256 (RFC 2104) | `hmac.bend` | done, tested |
-| HKDF (RFC 5869) | | not started |
-| AES-128-GCM, ChaCha20-Poly1305 | | not started |
-| X25519 / P-256 key agreement | | not started |
-| Signature verification (RSA-PSS, ECDSA, Ed25519) | | not started |
-| X.509 parsing and chain validation | | not started |
-| Record layer and handshake state machine | | not started |
+| HKDF (RFC 5869) and the TLS 1.3 key schedule | `hkdf.bend` | done, tested |
+| ChaCha20, Poly1305, ChaCha20-Poly1305 (RFC 8439) | `chacha20.bend`, `poly1305.bend`, `aead.bend` | done, tested |
+| AES-128-GCM | | not started |
+| X25519 key agreement (RFC 7748) | `x25519.bend` | done, tested |
+| P-256 key agreement | | not started |
+| RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
+| ECDSA, Ed25519 signatures | | not started |
+| DER / ASN.1 and X.509 chain, validity and hostname checks | `asn1.bend`, `x509.bend` | done for RSA chains |
+| Record layer and client handshake | `tls.bend`, `handshake.bend`, `client.bend` | done for one suite; see the e2e test |
 
 ## Running
 
 ```
 bend tests.bend                        -> sha256: 16 passed, 0 failed
-bend tests.bend -o tests && ./tests    (native: same output)
 bend hmac_tests.bend                   -> hmac-sha256: 10 passed, 0 failed
-bend bench.bend <file>                 SHA-256 digest and time for one file
+bend hkdf_tests.bend                   -> hkdf: 22 passed, 0 failed
+bend aead_tests.bend                   -> aead: 29 passed, 0 failed
+bend x25519_tests.bend                 -> x25519: 7 passed, 0 failed
+bend bigint_tests.bend                 -> bigint: 10 passed, 0 failed
+bend rsa_tests.bend                    -> rsa: 4 passed, 0 failed
+bend rsa_sig_tests.bend                -> rsa-sig: 24 passed, 0 failed
+bend x509_tests.bend                   -> x509: 17 passed, 0 failed
+bend tls_tests.bend                    -> tls: 19 passed, 0 failed
+bash e2e/run.sh                        -> e2e (js): 4 passed, 0 failed
+bash e2e/run.sh native                 -> e2e (native): 4 passed, 0 failed
 ```
 
-`sha256.bend`, `tests.bend` and `hmac_tests.bend` are generated: run
-`python3 -I gen_sha256.py`, `python3 -I gen_tests.py` and
-`python3 -I gen_hmac_tests.py`. The generators compute the round constants
-from the primes and the expected digests from Python's `hashlib` and `hmac`.
+Each suite also runs natively (`bend X.bend -o X && ./X`) with the same output.
+
+The client:
+
+```
+bend client.bend -o client
+./client <server-name> <ip> <port> <anchor.der> <unix-time>
+./client example.test 127.0.0.1 4433 root.der 1793495136
+```
+
+It sends `GET /` over TLS 1.3 and prints the response (HTTP headers and body).
+`<server-name>` goes in the ClientHello and must match the certificate. `<ip>`
+is the address to connect to, because the TCP kit has no DNS. `<anchor.der>` is
+the trust anchor, a DER certificate. `<unix-time>` is the current time in
+seconds, because Bend has no wall clock: `IO.now()` is monotonic.
+
+`client.bend` is generated from `client_body.bend` by `gen_client.py`, and its
+definitions must be in dependency order, so run:
+
+```
+python3 -I gen_client.py && python3 -I sortfile.py client.bend
+```
+
+The other generated files are `sha256.bend`, `tests.bend`, `hmac_tests.bend`,
+`hkdf_tests.bend`, `chacha20.bend`, `poly1305.bend`, `x25519.bend`,
+`bigint_tests.bend`, `rsa_tests.bend`, `rsa_sig_tests.bend`, `aead_tests.bend`,
+`x25519_tests.bend`, `x509_tests.bend`, `tls_tests.bend`. Each generator is the
+`gen_*.py` file with the same stem. They compute expected values with Python:
+`hashlib`, `hmac`, and the `cryptography` package (for X.509, RSA, X25519 and
+ChaCha20-Poly1305).
+
+## End-to-end test
+
+`e2e/run.sh` makes a PKI (root, intermediate, and a leaf for `example.test`),
+starts `openssl s_server` with TLS 1.3, `TLS_CHACHA20_POLY1305_SHA256` and X25519,
+and runs the client against it:
+
+- **valid:** the root is the anchor and the host is `example.test`. The page is
+  fetched.
+- **wrong anchor:** the leaf is the anchor. The handshake is rejected.
+- **wrong host:** the host is `other.test`. Rejected.
+- **expired:** the time is in 2100. Rejected.
+
+The positive case checks the handshake from start to finish: the ServerHello
+key share, the handshake traffic keys, decryption of the encrypted flight, the
+chain check, the CertificateVerify signature (RSA-PSS over the transcript), the
+server Finished, our client Finished, and decryption of the response. It passes
+on JS and native.
 
 ## What is checked
 
@@ -37,11 +93,23 @@ from the primes and the expected digests from Python's `hashlib` and `hmac`.
   700-plus-256-byte message with every byte value. Digests match `hashlib` on
   JS and native.
 - **HMAC-SHA256:** RFC 4231 test cases 1, 2, 3 and 6 (case 6 needs a key longer
-  than the 64-byte block). The generator asserts that Python's digests equal
-  the RFC's printed ones. Key lengths 0, 1, 63, 64, 65 and 200 are checked
+  than the 64-byte block). Key lengths 0, 1, 63, 64, 65 and 200 are checked
   against Python too.
-- The harness fails when a digest is wrong, which was checked by planting a
-  wrong digest.
+- **HKDF and the key schedule:** RFC 5869 vectors, and the TLS 1.3 secrets
+  (early, handshake, master, traffic keys and IVs, Finished key) checked against
+  the `cryptography` package.
+- **ChaCha20-Poly1305:** the RFC 8439 vectors, and seal/open round trips with
+  tampered input rejected.
+- **X25519:** the RFC 7748 vectors and an Alice-and-Bob exchange.
+- **RSA:** PSS and PKCS#1 v1.5 verification of real signatures, and rejection of
+  altered messages and signatures.
+- **X.509:** a PKI made with `cryptography` (root, intermediate, leaf with SAN,
+  and an expired certificate). The tests cover validity dates, hostname matching
+  against SAN, chain signatures, and a chain that ends at the wrong anchor.
+- **TLS encoding:** the ClientHello layout, the record header and nonce, and
+  ServerHello and certificate-list parsing.
+- The harness fails when a value is wrong. This was checked by planting a
+  wrong expected value.
 
 ## Performance
 
@@ -53,40 +121,45 @@ Hashing is about 4 MB/s on JS and 53 MB/s natively. The JS figure is with the
 tail-recursive message pass. The first version overflowed the JS stack somewhere
 between 16 KB and 64 KB.
 
+The e2e run is about 7 s on JS for four handshakes. Native runs are faster.
+
 ## Limits and cautions
 
+- **One cipher suite.** The client offers and accepts only
+  `TLS_CHACHA20_POLY1305_SHA256` with X25519. RFC 8446 section 9.1 requires
+  `TLS_AES_128_GCM_SHA256` as well, and AES-128-GCM is not implemented, so a
+  server without ChaCha20 support will fail the handshake.
+- **RSA certificates only.** ECDSA and Ed25519 keys are not verified. A server
+  with an ECDSA certificate will be rejected.
+- **Certificate checks are partial.** Validity dates and hostname matching (DNS
+  SAN, case-insensitive, no wildcards) are checked, and chain signatures back to
+  a trust anchor given as DER. basicConstraints, keyUsage and name constraints
+  are not checked. There is no revocation check.
+- **Bounded reads.** The handshake flight may use at most 24 records, and the
+  response at most 24 records (each up to 16 KB). A longer response is cut off
+  and the client still exits 0. A longer handshake fails with "did not check".
+- **No HelloRetryRequest, no session resumption, no client certificates, no
+  key update.** NewSessionTicket messages are read and ignored.
+- **No HTTP parsing.** The output is the raw response, headers included.
+- **Time and names come from the command line.** See the usage above.
 - **Not constant time.** Bend compiles to C and JS, and nothing in the code
   guards against timing or cache side channels. This is not safe for handling
   secrets until it has been reviewed.
-- **No streaming API.** `sha256_bytes` and `hmac` take the whole message at
-  once. HMAC joins the key and message with `List.append`, which is not
-  tail-recursive; 64 KB works on JS, larger inputs are untested there.
-- **No audit.** Test vectors show the arithmetic is right. They don't show the
-  code is secure.
+- **No streaming API for hashing.** `sha256_bytes` and `hmac` take the whole
+  message at once. HMAC joins the key and message with `List.append`, which is
+  not tail-recursive; 64 KB works on JS, larger inputs are untested there.
+- **No audit.** Test vectors and the e2e test show the arithmetic and the
+  protocol are right for these inputs. They don't show the code is secure.
 
-## TLS 1.3: what remains
+## What remains
 
-RFC 8446 section 9.1 requires `TLS_AES_128_GCM_SHA256` and recommends
-`TLS_CHACHA20_POLY1305_SHA256`. Roughly in order of difficulty:
+Roughly in order of difficulty:
 
-1. **HKDF** (RFC 5869) and the TLS 1.3 key schedule. This is small on top of
-   HMAC.
-2. **AEAD.** AES-128 needs its S-box and GHASH over GF(2^128), which is bit
-   arithmetic. ChaCha20 is 32-bit operations. Poly1305 needs arithmetic mod
-   2^130 - 5, which the bignat code can support once multiplication and
-   reduction are added.
-3. **Key agreement.** X25519 needs field arithmetic mod 2^255 - 19 with
-   full-size multiplication, and `bignat.bend` only divides by small numbers
-   so far. P-256 needs the same. This is the main performance risk in pure Bend.
-4. **Certificate verification.** The server's certificate must be parsed (DER /
-   ASN.1), its signature checked (RSA-PSS, ECDSA or Ed25519, which need big
-   modular exponentiation or elliptic-curve arithmetic), and the chain checked
-   against trust anchors with validity dates and hostname matching. The trust
-   anchors would be data in the program. `IO.now()` gives the clock in
-   milliseconds.
-5. **Record layer and handshake.** Framing on `TCP.send_bytes` and
-   `TCP.recv_bytes`, nonces from sequence numbers, and the state machine for
-   ClientHello through Finished, with the transcript hash.
-
-Step 4 is the largest, and the current effects can't test it against a real
-server until it's there.
+1. **AES-128-GCM** (AES round functions, the S-box, and GHASH over GF(2^128)).
+   RFC 8446 section 9.1 requires it.
+2. **P-256**, and ECDSA verification (needs modular inversion and point
+   arithmetic on the curve).
+3. **Ed25519** and certificates signed with ECDSA or Ed25519.
+4. **Certificate extensions:** basicConstraints and keyUsage, and wildcard names.
+5. **Bounded reads:** a stream that outlasts the 24-record limit should be an
+   error, not a silent cut.
