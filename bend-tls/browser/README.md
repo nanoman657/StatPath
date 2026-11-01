@@ -38,11 +38,31 @@ A false version of the round-trip law is rejected by the checker (checked when t
 Tested, not proven: the relay, the page's client, and the sockets. The Bend encodings of sample
 frames (`frame_vectors.json`) match the JavaScript encoder byte for byte.
 
+## The asynchronous scheduler (done as a patch)
+
+`runtime/async-scheduler.patch` changes Bend's JavaScript runtime (bend2/comp.ts, bend2/main.ts) so a
+program can wait on an event that is not a file descriptor, such as a WebSocket message or a host
+timer, without blocking the host's event loop. An external wait parks with no fd and at = Infinity,
+and its event calls `io_notify`. The top-level run awaits; a nested run (from inside an effect)
+keeps the blocking poll, as before. The patch is a commit on the branch `browser-async-scheduler`
+of the Bend checkout at /tmp/claude-0/src/bend-async (not pushed; the installed `bend` is unchanged).
+
+Checked: the 234 I/O tests of tests/io give the same results under the patched runtime, except
+three that name the checkout's path and one fork_join ordering that flips under parallel load
+(it matches its expected order alone). A program waiting on a host timer completes
+(`runtime/async_wake.bend`), and the relay demo completes:
+
+    BEND_MAIN=/path/to/bend2/main.ts sh runtime/run_relay_demo.sh      # prints "echoed 5"
+
+A wait that no event will ever complete hangs the program under Bun (the process stays alive).
+
 ## Not done
 
-- **The Bend runtime does not use these yet.** Bend 2's TCP effects are host code registered with
-  `io_eff`, and their waits block in `select`. A page needs an asynchronous scheduler before these
-  client calls can stand in for `TCP.connect` and the others. That is the next piece of work.
+- **The TCP effects as Bend effects.** The demo calls the relay from one JavaScript effect. The
+  real effects (`TCP.connect`, send, recv, close and the `try_` forms, with a socket handle type
+  instead of a U32 id) still need writing and registering, with their error results.
+- **A page runtime.** The patched runtime still uses Bun's FFI, `fs`, `Buffer` and `process`
+  (see the earlier list). A page needs those replaced.
 - **The Lean recheck** (`bend frame_proof.bend --verdict`) is not run: the Lean toolchain download is
   blocked by the sandbox's network policy.
 - Listen and accept are not in the protocol.
