@@ -15,6 +15,7 @@ import ./sha256.bend as S
 import ./hkdf.bend as K
 import ./x25519.bend as X
 import ./p256.bend as P
+import ./p384.bend as Q
 import ./tls.bend as T
 import ./handshake.bend as H
 import ./x509.bend as C
@@ -1696,8 +1697,9 @@ type SH is Data:
 def hello.alg(+c: Nat) -> Nat:
   Bool.pick(Nat, Nat.is_eq(c, 4865n), 16n, 32n)
 
-# the ClientHello message: an x25519 key share from priv (the base point is 9) and
-# a secp256r1 key share from privp (04 || x || y)
+# the private scalars: privs is the secp256r1 scalar (32 bytes) then the secp384r1 scalar (48 bytes)
+# the ClientHello message: an x25519 key share from priv (the base point is 9), a secp256r1
+# key share and a secp384r1 key share (each 04 || x || y)
 def hello.sh(+m: T.HM) -> SH:
   match m:
     case T.HM{+t, +body, +rest}:
@@ -1705,22 +1707,29 @@ def hello.sh(+m: T.HM) -> SH:
 
 # a ServerHello for one of our suites, with a group we offered
 def hello.group_ok(+g: Nat) -> Bool:
-  Bool.or(Nat.is_eq(g, 29n), Nat.is_eq(g, 23n))
+  Bool.or(Nat.is_eq(g, 29n), Bool.or(Nat.is_eq(g, 23n), Nat.is_eq(g, 24n)))
 
 # the record key length of the suite: 16 bytes for AES-128-GCM, 32 for ChaCha20-Poly1305
 def hello.suite_ok(+c: Nat) -> Bool:
   Bool.or(Nat.is_eq(c, 4865n), Nat.is_eq(c, 4867n))
 
-# the groups we offer: x25519 (29) and secp256r1 (23)
+# the groups we offer: x25519 (29), secp256r1 (23) and secp384r1 (24)
 def hello.ok(+m: T.HM) -> Bool:
   match m:
     case T.HM{+t, +body, +rest}:
       Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)), hello.group_ok(T.tls.sh.group(body))))
 
 # the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301) and TLS_CHACHA20_POLY1305_SHA256 (0x1303)
-def hello.msg(+priv: List<&2, U32>, +privp: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
+def hello.p256_scalar(+privs: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, privs, 32n)
+
+def hello.p384_scalar(+privs: List<&2, U32>) -> List<&2, U32>:
+  List.drop(&2, U32, privs, 32n)
+
+def hello.msg(+priv: List<&2, U32>, +privs: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
   T.tls.client_hello(rnd, X.x25519(priv, T.tls.cat((9 : U32) <> Nil{}, T.tls.zeros(31n))),
-    List.append(&2, U32, 4 <> Nil{}, P.p256.base_mul(privp)), host)
+    List.append(&2, U32, 4 <> Nil{}, P.p256.base_mul(hello.p256_scalar(privs))),
+    List.append(&2, U32, 4 <> Nil{}, Q.p384.base_mul(hello.p384_scalar(privs))), host)
 
 def hello.bad(s: Socket) -> IO(Unit):
   io.fail(s, "first server record is not a ServerHello for one of our suites and groups")
@@ -2269,56 +2278,63 @@ def flight.start(s: Socket, +rest: List<&2, U32>, +c_hs: List<&2, U32>, +s_hs: L
     r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
     flight.finish(r, c_hs, s_hs, mst, ch, sh, der, now, host, alg)
 
-def hello.dhe.at(x25519: Bool, +priv: List<&2, U32>, +privp: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
-  match x25519:
+def hello.dhe.ec(is384: Bool, +privs: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
+  match is384:
     case True{}:
-      X.x25519(priv, pub)
+      Q.p384.ecdh(hello.p384_scalar(privs), List.take(&2, U32, List.drop(&2, U32, pub, 1n), 48n), List.drop(&2, U32, pub, 49n))
     case False{}:
-      P.p256.ecdh(privp, List.take(&2, U32, List.drop(&2, U32, pub, 1n), 32n), List.drop(&2, U32, pub, 33n))
+      P.p256.ecdh(hello.p256_scalar(privs), List.take(&2, U32, List.drop(&2, U32, pub, 1n), 32n), List.drop(&2, U32, pub, 33n))
 
 # the handshake keys (RFC 8446 7.1): the handshake secret from the x25519
 # exchange, the client and server handshake traffic secrets over the transcript
 # through ServerHello, and the master secret
-def hello.dhe(+group: Nat, +priv: List<&2, U32>, +privp: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
-  hello.dhe.at(Nat.is_eq(group, 29n), priv, privp, pub)
+def hello.dhe.at(x25519: Bool, +is384: Bool, +priv: List<&2, U32>, +privs: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
+  match x25519:
+    case True{}:
+      X.x25519(priv, pub)
+    case False{}:
+      hello.dhe.ec(is384, privs, pub)
+
+def hello.dhe(+group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
+  hello.dhe.at(Nat.is_eq(group, 29n), Nat.is_eq(group, 24n), priv, privs, pub)
 
 def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<&2, U32>,
-  +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privp: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +th1 : List<&2, U32> = S.sha256_bytes(T.tls.cat(ch, raw))
-    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hello.dhe(group, priv, privp, pub))
+    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hello.dhe(group, priv, privs, pub))
     +c_hs : List<&2, U32> = K.derive_secret(hsec, "c hs traffic", th1)
     +s_hs : List<&2, U32> = K.derive_secret(hsec, "s hs traffic", th1)
     +mst : List<&2, U32> = K.master_secret(hsec)
     flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, now, host, alg)
 
 # the server's flight, read from rest with the server handshake keys
-def hello.derive(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privp: List<&2, U32>,
+def hello.derive(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privs: List<&2, U32>,
   +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
     case SH{+raw, +pub, +alg, +group}:
-      hello.keys(s, rest, raw, pub, alg, group, priv, privp, ch, der, now, host)
+      hello.keys(s, rest, raw, pub, alg, group, priv, privs, ch, der, now, host)
 
-# the shared secret of the server's key share: x25519 for group 29, or the P-256
-# x coordinate for group 23 (its key is 04 || x || y)
+# the shared secret of the server's key share: x25519 for group 29, the secp256r1 x coordinate
+# for group 23 (its key is 04 || x || y), or the secp384r1 x coordinate for group 24
 def hello.at(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privp: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match ok:
     case True{}:
-      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privp, ch, der, now, host)
+      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, now, host)
     case False{}:
       hello.bad(s)
 
 def hello.check(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privp: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   hello.at(Bool.and(U32.is_eq(T.tls.tag(rec), 22), hello.ok(T.tls.hm(List.drop(&2, U32, rec, 5n)))),
-    s, rest, rec, priv, privp, ch, der, now, host)
+    s, rest, rec, priv, privs, ch, der, now, host)
 
-def hello.got(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privp: List<&2, U32>,
+def hello.got(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
   +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   (s, pr) = t
   (rest, rec) = pr
-  hello.check(s, rest, rec, priv, privp, ch, der, now, host)
+  hello.check(s, rest, rec, priv, privs, ch, der, now, host)
 
 def arg.nat(s: String, +acc: Nat) -> Nat:
   match s:
@@ -2354,12 +2370,13 @@ def run(name: String, ip: String, port: Nat, path: String, now: Nat) -> IO(Unit)
     +host : List<&2, U32> = S.bytes_of(name)
     +priv : List<&2, U32> <- io.rand(8n)
     +privr : List<&2, U32> <- io.rand(8n)
-    +privp : List<&2, U32> = P.p256.scalar(privr)
+    +privq : List<&2, U32> <- io.rand(12n)
+    +privs : List<&2, U32> = List.append(&2, U32, P.p256.scalar(privr), Q.p384.scalar(privq))
     +rnd : List<&2, U32> <- io.rand(8n)
-    +ch : List<&2, U32> = hello.msg(priv, privp, rnd, host)
+    +ch : List<&2, U32> = hello.msg(priv, privs, rnd, host)
     s1 : Socket <- io.send(sock, T.tls.plain(22, ch))
     t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, Nil{})
-    hello.got(t, priv, privp, ch, der, now, host)
+    hello.got(t, priv, privs, ch, der, now, host)
 
 def start(args: List<String>) -> IO(Unit):
   match args:

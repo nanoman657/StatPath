@@ -1,6 +1,6 @@
 # Writes p384.bend: NIST P-384 (secp384r1) for ECDSA verification. It is p256.bend
 # with the sizes changed: 24 limbs of 16 bits (the field is 384 bits), a Montgomery
-# factor of 2^384, 48-byte coordinates, and no ECDH. The text of p256_body.bend is the
+# factor of 2^384, 48-byte coordinates and scalars, and ECDH. The text of p256_body.bend is the
 # source; every size-dependent literal is replaced with a counted replacement, so a
 # change in the source that the replacements do not expect stops the generator.
 # The P-384 constants are checked first: the curve equation, the order n (n G is the
@@ -82,10 +82,7 @@ block = "\n".join([f"def p384.{name}() -> List<&2, Nat>:\n  {lit}\n" for name, l
 
 src = open("p256_body.bend").read()
 
-# the ECDH section goes: P-384 is needed for verification only
-start = src.index("# ECDH (SEC 1 3.3.1)")
-end = src.index("# ECDSA verification (FIPS 186-4 6.4)")
-src = src[:start] + src[end:]
+# the ECDH section stays: P-384 key agreement uses it (its sizes are changed below)
 
 def rep(old, new, count):
     global src
@@ -94,7 +91,7 @@ def rep(old, new, count):
     src = src.replace(old, new)
 
 rep("p256.bend: NIST P-256 (secp256r1) for ECDSA verification with SHA-256.",
-    "p384.bend: NIST P-384 (secp384r1) for ECDSA verification. Generated from p256_body.bend by gen_p384.py.", 1)
+    "p384.bend: NIST P-384 (secp384r1) for ECDSA verification and ECDH. Generated from p256_body.bend by gen_p384.py.", 1)
 rep("p256.bend is generated: python3 -I gen_p256.py", "p384.bend is generated: python3 -I gen_p384.py", 1)
 rep("The constants come from gen_p256.py, which checks them against cryptography.",
     "The constants come from gen_p384.py, which checks them against cryptography.", 1)
@@ -122,7 +119,21 @@ rep("# the signature (r, s) on the digest e under the public key (qx, qy); all b
     "    case 1n+p:\n"
     "      0 <> p256.zero32(p)\n\n"
     "# the signature (r, s) on the digest e under the public key (qx, qy); all big-endian\n", 1)
+# ECDH: the sizes of the private scalar, the peer point and the shared secret
+rep("Nat.is_eq(List.length(&2, U32, d), 32n), Nat.is_eq(List.length(&2, U32, qx), 32n)),",
+    "Nat.is_eq(List.length(&2, U32, d), 48n), Nat.is_eq(List.length(&2, U32, qx), 48n)),", 1)
+rep("Nat.is_eq(List.length(&2, U32, qy), 32n)), d, qx, qy)",
+    "Nat.is_eq(List.length(&2, U32, qy), 48n)), d, qx, qy)", 1)
+rep("p256.limbs(qy)))), 32n)", "p256.limbs(qy)))), 48n)", 1)
+rep("# ECDH (SEC 1 3.3.1): the x coordinate of d * Q, 32 bytes. A private scalar is 32\n# bytes below 2^255 (less than n, so a fresh random one needs no reduction).",
+    "# ECDH (SEC 1 3.3.1): the x coordinate of d * Q, 48 bytes. A private scalar is 48\n# bytes below 2^383 (less than n, so a fresh random one needs no reduction).", 1)
+rep("(not 32 + 32 bytes, or", "(not 48 + 48 bytes, or", 1)
 rep("#@@CONST@@", block, 1)
 body = src.replace("p256.", "p384.")
+# the compiler needs each definition after the ones it uses: sort as sortfile.py does
+import sys
+sys.path.insert(0, __file__.rsplit("/", 1)[0] if "/" in __file__ else ".")
+from bendsort import sort_defs
+body = sort_defs(body)
 open("p384.bend", "w").write(body)
 print("p384.bend: constants checked (curve, order n, generator, kG); sizes 24 limbs / 48 bytes")

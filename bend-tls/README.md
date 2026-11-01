@@ -3,7 +3,7 @@
 TLS 1.3 in pure Bend 2. Nothing here uses `@unsafe` or foreign code. The client
 completes a TLS 1.3 handshake with `openssl s_server` (and with a Python TLS
 server for the response-size test), verifies the server's certificate chain, and
-fetches a page. It supports two cipher suites, two key-exchange groups and three
+fetches a page. It supports two cipher suites, three key-exchange groups and three
 certificate key types. See "Limits" for what is missing.
 
 ## Status
@@ -18,14 +18,14 @@ certificate key types. See "Limits" for what is missing.
 | SHA-384 and SHA-512 (FIPS 180-4) | `sha512.bend` | done, tested |
 | X25519 key agreement (RFC 7748) | `x25519.bend` | done, tested |
 | P-256 ECDH and ECDSA verification (SEC 1, FIPS 186-4) | `p256.bend` | done, tested |
-| P-384 ECDSA verification (FIPS 186-4) | `p384.bend` | done, tested |
+| P-384 ECDH and ECDSA verification (SEC 1, FIPS 186-4) | `p384.bend` | done, tested |
 | Ed25519 verification (RFC 8032) | `ed25519.bend` | done, tested |
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
 | DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and P-384, and Ed25519 keys |
-| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 2 suites, 2 groups, 4 certificate key types |
+| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 2 suites, 3 groups, 4 certificate key types |
 
 The client's two suites are `TLS_AES_128_GCM_SHA256` and
-`TLS_CHACHA20_POLY1305_SHA256`. Its key shares are x25519 and secp256r1. Its
+`TLS_CHACHA20_POLY1305_SHA256`. Its key shares are x25519, secp256r1 and secp384r1. Its
 signature algorithms are `rsa_pss_rsae_sha256`, `rsa_pkcs1_sha256` (offered, not
 used for CertificateVerify), `ecdsa_secp256r1_sha256`, `ecdsa_secp384r1_sha384`
 and `ed25519`.
@@ -44,7 +44,7 @@ bend aes_tests.bend             -> aes-gcm: 39 passed, 0 failed
 bend sha512_tests.bend          -> sha512: 27 passed, 0 failed
 bend x25519_tests.bend          -> x25519: 7 passed, 0 failed
 bend p256_tests.bend            -> p256: 51 passed, 0 failed
-bend p384_tests.bend            -> p384: 41 passed, 0 failed
+bend p384_tests.bend            -> p384: 47 passed, 0 failed
 bend ed25519_tests.bend         -> ed25519: 30 passed, 0 failed
 bend bigint_tests.bend          -> bigint: 10 passed, 0 failed
 bend rsa_tests.bend             -> rsa: 4 passed, 0 failed
@@ -54,7 +54,7 @@ bend x509_ext_tests.bend        -> x509-ext: 23 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
-bend tls_tests.bend             -> tls: 22 passed, 0 failed
+bend tls_tests.bend             -> tls: 24 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
@@ -107,8 +107,8 @@ combination of:
   signature is ECDSA), `mixed` (RSA root, P-256 intermediate, RSA leaf), `ed`
   (Ed25519 keys throughout) and `ec384` (P-384 keys, signed with SHA-384);
 - cipher suite: `TLS_AES_128_GCM_SHA256` or `TLS_CHACHA20_POLY1305_SHA256`;
-- group: X25519 or P-256 (the server allows only that group, so the client must use
-  it).
+- group: X25519, P-256 or P-384 (the server allows only that group, so the client must
+  use it).
 
 For each, the client runs four cases:
 
@@ -118,7 +118,7 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 2 x 2 x 4 = 80 runs. A valid run goes through the whole handshake:
+That is 5 x 2 x 3 x 4 = 120 runs. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
@@ -153,8 +153,9 @@ more than the client reads, is refused with `the stream was cut`.
   (valid, since ECDSA has no low-s rule). The constants are checked by the
   generator against `cryptography` and an independent affine implementation.
 - **P-384:** the same kinds of checks as P-256 (field arithmetic, `k G` against
-  `cryptography`, and ECDSA with SHA-384 and SHA-256 digests from `cryptography`,
-  with the rejections). The constants are checked by the generator as well.
+  `cryptography`, ECDH against `cryptography`'s exchange, malformed peers and scalars
+  refused, and ECDSA with SHA-384 and SHA-256 digests from `cryptography`, with the
+  rejections). The constants are checked by the generator as well.
 - **Ed25519:** RFC 8032 test 1 (the key and signature are checked against
   `cryptography` first), valid signatures from `cryptography`, a changed message,
   R or S, a non-reduced S (S + L), another key, a key or signature of the wrong
@@ -171,9 +172,9 @@ more than the client reads, is refused with `the stream was cut`.
   tampered or wrong-anchor chains.
 - **CertificateVerify:** RSA-PSS, ECDSA P-256, ECDSA P-384 and Ed25519 over a transcript hash, each
   with a changed transcript, a wrong algorithm code, and a key of the wrong type.
-- **TLS encoding:** the ClientHello layout (both key shares, both groups, all the
+- **TLS encoding:** the ClientHello layout (three key shares, three groups, all the
   signature algorithms), the record header and nonce, and ServerHello and
-  certificate-list parsing.
+  certificate-list parsing, including a ServerHello with a P-384 key share.
 - **Robustness (fuzzing):** valid certificate chains (RSA, ECDSA P-256, Ed25519)
   and CertificateVerify signatures, mutated by byte flips, truncations, insertions
   and duplicated slices. Every mutated input must be refused, and none may fault
@@ -214,8 +215,9 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 - **Two cipher suites.** `TLS_AES_128_GCM_SHA256` and
   `TLS_CHACHA20_POLY1305_SHA256`. `TLS_AES_256_GCM_SHA384` is not implemented:
   it needs SHA-384 in the transcript hash and the key schedule.
-- **Two groups.** x25519 and secp256r1 (P-256). There is no P-384, P-521 or X448,
-  and no HelloRetryRequest, so a server that requires another group fails.
+- **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). There is no
+  P-521 or X448, and no HelloRetryRequest, so a server that requires another group
+  fails.
 - **Certificates.** RSA (verified with SHA-256, PSS or PKCS#1 v1.5), ECDSA on P-256
   with SHA-256, ECDSA on P-384 with SHA-384 (or SHA-256), and Ed25519. P-521 ECDSA,
   Ed448, and RSA with hashes other than SHA-256 are not verified.
@@ -247,9 +249,9 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 
 ## What remains
 
-1. **P-384 key agreement** (ECDH), and the `TLS_AES_256_GCM_SHA384` suite with
-   SHA-384 in the key schedule. P-384 certificates are verified already; these are
-   extensions of the same code.
+1. **`TLS_AES_256_GCM_SHA384`,** with SHA-384 in the transcript hash and the key
+   schedule (HKDF-SHA384, HMAC-SHA384, AES-256 keys). The P-384 key agreement and
+   certificates are done; this suite is an extension of the same code.
 2. **HelloRetryRequest,** so a server that wants another group can be served.
 3. **Constant-time arithmetic,** and a review before any use with real secrets.
 4. **Revocation, name constraints, and the anchor's path length** in the

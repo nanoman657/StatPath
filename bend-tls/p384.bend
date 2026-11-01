@@ -1,4 +1,4 @@
-# p384.bend: NIST P-384 (secp384r1) for ECDSA verification. Generated from p256_body.bend by gen_p384.py. Values
+# p384.bend: NIST P-384 (secp384r1) for ECDSA verification and ECDH. Generated from p256_body.bend by gen_p384.py. Values
 # are 18-limb lists of 16-bit limbs (bigint.bend), least significant first. Field
 # values are in Montgomery form (x * 2^256 mod p). Points are Jacobian (X, Y, Z),
 # affine (x, y) = (X / Z^2, Y / Z^3), with Z = 0 for the point at infinity.
@@ -381,14 +381,36 @@ def p384.limbs(+bs: List<&2, U32>) -> List<&2, Nat>:
 def p384.base_mul(+k: List<&2, U32>) -> List<&2, U32>:
   p384.affine(p384.smul(p384.bits(p384.limbs(k)), p384.GXM(), p384.GYM()))
 
+# ECDH (SEC 1 3.3.1): the x coordinate of d * Q, 48 bytes. A private scalar is 48
+# bytes below 2^383 (less than n, so a fresh random one needs no reduction).
+# p384.scalar clears the top bit of random bytes.
+def p384.scalar(+bs: List<&2, U32>) -> List<&2, U32>:
+  match bs:
+    case Nil{}:
+      Nil{}
+    case x <> t:
+      U32.and(x, 127) <> t
+
+# the shared x coordinate; Nil when the peer key is malformed (not 48 + 48 bytes, or
+# not on the curve) or the private scalar is out of range
+def p384.ecdh.point(point_ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match point_ok:
+    case True{}:
+      List.take(&2, U32, p384.affine(p384.smul(p384.bits(p384.limbs(d)), p384.tom(p384.limbs(qx)), p384.tom(p384.limbs(qy)))), 48n)
+    case False{}:
+      Nil{}
+
 # ECDSA verification (FIPS 186-4 6.4)
 # -----------------------------------
 
 # big-endian bytes (32 of them) as 18 limbs
-def p384.reduce_n(+e: List<&2, Nat>) -> List<&2, Nat>:
-  B.bi.csub(e, p384.N())
+def p384.ecdh.check(scalar_ok: Bool, point_ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match scalar_ok:
+    case True{}:
+      p384.ecdh.point(point_ok, d, qx, qy)
+    case False{}:
+      Nil{}
 
-# 0 < x < n
 def p384.nonzero.at(z: Bool, +x: List<&2, Nat>) -> Bool:
   match z:
     case True{}:
@@ -405,6 +427,22 @@ def p384.oncurve(+xm: List<&2, Nat>, +ym: List<&2, Nat>) -> Bool:
 
 # the digest e is at most 48 bytes (SHA-384, or SHA-256 on a P-384 key): it is left-padded to 48
 # bytes, which keeps its integer value
+def p384.ecdh.len(ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match ok:
+    case True{}:
+      p384.ecdh.check(p384.nonzero_lt_n(p384.limbs(d)),
+        p384.oncurve(p384.tom(p384.limbs(qx)), p384.tom(p384.limbs(qy))), d, qx, qy)
+    case False{}:
+      Nil{}
+
+def p384.ecdh(+d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  p384.ecdh.len(Bool.and(Bool.and(Nat.is_eq(List.length(&2, U32, d), 48n), Nat.is_eq(List.length(&2, U32, qx), 48n)),
+    Nat.is_eq(List.length(&2, U32, qy), 48n)), d, qx, qy)
+
+def p384.reduce_n(+e: List<&2, Nat>) -> List<&2, Nat>:
+  B.bi.csub(e, p384.N())
+
+# 0 < x < n
 def p384.zero32(n: Nat) -> List<&2, U32>:
   match n:
     case 0n:
