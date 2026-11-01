@@ -2316,15 +2316,25 @@ def rv.crl.got(r: Maybe<&2, List<&2, U32>>, +c: List<&2, U32>, +n: List<&2, U32>
 
 # A revocation URL, a CRL (GET) or an OCSP responder (POST of the request as body): http, or https,
 # whose server certificate must chain to der (the trust anchor). An unusable URL is no reply.
+def rv.body(+r: Maybe<&2, List<&2, U32>>) -> Maybe<&2, List<&2, U32>>:
+  match r:
+    case Some{+bs}:
+      HTTP.http.reply(bs)
+    case None{}:
+      None{}
+
+# the revocation run over the chain, when fetching is on (rv.on)
 def rv.get.tls(tls: Bool, +ip: String, port: Nat, +req: List<&2, U32>, +name: List<&2, U32>, +der: List<&2, U32>,
   now: Nat) -> IO(Maybe<&2, List<&2, U32>>):
   match tls:
     case True{}:
-      TG.tg.get(ip, port, req, name, der, now)
+      do IO<Maybe<&2, List<&2, U32>>>:
+        r : Maybe<&2, List<&2, U32>> <- TG.tg.get(ip, port, req, name, der, now)
+        IO.pure(Maybe<&2, List<&2, U32>>, rv.body(r))
     case False{}:
       HTTP.http.call.at(ip, port, req)
 
-# the revocation run over the chain, when fetching is on (rv.on)
+# the body of a 200 reply from the TLS fetch: its bytes are the raw reply (status line, headers)
 def rv.method(+body: List<&2, U32>) -> String:
   match body:
     case Nil{}:
