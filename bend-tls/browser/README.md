@@ -29,18 +29,22 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `test/relay.test.ts` | 12 tests over real TCP, with a token: echo, 300 KB both ways, default-deny (13), refused (111), end of stream, 20 connections, id reuse, the connection limit (24), protocol errors | `bun test browser/test` |
 | `test/relay_safety.test.ts` | 17 tests: the configuration, the example's placeholder, a token from `token.ts`, the origin, AUTH first and wrong tokens, the authentication deadline, TLS (wss), /healthz, the connect rate, the connection caps, the session and upgrade caps, the byte rate, shutdown, and no token in the log | `bun test browser/test` |
 | `test/support.ts` | The test token and origin, `PageSocket` (a WebSocket with the origin), `rawSocket` (authenticated), and the relay built from a checked configuration | used by the tests |
-| `test/flow.test.ts` | Partial writes (a slow peer gets every byte), a dropped send reports exactly what was taken, the read window, EPIPE after a peer's close, the protocol rules for READ and freed ids | `bun test browser/test` |
+| `test/flow.test.ts` | Partial writes (a slow peer gets every byte), a dropped send reports exactly what was taken, the read window, EPIPE after a peer's close, the protocol rules for READ and freed ids, the count limit (EFBIG, on the relay and on the page) | `bun test browser/test` |
 | `test/errno.test.ts` | The page's failure texts are libc's `strerror` for their errnos, as the native effects give | `bun test browser/test` |
 | `test/web_tcp.test.ts` | The page programs run under the Bend runtime, against the relay | `bun test browser/test` (needs the async runtime, below) |
 | `test/preload.js` | Opens the page's relay before a program runs (`globalThis.bend_relay`) | used by the page program tests |
 | `page/index.html`, `page/app.js` | A page: opens the relay, makes it `globalThis.bend_relay`, and runs the program's `page_main`. Its output goes to `#bend-output` | `test/page.test.ts` |
 | `test/page.test.ts`, `test/page_e2e.cjs` | Builds the page with the Bend CLI, serves it, and runs it in Chromium (Playwright): the program's output must reach the page | `bun test browser/test` (needs Node and the Playwright Chromium) |
+| `core/check/Transitions.lean` | The Lean model of the thirteen compiled transitions: the theorems about them, and an executable copy that `transitions.test.ts` runs | `lean --run` by `transitions.test.ts` (needs Lean 4.34.0) |
+| `core/check/transitions.test.ts` | The compiled JavaScript against the Lean model, 18,000 calls up to 2^53 (values and throws) | `bun test browser/core/check` (skipped without Lean) |
+| `core/check/bendtt.test.ts`, `build-bendtt-eval.sh`, `bendtt-eval.patch` | The compiled JavaScript against BendTT's own evaluator on the Bend source, 1,300 probes; the kernel with its `eval` mode is built by the script | `bun test browser/core/check` (skipped without the kernel or the bend CLI) |
 
 ## Run the tests
 
     cd bend-tls
     bun test browser/test                # the relay, the flow rules, the errno texts, the page programs
     bend browser/frame_proof.bend        # ALL PROOFS CHECK
+    bun test browser/core/check          # the compiled transitions against the Lean model and BendTT (see below)
 
     bun browser/relay/token.ts alice                                # a token for a user
     bun browser/relay/relay.ts <config.json>                        # the relay (RELAY.md)
@@ -193,6 +197,13 @@ The invariants, and the lemma for each transition that keeps each one, are in th
   no further ahead than the grant plus one chunk;
 - for an honest page, what the page holds is at most the window plus one chunk.
 
+The counts are capped. A connection moves at most `MAX_COUNT` = 2^32 - 1 bytes each way. The page refuses
+a send that would pass it, before the send is framed (`startSend`); the relay fails a connection whose
+SEND, or whose read, would pass it (EFBIG); and the page fails a connection on which the relay sends data
+past it. That keeps every argument of the transitions below 2^33, the bound of the Lean model's theorems
+(see "The compiler, checked"). The relay and the page take the cap as an option, so the tests reach it
+without moving 4 GiB (`test/flow.test.ts`).
+
 Assumptions about the environment. The code checks each one at run time and fails the connection closed
 (an errno of 5 or 22) if it is broken; none is assumed silently:
 
@@ -208,6 +219,8 @@ Assumptions about the environment. The code checks each one at run time and fail
 Not proven:
 - That the compiler and the JavaScript runtime are correct (the proofs are about Bend's definitions;
   the test checks that the committed `.mjs` is the compiler's output and computes the intended arithmetic).
+  Two checks compare that output with independent models, without proving either (see "The compiler,
+  checked").
 - The timing and liveness of anything: that a send completes, that a read returns, when a `try_` answers.
 - Bun's socket and WebSocket behaviour beyond the assumptions above, and the glue (the event handlers
   that call the model), which is tested, not proven.
@@ -235,4 +248,51 @@ Results (`--verdict`, Lean 4.34.0):
 | `tcp_contract_false.bend` | SOME PROOFS FAIL (the claim is false; rejected before the kernel) |
 
 The kernel's check is an independent recheck of the proofs, not of the code generator: the JavaScript
-the relay runs is still produced by Bend's compiler, which no check here covers.
+the relay runs is still produced by Bend's compiler. The checks in "The compiler, checked" compare that
+output with two other models of the same arithmetic.
+
+## The compiler, checked
+
+The proofs are about Bend's definitions, and the JavaScript that runs is the compiler's output. Two checks
+compare that output with independent models of the same arithmetic. Neither proves the compiler. A bug in
+the code generator would have to produce the same wrong result in both the Lean model and BendTT, and in
+every probe, to go unnoticed.
+
+**The Lean model** (`core/check/Transitions.lean`, Lean 4.34.0). The compiled code differs from Bend's
+unbounded Nat in three ways, and the model has all three: subtraction is clamped at 0, `nat_in` refuses an
+argument past 2^53, and `nat_chk` throws on a sum past 2^48 - 1. With no `sorry`, the model proves:
+
+- the subtraction and minimum transitions (`pg_frame_n_eq`, `pg_take_n_eq`, `rl_room_eq`, `rl_unqueue_eq`,
+  `rl_over_eq`) give Nat's value for every argument;
+- for arguments up to 2^33 (`bound`), each adding transition gives the sum (`pg_start_ok`, `pg_sent_ok`,
+  `pg_taken_ok`, `pg_recv_data_ok`, `rl_queue_ok`, `rl_written_ok`, `rl_read_ok`, `rl_grant_ok`);
+- a sum past 2^48 - 1 throws (`natChk_throws`), and an argument past 2^53 is refused (`natIn`).
+
+`transitions.test.ts` runs the model with `lean --run`, and the compiled JavaScript, on the same 18,000
+calls: all thirteen transitions, edge values up to 2^53 and random ones. 5,321 of the calls throw, and the
+two agree on every call. The range beyond the bound is covered by this test, not by a proof.
+
+Negative control: with the model's limit changed to 2^47 - 1, the same test reports mismatches (sums
+between 2^47 and 2^48 that the compiled code accepts and the model refuses).
+
+**BendTT's evaluator** (`core/check/bendtt.test.ts`). BendTT is the kernel that rechecks the proofs, and it
+also evaluates terms. `build-bendtt-eval.sh` builds it from the bend2 source at 9d514f3 with
+`bendtt-eval.patch`, which adds an `eval` mode and nothing else (26 lines). The test elaborates
+`core/tcp_transitions.bend` with the bend CLI, evaluates 1,300 probes with the kernel, and compares each value
+with the compiled JavaScript: all agree, and none is stuck.
+
+BendTT's numbers are unary, so its probes use the values 0 to 59. This test checks the Bend source against
+the compiled code, not the large range, which is the Lean model's job.
+
+Negative control: swapping the arguments of one `Nat.sub` in `pg_take_n` in a copy of the Bend source gives
+mismatches (`TRANSITIONS_BEND` selects the source).
+
+To run them:
+
+    bun test browser/core/check        # both; each test is skipped if its tool is missing
+    BEND_DIR=<bend2 checkout at 9d514f3> sh browser/core/check/build-bendtt-eval.sh   # the eval kernel, once
+    LEAN=<lean binary>                 # optional: a Lean 4.34.0 binary (default: the elan toolchain)
+
+Not covered by these checks: the compiler's correctness in general, the agreement of Bend's Nat with Lean's
+Nat in the proofs, the JavaScript runtime that drives the transitions (`run_loop`, the trampolines), and the
+glue around them.

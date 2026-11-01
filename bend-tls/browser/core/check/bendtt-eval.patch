@@ -1,0 +1,37 @@
+--- bendtt.lean
++++ bendtt.lean
+@@ -1481,8 +1481,34 @@
+ -- Main
+ -- ====
+ 
++-- test-only: evaluate named defs (closed) to Nat results: a Succ chain, each step reduced in turn
++partial def natOfM (bk : Book) (t : Term) : Option Nat :=
++  let (t, _) := Term.wnf bk true 1000000000 t []
++  match t with
++  | Tup _ (Lab "Zero") _ => some 0
++  | Tup _ (Lab "Succ") (Tup _ x _) => (natOfM bk x).map (· + 1)
++  | _ => none
++
++def evalNames (bk : Book) : List String → IO Unit
++  | [] => pure ()
++  | n :: ns => do
++    let shown := match natOfM bk (Ref n) with
++      | some k => toString k
++      | none => "stuck"
++    IO.println (n ++ " " ++ shown)
++    evalNames bk ns
++
+ def main (args : List String) : IO UInt32 := do
+   match args with
++  | "eval" :: path :: names =>
++    let s ← IO.FS.readFile path
++    match Book.parse s with
++    | .ok bk => do
++      evalNames bk names
++      pure 0
++    | .error e => do
++      IO.println ("PARSE FAIL\n" ++ e)
++      pure 1
+   | [path] =>
+     let s ← IO.FS.readFile path
+     match Book.parse s >>= Book.check with

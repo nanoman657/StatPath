@@ -65,8 +65,9 @@ A connection counts the bytes of SEND data from its connect: the first SEND byte
 - **DISCARD** drops the SEND data the relay has not taken yet, and the relay answers with a WRITTEN
   whose flag is 1. That count is final: the bytes after it were not taken, and the page continues
   its count from there. The page sends no SEND until the reply.
-- A count is four bytes, so a connection moves at most 4 GiB each way. Past that the relay fails the
-  connection with EFBIG.
+- A count is four bytes, so a connection moves at most 2^32 - 1 bytes each way. Past that the relay
+  fails the connection with EFBIG, for a SEND and for data it reads. The page refuses a send past it
+  before the send is framed, and fails the connection if the relay sends data past it.
 
 ### Reading and the read window
 
@@ -111,7 +112,7 @@ never connected is a protocol error (1002).
 Errors use Linux errno numbers: 13 EACCES (destination not allowed, or a token refused by the
 client), 11 EAGAIN (connect rate limit), 111 ECONNREFUSED, 110 ETIMEDOUT, 113 EHOSTUNREACH, 101
 ENETUNREACH, 99 EADDRNOTAVAIL, 24 EMFILE (too many connections), 32 EPIPE (the peer has closed),
-104 ECONNRESET, 27 EFBIG (a count past 4 GiB), 5 EIO (anything else).
+104 ECONNRESET, 27 EFBIG (a count past 2^32 - 1), 5 EIO (anything else).
 
 WebSocket close codes: 1001 the relay is stopping; 1002 a protocol error; 1008 the first frame was
 not AUTH, the token was wrong, or the token came too late.

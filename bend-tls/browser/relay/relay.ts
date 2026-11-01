@@ -129,8 +129,11 @@ type Session = {
   authTimer: ReturnType<typeof setTimeout> | null;
 };
 
-export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
+export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } = {}) {
   const log = opts.log ?? stdoutLog;
+  // the most a connection moves in one direction: MAX_COUNT in production, lower only in tests
+  const cap = opts.maxCount ?? MAX_COUNT;
+  if (!Number.isInteger(cap) || cap < 1 || cap > MAX_COUNT) throw new RangeError("maxCount out of range");
   const lim = cfg.limits;
   const digests = cfg.tokens.map((t) => ({ name: t.name, digest: Buffer.from(t.sha256, "hex") }));
   const sessions = new Set<Session>();
@@ -402,6 +405,7 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
             // in chunks of at most CHUNK_MAX: the two assumptions of the model's bound
             if (conn.rd > conn.gr) return fail(s, id, ERR.EIO, "data beyond the page's credit");
             if (chunk.length > CHUNK_MAX) return fail(s, id, ERR.EIO, "a read past the chunk limit");
+            if (conn.rd + chunk.length > cap) return fail(s, id, ERR.EFBIG, "file too large");
             conn.rd = M.rl_read(conn.rd, chunk.length);
             for (let at = 0; at < chunk.length; at += MAX_BODY) {
               sendFrame(s, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
@@ -439,7 +443,7 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
       if (M.rl_over(body.length, M.rl_room(SEND_WINDOW, conn.queued)) !== 0) {
         return s.ws.close(1002, "SEND past the window");
       }
-      if (conn.written + conn.queued + body.length > MAX_COUNT) {
+      if (conn.written + conn.queued + body.length > cap) {
         return fail(s, id, ERR.EFBIG, "file too large");
       }
       if (conn.peerClosed) return fail(s, id, ERR.EPIPE, "Broken pipe");

@@ -75,9 +75,14 @@ function connectBody(port, host) {
 
 export class RelayTcp {
   // WebSocketImpl is the WebSocket class to use (the browser's, or Bun's, or a test double)
-  constructor(url, WebSocketImpl = globalThis.WebSocket) {
+  constructor(url, WebSocketImpl = globalThis.WebSocket, opts = {}) {
     this.url = url;
     this.WebSocketImpl = WebSocketImpl;
+    // the most a connection moves in one direction: MAX_COUNT, lower only in tests (the relay's cap too)
+    this.maxCount = opts.maxCount ?? MAX_COUNT;
+    if (!Number.isInteger(this.maxCount) || this.maxCount < 1 || this.maxCount > MAX_COUNT) {
+      throw new RangeError("maxCount out of range");
+    }
     this.ws = null;
     this.conns = new Map();       // id -> connection (#newConn)
     this.connecting = new Map();  // id -> callback of its connect
@@ -140,6 +145,11 @@ export class RelayTcp {
       return 0;
     }
     if (c.op || c.discard) throw new Error("a connection takes one send at a time");
+    // refused here, before it reaches the wire: the relay would fail the connection for it
+    if (c.tail + bytes.length > this.maxCount) {
+      cb({ error: new TcpError(27, "file too large", c.written) });
+      return 0;
+    }
     const start = c.tail;
     c.tail = M.pg_start(c.tail, bytes.length);
     if (bytes.length === 0) {
@@ -360,6 +370,12 @@ export class RelayTcp {
       }
       case OP.DATA: {
         if (!c) return;
+        // a relay that keeps to the cap never sends past it: data past it ends the connection
+        if (c.received + f.body.length > this.maxCount) {
+          this.#die(id, c, new TcpError(27, "file too large"));
+          if (this.ws && this.ws.readyState === 1) this.ws.send(encodeFrame(OP.CLOSE, id));
+          return;
+        }
         c.chunks.push(f.body.slice());
         c.received = M.pg_recv_data(c.received, f.body.length);
         this.#wake(c);
