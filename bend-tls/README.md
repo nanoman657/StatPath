@@ -132,7 +132,8 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 3 x 3 x 4 = 180 runs. A valid run goes through the whole handshake:
+That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client (the JS interpreter
+ran the same matrix before the revocation changes; its result is in the commit history). A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
@@ -142,9 +143,10 @@ and decryption of the response.
 (`e2e/big_server.py`). A 200 KB body is printed in full. A 500 KB body, which is
 more than the client reads, is refused with `the stream was cut`.
 
-`e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs.
+`e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs: 15
+of 15 pass on the native client.
 `e2e/rejects.py` runs the rejection paths against a scripted fake server (see "What is
-checked"). `e2e/fetch.py` runs the revocation fetch against `openssl ocsp` and a CRL HTTP
+checked"): 7 of 7 pass on the native client. `e2e/fetch.py` runs the revocation fetch against `openssl ocsp` and a CRL HTTP
 server, nine cases, with `native` for the native binary and the default for the interpreter.
 
 ## What is checked
