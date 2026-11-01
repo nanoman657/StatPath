@@ -1,0 +1,7 @@
+{
+  "port": 8765,
+  "maxConnections": 256,
+  "allow": [
+    { "host": "127.0.0.1", "ports": [4433] }
+  ]
+}
