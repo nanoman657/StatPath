@@ -148,6 +148,10 @@ sig384 = l384_k.sign(cv_content(th), ec.ECDSA(hashes.SHA384()))
 boolcase("cv-ecdsa384-valid", f"H.hs.cv_ok({lst(E384_LEAF)}, {lst(list(th))}, {lst(list(cv_body(1283, sig384)))})", "True")
 boolcase("cv-ecdsa384-other-transcript", f"H.hs.cv_ok({lst(E384_LEAF)}, {lst(list(th2))}, {lst(list(cv_body(1283, sig384)))})", "False")
 boolcase("cv-ecdsa384-on-p256-leaf", f"H.hs.cv_ok({lst(E_LEAF)}, {lst(list(th))}, {lst(list(cv_body(1283, sig384)))})", "False")
+# a CertificateVerify whose length prefix is wrong, and a DER signature with bytes after it: refused
+bad_len = (len(sig_ec) + 1).to_bytes(2, "big")
+boolcase("cv-ecdsa-length-prefix-wrong", f"H.hs.cv_ok({lst(E_LEAF)}, {lst(list(th))}, {lst(list(bytes([0x04, 0x03]) + bad_len + sig_ec))})", "False")
+boolcase("cv-ecdsa-trailing-byte", f"H.hs.cv_ok({lst(E_LEAF)}, {lst(list(th))}, {lst(list(cv_body(1027, sig_ec + b'\x00')))})", "False")
 boolcase("cv-ecdsa256-on-p384-leaf", f"H.hs.cv_ok({lst(E384_LEAF)}, {lst(list(th))}, {lst(list(cv_body(1027, sig384)))})", "False")
 
 src = r'''# ec_tests.bend: P-256 certificate chains and the ECDSA CertificateVerify

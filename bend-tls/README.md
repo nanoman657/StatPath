@@ -50,8 +50,9 @@ bend bigint_tests.bend          -> bigint: 10 passed, 0 failed
 bend rsa_tests.bend             -> rsa: 4 passed, 0 failed
 bend rsa_sig_tests.bend         -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend            -> x509: 17 passed, 0 failed
-bend x509_ext_tests.bend        -> x509-ext: 22 passed, 0 failed
-bend ec_tests.bend              -> ec: 25 passed, 0 failed
+bend x509_ext_tests.bend        -> x509-ext: 23 passed, 0 failed
+bend ec_tests.bend              -> ec: 27 passed, 0 failed
+bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend tls_tests.bend             -> tls: 22 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
@@ -86,6 +87,7 @@ Several modules are generated; the source is the file with the `_body` or the
 | `p256.bend` | `p256_body.bend` | `python3 -I gen_p256.py` |
 | `ed25519.bend` | `ed25519_body.bend` | `python3 -I gen_ed25519.py` |
 | `p384.bend` | `p256_body.bend` | `python3 -I gen_p384.py` |
+| `fuzz_tests.bend` | `gen_fuzz_tests.py` | `python3 -I gen_fuzz_tests.py` (fresh random keys each run) |
 | `*_tests.bend` | `gen_*_tests.py` | `python3 -I gen_X_tests.py` |
 
 Bend requires definitions in dependency order, so the generated files that
@@ -170,6 +172,14 @@ more than the client reads, is refused with `the stream was cut`.
 - **TLS encoding:** the ClientHello layout (both key shares, both groups, all the
   signature algorithms), the record header and nonce, and ServerHello and
   certificate-list parsing.
+- **Robustness (fuzzing):** valid certificate chains (RSA, ECDSA P-256, Ed25519)
+  and CertificateVerify signatures, mutated by byte flips, truncations, insertions
+  and duplicated slices. Every mutated input must be refused, and none may fault
+  the runtime. The fuzzing found three faults or leniencies, all fixed: an ASN.1
+  long-form length with more than six bytes overflowed the 2^48 Nat (a runtime
+  fault, a denial of service); bytes after a certificate or an ECDSA signature were
+  ignored; and a CertificateVerify length prefix was not checked. Each now has a
+  regression case.
 - The harness fails when a value is wrong. This was checked by planting a wrong
   expected value.
 

@@ -87,10 +87,11 @@ def hs.cv_content(+th: List<&2, U32>) -> List<&2, U32>:
 def hs.cv_ok.ec.at(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   match ok:
     case True{}:
-      P.p256.verify(C.x509.ec_qx(C.x509.spki(leaf)), C.x509.ec_qy(C.x509.spki(leaf)),
-        S.sha256_bytes(hs.cv_content(th)), C.x509.ecdsa.r(sig), C.x509.ecdsa.s(sig))
+      Bool.and(C.x509.der_exact(sig), P.p256.verify(C.x509.ec_qx(C.x509.spki(leaf)), C.x509.ec_qy(C.x509.spki(leaf)),
+        S.sha256_bytes(hs.cv_content(th)), C.x509.ecdsa.r(sig), C.x509.ecdsa.s(sig)))
     case False{}:
       False{}
+
 
 # the server's Finished: the MAC of the transcript under its traffic key
 # the RSA-PSS check runs only for an RSA leaf (no RSA arithmetic on an EC key)
@@ -121,10 +122,11 @@ def hs.cv_ok.ed(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&
 def hs.cv_ok.ec384.at(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   match ok:
     case True{}:
-      Q.p384.verify(C.x509.ec_qx384(C.x509.spki(leaf)), C.x509.ec_qy384(C.x509.spki(leaf)),
-        SH.sha384.hash(hs.cv_content(th)), C.x509.ecdsa.r384(sig), C.x509.ecdsa.s384(sig))
+      Bool.and(C.x509.der_exact(sig), Q.p384.verify(C.x509.ec_qx384(C.x509.spki(leaf)), C.x509.ec_qy384(C.x509.spki(leaf)),
+        SH.sha384.hash(hs.cv_content(th)), C.x509.ecdsa.r384(sig), C.x509.ecdsa.s384(sig)))
     case False{}:
       False{}
+
 
 def hs.cv_ok.ec384(+leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   hs.cv_ok.ec384.at(C.x509.is_p384(C.x509.spki(leaf)), leaf, th, sig)
@@ -152,9 +154,18 @@ def hs.cv_ok.at(+alg: Nat, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<
   hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), Nat.is_eq(alg, 1283n), Nat.is_eq(alg, 2055n), leaf, th, sig)
 
 # rsa_pss_rsae_sha256 (2052) for an RSA leaf, ecdsa_secp256r1_sha256 (1027) for a P-256 leaf
-def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
-  hs.cv_ok.at(T.tls.num(2n, body), leaf, th, List.drop(&2, U32, body, 4n))
+def hs.cv_ok.len(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      hs.cv_ok.at(T.tls.num(2n, body), leaf, th, List.drop(&2, U32, body, 4n))
+    case False{}:
+      False{}
 
+def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
+  hs.cv_ok.len(Nat.is_eq(T.tls.num(2n, List.drop(&2, U32, body, 2n)), List.length(&2, U32, List.drop(&2, U32, body, 4n))),
+    leaf, th, body)
+
+# the signature's 2-byte length is the length of the bytes after it
 def hs.fin_ok(+s_hs: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
   R.rsa.eqb(K.finished_mac(s_hs, th), body)
 

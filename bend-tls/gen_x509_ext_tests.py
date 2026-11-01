@@ -64,6 +64,10 @@ def build(inter_bc, inter_usage, root_bc=True, leaf_san=("example.test",), leaf_
                 bc=False, san=list(leaf_san), eku=leaf_eku)
     return der(root), der(inter), der(leaf)
 
+# a certificate entry is exactly one DER element: a byte after it is refused
+r, i, l = build(True, ku(True))
+boolcase("trailing-byte-refused", chain_expr(l + [0], i, r), "False")
+
 # baseline: CA with keyCertSign
 r, i, l = build(True, ku(True))
 boolcase("ca-with-keycertsign", chain_expr(l, i, r), "True")

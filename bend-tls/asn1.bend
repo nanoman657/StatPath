@@ -24,13 +24,23 @@ def asn1.be(k: Nat, +bs: List<&2, U32>) -> Nat:
 
 # the header of the element at the front of bs: its content length and the
 # header's own length
+def asn1.len.at(ok: Bool, k: Nat, +r: List<&2, U32>) -> Nat:
+  match ok:
+    case True{}:
+      asn1.be(k, r)
+    case False{}:
+      4294967295n
+
 def asn1.hd.at(+l: U32, +r: List<&2, U32>, short: Bool) -> Hd:
   match short:
     case True{}:
       Hd{U32.to_nat(l), 2n}
     case False{}:
-      Hd{asn1.be(Nat.sub(U32.to_nat(l), 128n), r), Nat.add(2n, Nat.sub(U32.to_nat(l), 128n))}
+      Hd{asn1.len.at(Nat.is_le(Nat.sub(U32.to_nat(l), 128n), 4n), Nat.sub(U32.to_nat(l), 128n), r),
+        Nat.add(2n, Nat.sub(U32.to_nat(l), 128n))}
 
+# a long-form length of more than 4 bytes is more than any certificate: it is 2^32, which
+# makes the element overrun its bytes and fail the checks (no Nat overflow)
 def asn1.hd(+bs: List<&2, U32>) -> Hd:
   match bs:
     case Nil{}:

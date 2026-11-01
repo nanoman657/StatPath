@@ -565,6 +565,10 @@ def x509.ecdsa.r384(+sig: List<&2, U32>) -> List<&2, U32>:
 def x509.ecdsa.s384(+sig: List<&2, U32>) -> List<&2, U32>:
   x509.padn(x509.strip0(x509.valof(A.asn1.nth(1n, x509.valof(A.asn1.read(sig))))), 48n)
 
+# a DER element that is exactly the bytes given (no bytes after it)
+def x509.der_exact(+sig: List<&2, U32>) -> Bool:
+  Nat.is_eq(A.asn1.total(sig), List.length(&2, U32, sig))
+
 # big-endian bytes left-padded with zeros to n (longer than n: zero, which fails)
 def x509.rk(+spki: List<&2, U32>) -> List<&2, U32>:
   x509.valof(A.asn1.read(List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 1n)))
@@ -653,8 +657,9 @@ def x509.sigok.ec.p256.at(sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, 
     case True{}:
       False{}
     case False{}:
-      P.p256.verify(x509.ec_qx(x509.spki(issuer)), x509.ec_qy(x509.spki(issuer)),
-        S.sha256_bytes(x509.tbs_raw(cert)), x509.ecdsa.r(x509.signature(cert)), x509.ecdsa.s(x509.signature(cert)))
+      Bool.and(x509.der_exact(x509.signature(cert)), P.p256.verify(x509.ec_qx(x509.spki(issuer)), x509.ec_qy(x509.spki(issuer)),
+        S.sha256_bytes(x509.tbs_raw(cert)), x509.ecdsa.r(x509.signature(cert)), x509.ecdsa.s(x509.signature(cert))))
+
 
 def x509.sigok.ec.digest(sha384: Bool, +tbs: List<&2, U32>) -> List<&2, U32>:
   match sha384:
@@ -664,9 +669,10 @@ def x509.sigok.ec.digest(sha384: Bool, +tbs: List<&2, U32>) -> List<&2, U32>:
       S.sha256_bytes(tbs)
 
 def x509.sigok.ec.p384.at(sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
-  Q.p384.verify(x509.ec_qx384(x509.spki(issuer)), x509.ec_qy384(x509.spki(issuer)),
+  Bool.and(x509.der_exact(x509.signature(cert)), Q.p384.verify(x509.ec_qx384(x509.spki(issuer)), x509.ec_qy384(x509.spki(issuer)),
     x509.sigok.ec.digest(sha384, x509.tbs_raw(cert)), x509.ecdsa.r384(x509.signature(cert)),
-    x509.ecdsa.s384(x509.signature(cert)))
+    x509.ecdsa.s384(x509.signature(cert))))
+
 
 def x509.sigok.ec.p384.gate(p384: Bool, sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
   match p384:
@@ -731,6 +737,14 @@ def x509.anchor.any(+c: List<&2, U32>, anchors: List<&2, List<&2, U32>>, +now: N
     case a <> more:
       Bool.or(x509.anchor.match(c, a, now), x509.anchor.any(c, more, now))
 
+# each certificate of the chain is exactly one DER element: no bytes after it
+def x509.exact_all(chain: List<&2, List<&2, U32>>) -> Bool:
+  match chain:
+    case Nil{}:
+      True{}
+    case +c <> t:
+      Bool.and(Nat.is_eq(A.asn1.total(c), List.length(&2, U32, c)), x509.exact_all(t))
+
 # the path length of a CA (basicConstraints pathLenConstraint): the number of CA
 # certificates allowed below it in a chain; 1000000 when there is no limit
 def x509.be.acc(+bs: List<&2, U32>, acc: Nat) -> Nat:
@@ -742,14 +756,25 @@ def x509.be.acc(+bs: List<&2, U32>, acc: Nat) -> Nat:
 
 # a CA at chain position k + 1 may have at most pathLen CA certificates below it, and
 # the certificate at position k is one of them
-def x509.pathlen.int.at(is_int: Bool, +xs: List<&2, U32>) -> Nat:
-  match is_int:
+def x509.pathlen.val.at(ok: Bool, +bs: List<&2, U32>) -> Nat:
+  match ok:
     case True{}:
-      x509.be.acc(x509.valof(A.asn1.read(xs)), 0n)
+      x509.be.acc(bs, 0n)
     case False{}:
       1000000n
 
 # big-endian bytes as a number
+def x509.pathlen.val(+bs: List<&2, U32>) -> Nat:
+  x509.pathlen.val.at(Nat.is_le(List.length(&2, U32, bs), 4n), bs)
+
+def x509.pathlen.int.at(is_int: Bool, +xs: List<&2, U32>) -> Nat:
+  match is_int:
+    case True{}:
+      x509.pathlen.val(x509.valof(A.asn1.read(xs)))
+    case False{}:
+      1000000n
+
+# a path length of more than 4 bytes is beyond any chain: it counts as no limit
 def x509.pathlen.int(+xs: List<&2, U32>) -> Nat:
   match xs:
     case Nil{}:
@@ -801,13 +826,13 @@ def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32
 
 # the server authentication check: the leaf (first in chain) names host, and the
 # chain verifies against the anchors at time now (Unix seconds)
-def x509.verify_server.at(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>,
+def x509.verify_server.at(+chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>,
   +host: List<&2, U32>, now: Nat) -> Bool:
   match chain:
     case Nil{}:
       False{}
     case +leaf <> more:
-      Bool.and(x509.host_ok(leaf, host), Bool.and(x509.eku_ok(leaf), x509.chain.ok(chain, anchors, now, 0n)))
+      Bool.and(x509.host_ok(leaf, host), Bool.and(x509.eku_ok(leaf), Bool.and(x509.exact_all(chain), x509.chain.ok(chain, anchors, now, 0n))))
 
 def x509.verify_server(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>,
   +host: List<&2, U32>, now: Nat) -> Bool:
