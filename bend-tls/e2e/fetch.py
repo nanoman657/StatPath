@@ -187,6 +187,8 @@ def main():
         else:
             run_prefix = ["bend", "client.bend"]
 
+        # each case verifies at a time after its responses were made: the native build takes minutes,
+        # and an OCSP reply made later than the verification time is not current (thisUpdate > now)
         def run_case(label, sname, want, fetch):
             shutil.copy(f"{work}/{sname}.pem", f"{work}/leaf.pem")
             shutil.copy(f"{work}/{sname}.key", f"{work}/leaf.key")
@@ -201,7 +203,7 @@ def main():
                     results["fail"] += 1
                     print(f"FAIL {label}: the TLS server did not start")
                     return
-                args = run_prefix + ["example.test", "127.0.0.1", str(sport), f"{work}/root.der", str(now), ""]
+                args = run_prefix + ["example.test", "127.0.0.1", str(sport), f"{work}/root.der", str(int(time.time()) + 60), ""]
                 if fetch:
                     args.append("fetch")
                 try:

@@ -1330,15 +1330,28 @@ def http.r0(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
     r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
     http.r0.got(r, acc)
 
-def http.call.at(addr: String, port: Nat, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
+def http.call.go(s: Socket, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
   do IO<Maybe<&2, List<&2, U32>>>:
-    s : Socket <- IO.try(Socket, TCP.connect(addr, U32.from_nat(port)))
     s1 : Socket <- http.send(s, req)
     r : Socket & List<&2, U32> <- http.r0(s1, Nil{})
     http.done(r)
 
 
 # a request to a parsed URL: the body of a 200 reply, or None (also when the URL is not an address)
+def http.connect.got(c: Result<&1, &1, U32 & String, Socket>, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
+  match c:
+    case Fail{(code, message)}:
+      IO.pure(Maybe<&2, List<&2, U32>>, None{})
+    case Done{s}:
+      http.call.go(s, req)
+
+def http.call.at(addr: String, port: Nat, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
+  do IO<Maybe<&2, List<&2, U32>>>:
+    c : Result<&1, &1, U32 & String, Socket> <- TCP.connect(addr, U32.from_nat(port))
+    http.connect.got(c, req)
+
+# a connection that is refused or times out is no reply (None), so the caller refuses the chain
+# instead of the runtime stopping
 def http.call(+u: Url, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
   match u:
     case Url{+ip, +port, +path}:
