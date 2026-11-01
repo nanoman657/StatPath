@@ -9,6 +9,8 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `frame_proof.bend` | Laws: a frame decodes to itself, and is complete | Bend's kernel: `bend frame_proof.bend` prints `ALL PROOFS CHECK` |
 | `frame_arith.bend` | Euclid's identity for the division routine of the base library, from its invariant | the same checker |
 | `frame_lists.bend` | List lemmas (append, take, drop) and `le` on sums | the same checker |
+| `tcp_contract_proof.bend` | The arithmetic and invariants of the TCP effects: the send split and resume, the send window, the read credit and the bound on what the page holds (33 lemmas) | Bend's kernel: `bend tcp_contract_proof.bend` prints `ALL PROOFS CHECK` |
+| `tcp_contract_false.bend` | A false claim, to show the checker rejects it | `bend tcp_contract_false.bend` must print `SOME PROOFS FAIL` |
 | `PROTOCOL.md` | The wire protocol: frames, operations, authentication and the origin, the windows and limits, errors | read it |
 | `RELAY.md` | Running the relay for real use: the configuration, tokens, TLS, limits, the log, the checklist | read it |
 | `DECISIONS.md` | The decisions, and their approval | read it |
@@ -62,6 +64,37 @@ A false version of the round-trip law is rejected by the checker (checked when t
 
 Tested, not proven: the relay, the page's client, the effects and the sockets. The Bend encodings
 of sample frames (`frame_vectors.json`) match the JavaScript encoder byte for byte.
+
+## The contract, proven (tcp_contract_proof.bend)
+
+`bend tcp_contract_proof.bend` checks the arithmetic and invariants that the TCP effects rely on,
+in the model below. Each law is an equation over naturals and lists, with the relay's counts as
+witnesses, so no statement needs an impossible case.
+
+| Law | The JavaScript it stands for | What it says |
+|-----|------------------------------|--------------|
+| `off`, `sub_add` | `from(w) = Math.max(0, w - start)` in `web_tcp.js` | a count `start + k` is at offset `k` in the send |
+| `take_drop` | `bytes.subarray(from)` in `wt_send` | what the relay took, then what is left, is the whole send |
+| `resume_stream`, `resume_len`, `resume_pos` | the resend after a `Wait` | nothing is lost or sent twice: the resend has exactly the bytes not taken, and the position where it starts plus its length is the send's end |
+| `ready_taken`, `ready_rest` | the `left >= bytes.length` test | past the end of the send, all the data was taken and none is left |
+| `pump_keeps`, `written_keeps`, `relay_accepts` | the window in `pump` and the relay's check for a SEND past `SEND_WINDOW` | the page's in-flight bytes stay within the window after a send and after a WRITTEN, and the relay accepts every send a page makes within its window |
+| `read_keeps`, `grant_keeps`, `clamp_keeps`, `credit_le` | the read credit in `relay.ts` (`READ`, the clamp, the pause) | the relay reads no further ahead than the page's grant plus one chunk, and its credit is at most the window |
+| `honest_A`, `honest_B` | the grants of an honest page | the grant stays the window plus what the page took, through a clamp |
+| `buffered_bound` | the bound on what a page holds | the page holds at most `READ_WINDOW` plus one chunk of unread bytes |
+
+Assumptions the proof takes as given: the chunk size `C` (the largest read from the socket) is a
+parameter, and its value is the socket's, not proven; the relay's guard for reading is weaker than its
+code (`R <= G` where the code checks `credit > 0`), so the proof covers the code.
+
+**Not proven:**
+- That the JavaScript computes these formulas. The correspondence above is by reading the code; the
+  tests in `test/` check its behaviour, not the formulas.
+- The relay as a whole: the order of frames, DISCARD and CLOSE together, and the WebSocket. The laws
+  hold for each step; the claim that every interleaving of steps keeps them is not checked.
+- Progress: that a send completes or a read returns. The laws say nothing about liveness.
+- Timing: whether a `try_` call answers Ready or Wait before its deadline. The laws give the shape of
+  each answer for the relay's count, not when it arrives.
+- The Lean recheck (`--verdict`) of these laws: not run (the toolchain download is blocked).
 
 ## The page's TCP operations
 
