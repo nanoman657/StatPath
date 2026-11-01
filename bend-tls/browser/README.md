@@ -314,7 +314,7 @@ glue around them.
 The relay's connection machine, the page client, the clock, and the search over the page and the relay are one
 Lean program, `core/check/Relay.lean` (see its header for its modes). Each part is checked against the code.
 
-**Two bugs, and one protocol change.** Writing the models found them.
+**Three bugs, and one protocol change.** Writing the models found them.
 
 - *The relay.* A socket's error callback failed the connection that held its id at that moment, not the
   connection the callback belonged to. After CLOSE and a reused id, a connect that failed late sent the new
@@ -325,6 +325,9 @@ Lean program, `core/check/Relay.lean` (see its header for its modes). Each part 
   handed the frame to the new connection: a stale DATA was read as its data, a stale FAIL failed it, a stale OK
   opened it. `test/client_lifecycle.test.ts` reproduces it with the real client, and the search (below) finds it
   six steps deep.
+- *A third, found while modelling the budget.* An empty SEND frame wedged its connection: the queue held an empty
+  chunk, which the socket takes nothing from, and every byte behind it waited. The client never sends one, but the
+  relay took one from any page. The relay now ignores it (`PROTOCOL.md`); `test/flow.test.ts` sends one.
 - *The change.* A new frame, CLOSED (op 17). The relay answers every CLOSE for an id it has used; the page keeps a
   closed id closing until the CLOSED, dropping the frames for it meanwhile (`PROTOCOL.md`).
 
@@ -350,14 +353,14 @@ callback; the discard's callback reports it (the effects wait on the discard for
 
 **The relay against the model.** `core/check/relay_conformance.test.ts` runs the relay itself on 300 random traces
 with scripted sockets; the order of events is the trace's, and a sentinel after each step shows that the relay is
-done with it. Its frames must be the model's, line for line: 16,845 frames, 3,740 socket events of a closed or
-reused connection, 136 protocol-violation closes, the count limit, the connect rate (1,810 refusals, with
-clock steps), and every kind of frame. Negative controls: the lifecycle bug put back, and the read-side count check
+done with it. Its frames must be the model's, line for line: 16,860 frames, 3,794 socket events of a closed or
+reused connection, 137 protocol-violation closes, the count limit, the connect rate (1,694 refusals, with
+clock steps), the byte budget (traces in which a queue waits behind an empty budget), and every kind of frame. Negative controls: the lifecycle bug put back, and the read-side count check
 removed; both fail it.
 
 **Every trace up to a length** (`RELAY_EXHAUSTIVE=n`): the same check on every trace of up to n steps over a
 14-letter alphabet (the page's calls on id 1, and two sockets of its connections). Length 4 (41,371 traces) agrees.
-Length 5 (about 600,000 traces) was run in the background; its result is recorded in the commit that adds it.
+Length 5 (about 600,000 traces) was started on an earlier commit of the relay (before the empty-SEND and ticker-order changes, which the alphabet does not reach); its result is given below once it is complete.
 The exhaustive run found one thing: a socket that reports open twice made the relay send OK twice. Bun does not
 do that, and the model assumes it does not, but the relay now ignores a second open anyway.
 
