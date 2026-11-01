@@ -306,7 +306,53 @@ def x509.ku_ok(+der: List<&2, U32>) -> Bool:
 def x509.issuer_ok(+der: List<&2, U32>) -> Bool:
   Bool.and(x509.is_ca(der), x509.ku_ok(der))
 
+# Extended key usage (2.5.29.37): when present, the leaf must allow server authentication
+# (1.3.6.1.5.5.7.3.1) or anyExtendedKeyUsage (2.5.29.37.0)
+def x509.oid_eku() -> List<&2, U32>:
+  85 <> 29 <> 37 <> Nil{}
+
+def x509.eku.allows.at(more: Bool, +xs: List<&2, U32>) -> Bool:
+  match more:
+    case True{}:
+      Bool.or(R.rsa.eqb(x509.valof(A.asn1.read(xs)), 43 <> 6 <> 1 <> 5 <> 5 <> 7 <> 3 <> 1 <> Nil{}),
+        R.rsa.eqb(x509.valof(A.asn1.read(xs)), 85 <> 29 <> 37 <> 0 <> Nil{}))
+    case False{}:
+      False{}
+
 # the SAN extension's OID content: 2.5.29.17
+def x509.eku.allows(+xs: List<&2, U32>) -> Bool:
+  x509.eku.allows.at(x509.nonempty(xs), xs)
+
+def x509.eku.scan(fuel: Nat, +xs: List<&2, U32>, more: Bool, hit: Bool) -> Bool:
+  match fuel:
+    case 0n:
+      False{}
+    case 1n+p:
+      match more hit:
+        case True{} True{}:
+          True{}
+        case True{} False{}:
+          x509.eku.scan(p, List.drop(&2, U32, xs, A.asn1.total(xs)),
+            x509.nonempty(List.drop(&2, U32, xs, A.asn1.total(xs))),
+            x509.eku.allows(List.drop(&2, U32, xs, A.asn1.total(xs))))
+        case False{} _:
+          False{}
+
+def x509.eku.start(+xs: List<&2, U32>) -> Bool:
+  x509.eku.scan(1000000n, xs, x509.nonempty(xs), x509.eku.allows(xs))
+
+def x509.eku.at(+ext: List<&2, U32>) -> Bool:
+  match ext:
+    case Nil{}:
+      True{}
+    case _:
+      x509.eku.start(x509.valof(A.asn1.read(ext)))
+
+# the purposes are a SEQUENCE OF OIDs; more and hit say whether xs has an element and
+# whether its first purpose is one we allow
+def x509.eku_ok(+der: List<&2, U32>) -> Bool:
+  x509.eku.at(x509.ext.value(x509.exts(der), x509.oid_eku()))
+
 def x509.san_oid() -> List<&2, U32>:
   85 <> 29 <> 17 <> Nil{}
 
@@ -617,9 +663,63 @@ def x509.anchor.any(+c: List<&2, U32>, anchors: List<&2, List<&2, U32>>, +now: N
     case a <> more:
       Bool.or(x509.anchor.match(c, a, now), x509.anchor.any(c, more, now))
 
+# the path length of a CA (basicConstraints pathLenConstraint): the number of CA
+# certificates allowed below it in a chain; 1000000 when there is no limit
+def x509.be.acc(+bs: List<&2, U32>, acc: Nat) -> Nat:
+  match bs:
+    case Nil{}:
+      acc
+    case x <> t:
+      x509.be.acc(t, Nat.add(Nat.mul(acc, 256n), U32.to_nat(x)))
+
+# a CA at chain position k + 1 may have at most pathLen CA certificates below it, and
+# the certificate at position k is one of them
+def x509.pathlen.int.at(is_int: Bool, +xs: List<&2, U32>) -> Nat:
+  match is_int:
+    case True{}:
+      x509.be.acc(x509.valof(A.asn1.read(xs)), 0n)
+    case False{}:
+      1000000n
+
+# big-endian bytes as a number
+def x509.pathlen.int(+xs: List<&2, U32>) -> Nat:
+  match xs:
+    case Nil{}:
+      1000000n
+    case _:
+      x509.pathlen.int.at(U32.is_eq(A.asn1.tag(xs), 2), xs)
+
+def x509.pathlen.skip(boolean: Bool, +seq: List<&2, U32>) -> Nat:
+  match boolean:
+    case True{}:
+      x509.pathlen.int(List.drop(&2, U32, seq, A.asn1.total(seq)))
+    case False{}:
+      x509.pathlen.int(seq)
+
+def x509.pathlen.seq(+seq: List<&2, U32>) -> Nat:
+  match seq:
+    case Nil{}:
+      1000000n
+    case _:
+      x509.pathlen.skip(U32.is_eq(A.asn1.tag(seq), 1), seq)
+
+def x509.pathlen.at(+bc: List<&2, U32>) -> Nat:
+  match bc:
+    case Nil{}:
+      1000000n
+    case _:
+      x509.pathlen.seq(x509.valof(A.asn1.read(bc)))
+
+# the BasicConstraints elements: cA (a BOOLEAN, optional) then pathLenConstraint (an INTEGER)
+def x509.pathlen(+der: List<&2, U32>) -> Nat:
+  x509.pathlen.at(x509.ext.value(x509.exts(der), x509.oid_bc()))
+
+def x509.path_ok(k: Nat, +n: List<&2, U32>) -> Bool:
+  Nat.is_le(k, x509.pathlen(n))
+
 # each certificate is valid at now and signed by the next one; the last is
-# trusted through an anchor
-def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>, +now: Nat) -> Bool:
+# trusted through an anchor. k is the position of the first certificate (the leaf is 0).
+def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>, +now: Nat, +k: Nat) -> Bool:
   match chain:
     case Nil{}:
       False{}
@@ -628,7 +728,8 @@ def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32
         case Nil{}:
           x509.anchor.any(c, anchors, now)
         case +n <> more:
-          Bool.and(x509.valid(c, now), Bool.and(x509.sigok(c, n), Bool.and(x509.issuer_ok(n), x509.chain.ok(rest, anchors, now))))
+          Bool.and(x509.valid(c, now), Bool.and(x509.sigok(c, n), Bool.and(x509.issuer_ok(n),
+            Bool.and(x509.path_ok(k, n), x509.chain.ok(rest, anchors, now, Nat.add(k, 1n))))))
 
 # the server authentication check: the leaf (first in chain) names host, and the
 # chain verifies against the anchors at time now (Unix seconds)
@@ -638,7 +739,7 @@ def x509.verify_server.at(chain: List<&2, List<&2, U32>>, anchors: List<&2, List
     case Nil{}:
       False{}
     case +leaf <> more:
-      Bool.and(x509.host_ok(leaf, host), x509.chain.ok(chain, anchors, now))
+      Bool.and(x509.host_ok(leaf, host), Bool.and(x509.eku_ok(leaf), x509.chain.ok(chain, anchors, now, 0n)))
 
 def x509.verify_server(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>,
   +host: List<&2, U32>, now: Nat) -> Bool:

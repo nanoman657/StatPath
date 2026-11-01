@@ -22,18 +22,20 @@ def ku(cert_sign):
                        data_encipherment=False, key_agreement=False, key_cert_sign=cert_sign,
                        crl_sign=cert_sign, encipher_only=False, decipher_only=False)
 
-def make(subject, key, issuer_name, issuer_key, nb, na, bc=None, usage=None, san=None):
+def make(subject, key, issuer_name, issuer_key, nb, na, bc=None, usage=None, san=None, eku=None, pathlen=None):
     """bc: None (no basicConstraints), True (CA) or False (not a CA); usage: None or a
     KeyUsage extension value; san: a list of DNS names or None."""
     b = (cx.CertificateBuilder().subject_name(name(subject)).issuer_name(issuer_name)
          .public_key(key.public_key()).serial_number(cx.random_serial_number())
          .not_valid_before(nb).not_valid_after(na))
     if bc is not None:
-        b = b.add_extension(cx.BasicConstraints(ca=bc, path_length=None), critical=True)
+        b = b.add_extension(cx.BasicConstraints(ca=bc, path_length=pathlen), critical=True)
     if usage is not None:
         b = b.add_extension(usage, critical=True)
     if san:
         b = b.add_extension(cx.SubjectAlternativeName([cx.DNSName(s) for s in san]), critical=False)
+    if eku is not None:
+        b = b.add_extension(cx.ExtendedKeyUsage(eku), critical=False)
     return b.sign(issuer_key, hashes.SHA256())
 
 def der(c):
@@ -52,14 +54,14 @@ def boolcase(name_, expr, want):
 def chain_expr(leaf, inter, root, h="example.test"):
     return f"X.x509.verify_server([{lst(leaf)}, {lst(inter)}], [{lst(root)}], {host(h)}, {NOW}n)"
 
-def build(inter_bc, inter_usage, root_bc=True, leaf_san=("example.test",)):
+def build(inter_bc, inter_usage, root_bc=True, leaf_san=("example.test",), leaf_eku=None):
     root_k, inter_k, leaf_k = ecp(), ecp(), ecp()
     root = make("Ext Root", root_k, name("Ext Root"), root_k, now - 30 * day, now + 3650 * day,
                 bc=root_bc, usage=ku(True))
     inter = make("Ext Intermediate", inter_k, root.subject, root_k, now - 30 * day, now + 1000 * day,
                  bc=inter_bc, usage=inter_usage)
     leaf = make("example.test", leaf_k, inter.subject, inter_k, now - day, now + 365 * day,
-                bc=False, san=list(leaf_san))
+                bc=False, san=list(leaf_san), eku=leaf_eku)
     return der(root), der(inter), der(leaf)
 
 # baseline: CA with keyCertSign
@@ -80,6 +82,48 @@ boolcase("intermediate-no-keyusage", chain_expr(l, i, r), "True")
 # anchor: not a CA
 r, i, l = build(True, ku(True), root_bc=False)
 boolcase("anchor-not-ca", chain_expr(l, i, r), "False")
+
+# extended key usage on the leaf: serverAuth, anyExtendedKeyUsage, several purposes,
+# and clientAuth alone (which does not authenticate a server)
+from cryptography.x509.oid import ExtendedKeyUsageOID as EKU
+for label, eku, want in [
+    ("eku-server-auth", [EKU.SERVER_AUTH], "True"),
+    ("eku-any", [EKU.ANY_EXTENDED_KEY_USAGE], "True"),
+    ("eku-several", [EKU.CLIENT_AUTH, EKU.SERVER_AUTH], "True"),
+    ("eku-client-auth-only", [EKU.CLIENT_AUTH], "False"),
+]:
+    r, i, l = build(True, ku(True), leaf_eku=eku)
+    boolcase(label, chain_expr(l, i, r), want)
+
+# path length: a CA with pathLenConstraint 0 may not have a CA below it (in the chain
+# root -> i1 -> i2 -> leaf, i1 has i2 below it); 1 allows it; 0 with the leaf directly below is fine
+def path_chain(i1_len, with_i2):
+    root_k, i1_k, i2_k, leaf_k = ecp(), ecp(), ecp(), ecp()
+    root = make("Path Root", root_k, name("Path Root"), root_k, now - 30 * day, now + 3650 * day,
+                bc=True, usage=ku(True))
+    i1 = make("Path I1", i1_k, root.subject, root_k, now - 30 * day, now + 1000 * day,
+              bc=True, usage=ku(True), pathlen=i1_len)
+    issuer, issuer_k = i1, i1_k
+    below = []
+    if with_i2:
+        i2 = make("Path I2", i2_k, i1.subject, i1_k, now - 30 * day, now + 1000 * day,
+                  bc=True, usage=ku(True))
+        issuer, issuer_k = i2, i2_k
+        below = [der(i2)]
+    leaf = make("example.test", leaf_k, issuer.subject, issuer_k, now - day, now + 365 * day,
+                bc=False, san=["example.test"])
+    # the chain runs from the leaf up: leaf, the intermediates below i1 (nearest first), i1
+    leaf_chain = [der(leaf)] + below + [der(i1)]
+    return leaf_chain, [der(root)]
+
+for label, i1_len, with_i2, want in [
+    ("pathlen-0-with-ca-below", 0, True, "False"),
+    ("pathlen-1-with-ca-below", 1, True, "True"),
+    ("pathlen-0-leaf-below", 0, False, "True"),
+]:
+    leaf_chain, anchors = path_chain(i1_len, with_i2)
+    chain_text = ", ".join(lst(c) for c in leaf_chain)
+    boolcase(label, f"X.x509.verify_server([{chain_text}], [{lst(anchors[0])}], {host('example.test')}, {NOW}n)", want)
 
 # wildcard names: *.example.test matches one label only
 r, i, l = build(True, ku(True), leaf_san=("*.example.test",))
