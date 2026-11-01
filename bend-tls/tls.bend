@@ -81,7 +81,7 @@ def tls.server_name(+host: List<&2, U32>) -> List<&2, U32>:
 
 def tls.exts(+pub: List<&2, U32>, +pubp: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
   tls.cat(0 <> 43 <> 0 <> 3 <> 2 <> 3 <> 4 <> Nil{}, tls.cat(0 <> 10 <> 0 <> 6 <> 0 <> 4 <> 0 <> 29 <> 0 <> 23 <> Nil{},
-    tls.cat(0 <> 13 <> 0 <> 8 <> 0 <> 6 <> 8 <> 4 <> 4 <> 1 <> 4 <> 3 <> Nil{},
+    tls.cat(0 <> 13 <> 0 <> 10 <> 0 <> 8 <> 8 <> 4 <> 4 <> 1 <> 4 <> 3 <> 8 <> 7 <> Nil{},
     tls.cat(tls.key_share(pub, pubp), tls.server_name(host)))))
 
 def tls.client_hello(+random: List<&2, U32>, +pub: List<&2, U32>, +pubp: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:

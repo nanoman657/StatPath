@@ -13,6 +13,7 @@ import ./tls.bend as T
 import ./x509.bend as C
 import ./rsa.bend as R
 import ./p256.bend as P
+import ./ed25519.bend as ED
 
 # the server's protected records: the AEAD open of a record body under the key
 # and nonce, with the record header as the associated data (RFC 8446 5.2)
@@ -101,7 +102,21 @@ def hs.cv_ok.pss(rsa: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List
 def hs.cv_ok.ec(+leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   hs.cv_ok.ec.at(C.x509.is_ec(C.x509.spki(leaf)), leaf, th, sig)
 
-def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+def hs.cv_ok.ed.at(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      ED.ed.verify(C.x509.ed_pub(C.x509.spki(leaf)), hs.cv_content(th), sig)
+    case False{}:
+      False{}
+
+def hs.cv_ok.ed(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      hs.cv_ok.ed.at(C.x509.is_ed(C.x509.spki(leaf)), leaf, th, sig)
+    case False{}:
+      False{}
+
+def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, ed: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   match pss:
     case True{}:
       hs.cv_ok.pss(C.x509.is_rsa(C.x509.spki(leaf)), leaf, th, sig)
@@ -110,10 +125,11 @@ def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, +leaf: List<&2, U32>, +th: List<&2, U3
         case True{}:
           hs.cv_ok.ec(leaf, th, sig)
         case False{}:
-          False{}
+          hs.cv_ok.ed(ed, leaf, th, sig)
 
+# ed25519 (2055): the signature is over the content itself, with the leaf's Ed25519 key
 def hs.cv_ok.at(+alg: Nat, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
-  hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), leaf, th, sig)
+  hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), Nat.is_eq(alg, 2055n), leaf, th, sig)
 
 # rsa_pss_rsae_sha256 (2052) for an RSA leaf, ecdsa_secp256r1_sha256 (1027) for a P-256 leaf
 def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
