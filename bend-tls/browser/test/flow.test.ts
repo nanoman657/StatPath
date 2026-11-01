@@ -372,3 +372,26 @@ test("data past the count limit from the relay ends the connection with EFBIG", 
   expect(err.errno).toBe(27);
   net.shutdown();
 });
+
+test("an empty SEND does not stall the connection behind it", async () => {
+  // a SEND frame with no body (the client never sends one: it answers a zero-byte send itself) must not hold
+  // up the bytes after it: the socket takes nothing from an empty chunk, and the queue would wait on it
+  const other = echo();
+  const r = relay([{ host: "127.0.0.1", ports: [other.port] }]);
+  const { ws, next } = await rawSocket(r.url);
+  ws.send(encodeFrame(OP.CONNECT, 1, connectBody(other.port, "127.0.0.1")));
+  expect(decodeFrame(await next())?.op).toBe(OP.OK);
+  ws.send(encodeFrame(OP.READ, 1, new Uint8Array([0, 2, 0, 0])));
+  ws.send(encodeFrame(OP.SEND, 1, new Uint8Array(0)));
+  ws.send(encodeFrame(OP.SEND, 1, enc.encode("after")));
+  // the bytes after it are written, and the echo comes back
+  let echoed = "";
+  for (let i = 0; i < 4 && echoed.length < 5; i++) {
+    const f = decodeFrame(await next());
+    if (f?.op === OP.DATA) echoed += dec.decode(f.body);
+  }
+  expect(echoed).toBe("after");
+  ws.close();
+  r.stop();
+  other.stop();
+});

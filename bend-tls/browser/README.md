@@ -233,8 +233,8 @@ Not proven:
 - Bun's socket and WebSocket behaviour beyond the four assumptions checked in `test/bun_assumptions.test.ts`.
   The relay's connection handlers and the page client are checked against Lean models on random traces, and
   the relay exhaustively over a small alphabet, not proven for the JavaScript (see "The protocol, checked").
-- Real time: the model has the clock as an input and the connect rate exactly, but not the byte budget (it gates
-  whole writes, by chunk). Its liveness results assume that a socket that is offered bytes takes some, and that a
+- Real time: the model has the clock as an input, with the connect rate and the byte budget exact (see "The
+  protocol, checked"). Its liveness results assume that a socket that is offered bytes takes some, and that a
   connecting socket opens or fails.
 - The Lean recheck is done (see below), but it checks Bend's kernel's proofs, not the compiler.
 
@@ -361,12 +361,19 @@ Length 5 (about 600,000 traces) was run in the background; its result is recorde
 The exhaustive run found one thing: a socket that reports open twice made the relay send OK twice. Bun does not
 do that, and the model assumes it does not, but the relay now ignores a second open anyway.
 
-**The clock** (`Clock` in `Relay.lean`). The connect tokens, the ticker's flush, and the injected time are modelled
-exactly (the tokens in thousandths, so the relay's floating-point arithmetic agrees where the test's clock steps
-keep it exact: multiples of half a second at two connects a second). `rate_run` is the rate bound: for every trace,
-the connects accepted are at most two seconds' burst plus the rate for the time that has passed, and a connect is
-refused with FAIL 11 only while less than one token is left. The conformance test drives the relay's clock and
-ticks, and the model agrees.
+**The clock and the budgets** (`Clock` in `Relay.lean`). The connect tokens, the byte budget, the ticker's flush,
+and the injected time are modelled, in thousandths (so the relay's floating-point arithmetic agrees where the test's
+clock steps keep it exact: multiples of half a second, at rates that divide them). Each connection's queue is kept as
+the lengths of its SEND frames, head first: the socket takes from the head chunk, and a write starts only while the
+budget is positive, so a write may take the budget below zero, as the relay's does. The theorems: `rate_run`, the
+connects accepted are at most two seconds' burst plus the rate for the time of the last refill, and a connect is refused
+with FAIL 11 only while less than one token is left; `byte_run`, the bytes written and read are at most the budget's
+burst plus the byte rate for the time of the last refill (which is no later than now), less the budget's debt. The conformance test drives the clock,
+the rates, the budgets and the ticks, with traces that make the budget bind (a queue waits behind an empty budget), and
+the model agrees. A negative control removes the budget check from the flush: the test fails.
+
+The relay's ticker flushes the connections in id order (the model's order; the order the connections were made in
+would have served too, but then the model would have to track it).
 
 **Bun's socket behaviour** (`test/bun_assumptions.test.ts`). The assumptions the model makes of Bun, checked with
 real sockets: a partial write keeps none of its remainder, drain comes after a partial write, pause stops the data
@@ -374,8 +381,9 @@ callbacks and resume starts them, and a connection's data comes before its end. 
 Bun shows there first.
 
 **Not checked by this:**
-- The byte budget of the relay (it gates whole writes, by chunk; the queue is a count in the model). The timer's
-  effect on the budget and on reads is therefore not modelled either.
+- The reads' pausing on an empty budget: the model takes the socket's data as it comes, as the environment's, and
+  does not model the relay's pausing of the socket. (The budget is decremented by the data; the relay's own check is
+  not modelled.)
 - The session limits per address (upgrades per minute) and the total of sessions.
 - Real time. The model has the clock as an input, and its liveness results assume the environment is fair; the
   rate bound is exact for any clock. Real latency, and how long a fair environment takes, are not in the model.

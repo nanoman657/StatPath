@@ -49,6 +49,7 @@ closes the WebSocket (code 1002).
 - An id is free until the page sends CONNECT for it, and is used until the page sends CLOSE or
   receives FAIL. The page must not reuse an id before then.
 - The page sends SEND, DISCARD and READ only after OK. Before OK, a SEND is a protocol error.
+- A SEND with an empty body is ignored: it has nothing to write, and the relay does not queue it.
 - The relay sends FAIL at most once per id, and frees the id after it. The page does not send a CLOSE
   for an id whose FAIL it has received.
 - CLOSE is answered with CLOSED, once the relay has dropped the connection, for every id the WebSocket has
@@ -92,7 +93,9 @@ A connection counts the bytes of SEND data from its connect: the first SEND byte
   past either, FAIL 24 (EMFILE).
 - **Bytes:** a WebSocket moves at most bytesPerSecond bytes a second, both ways together, with one
   second's worth allowed up front. Past that the relay holds the data (writes wait in the queue,
-  reads wait in the socket). Nothing fails; the page sees the delay.
+  reads wait in the socket). Nothing fails; the page sees the delay. A write starts only while the budget
+  is positive, and takes what the socket accepts of the head of the queue; so the budget may go below zero
+  by the last write.
 - **Upgrades and sessions:** a client address may open upgradesPerMinute WebSockets a minute (429
   past that), and the relay holds at most maxSessions at once (503 past that).
 

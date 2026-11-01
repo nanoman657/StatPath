@@ -330,7 +330,10 @@ export function startRelay(
     for (const s of sessions) {
       refill(s, now);
       const buffered = s.ws.getBufferedAmount();
-      for (const c of s.conns.values()) {
+      // the connections in id order: the same order whatever order they were made in (the model's)
+      for (const id of [...s.conns.keys()].sort((a, b) => a - b)) {
+        const c = s.conns.get(id);
+        if (!c) continue;
         if (c.wsPaused && buffered <= lim.maxBufferedBytes / 2) c.wsPaused = false;
         sync(s, c);
         flush(s, c);
@@ -454,6 +457,9 @@ export function startRelay(
       if (!conn) return unknownId(s, id);
       if (!conn.open) return s.ws.close(1002, "SEND before OK");
       if (body.length > MAX_BODY) return s.ws.close(1002, "SEND too long");
+      // an empty SEND has nothing to write; queued, it would hold up the bytes behind it (the socket takes
+      // nothing from it, and the queue waits on it)
+      if (body.length === 0) return;
       if (M.rl_over(body.length, M.rl_room(SEND_WINDOW, conn.queued)) !== 0) {
         return s.ws.close(1002, "SEND past the window");
       }

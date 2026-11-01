@@ -22,6 +22,7 @@ Trace lines: "trace" starts a trace; then optionally "cap N" (the count limit, d
   sock ID GEN open | sock ID GEN data N | sock ID GEN eof | sock ID GEN peerclose
   sock ID GEN error E | sock ID GEN drain A
   tick MS                                  (the clock goes on by MS, and the timer runs once)
+  rate N | budget N                        (connects per second, and bytes per second, for the trace)
 Output: one line per frame or session event, then "end":
   ok ID | data ID N | eof ID | written ID COUNT FLAG | fail ID ERRNO | closed ID | wsclose CODE
 
@@ -34,11 +35,13 @@ ok_only_from_open, step_outs_id (a step names only its own id), freed_run (a fre
 that answers a CLOSE), counters_bounded (the counts stay within the count limit, the queue within the send window,
 the credit within the read window), drain_empties and open_resolves and error_resolves (liveness, under fairness),
 rate_run (THE RATE BOUND: from the start, no more connects are accepted than two seconds' burst plus the rate
-for the time that has passed).
+for the time that has passed) and byte_run (THE BYTE BOUND: the bytes written and read are at most the budget's
+burst plus the byte rate for the time that has passed, less the budget's debt).
 
-The assumptions: a socket opens once and its events come after its open (the events Bun produces); for liveness,
-the environment is fair: a socket that is offered a byte takes one, and the timer keeps running. The byte budget
-of the relay is not modelled (it gates whole writes, by chunk; the queue would need to be a list of chunks).
+The assumptions: a socket opens once and its events come after its open (the events Bun produces); the socket
+delivers data only while the relay has credit and budget (the relay pauses it otherwise: the model does not
+model the pausing, it takes the data as it comes); for liveness, the environment is fair: a socket that is offered a
+byte takes one, and the timer keeps running.
 -/
 
 import Std.Data.HashSet
@@ -156,6 +159,7 @@ def sendStep (cap : Nat) (s : St) (id n : Nat) : St × List Out :=
   | none => if (s.slot id).known then (s, []) else protoClose s 1002
   | some c =>
     if !c.isOpen then protoClose s 1002
+    else if n = 0 then (s, [])
     else if n > SEND_WINDOW - c.queued then protoClose s 1002
     else if c.written + c.queued + n > cap then failConn s id c 27
     else if c.peerClosed then failConn s id c 32
@@ -164,6 +168,24 @@ def sendStep (cap : Nat) (s : St) (id n : Nat) : St × List Out :=
       let total := c.queued + n
       let c' : Conn := { c with queued := 0, written := c.written + total }
       (setConn s id (some c'), if total > 0 then [Out.written id c'.written 0] else [])
+
+-- sendStep, with the flush's amount given: m bytes of the queue (with the new bytes) go to the socket, the rest
+-- waits. The clock uses this: the budget and the socket decide m (Clock.stepK). With m = the whole queue,
+-- it is sendStep.
+def sendStepB (cap : Nat) (s : St) (id n m : Nat) : St × List Out :=
+  match (s.slot id).conn with
+  | none => if (s.slot id).known then (s, []) else protoClose s 1002
+  | some c =>
+    if !c.isOpen then protoClose s 1002
+    else if n = 0 then (s, [])
+    else if n > SEND_WINDOW - c.queued then protoClose s 1002
+    else if c.written + c.queued + n > cap then failConn s id c 27
+    else if c.peerClosed then failConn s id c 32
+    else
+      let total := c.queued + n
+      let w := min m total
+      let c' : Conn := { c with queued := total - w, written := c.written + w }
+      (setConn s id (some c'), if w > 0 then [Out.written id c'.written 0] else [])
 
 def discardStep (s : St) (id : Nat) : St × List Out :=
   match (s.slot id).conn with
@@ -392,22 +414,66 @@ theorem inv_sendStep (cap : Nat) (s : St) (id n : Nat) (hI : Inv cap s) :
     · rw [if_pos h1]
       exact inv_protoClose cap s _ hI
     · rw [if_neg h1]
-      by_cases h2 : n > SEND_WINDOW - c.queued
-      · rw [if_pos h2]
-        exact inv_protoClose cap s _ hI
-      · rw [if_neg h2]
-        by_cases h3 : c.written + c.queued + n > cap
-        · rw [if_pos h3]
-          exact inv_failConn cap s id c 27 hI
-        · rw [if_neg h3]
-          by_cases h4 : c.peerClosed = true
-          · rw [if_pos h4]
-            exact inv_failConn cap s id c 32 hI
-          · rw [if_neg h4]
-            apply inv_setConn cap s id _ hI
-            unfold ConnOk at hc ⊢
-            obtain ⟨g1, g2, g3, g4, g5, g6⟩ := hc
-            refine ⟨g1, ?_, ?_, g4, g5, g6⟩ <;> (try dsimp only) <;> omega
+      by_cases hn : n = 0
+      · rw [if_pos hn]
+        exact hI
+      · rw [if_neg hn]
+        by_cases h2 : n > SEND_WINDOW - c.queued
+        · rw [if_pos h2]
+          exact inv_protoClose cap s _ hI
+        · rw [if_neg h2]
+          by_cases h3 : c.written + c.queued + n > cap
+          · rw [if_pos h3]
+            exact inv_failConn cap s id c 27 hI
+          · rw [if_neg h3]
+            by_cases h4 : c.peerClosed = true
+            · rw [if_pos h4]
+              exact inv_failConn cap s id c 32 hI
+            · rw [if_neg h4]
+              apply inv_setConn cap s id _ hI
+              unfold ConnOk at hc ⊢
+              obtain ⟨g1, g2, g3, g4, g5, g6⟩ := hc
+              refine ⟨g1, ?_, ?_, g4, g5, g6⟩ <;> (try dsimp only) <;> omega
+
+theorem inv_sendStepB (cap : Nat) (s : St) (id n m : Nat) (hI : Inv cap s) :
+    Inv cap (sendStepB cap s id n m).1 := by
+  unfold sendStepB
+  cases hsl : (s.slot id).conn with
+  | none =>
+    dsimp only
+    by_cases hk : (s.slot id).known = true
+    · rw [if_pos hk]
+      exact hI
+    · rw [if_neg hk]
+      exact inv_protoClose cap s _ hI
+  | some c =>
+    dsimp only
+    have hc := hI id c hsl
+    by_cases h1 : (!c.isOpen) = true
+    · rw [if_pos h1]
+      exact inv_protoClose cap s _ hI
+    · rw [if_neg h1]
+      by_cases hn : n = 0
+      · rw [if_pos hn]
+        exact hI
+      · rw [if_neg hn]
+        by_cases h2 : n > SEND_WINDOW - c.queued
+        · rw [if_pos h2]
+          exact inv_protoClose cap s _ hI
+        · rw [if_neg h2]
+          by_cases h3 : c.written + c.queued + n > cap
+          · rw [if_pos h3]
+            exact inv_failConn cap s id c 27 hI
+          · rw [if_neg h3]
+            by_cases h4 : c.peerClosed = true
+            · rw [if_pos h4]
+              exact inv_failConn cap s id c 32 hI
+            · rw [if_neg h4]
+              apply inv_setConn cap s id _ hI
+              unfold ConnOk at hc ⊢
+              obtain ⟨g1, g2, g3, g4, g5, g6⟩ := hc
+              have hw : min m (c.queued + n) ≤ c.queued + n := Nat.min_le_right _ _
+              refine ⟨g1, ?_, ?_, g4, g5, g6⟩ <;> (try dsimp only) <;> omega
 
 theorem inv_discardStep (cap : Nat) (s : St) (id : Nat) (hI : Inv cap s) :
     Inv cap (discardStep s id).1 := by
@@ -1338,10 +1404,11 @@ def search (fixed : Bool) (depth : Nat) : Option (List String) × Nat := Id.run 
 end Client
 
 -- ================================================================================================
--- Time: the connect tokens and the ticker (relay/relay.ts: refill, tick). The model is exact: the tokens are
--- kept in thousandths (a CONNECT takes 1000), so the relay's floating-point arithmetic agrees with it where the
--- test's clock steps keep it exact. The byte budget is not modelled: it gates whole writes, by chunk, which
--- needs the queue as a list of chunks; see README.
+-- Time (relay/relay.ts: refill, the ticker, the budgets). The tokens and the budget are kept in thousandths
+-- (a connect takes 1000 tokens; a byte takes 1000 of the budget), so the arithmetic is exact. The relay's
+-- floating-point arithmetic agrees with it where the test's clock steps keep it exact (multiples of half a
+-- second, at rates that divide them). The queue of each connection is kept as chunks (the SEND frames, head
+-- first): the socket takes from the head chunk, and the budget is checked before each write.
 -- ================================================================================================
 
 namespace Clock
@@ -1350,34 +1417,102 @@ structure Clk where
   now : Nat            -- the time, in ms
   refilled : Nat       -- the time of the last refill
   tokens : Int         -- connect tokens, in thousandths of a token
-  acc : Nat            -- connects accepted (a ghost count: the theorem is about it)
+  acc : Nat            -- connects accepted (a ghost count)
   cps : Nat            -- connects per second
-  deriving Repr
+  bps : Nat            -- bytes per second: the budget's rate
+  bud : Int            -- the byte budget, in thousandths of a byte (it can go negative: a write may cross zero)
+  used : Nat           -- bytes written and read (a ghost count)
+  chunks : Nat → List Nat  -- each connection's queue, as the lengths of its chunks, head first (a ghost mirror)
 
-def init (cps : Nat) : Clk :=
-  { now := 0, refilled := 0, tokens := 2000 * cps, acc := 0, cps := cps }
+def init (cps bps : Nat) : Clk :=
+  { now := 0, refilled := 0, tokens := 2000 * (cps : Int), acc := 0, cps := cps, bps := bps,
+    bud := 1000 * (bps : Int), used := 0, chunks := fun _ => [] }
 
--- refill (relay/relay.ts): the tokens for the time since the last refill, up to two seconds' worth
+-- refill (relay/relay.ts): the tokens and the budget for the time since the last refill, up to their caps
 def refill (k : Clk) : Clk :=
   let dt : Int := (k.now : Int) - (k.refilled : Int)
   { k with refilled := k.now,
-           tokens := min (2000 * (k.cps : Int)) (k.tokens + dt * (k.cps : Int)) }
+           tokens := min (2000 * (k.cps : Int)) (k.tokens + dt * (k.cps : Int)),
+           bud := min (1000 * (k.bps : Int)) (k.bud + dt * (k.bps : Int)) }
 
--- the ticker's flush: every connection's queue, written as far as the socket takes it (the test socket takes
--- all of it), in id order (the relay's order is the connections' insertion order; the tests use one id)
-def flushAll (s : Relay.St) : Relay.St × List Relay.Out := Id.run do
-  let mut st := s
-  let mut outs : List Relay.Out := []
-  for id in List.range 256 do
-    match (st.slot id).conn with
-    | some c =>
-      let r := Relay.flushConn st id c 4294967295
-      st := r.1
-      outs := outs ++ r.2
-    | none => pure ()
-  return (st, outs)
+-- the flush of a queue (relay/relay.ts: flush): while the budget is positive, write the head chunk as far as the
+-- socket accepts (a is what it accepts in all, for this flush); a partial write ends it. Returns the bytes taken,
+-- the chunks left, and the budget left.
+def flushSim : List Nat → Nat → Int → Nat × List Nat × Int
+  | [], _, b => (0, [], b)
+  | h :: rest, a, b =>
+    if b ≤ 0 then (0, h :: rest, b)
+    else
+      let w := min a h
+      if w = 0 then (0, h :: rest, b)
+      else if w < h then (w, (h - w) :: rest, b - 1000 * (w : Int))
+      else
+        let r := flushSim rest (a - w) (b - 1000 * (w : Int))
+        (w + r.1, r.2.1, r.2.2)
 
--- one event with the clock. A CONNECT of a free id is refused with FAIL 11 while there is less than one token.
+-- the budget left is the budget less what was taken, in thousandths
+theorem flushSim_budget (cs : List Nat) : ∀ (a : Nat) (b : Int),
+    (flushSim cs a b).2.2 = b - 1000 * ((flushSim cs a b).1 : Int) := by
+  induction cs with
+  | nil =>
+    intro a b
+    simp [flushSim]
+  | cons x rest ih =>
+    intro a b
+    unfold flushSim
+    by_cases hb : b ≤ 0
+    · rw [if_pos hb]
+      try simp
+    · rw [if_neg hb]
+      by_cases hw : min a x = 0
+      · rw [if_pos hw]
+        try simp
+      · rw [if_neg hw]
+        by_cases hlt : min a x < x
+        · rw [if_pos hlt]
+          try simp
+        · rw [if_neg hlt]
+          show (flushSim rest (a - min a x) (b - 1000 * ((min a x : Nat) : Int))).2.2
+            = b - 1000 * (((min a x) + (flushSim rest (a - min a x) (b - 1000 * ((min a x : Nat) : Int))).1 : Nat) : Int)
+          rw [ih]
+          push_cast
+          omega
+
+-- what the ticker does to one connection: its queue is flushed, as far as the budget and the socket take it
+def flushOne (k : Clk) (s : Relay.St) (id : Nat) : Clk × Relay.St × List Relay.Out :=
+  match (s.slot id).conn with
+  | some c =>
+    if c.isOpen then
+      let m := flushSim (k.chunks id) 4294967295 k.bud
+      if m.1 > 0 then
+        let r := Relay.flushConn s id c m.1
+        ({ k with bud := m.2.2, used := k.used + m.1,
+                  chunks := fun i => if i = id then m.2.1 else k.chunks i }, r.1, r.2)
+      else (k, s, [])
+    else (k, s, [])
+  | none => (k, s, [])
+
+def flushIds (k : Clk) (s : Relay.St) : List Nat → Clk × Relay.St × List Relay.Out
+  | [] => (k, s, [])
+  | id :: ids =>
+    let r1 := flushOne k s id
+    let r2 := flushIds r1.1 r1.2.1 ids
+    (r2.1, r2.2.1, r1.2.2 ++ r2.2.2)
+
+-- the ticker: the time goes on, the tokens and the budget refill, and the queues are flushed
+def tickK (k : Clk) (s : Relay.St) (ms : Nat) : Clk × Relay.St × List Relay.Out :=
+  if s.closed.isSome then (k, s, []) else
+  let k1 := refill { k with now := k.now + ms }
+  flushIds k1 s (List.range 256)
+
+-- after a step, the queue of an id with no connection is empty (its connection is gone)
+def clearGone (k : Clk) (s : Relay.St) (id : Nat) : Clk :=
+  match (s.slot id).conn with
+  | none => { k with chunks := fun i => if i = id then [] else k.chunks i }
+  | some _ => k
+
+-- one event, with the clock. The connect tokens refuse a CONNECT of a free id while there is less than one token.
+-- A SEND or a DRAIN takes the bytes the budget and the socket allow (flushSim); a DATA takes the budget.
 def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St × List Relay.Out :=
   if s.closed.isSome then (k, s, []) else
   match e with
@@ -1392,46 +1527,82 @@ def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St 
       else
         let r := Relay.step cap s e
         ({ k1 with tokens := k1.tokens - 1000, acc := k1.acc + 1 }, r.1, r.2)
+  | .send id n =>
+    let m := flushSim ((k.chunks id) ++ [n]) 4294967295 k.bud
+    let r := Relay.sendStepB cap s id n m.1
+    let ok := decide (n ≠ 0) && (s.slot id).conn.isSome && (r.1.slot id).conn.isSome && r.1.closed.isNone
+    if ok then
+      let k' := { k with bud := m.2.2, used := k.used + m.1,
+                         chunks := fun i => if i = id then m.2.1 else k.chunks i }
+      (clearGone k' r.1 id, r.1, r.2)
+    else (clearGone k r.1 id, r.1, r.2)
+  | .sock id g (.drain a) =>
+    match (s.slot id).conn with
+    | some c =>
+      if c.gen = g && c.isOpen then
+        let m := flushSim (k.chunks id) a k.bud
+        let r := Relay.step cap s (.sock id g (.drain m.1))
+        let k' := { k with bud := m.2.2, used := k.used + m.1,
+                           chunks := fun i => if i = id then m.2.1 else k.chunks i }
+        (clearGone k' r.1 id, r.1, r.2)
+      else
+        let r := Relay.step cap s e
+        (clearGone k r.1 id, r.1, r.2)
+    | none =>
+      let r := Relay.step cap s e
+      (clearGone k r.1 id, r.1, r.2)
+  | .sock id _g (.data n) =>
+    let r := Relay.step cap s e
+    let delivered := decide (Relay.Out.data id n ∈ r.2)
+    let k' := if delivered then { k with bud := k.bud - 1000 * (n : Int), used := k.used + n } else k
+    (clearGone k' r.1 id, r.1, r.2)
+  | .discard id =>
+    let r := Relay.step cap s e
+    (clearGone { k with chunks := fun i => if i = id then [] else k.chunks i } r.1 id, r.1, r.2)
   | _ =>
     let r := Relay.step cap s e
-    (k, r.1, r.2)
+    (clearGone k r.1 (Relay.evId e), r.1, r.2)
 
--- the ticker: the time goes on, the tokens refill, and the queues are flushed
-def tickK (k : Clk) (s : Relay.St) (ms : Nat) : Clk × Relay.St × List Relay.Out :=
-  if s.closed.isSome then (k, s, []) else
-  let k1 := refill { k with now := k.now + ms }
-  let r := flushAll s
-  (k1, r.1, r.2)
-
--- what the connection tokens promise: no more connects accepted than the rate allows, for the time elapsed
+-- what the connection tokens and the budget promise. Good k: the tokens are never negative and the rate bound holds;
+-- the budget and the bytes used satisfy the same bound: the budget is at most the rate for the time that has passed,
+-- less what was used (in thousandths).
 def Good (k : Clk) : Prop :=
   0 ≤ k.tokens ∧ k.refilled ≤ k.now ∧ k.tokens + 1000 * (k.acc : Int) ≤ 2000 * (k.cps : Int) + (k.cps : Int) * (k.refilled : Int)
+    ∧ k.bud + 1000 * (k.used : Int) ≤ 1000 * (k.bps : Int) + (k.bps : Int) * (k.refilled : Int)
 
-theorem good_init (cps : Nat) : Good (init cps) := by
+theorem good_init (cps bps : Nat) : Good (init cps bps) := by
   unfold Good init
   simp only
-  refine ⟨?_, ?_, ?_⟩
+  refine ⟨?_, ?_, ?_, ?_⟩
+  · omega
   · omega
   · omega
   · omega
 
--- refill keeps the invariant: the tokens gained are the rate for the time since the last refill, and the
--- refill sets the last refill to now (the products are written in one order, so omega sees them as one atom)
+-- refill keeps the invariant: the tokens and the budget gained are the rates for the time since the last refill
 theorem good_refill (k : Clk) (h : Good k) : Good (refill k) := by
-  obtain ⟨h1, h2, h3⟩ := h
+  obtain ⟨h1, h2, h3, h4⟩ := h
   unfold Good refill
   simp only
   have hdt : ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int)
       = (k.cps : Int) * (k.now : Int) - (k.cps : Int) * (k.refilled : Int) := by
     rw [Int.sub_mul, Int.mul_comm (k.now : Int), Int.mul_comm (k.refilled : Int)]
+  have hdb : ((k.now : Int) - (k.refilled : Int)) * (k.bps : Int)
+      = (k.bps : Int) * (k.now : Int) - (k.bps : Int) * (k.refilled : Int) := by
+    rw [Int.sub_mul, Int.mul_comm (k.now : Int), Int.mul_comm (k.refilled : Int)]
   have hnn : 0 ≤ ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int) := by
+    apply Int.mul_nonneg
+    · omega
+    · exact Int.natCast_nonneg _
+  have hnb : 0 ≤ ((k.now : Int) - (k.refilled : Int)) * (k.bps : Int) := by
     apply Int.mul_nonneg
     · omega
     · exact Int.natCast_nonneg _
   have hmin : min (2000 * (k.cps : Int)) (k.tokens + ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int))
       ≤ k.tokens + ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int) := Int.min_le_right _ _
-  have hcn : (k.cps : Int) * (k.now : Int) = (k.now : Int) * (k.cps : Int) := Int.mul_comm _ _
-  refine ⟨?_, ?_, ?_⟩
+  have hminb : min (1000 * (k.bps : Int)) (k.bud + ((k.now : Int) - (k.refilled : Int)) * (k.bps : Int))
+      ≤ k.bud + ((k.now : Int) - (k.refilled : Int)) * (k.bps : Int) := Int.min_le_right _ _
+  refine ⟨?_, ?_, ?_, ?_⟩
   · apply Int.le_min.mpr
     refine ⟨?_, ?_⟩
     · have : (0 : Int) ≤ (k.cps : Int) := Int.natCast_nonneg _
@@ -1439,23 +1610,76 @@ theorem good_refill (k : Clk) (h : Good k) : Good (refill k) := by
     · omega
   · exact Nat.le_refl _
   · omega
+  · omega
 
 theorem good_tick (k : Clk) (h : Good k) (ms : Nat) : Good (refill { k with now := k.now + ms }) := by
   apply good_refill
   unfold Good at h ⊢
-  obtain ⟨h1, h2, h3⟩ := h
+  obtain ⟨h1, h2, h3, h4⟩ := h
   simp only
   omega
 
--- the rate bound: the connects accepted so far, against the rate and the time (refilled never passes now)
-theorem rate_bound (k : Clk) (h : Good k) :
-    1000 * (k.acc : Int) ≤ 2000 * (k.cps : Int) + (k.cps : Int) * (k.now : Int) := by
-  obtain ⟨h1, h2, h3⟩ := h
-  have hc : (k.cps : Int) * (k.refilled : Int) ≤ (k.cps : Int) * (k.now : Int) := by
-    apply Int.mul_le_mul_of_nonneg_left
-    · omega
-    · exact Int.natCast_nonneg _
+-- a write or a read: the budget less the bytes, and the bytes used more: the sum is unchanged
+theorem good_flushOne (k : Clk) (s : Relay.St) (id : Nat) (h : Good k) :
+    Good (flushOne k s id).1 := by
+  unfold flushOne
+  cases hsl : (s.slot id).conn with
+  | none => exact h
+  | some c =>
+    dsimp only
+    by_cases hopen : c.isOpen = true
+    · rw [if_pos hopen]
+      by_cases hm : (flushSim (k.chunks id) 4294967295 k.bud).1 > 0
+      · rw [if_pos hm]
+        unfold Good at h ⊢
+        obtain ⟨h1, h2, h3, h4⟩ := h
+        have hb := flushSim_budget (k.chunks id) 4294967295 k.bud
+        simp only
+        omega
+      · rw [if_neg hm]
+        exact h
+    · rw [if_neg hopen]
+      exact h
+
+theorem good_flushIds (k : Clk) (s : Relay.St) (ids : List Nat) (h : Good k) :
+    Good (flushIds k s ids).1 := by
+  induction ids generalizing k s with
+  | nil => exact h
+  | cons id ids ih =>
+    unfold flushIds
+    dsimp only
+    apply ih
+    exact good_flushOne k s id h
+
+theorem good_tickK (k : Clk) (s : Relay.St) (ms : Nat) (h : Good k) :
+    Good (tickK k s ms).1 := by
+  unfold tickK
+  by_cases hc : s.closed.isSome = true
+  · rw [if_pos hc]
+    exact h
+  · rw [if_neg hc]
+    exact good_flushIds _ _ _ (good_tick k h ms)
+
+-- a change of the chunks only keeps the invariant (it reads the numbers only)
+theorem good_chunks (k : Clk) (c : Nat → List Nat) (h : Good k) : Good { k with chunks := c } := by
+  unfold Good at h ⊢
+  exact h
+
+-- a change of the budget and of the bytes used keeps the invariant when the budget's loss is the bytes gained
+theorem good_upd (k : Clk) (b' : Int) (u' : Nat) (c : Nat → List Nat) (h : Good k)
+    (hsum : b' + 1000 * (u' : Int) = k.bud + 1000 * (k.used : Int)) :
+    Good { k with bud := b', used := u', chunks := c } := by
+  unfold Good at h ⊢
+  obtain ⟨h1, h2, h3, h4⟩ := h
+  refine ⟨h1, h2, h3, ?_⟩
+  show b' + 1000 * (u' : Int) ≤ 1000 * (k.bps : Int) + (k.bps : Int) * (k.refilled : Int)
   omega
+
+theorem good_clearGone_eq (k : Clk) (s : Relay.St) (id : Nat) (h : Good k) : Good (clearGone k s id) := by
+  unfold clearGone
+  split
+  · exact good_chunks k _ h
+  · exact h
 
 theorem good_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (h : Good k) :
     Good (stepK cap k s e).1 := by
@@ -1466,26 +1690,55 @@ theorem good_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (h : Good
   · rw [if_neg hc]
     cases e with
     | connect id =>
-      simp only
+      dsimp only
       split
       · exact h
       · have hg := good_refill k h
         split
         · exact hg
-        · obtain ⟨g1, g2, g3⟩ := hg
-          unfold Good
+        · unfold Good at hg ⊢
+          obtain ⟨g1, g2, g3, g4⟩ := hg
           simp only
-          refine ⟨?_, ?_, ?_⟩
+          refine ⟨?_, ?_, ?_, ?_⟩
           · omega
           · exact g2
           · push_cast
             omega
-    | deny id => exact h
-    | send id n => exact h
-    | discard id => exact h
-    | read id k' => exact h
-    | close id => exact h
-    | sock id g kk => exact h
+          · exact g4
+    | send id n =>
+      dsimp only
+      have hb := flushSim_budget ((k.chunks id) ++ [n]) 4294967295 k.bud
+      split
+      · exact good_clearGone_eq _ _ _ (good_upd k _ _ _ h (by omega))
+      · exact good_clearGone_eq _ _ _ h
+    | discard id =>
+      dsimp only
+      exact good_clearGone_eq _ _ _ (good_chunks k _ h)
+    | read id k' =>
+      exact good_clearGone_eq _ _ _ h
+    | close id =>
+      exact good_clearGone_eq _ _ _ h
+    | deny id =>
+      exact good_clearGone_eq _ _ _ h
+    | sock id _g kk =>
+      cases kk with
+      | open_ => exact good_clearGone_eq _ _ _ h
+      | eof => exact good_clearGone_eq _ _ _ h
+      | peerclose => exact good_clearGone_eq _ _ _ h
+      | error x => exact good_clearGone_eq _ _ _ h
+      | drain a =>
+        dsimp only
+        have hb := flushSim_budget (k.chunks id) a k.bud
+        split
+        · split
+          · exact good_clearGone_eq _ _ _ (good_upd k _ _ _ h (by omega))
+          · exact good_clearGone_eq _ _ _ h
+        · exact good_clearGone_eq _ _ _ h
+      | data n =>
+        dsimp only
+        split
+        · exact good_clearGone_eq _ _ _ (good_upd k _ _ _ h (by omega))
+        · exact good_clearGone_eq _ _ _ h
 
 -- an item of a trace: an event of the relay, or a tick of the timer (ms later)
 inductive Item where
@@ -1511,23 +1764,31 @@ theorem good_runK (cap : Nat) (items : List Item) : ∀ (k : Clk) (s : Relay.St)
     intro k s h
     cases it with
     | ev e => exact ih _ _ (good_stepK cap k s e h)
-    | tick ms =>
-      have hT : Good (tickK k s ms).1 := by
-        unfold tickK
-        by_cases hc : s.closed.isSome = true
-        · rw [if_pos hc]
-          exact h
-        · rw [if_neg hc]
-          exact good_tick k h ms
-      exact ih _ _ hT
+    | tick ms => exact ih _ _ (good_tickK k s ms h)
 
--- THE RATE BOUND: from the start, for any trace of events and ticks, the connects accepted are at most the
--- burst of two seconds' worth plus the rate for the time that has passed.
-theorem rate_run (cap cps : Nat) (items : List Item) :
-    1000 * ((runK cap (init cps) Relay.init items).1.acc : Int)
-      ≤ 2000 * ((runK cap (init cps) Relay.init items).1.cps : Int)
-        + ((runK cap (init cps) Relay.init items).1.cps : Int) * ((runK cap (init cps) Relay.init items).1.now : Int) :=
-  rate_bound _ (good_runK cap items (init cps) Relay.init (good_init cps))
+-- THE RATE BOUND: from the start, for any trace of events and ticks, the connects accepted are at most the burst
+-- of two seconds' worth plus the rate for the time that has passed.
+theorem rate_run (cap cps bps : Nat) (items : List Item) :
+    1000 * ((runK cap (init cps bps) Relay.init items).1.acc : Int)
+      ≤ 2000 * ((runK cap (init cps bps) Relay.init items).1.cps : Int)
+        + ((runK cap (init cps bps) Relay.init items).1.cps : Int) * ((runK cap (init cps bps) Relay.init items).1.refilled : Int) := by
+  have h := good_runK cap items (init cps bps) Relay.init (good_init cps bps)
+  unfold Good at h
+  omega
+
+-- THE BYTE BOUND: from the start, for any trace, the bytes written and read are at most the budget's burst plus
+-- the byte rate for the time that has passed, less what the budget is in debt (the budget may go below zero by the
+-- last write: a write starts only while the budget is positive).
+theorem byte_run (cap cps bps : Nat) (items : List Item) :
+    1000 * ((runK cap (init cps bps) Relay.init items).1.used : Int)
+      ≤ 1000 * ((runK cap (init cps bps) Relay.init items).1.bps : Int)
+        + ((runK cap (init cps bps) Relay.init items).1.bps : Int) * ((runK cap (init cps bps) Relay.init items).1.refilled : Int)
+        - (runK cap (init cps bps) Relay.init items).1.bud := by
+  have h := good_runK cap items (init cps bps) Relay.init (good_init cps bps)
+  generalize (runK cap (init cps bps) Relay.init items).1 = k at h ⊢
+  unfold Good at h
+  obtain ⟨_, _, _, h4⟩ := h
+  omega
 
 end Clock
 
@@ -1596,8 +1857,8 @@ partial def readLines (h : IO.FS.Stream) (acc : Array String) : IO (Array String
   if line.isEmpty then return acc
   readLines h (acc.push line.trimAscii.toString)
 
-def emitTrace (cap cps : Nat) (items : Array Clock.Item) : IO Unit := do
-  let (_, _, outs) := Clock.runK cap (Clock.init cps) init items.toList
+def emitTrace (cap cps bps : Nat) (items : Array Clock.Item) : IO Unit := do
+  let (_, _, outs) := Clock.runK cap (Clock.init cps bps) init items.toList
   for o in outs do
     IO.println (showOut o)
   IO.println "end"
@@ -1608,15 +1869,17 @@ def traceMode : IO UInt32 := do
   let lines ← readLines (← IO.getStdin) #[]
   let mut cap := DEFAULT_CAP
   let mut cps := 100000
+  let mut bps := 1000000000
   let mut items : Array Clock.Item := #[]
   let mut started := false
   let mut bad := false
   for l in lines do
     if bad || l.isEmpty then continue
     if l == "trace" then
-      if started then emitTrace cap cps items
+      if started then emitTrace cap cps bps items
       cap := DEFAULT_CAP
       cps := 100000
+      bps := 1000000000
       items := #[]
       started := true
     else
@@ -1630,6 +1893,10 @@ def traceMode : IO UInt32 := do
         match n.toNat? with
         | some k => cps := k
         | none => bad := true
+      | ["budget", n] =>
+        match n.toNat? with
+        | some k => bps := k
+        | none => bad := true
       | ["tick", n] =>
         match n.toNat? with
         | some k => items := items.push (Clock.Item.tick k)
@@ -1641,7 +1908,7 @@ def traceMode : IO UInt32 := do
   if bad then
     IO.println "BAD"
     return 1
-  if started then emitTrace cap cps items
+  if started then emitTrace cap cps bps items
   return 0
 
 def parsePage (ws : List String) : Option Page.In :=

@@ -68,6 +68,7 @@ type Op =
 interface Trace {
   cap: number | null;
   cps: number; // connects per second: a low rate makes the connect tokens run out
+  bps: number; // bytes per second: a low budget makes the writes and reads wait for the clock
   ops: Op[];
   stale: number; // socket events of a connection the page has closed, or of an id it has reused
 }
@@ -86,6 +87,10 @@ function genTrace(seed: number): Trace {
   // a low rate (two connects a second) makes the connect tokens run out; the clock steps are then multiples of
   // half a second, which keeps the relay's arithmetic exact
   const cps = r() < 0.5 ? 2 : 100000;
+  // a low byte budget (two kilobytes a second) makes the writes wait for the clock
+  const bps = r() < 0.5 ? 2000 : 1000000000;
+  // in a low-budget trace the sends are larger and the socket takes less at a time, so queues wait behind the budget
+  const small = bps === 2000;
   const ops: Op[] = [];
   const alive = new Map<number, number>(); // id -> the generation the page believes is in use
   const opened = new Map<number, boolean>(); // generation -> the socket has opened
@@ -113,7 +118,7 @@ function genTrace(seed: number): Trace {
       continue;
     }
     const x = r();
-    if (x < 0.05 && cps !== 2) {
+    if (x < (small ? 0.02 : 0.05) && cps !== 2) {
       const ms = 500 * (1 + int(3));
       ops.push({ kind: "tick", line: `tick ${ms}`, ms });
       continue;
@@ -142,7 +147,7 @@ function genTrace(seed: number): Trace {
       const id2 = 1 + int(3);
       const g = alive.get(id2);
       if (g !== undefined && opened.get(g)) {
-        const n = 1 + int(1500);
+        const n = r() < 0.08 ? 0 : 1 + int(small ? 3000 : 1500); // an empty SEND is ignored (PROTOCOL.md)
         ops.push({ kind: "page", line: `send ${id2} ${n}`, frame: encodeFrame(OP.SEND, id2, new Uint8Array(n).fill(7)) });
       } else if (r() < 0.2) {
         // a violation: a SEND before OK, or to an id that is not in use
@@ -159,7 +164,7 @@ function genTrace(seed: number): Trace {
     } else if (x < 0.5) {
       if (openGens.length > 0) {
         const g = openGens[int(openGens.length)];
-        const a = int(2000);
+        const a = int(small ? 800 : 2000);
         if (isStale(g)) stale++;
         ops.push({ kind: "sock", line: `sock ${genId.get(g)} ${g} drain ${a}`, id: genId.get(g)!, gen: g, ev: "drain", arg: a });
       }
@@ -198,7 +203,7 @@ function genTrace(seed: number): Trace {
       ops.push({ kind: "page", line: `close ${id}`, frame: encodeFrame(OP.CLOSE, id) });
     }
   }
-  return { cap, cps, ops, stale };
+  return { cap, cps, bps, ops, stale };
 }
 
 // ---- the model ----
@@ -209,6 +214,7 @@ function modelInput(traces: Trace[]): string {
   for (const t of traces) {
     out.push("trace");
     out.push(`rate ${t.cps}`);
+    out.push(`budget ${t.bps}`);
     if (t.cap !== null) out.push(`cap ${t.cap}`);
     for (const op of t.ops) {
       out.push(op.line);
@@ -340,7 +346,7 @@ async function relayOutputs(t: Trace): Promise<string[]> {
   let clockNow = 0;
   const relay = testRelay(
     [{ host: ALLOWED, ports: [PORT] }],
-    { ...cfg, connectsPerSecond: t.cps },
+    { ...cfg, connectsPerSecond: t.cps, bytesPerSecond: t.bps },
     {},
     { log: () => {}, maxCount: t.cap ?? undefined, connect, ticker: false, now: () => clockNow },
   );
@@ -464,7 +470,7 @@ const ALPHABET: Op[] = [
 function allTraces(maxLen: number): Trace[] {
   const out: Trace[] = [];
   const walk = (prefix: Op[]) => {
-    out.push({ cap: null, cps: 100000, ops: prefix, stale: 0 });
+    out.push({ cap: null, cps: 100000, bps: 1000000000, ops: prefix, stale: 0 });
     if (prefix.length === maxLen) return;
     for (const letter of ALPHABET) walk([...prefix, letter]);
   };
