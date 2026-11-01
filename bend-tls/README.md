@@ -132,8 +132,8 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client (the JS interpreter
-ran the same matrix before the revocation changes; its result is in the commit history). A valid run goes through the whole handshake:
+That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client. The JS interpreter's run of the matrix was
+done before the revocation changes and is not recorded here; it has not been rerun. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
