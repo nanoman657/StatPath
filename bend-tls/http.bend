@@ -178,7 +178,7 @@ def http.r64(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   IO.pure(Socket & List<&2, U32>, (s, acc))
 
 
-def http.r63.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r63.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -187,16 +187,23 @@ def http.r63.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r64(s, List.append(&2, U32, acc, chunk))
 
-def http.r63.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r63.at(r, s, acc)
+def http.r63.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r63.res(r, s, acc)
+
+def http.r63.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r63.at(p, s, acc)
 
 def http.r63(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r63.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r63.got(m, acc)
 
-def http.r62.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r62.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -205,16 +212,23 @@ def http.r62.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r63(s, List.append(&2, U32, acc, chunk))
 
-def http.r62.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r62.at(r, s, acc)
+def http.r62.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r62.res(r, s, acc)
+
+def http.r62.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r62.at(p, s, acc)
 
 def http.r62(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r62.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r62.got(m, acc)
 
-def http.r61.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r61.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -223,16 +237,23 @@ def http.r61.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r62(s, List.append(&2, U32, acc, chunk))
 
-def http.r61.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r61.at(r, s, acc)
+def http.r61.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r61.res(r, s, acc)
+
+def http.r61.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r61.at(p, s, acc)
 
 def http.r61(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r61.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r61.got(m, acc)
 
-def http.r60.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r60.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -241,16 +262,23 @@ def http.r60.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r61(s, List.append(&2, U32, acc, chunk))
 
-def http.r60.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r60.at(r, s, acc)
+def http.r60.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r60.res(r, s, acc)
+
+def http.r60.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r60.at(p, s, acc)
 
 def http.r60(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r60.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r60.got(m, acc)
 
-def http.r59.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r59.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -259,16 +287,23 @@ def http.r59.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r60(s, List.append(&2, U32, acc, chunk))
 
-def http.r59.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r59.at(r, s, acc)
+def http.r59.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r59.res(r, s, acc)
+
+def http.r59.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r59.at(p, s, acc)
 
 def http.r59(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r59.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r59.got(m, acc)
 
-def http.r58.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r58.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -277,16 +312,23 @@ def http.r58.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r59(s, List.append(&2, U32, acc, chunk))
 
-def http.r58.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r58.at(r, s, acc)
+def http.r58.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r58.res(r, s, acc)
+
+def http.r58.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r58.at(p, s, acc)
 
 def http.r58(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r58.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r58.got(m, acc)
 
-def http.r57.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r57.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -295,16 +337,23 @@ def http.r57.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r58(s, List.append(&2, U32, acc, chunk))
 
-def http.r57.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r57.at(r, s, acc)
+def http.r57.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r57.res(r, s, acc)
+
+def http.r57.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r57.at(p, s, acc)
 
 def http.r57(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r57.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r57.got(m, acc)
 
-def http.r56.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r56.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -313,16 +362,23 @@ def http.r56.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r57(s, List.append(&2, U32, acc, chunk))
 
-def http.r56.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r56.at(r, s, acc)
+def http.r56.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r56.res(r, s, acc)
+
+def http.r56.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r56.at(p, s, acc)
 
 def http.r56(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r56.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r56.got(m, acc)
 
-def http.r55.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r55.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -331,16 +387,23 @@ def http.r55.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r56(s, List.append(&2, U32, acc, chunk))
 
-def http.r55.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r55.at(r, s, acc)
+def http.r55.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r55.res(r, s, acc)
+
+def http.r55.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r55.at(p, s, acc)
 
 def http.r55(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r55.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r55.got(m, acc)
 
-def http.r54.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r54.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -349,16 +412,23 @@ def http.r54.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r55(s, List.append(&2, U32, acc, chunk))
 
-def http.r54.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r54.at(r, s, acc)
+def http.r54.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r54.res(r, s, acc)
+
+def http.r54.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r54.at(p, s, acc)
 
 def http.r54(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r54.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r54.got(m, acc)
 
-def http.r53.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r53.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -367,16 +437,23 @@ def http.r53.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r54(s, List.append(&2, U32, acc, chunk))
 
-def http.r53.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r53.at(r, s, acc)
+def http.r53.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r53.res(r, s, acc)
+
+def http.r53.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r53.at(p, s, acc)
 
 def http.r53(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r53.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r53.got(m, acc)
 
-def http.r52.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r52.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -385,16 +462,23 @@ def http.r52.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r53(s, List.append(&2, U32, acc, chunk))
 
-def http.r52.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r52.at(r, s, acc)
+def http.r52.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r52.res(r, s, acc)
+
+def http.r52.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r52.at(p, s, acc)
 
 def http.r52(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r52.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r52.got(m, acc)
 
-def http.r51.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r51.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -403,16 +487,23 @@ def http.r51.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r52(s, List.append(&2, U32, acc, chunk))
 
-def http.r51.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r51.at(r, s, acc)
+def http.r51.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r51.res(r, s, acc)
+
+def http.r51.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r51.at(p, s, acc)
 
 def http.r51(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r51.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r51.got(m, acc)
 
-def http.r50.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r50.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -421,16 +512,23 @@ def http.r50.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r51(s, List.append(&2, U32, acc, chunk))
 
-def http.r50.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r50.at(r, s, acc)
+def http.r50.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r50.res(r, s, acc)
+
+def http.r50.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r50.at(p, s, acc)
 
 def http.r50(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r50.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r50.got(m, acc)
 
-def http.r49.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r49.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -439,16 +537,23 @@ def http.r49.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r50(s, List.append(&2, U32, acc, chunk))
 
-def http.r49.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r49.at(r, s, acc)
+def http.r49.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r49.res(r, s, acc)
+
+def http.r49.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r49.at(p, s, acc)
 
 def http.r49(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r49.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r49.got(m, acc)
 
-def http.r48.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r48.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -457,16 +562,23 @@ def http.r48.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r49(s, List.append(&2, U32, acc, chunk))
 
-def http.r48.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r48.at(r, s, acc)
+def http.r48.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r48.res(r, s, acc)
+
+def http.r48.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r48.at(p, s, acc)
 
 def http.r48(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r48.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r48.got(m, acc)
 
-def http.r47.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r47.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -475,16 +587,23 @@ def http.r47.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r48(s, List.append(&2, U32, acc, chunk))
 
-def http.r47.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r47.at(r, s, acc)
+def http.r47.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r47.res(r, s, acc)
+
+def http.r47.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r47.at(p, s, acc)
 
 def http.r47(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r47.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r47.got(m, acc)
 
-def http.r46.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r46.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -493,16 +612,23 @@ def http.r46.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r47(s, List.append(&2, U32, acc, chunk))
 
-def http.r46.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r46.at(r, s, acc)
+def http.r46.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r46.res(r, s, acc)
+
+def http.r46.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r46.at(p, s, acc)
 
 def http.r46(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r46.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r46.got(m, acc)
 
-def http.r45.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r45.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -511,16 +637,23 @@ def http.r45.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r46(s, List.append(&2, U32, acc, chunk))
 
-def http.r45.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r45.at(r, s, acc)
+def http.r45.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r45.res(r, s, acc)
+
+def http.r45.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r45.at(p, s, acc)
 
 def http.r45(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r45.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r45.got(m, acc)
 
-def http.r44.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r44.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -529,16 +662,23 @@ def http.r44.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r45(s, List.append(&2, U32, acc, chunk))
 
-def http.r44.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r44.at(r, s, acc)
+def http.r44.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r44.res(r, s, acc)
+
+def http.r44.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r44.at(p, s, acc)
 
 def http.r44(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r44.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r44.got(m, acc)
 
-def http.r43.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r43.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -547,16 +687,23 @@ def http.r43.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r44(s, List.append(&2, U32, acc, chunk))
 
-def http.r43.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r43.at(r, s, acc)
+def http.r43.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r43.res(r, s, acc)
+
+def http.r43.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r43.at(p, s, acc)
 
 def http.r43(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r43.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r43.got(m, acc)
 
-def http.r42.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r42.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -565,16 +712,23 @@ def http.r42.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r43(s, List.append(&2, U32, acc, chunk))
 
-def http.r42.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r42.at(r, s, acc)
+def http.r42.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r42.res(r, s, acc)
+
+def http.r42.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r42.at(p, s, acc)
 
 def http.r42(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r42.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r42.got(m, acc)
 
-def http.r41.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r41.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -583,16 +737,23 @@ def http.r41.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r42(s, List.append(&2, U32, acc, chunk))
 
-def http.r41.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r41.at(r, s, acc)
+def http.r41.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r41.res(r, s, acc)
+
+def http.r41.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r41.at(p, s, acc)
 
 def http.r41(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r41.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r41.got(m, acc)
 
-def http.r40.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r40.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -601,16 +762,23 @@ def http.r40.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r41(s, List.append(&2, U32, acc, chunk))
 
-def http.r40.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r40.at(r, s, acc)
+def http.r40.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r40.res(r, s, acc)
+
+def http.r40.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r40.at(p, s, acc)
 
 def http.r40(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r40.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r40.got(m, acc)
 
-def http.r39.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r39.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -619,16 +787,23 @@ def http.r39.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r40(s, List.append(&2, U32, acc, chunk))
 
-def http.r39.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r39.at(r, s, acc)
+def http.r39.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r39.res(r, s, acc)
+
+def http.r39.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r39.at(p, s, acc)
 
 def http.r39(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r39.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r39.got(m, acc)
 
-def http.r38.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r38.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -637,16 +812,23 @@ def http.r38.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r39(s, List.append(&2, U32, acc, chunk))
 
-def http.r38.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r38.at(r, s, acc)
+def http.r38.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r38.res(r, s, acc)
+
+def http.r38.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r38.at(p, s, acc)
 
 def http.r38(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r38.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r38.got(m, acc)
 
-def http.r37.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r37.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -655,16 +837,23 @@ def http.r37.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r38(s, List.append(&2, U32, acc, chunk))
 
-def http.r37.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r37.at(r, s, acc)
+def http.r37.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r37.res(r, s, acc)
+
+def http.r37.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r37.at(p, s, acc)
 
 def http.r37(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r37.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r37.got(m, acc)
 
-def http.r36.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r36.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -673,16 +862,23 @@ def http.r36.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r37(s, List.append(&2, U32, acc, chunk))
 
-def http.r36.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r36.at(r, s, acc)
+def http.r36.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r36.res(r, s, acc)
+
+def http.r36.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r36.at(p, s, acc)
 
 def http.r36(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r36.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r36.got(m, acc)
 
-def http.r35.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r35.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -691,16 +887,23 @@ def http.r35.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r36(s, List.append(&2, U32, acc, chunk))
 
-def http.r35.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r35.at(r, s, acc)
+def http.r35.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r35.res(r, s, acc)
+
+def http.r35.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r35.at(p, s, acc)
 
 def http.r35(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r35.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r35.got(m, acc)
 
-def http.r34.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r34.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -709,16 +912,23 @@ def http.r34.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r35(s, List.append(&2, U32, acc, chunk))
 
-def http.r34.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r34.at(r, s, acc)
+def http.r34.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r34.res(r, s, acc)
+
+def http.r34.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r34.at(p, s, acc)
 
 def http.r34(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r34.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r34.got(m, acc)
 
-def http.r33.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r33.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -727,16 +937,23 @@ def http.r33.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r34(s, List.append(&2, U32, acc, chunk))
 
-def http.r33.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r33.at(r, s, acc)
+def http.r33.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r33.res(r, s, acc)
+
+def http.r33.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r33.at(p, s, acc)
 
 def http.r33(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r33.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r33.got(m, acc)
 
-def http.r32.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r32.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -745,16 +962,23 @@ def http.r32.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r33(s, List.append(&2, U32, acc, chunk))
 
-def http.r32.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r32.at(r, s, acc)
+def http.r32.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r32.res(r, s, acc)
+
+def http.r32.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r32.at(p, s, acc)
 
 def http.r32(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r32.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r32.got(m, acc)
 
-def http.r31.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r31.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -763,16 +987,23 @@ def http.r31.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r32(s, List.append(&2, U32, acc, chunk))
 
-def http.r31.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r31.at(r, s, acc)
+def http.r31.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r31.res(r, s, acc)
+
+def http.r31.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r31.at(p, s, acc)
 
 def http.r31(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r31.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r31.got(m, acc)
 
-def http.r30.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r30.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -781,16 +1012,23 @@ def http.r30.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r31(s, List.append(&2, U32, acc, chunk))
 
-def http.r30.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r30.at(r, s, acc)
+def http.r30.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r30.res(r, s, acc)
+
+def http.r30.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r30.at(p, s, acc)
 
 def http.r30(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r30.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r30.got(m, acc)
 
-def http.r29.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r29.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -799,16 +1037,23 @@ def http.r29.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r30(s, List.append(&2, U32, acc, chunk))
 
-def http.r29.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r29.at(r, s, acc)
+def http.r29.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r29.res(r, s, acc)
+
+def http.r29.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r29.at(p, s, acc)
 
 def http.r29(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r29.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r29.got(m, acc)
 
-def http.r28.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r28.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -817,16 +1062,23 @@ def http.r28.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r29(s, List.append(&2, U32, acc, chunk))
 
-def http.r28.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r28.at(r, s, acc)
+def http.r28.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r28.res(r, s, acc)
+
+def http.r28.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r28.at(p, s, acc)
 
 def http.r28(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r28.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r28.got(m, acc)
 
-def http.r27.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r27.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -835,16 +1087,23 @@ def http.r27.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r28(s, List.append(&2, U32, acc, chunk))
 
-def http.r27.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r27.at(r, s, acc)
+def http.r27.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r27.res(r, s, acc)
+
+def http.r27.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r27.at(p, s, acc)
 
 def http.r27(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r27.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r27.got(m, acc)
 
-def http.r26.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r26.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -853,16 +1112,23 @@ def http.r26.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r27(s, List.append(&2, U32, acc, chunk))
 
-def http.r26.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r26.at(r, s, acc)
+def http.r26.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r26.res(r, s, acc)
+
+def http.r26.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r26.at(p, s, acc)
 
 def http.r26(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r26.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r26.got(m, acc)
 
-def http.r25.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r25.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -871,16 +1137,23 @@ def http.r25.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r26(s, List.append(&2, U32, acc, chunk))
 
-def http.r25.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r25.at(r, s, acc)
+def http.r25.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r25.res(r, s, acc)
+
+def http.r25.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r25.at(p, s, acc)
 
 def http.r25(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r25.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r25.got(m, acc)
 
-def http.r24.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r24.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -889,16 +1162,23 @@ def http.r24.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r25(s, List.append(&2, U32, acc, chunk))
 
-def http.r24.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r24.at(r, s, acc)
+def http.r24.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r24.res(r, s, acc)
+
+def http.r24.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r24.at(p, s, acc)
 
 def http.r24(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r24.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r24.got(m, acc)
 
-def http.r23.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r23.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -907,16 +1187,23 @@ def http.r23.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r24(s, List.append(&2, U32, acc, chunk))
 
-def http.r23.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r23.at(r, s, acc)
+def http.r23.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r23.res(r, s, acc)
+
+def http.r23.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r23.at(p, s, acc)
 
 def http.r23(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r23.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r23.got(m, acc)
 
-def http.r22.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r22.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -925,16 +1212,23 @@ def http.r22.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r23(s, List.append(&2, U32, acc, chunk))
 
-def http.r22.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r22.at(r, s, acc)
+def http.r22.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r22.res(r, s, acc)
+
+def http.r22.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r22.at(p, s, acc)
 
 def http.r22(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r22.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r22.got(m, acc)
 
-def http.r21.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r21.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -943,16 +1237,23 @@ def http.r21.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r22(s, List.append(&2, U32, acc, chunk))
 
-def http.r21.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r21.at(r, s, acc)
+def http.r21.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r21.res(r, s, acc)
+
+def http.r21.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r21.at(p, s, acc)
 
 def http.r21(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r21.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r21.got(m, acc)
 
-def http.r20.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r20.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -961,16 +1262,23 @@ def http.r20.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r21(s, List.append(&2, U32, acc, chunk))
 
-def http.r20.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r20.at(r, s, acc)
+def http.r20.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r20.res(r, s, acc)
+
+def http.r20.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r20.at(p, s, acc)
 
 def http.r20(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r20.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r20.got(m, acc)
 
-def http.r19.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r19.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -979,16 +1287,23 @@ def http.r19.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r20(s, List.append(&2, U32, acc, chunk))
 
-def http.r19.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r19.at(r, s, acc)
+def http.r19.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r19.res(r, s, acc)
+
+def http.r19.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r19.at(p, s, acc)
 
 def http.r19(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r19.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r19.got(m, acc)
 
-def http.r18.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r18.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -997,16 +1312,23 @@ def http.r18.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r19(s, List.append(&2, U32, acc, chunk))
 
-def http.r18.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r18.at(r, s, acc)
+def http.r18.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r18.res(r, s, acc)
+
+def http.r18.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r18.at(p, s, acc)
 
 def http.r18(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r18.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r18.got(m, acc)
 
-def http.r17.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r17.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1015,16 +1337,23 @@ def http.r17.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r18(s, List.append(&2, U32, acc, chunk))
 
-def http.r17.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r17.at(r, s, acc)
+def http.r17.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r17.res(r, s, acc)
+
+def http.r17.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r17.at(p, s, acc)
 
 def http.r17(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r17.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r17.got(m, acc)
 
-def http.r16.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r16.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1033,16 +1362,23 @@ def http.r16.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r17(s, List.append(&2, U32, acc, chunk))
 
-def http.r16.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r16.at(r, s, acc)
+def http.r16.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r16.res(r, s, acc)
+
+def http.r16.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r16.at(p, s, acc)
 
 def http.r16(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r16.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r16.got(m, acc)
 
-def http.r15.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r15.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1051,16 +1387,23 @@ def http.r15.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r16(s, List.append(&2, U32, acc, chunk))
 
-def http.r15.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r15.at(r, s, acc)
+def http.r15.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r15.res(r, s, acc)
+
+def http.r15.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r15.at(p, s, acc)
 
 def http.r15(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r15.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r15.got(m, acc)
 
-def http.r14.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r14.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1069,16 +1412,23 @@ def http.r14.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r15(s, List.append(&2, U32, acc, chunk))
 
-def http.r14.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r14.at(r, s, acc)
+def http.r14.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r14.res(r, s, acc)
+
+def http.r14.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r14.at(p, s, acc)
 
 def http.r14(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r14.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r14.got(m, acc)
 
-def http.r13.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r13.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1087,16 +1437,23 @@ def http.r13.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r14(s, List.append(&2, U32, acc, chunk))
 
-def http.r13.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r13.at(r, s, acc)
+def http.r13.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r13.res(r, s, acc)
+
+def http.r13.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r13.at(p, s, acc)
 
 def http.r13(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r13.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r13.got(m, acc)
 
-def http.r12.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r12.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1105,16 +1462,23 @@ def http.r12.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r13(s, List.append(&2, U32, acc, chunk))
 
-def http.r12.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r12.at(r, s, acc)
+def http.r12.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r12.res(r, s, acc)
+
+def http.r12.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r12.at(p, s, acc)
 
 def http.r12(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r12.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r12.got(m, acc)
 
-def http.r11.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r11.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1123,16 +1487,23 @@ def http.r11.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r12(s, List.append(&2, U32, acc, chunk))
 
-def http.r11.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r11.at(r, s, acc)
+def http.r11.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r11.res(r, s, acc)
+
+def http.r11.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r11.at(p, s, acc)
 
 def http.r11(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r11.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r11.got(m, acc)
 
-def http.r10.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r10.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1141,16 +1512,23 @@ def http.r10.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: So
     case Done{Some{+chunk}}:
       http.r11(s, List.append(&2, U32, acc, chunk))
 
-def http.r10.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r10.at(r, s, acc)
+def http.r10.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r10.res(r, s, acc)
+
+def http.r10.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r10.at(p, s, acc)
 
 def http.r10(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r10.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r10.got(m, acc)
 
-def http.r9.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r9.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1159,16 +1537,23 @@ def http.r9.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r10(s, List.append(&2, U32, acc, chunk))
 
-def http.r9.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r9.at(r, s, acc)
+def http.r9.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r9.res(r, s, acc)
+
+def http.r9.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r9.at(p, s, acc)
 
 def http.r9(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r9.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r9.got(m, acc)
 
-def http.r8.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r8.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1177,16 +1562,23 @@ def http.r8.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r9(s, List.append(&2, U32, acc, chunk))
 
-def http.r8.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r8.at(r, s, acc)
+def http.r8.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r8.res(r, s, acc)
+
+def http.r8.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r8.at(p, s, acc)
 
 def http.r8(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r8.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r8.got(m, acc)
 
-def http.r7.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r7.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1195,16 +1587,23 @@ def http.r7.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r8(s, List.append(&2, U32, acc, chunk))
 
-def http.r7.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r7.at(r, s, acc)
+def http.r7.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r7.res(r, s, acc)
+
+def http.r7.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r7.at(p, s, acc)
 
 def http.r7(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r7.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r7.got(m, acc)
 
-def http.r6.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r6.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1213,16 +1612,23 @@ def http.r6.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r7(s, List.append(&2, U32, acc, chunk))
 
-def http.r6.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r6.at(r, s, acc)
+def http.r6.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r6.res(r, s, acc)
+
+def http.r6.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r6.at(p, s, acc)
 
 def http.r6(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r6.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r6.got(m, acc)
 
-def http.r5.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r5.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1231,16 +1637,23 @@ def http.r5.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r6(s, List.append(&2, U32, acc, chunk))
 
-def http.r5.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r5.at(r, s, acc)
+def http.r5.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r5.res(r, s, acc)
+
+def http.r5.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r5.at(p, s, acc)
 
 def http.r5(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r5.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r5.got(m, acc)
 
-def http.r4.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r4.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1249,16 +1662,23 @@ def http.r4.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r5(s, List.append(&2, U32, acc, chunk))
 
-def http.r4.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r4.at(r, s, acc)
+def http.r4.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r4.res(r, s, acc)
+
+def http.r4.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r4.at(p, s, acc)
 
 def http.r4(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r4.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r4.got(m, acc)
 
-def http.r3.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r3.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1267,16 +1687,23 @@ def http.r3.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r4(s, List.append(&2, U32, acc, chunk))
 
-def http.r3.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r3.at(r, s, acc)
+def http.r3.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r3.res(r, s, acc)
+
+def http.r3.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r3.at(p, s, acc)
 
 def http.r3(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r3.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r3.got(m, acc)
 
-def http.r2.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r2.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1285,16 +1712,23 @@ def http.r2.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r3(s, List.append(&2, U32, acc, chunk))
 
-def http.r2.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r2.at(r, s, acc)
+def http.r2.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r2.res(r, s, acc)
+
+def http.r2.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r2.at(p, s, acc)
 
 def http.r2(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r2.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r2.got(m, acc)
 
-def http.r1.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r1.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1303,16 +1737,23 @@ def http.r1.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r2(s, List.append(&2, U32, acc, chunk))
 
-def http.r1.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r1.at(r, s, acc)
+def http.r1.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r1.res(r, s, acc)
+
+def http.r1.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r1.at(p, s, acc)
 
 def http.r1(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r1.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r1.got(m, acc)
 
-def http.r0.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r0.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{(code, message)}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
@@ -1321,14 +1762,21 @@ def http.r0.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Soc
     case Done{Some{+chunk}}:
       http.r1(s, List.append(&2, U32, acc, chunk))
 
-def http.r0.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r0.at(r, s, acc)
+def http.r0.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{u}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{r}:
+      http.r0.res(r, s, acc)
+
+def http.r0.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r0.at(p, s, acc)
 
 def http.r0(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r0.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, 5000)
+    http.r0.got(m, acc)
 
 def http.call.go(s: Socket, +req: List<&2, U32>) -> IO(Maybe<&2, List<&2, U32>>):
   do IO<Maybe<&2, List<&2, U32>>>:

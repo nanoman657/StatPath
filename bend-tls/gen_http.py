@@ -2,21 +2,32 @@
 # distribution point, an OCSP answer from the responder). A URL is http://a.b.c.d[:port][/path]:
 # the kit has no DNS, so the host must be an IP address. The reply is read until the server
 # closes, in a chain of K stages (one 16 KB read each), so no IO function is recursive (Bend's
-# checker takes no cycles through definitions, as in gen_client.py).
+# checker takes no cycles through definitions, as in gen_client.py). Each read waits at most
+# RECV_MS milliseconds (TCP.try_recv_bytes): a server that goes silent ends the reply there, and
+# a reply that is cut short fails its check (a truncated CRL or OCSP reply does not verify), so
+# the chain is refused.
 #   python3 -I gen_http.py
 K = 64
+RECV_MS = 5000
 
 def read_stage(k):
     return f"""def http.r{k}(s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   do IO<Socket & List<&2, U32>>:
-    r : Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>> <- TCP.recv_bytes(s, 16384)
-    http.r{k}.got(r, acc)
+    m : Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit> <- TCP.try_recv_bytes(s, 16384, {RECV_MS})
+    http.r{k}.got(m, acc)
 
-def http.r{k}.got(m: Socket & Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
-  (s, r) = m
-  http.r{k}.at(r, s, acc)
+def http.r{k}.got(m: Socket & Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  (s, p) = m
+  http.r{k}.at(p, s, acc)
 
-def http.r{k}.at(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+def http.r{k}.at(p: Poll<&1, &1, Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, Unit>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
+  match p:
+    case Wait{{u}}:
+      IO.pure(Socket & List<&2, U32>, (s, acc))
+    case Ready{{r}}:
+      http.r{k}.res(r, s, acc)
+
+def http.r{k}.res(r: Result<&1, &1, U32 & String, Maybe<&1, List<&2, U32>>>, s: Socket, +acc: List<&2, U32>) -> IO(Socket & List<&2, U32>):
   match r:
     case Fail{{(code, message)}}:
       IO.pure(Socket & List<&2, U32>, (s, acc))
