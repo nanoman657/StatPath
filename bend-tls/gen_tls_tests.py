@@ -16,7 +16,7 @@ def client_hello(rnd, pub, pubp, host):
     exts = b""
     exts += b"\x00\x2b" + vec(2, bytes([3, 4]) if False else bytes([2, 3, 4]))          # supported_versions
     exts += b"\x00\x0a" + vec(2, vec(2, b"\x00\x1d\x00\x17"))                       # supported_groups: x25519, secp256r1
-    exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01\x04\x03\x08\x07"))                       # signature_algorithms
+    exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01\x04\x03\x08\x07\x05\x03"))                       # signature_algorithms
     exts += b"\x00\x33" + vec(2, vec(2, b"\x00\x1d" + vec(2, pub) + b"\x00\x17" + vec(2, pubp)))  # key_share
     exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                        # server_name
     body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))

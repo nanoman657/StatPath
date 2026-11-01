@@ -12,7 +12,14 @@ out = []
 def kc(name, msg):
     out.append(f'  kcase("{name}", S.hex_of(SH.sha512.hash({lst(msg)})), "{hashlib.sha512(msg).hexdigest()}") <>')
 
+def kc384(name, msg):
+    out.append(f'  kcase("{name}", S.hex_of(SH.sha384.hash({lst(msg)})), "{hashlib.sha384(msg).hexdigest()}") <>')
+
 kc("empty", b"")
+kc384("sha384-empty", b"")
+kc384("sha384-abc", b"abc")
+for n in [111, 112, 127, 128, 129, 300]:
+    kc384(f"sha384-len-{n}", bytes(rng.randrange(256) for _ in range(n)))
 kc("abc", b"abc")
 kc("nist-896", b"abcdefghbcdefghicdefghijdefghijkefghijklfghijklmghijklmnhijklmnoijklmnopjklmnopqklmnopqrlmnopqrsmnopqrstnopqrstu")
 for n in [1, 55, 111, 112, 113, 127, 128, 129, 200, 255, 256, 300]:

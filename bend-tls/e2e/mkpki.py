@@ -4,9 +4,10 @@
 #   leaf.pem   the server's certificate for example.test (SAN), PEM
 #   leaf.key   its private key, PEM
 # The kind picks the key types: rsa (all RSA), ec (all P-256, so every signature
-# is ECDSA), mixed (RSA root, P-256 intermediate, RSA leaf), or ed (all Ed25519). The leaf is valid
+# is ECDSA), mixed (RSA root, P-256 intermediate, RSA leaf), ed (all Ed25519), or ec384
+# (all P-384, signed with SHA-384). The leaf is valid
 # from a day ago for a year; the root and intermediate for longer.
-#   python3 -I e2e/mkpki.py <dir> [rsa|ec|mixed|ed]
+#   python3 -I e2e/mkpki.py <dir> [rsa|ec|mixed|ed|ec384]
 import datetime as dt
 import os
 import sys
@@ -28,7 +29,12 @@ def make(subject, key, issuer_name, issuer_key, nb, na, ca=False, san=None):
     if san:
         b = b.add_extension(cx.SubjectAlternativeName([cx.DNSName(s) for s in san]), critical=False)
     # Ed25519 signs without a hash function; the others sign with SHA-256
-    algorithm = None if isinstance(issuer_key, ed25519.Ed25519PrivateKey) else hashes.SHA256()
+    if isinstance(issuer_key, ed25519.Ed25519PrivateKey):
+        algorithm = None
+    elif isinstance(issuer_key, ec.EllipticCurvePrivateKey) and issuer_key.curve.name == "secp384r1":
+        algorithm = hashes.SHA384()
+    else:
+        algorithm = hashes.SHA256()
     return b.sign(issuer_key, algorithm)
 
 KINDS = {
@@ -36,13 +42,15 @@ KINDS = {
     "ec": ("ec", "ec", "ec"),
     "mixed": ("rsa", "ec", "rsa"),
     "ed": ("ed", "ed", "ed"),
+    "ec384": ("ec384", "ec384", "ec384"),
 }
 out = sys.argv[1] if len(sys.argv) > 1 else "."
 kind = sys.argv[2] if len(sys.argv) > 2 else "rsa"
 root_t, inter_t, leaf_t = KINDS[kind]
 new_key = {"rsa": lambda: rsa.generate_private_key(65537, 2048),
            "ec": lambda: ec.generate_private_key(ec.SECP256R1()),
-           "ed": lambda: ed25519.Ed25519PrivateKey.generate()}
+           "ed": lambda: ed25519.Ed25519PrivateKey.generate(),
+           "ec384": lambda: ec.generate_private_key(ec.SECP384R1())}
 now = dt.datetime.fromtimestamp(time.time(), dt.timezone.utc)
 day = dt.timedelta(days=1)
 root_key, inter_key, leaf_key = (new_key[root_t](), new_key[inter_t](), new_key[leaf_t]())

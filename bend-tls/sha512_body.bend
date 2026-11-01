@@ -238,6 +238,13 @@ def sha512.hash(+msg: List<&2, U32>) -> List<&2, U32>:
 def sha512.hash.at(+padded: List<&2, U32>) -> List<&2, U32>:
   sha512.out(sha512.blocks(Nat.div(List.length(&2, U32, padded), 128n), sha512.IV(), padded))
 
+# SHA-384: the same compression from its own initial value, the first 48 bytes out
+def sha384.hash(+msg: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, sha384.hash.at(sha512.pad(msg)), 48n)
+
+def sha384.hash.at(+padded: List<&2, U32>) -> List<&2, U32>:
+  sha512.out(sha512.blocks(Nat.div(List.length(&2, U32, padded), 128n), sha512.IV384(), padded))
+
 def sha512.out(+st: ST) -> List<&2, U32>:
   match st:
     case ST{+a, +b, +c, +d, +e, +f, +g, +h}:

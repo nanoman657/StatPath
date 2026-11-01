@@ -13,6 +13,8 @@ import ./tls.bend as T
 import ./x509.bend as C
 import ./rsa.bend as R
 import ./p256.bend as P
+import ./p384.bend as Q
+import ./sha512.bend as SH
 import ./ed25519.bend as ED
 
 # the server's protected records: the AEAD open of a record body under the key
@@ -116,7 +118,25 @@ def hs.cv_ok.ed(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&
     case False{}:
       False{}
 
-def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, ed: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+def hs.cv_ok.ec384.at(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      Q.p384.verify(C.x509.ec_qx384(C.x509.spki(leaf)), C.x509.ec_qy384(C.x509.spki(leaf)),
+        SH.sha384.hash(hs.cv_content(th)), C.x509.ecdsa.r384(sig), C.x509.ecdsa.s384(sig))
+    case False{}:
+      False{}
+
+def hs.cv_ok.ec384(+leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  hs.cv_ok.ec384.at(C.x509.is_p384(C.x509.spki(leaf)), leaf, th, sig)
+
+def hs.cv_ok.ed384(ecdsa384: Bool, ed: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match ecdsa384:
+    case True{}:
+      hs.cv_ok.ec384(leaf, th, sig)
+    case False{}:
+      hs.cv_ok.ed(ed, leaf, th, sig)
+
+def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, ecdsa384: Bool, ed: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
   match pss:
     case True{}:
       hs.cv_ok.pss(C.x509.is_rsa(C.x509.spki(leaf)), leaf, th, sig)
@@ -125,11 +145,11 @@ def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, ed: Bool, +leaf: List<&2, U32>, +th: L
         case True{}:
           hs.cv_ok.ec(leaf, th, sig)
         case False{}:
-          hs.cv_ok.ed(ed, leaf, th, sig)
+          hs.cv_ok.ed384(ecdsa384, ed, leaf, th, sig)
 
 # ed25519 (2055): the signature is over the content itself, with the leaf's Ed25519 key
 def hs.cv_ok.at(+alg: Nat, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
-  hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), Nat.is_eq(alg, 2055n), leaf, th, sig)
+  hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), Nat.is_eq(alg, 1283n), Nat.is_eq(alg, 2055n), leaf, th, sig)
 
 # rsa_pss_rsae_sha256 (2052) for an RSA leaf, ecdsa_secp256r1_sha256 (1027) for a P-256 leaf
 def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
@@ -137,3 +157,5 @@ def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> 
 
 def hs.fin_ok(+s_hs: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
   R.rsa.eqb(K.finished_mac(s_hs, th), body)
+
+# ecdsa_secp384r1_sha384 (1283): the leaf's P-384 key verifies SHA-384 of the content

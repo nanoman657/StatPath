@@ -30,17 +30,19 @@ from math import isqrt
 
 P80 = primes(80)
 IV = [isqrt(p << 128) & ((1 << 64) - 1) for p in P80[:8]]
+# SHA-384's initial value: the square roots of the ninth to sixteenth primes
+IV384 = [isqrt(p << 128) & ((1 << 64) - 1) for p in P80[8:16]]
 K = [icbrt(p << 192) & ((1 << 64) - 1) for p in P80]
 
 # the check: a plain SHA-512 over these constants agrees with hashlib
-def ref_sha512(msg):
+def ref_sha512(msg, start=None):
     def rotr(x, n):
         return ((x >> n) | (x << (64 - n))) & ((1 << 64) - 1)
     M = (1 << 64) - 1
     m = msg + b"\x80"
     m += b"\x00" * ((112 - len(m) % 128) % 128)
     m += (8 * len(msg)).to_bytes(16, "big")
-    h = list(IV)
+    h = list(IV if start is None else start)
     for off in range(0, len(m), 128):
         w = [int.from_bytes(m[off + 8 * i: off + 8 * i + 8], "big") for i in range(16)]
         for t in range(16, 80):
@@ -61,6 +63,7 @@ def ref_sha512(msg):
 
 for msg in [b"", b"abc", b"x" * 111, b"y" * 112, b"z" * 200]:
     assert ref_sha512(msg) == hashlib.sha512(msg).digest(), msg[:8]
+    assert ref_sha512(msg, IV384)[:48] == hashlib.sha384(msg).digest(), msg[:8]
 
 def pair(x):
     return f"W{{{(x >> 32) & 0xffffffff}, {x & 0xffffffff}}}"
@@ -69,7 +72,8 @@ def lit(xs):
     return "[" + ", ".join(pair(x) for x in xs) + "]"
 
 consts = (f"def sha512.K() -> List<&2, W>:\n  {lit(K)}\n\n"
-          f"def sha512.IV() -> ST:\n  ST{{" + ", ".join(pair(x) for x in IV) + "}\n")
+          f"def sha512.IV() -> ST:\n  ST{{" + ", ".join(pair(x) for x in IV) + "}\n\n"
+          f"def sha512.IV384() -> ST:\n  ST{{" + ", ".join(pair(x) for x in IV384) + "}\n")
 body = open("sha512_body.bend").read()
 assert body.count("#@@CONST@@") == 1
 open("sha512.bend", "w").write(body.replace("#@@CONST@@", consts))

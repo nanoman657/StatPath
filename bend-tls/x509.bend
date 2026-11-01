@@ -10,6 +10,8 @@ import ./asn1.bend as A
 import ./rsa.bend as R
 import ./sha256.bend as S
 import ./p256.bend as P
+import ./p384.bend as Q
+import ./sha512.bend as SH
 import ./ed25519.bend as ED
 
 # Accessors
@@ -471,8 +473,19 @@ def x509.is_rsa(+spki: List<&2, U32>) -> Bool:
   R.rsa.eqb(x509.spki_alg_oid(spki), x509.oid_rsa_enc())
 
 # a P-256 key: id-ecPublicKey on prime256v1
+# ecdsa-with-SHA384 (1.2.840.10045.4.3.3), and secp384r1 (1.3.132.0.34)
+def x509.oid_ecdsa384() -> List<&2, U32>:
+  42 <> 134 <> 72 <> 206 <> 61 <> 4 <> 3 <> 3 <> Nil{}
+
+def x509.oid_p384() -> List<&2, U32>:
+  43 <> 129 <> 4 <> 0 <> 34 <> Nil{}
+
 def x509.oid_ec_pub() -> List<&2, U32>:
   42 <> 134 <> 72 <> 206 <> 61 <> 2 <> 1 <> Nil{}
+
+def x509.is_p384(+spki: List<&2, U32>) -> Bool:
+  Bool.and(R.rsa.eqb(x509.spki_alg_oid(spki), x509.oid_ec_pub()),
+    R.rsa.eqb(x509.spki_curve(spki), x509.oid_p384()))
 
 def x509.oid_p256() -> List<&2, U32>:
   42 <> 134 <> 72 <> 206 <> 61 <> 3 <> 1 <> 7 <> Nil{}
@@ -491,6 +504,13 @@ def x509.ec_qx(+spki: List<&2, U32>) -> List<&2, U32>:
 
 def x509.ec_qy(+spki: List<&2, U32>) -> List<&2, U32>:
   List.drop(&2, U32, x509.ec_xy(spki), 32n)
+
+# the same for a P-384 key: X and Y are 48 bytes each
+def x509.ec_qx384(+spki: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 2n), 48n)
+
+def x509.ec_qy384(+spki: List<&2, U32>) -> List<&2, U32>:
+  List.drop(&2, U32, List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 2n), 48n)
 
 # Ed25519 (id-Ed25519 1.3.101.112): the key is 32 bytes after the BIT STRING's unused-bits byte
 def x509.oid_ed25519() -> List<&2, U32>:
@@ -528,7 +548,24 @@ def x509.ecdsa.r(+sig: List<&2, U32>) -> List<&2, U32>:
 def x509.ecdsa.s(+sig: List<&2, U32>) -> List<&2, U32>:
   x509.pad32(x509.strip0(x509.valof(A.asn1.nth(1n, x509.valof(A.asn1.read(sig))))))
 
+def x509.padn.at(ok: Bool, +xs: List<&2, U32>, +n: Nat) -> List<&2, U32>:
+  match ok:
+    case True{}:
+      List.append(&2, U32, x509.zeros(Nat.sub(n, List.length(&2, U32, xs))), xs)
+    case False{}:
+      x509.zeros(n)
+
 # big-endian bytes left-padded with zeros to 32
+def x509.padn(+xs: List<&2, U32>, +n: Nat) -> List<&2, U32>:
+  x509.padn.at(Nat.is_le(List.length(&2, U32, xs), n), xs, n)
+
+def x509.ecdsa.r384(+sig: List<&2, U32>) -> List<&2, U32>:
+  x509.padn(x509.strip0(x509.valof(A.asn1.nth(0n, x509.valof(A.asn1.read(sig))))), 48n)
+
+def x509.ecdsa.s384(+sig: List<&2, U32>) -> List<&2, U32>:
+  x509.padn(x509.strip0(x509.valof(A.asn1.nth(1n, x509.valof(A.asn1.read(sig))))), 48n)
+
+# big-endian bytes left-padded with zeros to n (longer than n: zero, which fails)
 def x509.rk(+spki: List<&2, U32>) -> List<&2, U32>:
   x509.valof(A.asn1.read(List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 1n)))
 
@@ -610,17 +647,47 @@ def x509.sigok.alg(pkcs1: Bool, pss: Bool, +cert: List<&2, U32>, +issuer: List<&
   x509.sigok.key(pkcs1, pss, cert, issuer,
     Bool.and(x509.is_rsa(x509.spki(issuer)), R.rsa.eqb(x509.ekey(x509.spki(issuer)), x509.e65537())))
 
-def x509.sigok.ec.at(ok: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
-  match ok:
+
+def x509.sigok.ec.p256.at(sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  match sha384:
     case True{}:
+      False{}
+    case False{}:
       P.p256.verify(x509.ec_qx(x509.spki(issuer)), x509.ec_qy(x509.spki(issuer)),
         S.sha256_bytes(x509.tbs_raw(cert)), x509.ecdsa.r(x509.signature(cert)), x509.ecdsa.s(x509.signature(cert)))
+
+def x509.sigok.ec.digest(sha384: Bool, +tbs: List<&2, U32>) -> List<&2, U32>:
+  match sha384:
+    case True{}:
+      SH.sha384.hash(tbs)
+    case False{}:
+      S.sha256_bytes(tbs)
+
+def x509.sigok.ec.p384.at(sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  Q.p384.verify(x509.ec_qx384(x509.spki(issuer)), x509.ec_qy384(x509.spki(issuer)),
+    x509.sigok.ec.digest(sha384, x509.tbs_raw(cert)), x509.ecdsa.r384(x509.signature(cert)),
+    x509.ecdsa.s384(x509.signature(cert)))
+
+def x509.sigok.ec.p384.gate(p384: Bool, sha384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  match p384:
+    case True{}:
+      x509.sigok.ec.p384.at(sha384, cert, issuer)
     case False{}:
       False{}
 
-def x509.sigok.ec(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
-  x509.sigok.ec.at(x509.is_ec(x509.spki(issuer)), cert, issuer)
+def x509.sigok.ec.by(sha384: Bool, p256: Bool, p384: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  match p256:
+    case True{}:
+      x509.sigok.ec.p256.at(sha384, cert, issuer)
+    case False{}:
+      x509.sigok.ec.p384.gate(p384, sha384, cert, issuer)
 
+def x509.sigok.ec(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  x509.sigok.ec.by(R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ecdsa384()),
+    x509.is_ec(x509.spki(issuer)), x509.is_p384(x509.spki(issuer)), cert, issuer)
+
+# a P-256 key takes SHA-256 only; a P-384 key takes SHA-384, or SHA-256 (the digest is then
+# padded to 48 bytes, which keeps its value)
 def x509.sigok.ed.at(ok: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
   match ok:
     case True{}:
@@ -647,7 +714,8 @@ def x509.sigok.by(ecdsa: Bool, pkcs1: Bool, pss: Bool, ed: Bool, +cert: List<&2,
       x509.sigok.ed.by(ed, pkcs1, pss, cert, issuer)
 
 def x509.sigok(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
-  x509.sigok.by(R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ecdsa()),
+  x509.sigok.by(Bool.or(R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ecdsa()),
+    R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ecdsa384())),
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pkcs1()),
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pss()),
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ed25519()), cert, issuer)

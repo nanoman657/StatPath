@@ -23,6 +23,9 @@ def sha512.K() -> List<&2, W>:
 def sha512.IV() -> ST:
   ST{W{1779033703, 4089235720}, W{3144134277, 2227873595}, W{1013904242, 4271175723}, W{2773480762, 1595750129}, W{1359893119, 2917565137}, W{2600822924, 725511199}, W{528734635, 4215389547}, W{1541459225, 327033209}}
 
+def sha512.IV384() -> ST:
+  ST{W{3418070365, 3238371032}, W{1654270250, 914150663}, W{2438529370, 812702999}, W{355462360, 4144912697}, W{1731405415, 4290775857}, W{2394180231, 1750603025}, W{3675008525, 1694076839}, W{1203062813, 3204075428}}
+
 
 # Word operations
 # ---------------
@@ -247,5 +250,12 @@ def sha512.out(+st: ST) -> List<&2, U32>:
 def sha512.hash.at(+padded: List<&2, U32>) -> List<&2, U32>:
   sha512.out(sha512.blocks(Nat.div(List.length(&2, U32, padded), 128n), sha512.IV(), padded))
 
+# SHA-384: the same compression from its own initial value, the first 48 bytes out
 def sha512.hash(+msg: List<&2, U32>) -> List<&2, U32>:
   sha512.hash.at(sha512.pad(msg))
+
+def sha384.hash.at(+padded: List<&2, U32>) -> List<&2, U32>:
+  sha512.out(sha512.blocks(Nat.div(List.length(&2, U32, padded), 128n), sha512.IV384(), padded))
+
+def sha384.hash(+msg: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, sha384.hash.at(sha512.pad(msg)), 48n)
