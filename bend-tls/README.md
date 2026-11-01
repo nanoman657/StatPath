@@ -23,9 +23,9 @@ certificate key types. See "Limits" for what is missing.
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
 | DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and P-384, and Ed25519 keys |
 | TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 3 suites, 3 groups (HelloRetryRequest for secp384r1), 4 certificate key types |
-| HTTP/1.1 GET and POST over TCP to IP-literal `http://` URLs (for CRL and OCSP) | `http.bend` | done, tested |
+| HTTP/1.1 GET and POST over TCP to `http://` and `https://` URLs (for CRL and OCSP), with host names given by the operator | `http.bend`, `tlsget.bend` | done, tested |
 | OCSP request and response check (RFC 6960), CRL distribution points and OCSP URIs | `revoc.bend` | done, tested |
-| Revocation fetching in the client (`fetch` argument) | `client.bend`, `crl.bend` | done on the native client: all 9 cases of `e2e/fetch.py` pass; the JS run is not done |
+| Revocation fetching in the client (`fetch` argument) | `client.bend`, `crl.bend`, `tlsget.bend` | done on the native client: all 15 cases of `e2e/fetch.py` pass (http, https, host names); the JS run is not done |
 | Proofs of the branch-free selects (`LAWS.bend`, `PROOF.bend`) | `LAWS.bend`, `PROOF.bend` | 4 laws, `ALL PROOFS CHECK`; Lean recheck not run |
 
 The client's three suites are `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
@@ -72,7 +72,7 @@ The client:
 
 ```
 bend client.bend -o client
-./client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der]
+./client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der] [fetch [name=address ...]]
 ./client example.test 127.0.0.1 4433 root.der 1793495136
 ./client example.test 127.0.0.1 4433 root.der 1793495136 crl.der
 ```
@@ -83,8 +83,9 @@ It sends `GET /` over TLS 1.3 and prints the response, HTTP headers included.
 `<anchor.der>` is the trust anchor, a DER certificate. `<unix-time>` is the
 current time in seconds, because Bend has no wall clock: `IO.now()` is
 monotonic. `[crl.der]` is an optional certificate revocation list (DER), or `""` for none,
-and a further `fetch` makes the client fetch the revocation status of the chain over HTTP;
-see "Revocation" below. Exit status is 0 on success and 1 on any error, with a message.
+and a further `fetch` makes the client fetch the revocation status of the chain over HTTP or
+HTTPS. A host name in a revocation URL is given its address by the operator as `name=address`
+arguments after `fetch` (`TCP.connect` takes only addresses); see "Revocation" below. Exit status is 0 on success and 1 on any error, with a message.
 
 ### Generated files
 
@@ -147,7 +148,7 @@ more than the client reads, is refused with `the stream was cut`.
 `e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs: 15 of 15
 pass on the native client. `e2e/rejects.py` runs the rejection paths against a scripted fake
 server (see "What is checked"): 7 of 7 pass on the native client. `e2e/fetch.py` runs the
-revocation fetch against `openssl ocsp` and a CRL HTTP server, nine cases, with `native` for
+revocation fetch against `openssl ocsp`, a CRL HTTP server and a TLS server, fifteen cases, with `native` for
 the native binary and the default for the interpreter.
 
 ## What is checked
@@ -203,12 +204,14 @@ the native binary and the default for the interpreter.
   unknown; for another certificate; tampered; outside the time window; a delegated
   responder with the OCSP-signing purpose (accepted) and without it (refused); and a
   try-later status. `e2e/fetch.py` runs the native client with the `fetch` argument
-  against `openssl ocsp`, with a status index, and a CRL HTTP server. Its nine cases:
-  a good, a revoked and an unknown OCSP status; an unreachable responder; a clean CRL;
-  a CRL that lists the leaf; an unreachable CRL server; a certificate with no revocation
-  URI (accepted); and a revoked certificate without the argument (accepted). All nine
-  pass on the native client.
-- **HTTP:** `http_tests.bend` (8 cases) for URL and reply parsing, and
+  against `openssl ocsp`, with a status index, a CRL HTTP server and a TLS server (a CRL by GET
+  and an OCSP responder by POST, for `crl.example.test`). Its fifteen cases: a good, a revoked
+  and an unknown OCSP status; an unreachable responder; a clean CRL; a CRL that lists the leaf;
+  an unreachable CRL server; a certificate with no revocation URI (accepted); a revoked
+  certificate without the argument (accepted); the same OCSP and CRL checks over `https://`
+  (good and revoked, the name given by the operator); and a host name with and without its
+  entry. All fifteen pass on the native client.
+- **HTTP:** `http_tests.bend` (16 cases) for URL, target and reply parsing, and
   `e2e/http_test.py` (3 cases) against a local server.
 - **X.509:** certificates made with `cryptography`, with RSA, ECDSA P-256 and
   Ed25519 keys, each in its own chain: validity dates, hostnames (SAN, with wildcard
@@ -313,7 +316,8 @@ select laws below.
 The laws are about values. They show that the selects pick the right operand, which is what
 the branch-free code relies on. They say nothing about timing, which Bend's logic does not
 describe. The Lean recheck (`--verdict`) was not run: it needs a Lean toolchain, which this
-environment does not have.
+environment does not have. Installing it (elan, from GitHub) was refused by the sandbox, because
+it runs a downloaded installer; it needs your permission.
 
 The timing measurement below is indicative only. Do not rely on the client to keep a key
 secret from a timing observer until the compiled client is measured more thoroughly.
@@ -368,19 +372,21 @@ differences of a few percent. The JS interpreter is not measured.
   messages are read and ignored.
 - **Time and names come from the command line.** The Unix time and the server name
   are arguments, and the connection address is an IP address (no DNS).
-- **Fetching revocation status (`fetch`).** Only `http://` URLs with an IP address are
-  used. `TCP.connect` accepts no host names (`localhost` fails with "Invalid argument"), and
-  there is no TLS for HTTP, so an `https://` URL or a host name refuses the chain. For each
-  certificate the client takes its first OCSP responder URI, or else its first CRL
-  distribution point. A URL that cannot be fetched, or a reply that does not confirm the
-  certificate, refuses the handshake; a refused connection is no reply and does the same. A
-  certificate with no revocation URI is accepted, and so is the trust anchor (it is not
-  checked). A chain longer than 8 certificates is refused. The client sends no OCSP nonce,
-  and a reply's time window must hold at the given time, with no clock skew allowed. A
-  response is read up to 64 reads of 16 KB (about 1 MB); a longer body is cut and fails its
-  check. There is no read timeout: the installed Bend (2.0.39) has no timed receive for
-  bytes (its `TCP.try_recv` returns text), so a responder that accepts the connection and
-  never answers stops the client. Responses are not cached.
+- **Fetching revocation status (`fetch`).** For each certificate the client takes its first OCSP
+  responder URI, or else its first CRL distribution point. Both `http://` and `https://` work.
+  A host name is resolved only through the operator's `name=address` arguments: `TCP.connect`
+  takes only addresses, so an unlisted name refuses the chain. An `https://` URL is a TLS
+  connection to its address, with the server name checked against the certificate and the
+  chain required to end at the trust anchor the client was given. That is a decision: a
+  responder whose certificate chains to another root is refused. A URL that cannot be fetched,
+  or a reply that does not confirm the certificate, refuses the handshake; a refused connection
+  is no reply and does the same. A certificate with no revocation URI is accepted, and so is the
+  trust anchor (it is not checked). A chain longer than 8 certificates is refused. The client
+  sends no OCSP nonce, and a reply's time window must hold at the given time, with no clock skew
+  allowed. A response is read up to 64 reads of 16 KB (about 1 MB); a longer body is cut and
+  fails its check. Each read waits at most 5 seconds (`TCP.try_recv_bytes`), so a silent
+  responder ends its reply there, which then fails its check. Bend does not time the connect
+  itself; the operating system's connect timeout applies. Responses are not cached.
 - **Constant time: source, and a first measurement.** See the review above. The timing
   measurement covers only the native X25519 and P-256 scalar multiplications, and is
   indicative (see "Timing measurement" in the review).
@@ -393,12 +399,11 @@ differences of a few percent. The JS interpreter is not measured.
 
 1. **Timing.** A finer measurement: the whole client rather than the scalar multiplications,
    a clock inside the program, and more runs. The zero test on the ECDH scalar is also open.
-2. **Host names and `https://` revocation URLs.** `TCP.connect` accepts only IP addresses,
-   and there is no TLS for HTTP. Two options are an operator-supplied address for each host,
-   like a hosts file, and TLS for the fetch, which needs a trust anchor for the revocation
-   endpoints. Both are design decisions and neither is done.
-3. **Read timeout.** The installed Bend (2.0.39) has no timed receive for bytes. A newer Bend
-   release describes a `TCP.poll` with a deadline; using it would mean changing the toolchain.
+2. **Lean recheck.** `bend PROOF.bend --verdict` has not been run. Installing the Lean
+   toolchain was refused by the sandbox (it runs a downloaded installer); it needs your
+   permission.
+3. **Connect timeout and DNS.** `TCP.connect` has no timeout of Bend's own, and no name
+   resolution: the operator's `name=address` arguments stand in for DNS.
 4. **Fetching, more.** More than the first revocation URI of a certificate, delta CRLs, OCSP
    nonces, caching, and a response size limit below about 1 MB. The fetch matrix has run on
    the native client only; the JS interpreter has not run it.
