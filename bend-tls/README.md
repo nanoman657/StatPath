@@ -53,7 +53,7 @@ bend x509_tests.bend            -> x509: 17 passed, 0 failed
 bend x509_ext_tests.bend        -> x509-ext: 23 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
-bend fuzz_tls_tests.bend        -> fuzz-tls: 234 passed, 0 failed
+bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
 bend tls_tests.bend             -> tls: 22 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
@@ -185,6 +185,10 @@ more than the client reads, is refused with `the stream was cut`.
   message parsers: a mutated sealed record must not open (both suites), mutated
   ServerHello and Certificate bodies must parse to bounded values, and random keys
   and signatures of the right lengths must verify False for P-256, P-384 and Ed25519.
+  Boundary values (the field prime, the prime plus one, all ones) are tried in each
+  position of the P-256 and P-384 verifiers, and Ed25519 keys with a non-canonical y
+  are refused. A valid Ed25519 signature with S replaced by S + L is refused (RFC 8032
+  requires S < L), while the unmodified signature verifies.
 - The harness fails when a value is wrong. This was checked by planting a wrong
   expected value.
 
