@@ -129,8 +129,14 @@ type Session = {
   authTimer: ReturnType<typeof setTimeout> | null;
 };
 
-export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } = {}) {
+// Test hooks, with the defaults the relay runs with: connect (how a TCP connection is opened) and
+// ticker (whether the 50 ms timer runs: it refills the budgets and flushes the writes the socket held).
+export function startRelay(
+  cfg: Config,
+  opts: { log?: Log; maxCount?: number; connect?: (o: any) => Promise<unknown>; ticker?: boolean } = {},
+) {
   const log = opts.log ?? stdoutLog;
+  const connect = opts.connect ?? ((o: any) => Bun.connect(o));
   // the most a connection moves in one direction: MAX_COUNT in production, lower only in tests
   const cap = opts.maxCount ?? MAX_COUNT;
   if (!Number.isInteger(cap) || cap < 1 || cap > MAX_COUNT) throw new RangeError("maxCount out of range");
@@ -251,14 +257,15 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
   }
 
   // The connection failed: the page hears how much of its send was taken, then the failure.
-  // A connection gets at most one FAIL.
-  function fail(s: Session, id: number, errno: number, message: string) {
-    const c = s.conns.get(id);
-    if (!c || c.closed) return;
+  // A connection gets at most one FAIL. The connection is named by its object, not its id: an id may
+  // have been closed and reused since, and a late callback of the old socket must not act on the new
+  // connection that has it now.
+  function fail(s: Session, c: Conn, errno: number, message: string) {
+    if (c.closed || s.conns.get(c.id) !== c) return;
     if (c.open) sendWritten(s, c, false);
-    sendFrame(s, OP.FAIL, id, failBody(errno, message));
+    sendFrame(s, OP.FAIL, c.id, failBody(errno, message));
     end(c);
-    s.conns.delete(id);
+    s.conns.delete(c.id);
   }
 
   // The reads of a connection run only while the page has credit, the session has bytes to spare,
@@ -285,7 +292,7 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
       const n: number = c.tcp.write(head);
       if (n <= 0) break;
       if (n > head.length) {
-        fail(s, c.id, ERR.EIO, "the socket took more than it was given");
+        fail(s, c, ERR.EIO, "the socket took more than it was given");
         return;
       }
       moved += n;
@@ -313,7 +320,7 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
   // (this does not wait for the drain event alone, which Bun need not send). Addresses that have
   // not upgraded for a minute are forgotten.
   let lastForget = Date.now();
-  const ticker = setInterval(() => {
+  const ticker = opts.ticker === false ? null : setInterval(() => {
     const now = Date.now();
     for (const s of sessions) {
       refill(s, now);
@@ -388,7 +395,7 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
       s.known[id] = 1;
       log("connect", { host: host.slice(0, 255), port, name: s.name });
       const message = (err: unknown) => String((err as Error)?.message ?? err);
-      Bun.connect({
+      connect({
         hostname: host,
         port,
         socket: {
@@ -403,9 +410,9 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
             if (conn.closed) return;
             // the socket delivers only while the page has credit (its reads are paused otherwise), and
             // in chunks of at most CHUNK_MAX: the two assumptions of the model's bound
-            if (conn.rd > conn.gr) return fail(s, id, ERR.EIO, "data beyond the page's credit");
-            if (chunk.length > CHUNK_MAX) return fail(s, id, ERR.EIO, "a read past the chunk limit");
-            if (conn.rd + chunk.length > cap) return fail(s, id, ERR.EFBIG, "file too large");
+            if (conn.rd > conn.gr) return fail(s, conn, ERR.EIO, "data beyond the page's credit");
+            if (chunk.length > CHUNK_MAX) return fail(s, conn, ERR.EIO, "a read past the chunk limit");
+            if (conn.rd + chunk.length > cap) return fail(s, conn, ERR.EFBIG, "file too large");
             conn.rd = M.rl_read(conn.rd, chunk.length);
             for (let at = 0; at < chunk.length; at += MAX_BODY) {
               sendFrame(s, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
@@ -423,16 +430,16 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
           close() {
             conn.peerClosed = true;
             // bytes queued for a socket that is closed can never be written
-            if (!conn.closed && conn.queued > 0) fail(s, id, ERR.EPIPE, "Broken pipe");
+            if (!conn.closed && conn.queued > 0) fail(s, conn, ERR.EPIPE, "Broken pipe");
           },
           error(_tcp, err) {
-            fail(s, id, errnoOf(err), message(err));
+            fail(s, conn, errnoOf(err), message(err));
           },
           connectError(_tcp, err) {
-            fail(s, id, errnoOf(err), message(err));
+            fail(s, conn, errnoOf(err), message(err));
           },
         },
-      }).catch((err: unknown) => fail(s, id, errnoOf(err), message(err)));
+      }).catch((err: unknown) => fail(s, conn, errnoOf(err), message(err)));
       return;
     }
     const conn = s.conns.get(id);
@@ -444,9 +451,9 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
         return s.ws.close(1002, "SEND past the window");
       }
       if (conn.written + conn.queued + body.length > cap) {
-        return fail(s, id, ERR.EFBIG, "file too large");
+        return fail(s, conn, ERR.EFBIG, "file too large");
       }
-      if (conn.peerClosed) return fail(s, id, ERR.EPIPE, "Broken pipe");
+      if (conn.peerClosed) return fail(s, conn, ERR.EPIPE, "Broken pipe");
       conn.queue.push(body.slice());
       conn.queued = M.rl_queue(conn.queued, body.length);
       flush(s, conn);
@@ -484,7 +491,7 @@ export function startRelay(cfg: Config, opts: { log?: Log; maxCount?: number } =
     url: `${cfg.tls ? "wss" : "ws"}://${cfg.host.includes(":") ? `[${cfg.host}]` : cfg.host}:${server.port}`,
     // closes every WebSocket (1001, going away), then stops listening
     stop() {
-      clearInterval(ticker);
+      if (ticker) clearInterval(ticker);
       for (const s of [...sessions]) s.ws?.close(1001, "relay stopping");
       server.stop(true);
     },

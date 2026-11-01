@@ -45,7 +45,7 @@ export function testRelay(
   allow: Allow[],
   limits: Record<string, number> = {},
   extra: Record<string, unknown> = {},
-  opts: { log?: Log; maxCount?: number } = {},
+  opts: Parameters<typeof startRelay>[1] = {},
 ) {
   const server = startRelay(testConfig(allow, limits, extra), opts);
   return { url: server.url, port: server.port, stop: () => server.stop() };

@@ -38,13 +38,16 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `core/check/Transitions.lean` | The Lean model of the thirteen compiled transitions: the theorems about them, and an executable copy that `transitions.test.ts` runs | `lean --run` by `transitions.test.ts` (needs Lean 4.34.0) |
 | `core/check/transitions.test.ts` | The compiled JavaScript against the Lean model, 18,000 calls up to 2^53 (values and throws) | `bun test browser/core/check` (skipped without Lean) |
 | `core/check/bendtt.test.ts`, `build-bendtt-eval.sh`, `bendtt-eval.patch` | The compiled JavaScript against BendTT's own evaluator on the Bend source, 1,300 probes; the kernel with its `eval` mode is built by the script | `bun test browser/core/check` (skipped without the kernel or the bend CLI) |
+| `core/check/Relay.lean` | The relay's connection machine as a Lean model, with the theorems of "The protocol, checked" (no `sorry`), and the executable that the conformance test runs | `lean --run` by `relay_conformance.test.ts` (needs Lean 4.34.0) |
+| `core/check/relay_conformance.test.ts` | The relay against the model on 300 random traces: every frame the page receives, in order, must be the model's output (11,434 frames, 4,068 socket events of a closed or reused connection) | `bun test browser/core/check` (skipped without Lean) |
+| `test/lifecycle.test.ts` | The regression for the bug the model found: a connect that fails after its id was closed and reused must not fail the new connection | `bun test browser/test` |
 
 ## Run the tests
 
     cd bend-tls
     bun test browser/test                # the relay, the flow rules, the errno texts, the page programs
     bend browser/frame_proof.bend        # ALL PROOFS CHECK
-    bun test browser/core/check          # the compiled transitions against the Lean model and BendTT (see below)
+    bun test browser/core/check          # the compiled transitions and the relay, against Lean models (see below)
 
     bun browser/relay/token.ts alice                                # a token for a user
     bun browser/relay/relay.ts <config.json>                        # the relay (RELAY.md)
@@ -97,8 +100,10 @@ code (`R <= G` where the code checks `credit > 0`), so the proof covers the code
 - That the JavaScript computes these formulas. The correspondence above is by reading the code; the
   tests in `test/` check its behaviour, not the formulas.
 - The relay as a whole: the order of frames, DISCARD and CLOSE together, and the WebSocket. The laws
-  hold for each step; the claim that every interleaving of steps keeps them is not checked.
-- Progress: that a send completes or a read returns. The laws say nothing about liveness.
+  hold for each step; that every interleaving keeps them is checked on random traces against a model of
+  the relay's connection machine (see "The protocol, checked"), not proven for the JavaScript.
+- Progress: that a send completes or a read returns. The laws say nothing about liveness; the model's
+  liveness results are under stated fairness assumptions (see "The protocol, checked").
 - Timing: whether a `try_` call answers Ready or Wait before its deadline. The laws give the shape of
   each answer for the relay's count, not when it arrives.
 - The Lean recheck (`--verdict`) is run for every proof file (see "The Lean recheck" below); its result
@@ -222,8 +227,11 @@ Not proven:
   Two checks compare that output with independent models, without proving either (see "The compiler,
   checked").
 - The timing and liveness of anything: that a send completes, that a read returns, when a `try_` answers.
-- Bun's socket and WebSocket behaviour beyond the assumptions above, and the glue (the event handlers
-  that call the model), which is tested, not proven.
+- Bun's socket and WebSocket behaviour beyond the assumptions above. The relay's connection handlers are
+  checked against the Lean model on random traces, not proven (see "The protocol, checked"). The page's
+  client is not modelled yet, so its handlers are tested only.
+- Real time: the model has no clock and no budget. Its liveness results assume that a socket that is
+  offered bytes takes some, and that a connecting socket opens or fails.
 - The Lean recheck is done (see below), but it checks Bend's kernel's proofs, not the compiler.
 
 ## The Lean recheck
@@ -296,3 +304,49 @@ To run them:
 Not covered by these checks: the compiler's correctness in general, the agreement of Bend's Nat with Lean's
 Nat in the proofs, the JavaScript runtime that drives the transitions (`run_loop`, the trampolines), and the
 glue around them.
+
+## The protocol, checked
+
+The relay's connection machine is written as a Lean model, `core/check/Relay.lean`, with the connection
+generations that the relay needed to get right. A socket event carries the generation of the socket it
+came from, so a late event of a closed socket cannot touch the connection that reuses its id.
+
+**The bug the model found.** A socket's error callback failed the connection that held its id at that
+moment, not the connection that the callback belonged to. A CLOSE and a CONNECT on the same id, with a
+connect still failing, sent the new connection a FAIL. `test/lifecycle.test.ts` reproduces it, and the fix
+(`fail` takes the connection, and acts only while that connection holds the id) is in `relay/relay.ts`.
+
+**The theorems** (`lean Relay.lean` checks them, with no `sorry`):
+
+- `stale_noop`, `freed_sock_silent`: a socket event does nothing for an id with no connection, or for a
+  connection of another generation.
+- `sockStep_fail_frees`: a FAIL leaves the id free. `ok_only_from_open`: an OK comes only from the open of
+  a connection that is not open yet.
+- `freed_run`: once an id is free, a trace that does not connect or deny it sends no frame that names it.
+- `step_outs_id`: a step names only the id of its event in its frames (or closes the session).
+- `counters_bounded`: for every trace from the start, the bytes sent (written and queued) and the bytes read
+  stay within the count limit, the queue within the send window, and the read credit within the read
+  window: the credit is never more than the window past what was read, and what was read is never more
+  than a chunk past the credit.
+- `drain_empties`, `open_resolves`, `error_resolves` (liveness, under fairness): a connection with q bytes
+  queued is emptied by q drains that each take a byte; a connecting socket's open or failure resolves it.
+
+The model has no clock and no budget: the timing of the relay's timer, and the budget that limits the
+bytes a WebSocket moves, are outside it.
+
+**The conformance test** (`core/check/relay_conformance.test.ts`) runs the relay itself on 300 random traces.
+Its sockets are scripted, so the order of events is the trace's order, and a sentinel after each step shows
+that the relay is done with it. The frames the page receives must be the model's output on the same trace,
+line for line. The traces are plausible page behaviour with some it should not do (sends before OK, sends to
+an id not in use, socket events after the page has closed the connection or the id has been reused), and a
+small count limit in some traces. The test checks that every kind of frame occurs, and that 4,068 socket
+events of a closed or reused connection occur.
+
+Negative controls: with the lifecycle bug put back, the conformance test fails on trace 4 (a stale FAIL). With
+the read-side count check removed from `relay/relay.ts`, it fails on trace 18 (a DATA frame where the model has
+EFBIG). Both changes were made in a copy and then reverted.
+
+**Not checked by this:** the page's client (`tcp_relay_client.js`), which has the same kind of glue; that the
+relay's JavaScript matches the model for traces that the test does not generate (the test samples); the
+timer, budget and rate limits; Bun's socket and WebSocket behaviour, which the scripted sockets stand in
+for; and real-time liveness.
