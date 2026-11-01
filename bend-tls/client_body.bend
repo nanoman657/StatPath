@@ -57,10 +57,24 @@ def io.record.need(s: Socket, +b: List<&2, U32>) -> IO(Socket & List<&2, U32> & 
     r : Socket & List<&2, U32> <- io.fill(s, b, Nat.add(5n, T.tls.num(2n, List.drop(&2, U32, b, 3n))))
     io.record.done(r, Nat.add(5n, T.tls.num(2n, List.drop(&2, U32, b, 3n))))
 
-# the first n bytes of the buffer (the record) and the rest after them
+# the first n bytes of the buffer (the record) and the rest after them. A connection
+# that closes inside a record is an error; closing at a record boundary (an empty
+# buffer) is the end of the stream
 def io.record.done(r: Socket & List<&2, U32>, +n: Nat) -> IO(Socket & List<&2, U32> & List<&2, U32>):
   (s, b) = r
-  io.record.cut(s, b, n)
+  io.record.done.split(s, b, n)
+
+def io.record.done.split(s: Socket, +b: List<&2, U32>, +n: Nat) -> IO(Socket & List<&2, U32> & List<&2, U32>):
+  io.record.done.at(Bool.or(Nat.is_eq(List.length(&2, U32, b), 0n), Nat.is_le(n, List.length(&2, U32, b))), s, b, n)
+
+def io.record.done.at(ok: Bool, s: Socket, +b: List<&2, U32>, +n: Nat) -> IO(Socket & List<&2, U32> & List<&2, U32>):
+  match ok:
+    case True{}:
+      io.record.cut(s, b, n)
+    case False{}:
+      do IO<Socket & List<&2, U32> & List<&2, U32>>:
+        Socket.close(s)
+        IO.die(Socket & List<&2, U32> & List<&2, U32>, 1, "the connection closed inside a record")
 
 def io.record.cut(s: Socket, +b: List<&2, U32>, +n: Nat) -> IO(Socket & List<&2, U32> & List<&2, U32>):
   IO.pure(Socket & List<&2, U32> & List<&2, U32>, (s, (List.drop(&2, U32, b, n), List.take(&2, U32, b, n))))
@@ -93,18 +107,33 @@ def io.fail(s: Socket, msg: String) -> IO(Unit):
 # the server's record sequence number, and whether a record failed to open
 # ---------------------------------------------------------------------------
 
+# recs holds the bodies of the records read so far, newest first: adding one is O(1),
+# and the flat bytes (fl.acc) are built once when they are needed
 type Fl is Data:
-  Fl{buf: List<&2, U32>, acc: List<&2, U32>, seq: Nat, bad: Bool}
+  Fl{buf: List<&2, U32>, recs: List<&2, List<&2, U32>>, seq: Nat, bad: Bool}
 
 def fl.buf(+st: Fl) -> List<&2, U32>:
   match st:
     case Fl{+buf, +acc, +seq, +bad}:
       buf
 
-def fl.acc(+st: Fl) -> List<&2, U32>:
+# the record bodies, newest first
+def fl.recs(+st: Fl) -> List<&2, List<&2, U32>>:
   match st:
-    case Fl{+buf, +acc, +seq, +bad}:
-      acc
+    case Fl{+buf, +recs, +seq, +bad}:
+      recs
+
+# the bytes of all the records, oldest first
+def fl.acc(+st: Fl) -> List<&2, U32>:
+  fl.flat(List.reverse(&2, List<&2, U32>, fl.recs(st)))
+
+# the bodies in order, each appended to the rest (the recursion is over one body)
+def fl.flat(+rs: List<&2, List<&2, U32>>) -> List<&2, U32>:
+  match rs:
+    case Nil{}:
+      Nil{}
+    case x <> t:
+      List.append(&2, U32, x, fl.flat(t))
 
 def fl.seq(+st: Fl) -> Nat:
   match st:
@@ -127,7 +156,7 @@ def fl.next.at(hdr: U32, +st: Fl, +rest: List<&2, U32>, +rec: List<&2, U32>,
   +key: List<&2, U32>, +iv: List<&2, U32>, want: U32) -> Fl:
   match hdr:
     case 20:
-      Fl{rest, fl.acc(st), fl.seq(st), fl.bad(st)}
+      Fl{rest, fl.recs(st), fl.seq(st), fl.bad(st)}
     case _:
       fl.open(H.hs.open(key, iv, fl.seq(st), rec), st, rest, want)
 
@@ -136,7 +165,7 @@ def fl.open(opened: Maybe<&2, List<&2, U32>>, +st: Fl, +rest: List<&2, U32>, wan
     case Some{pt}:
       fl.inner(H.hs.unpad(pt), st, rest, want)
     case None{}:
-      Fl{rest, fl.acc(st), fl.seq(st), True{}}
+      Fl{rest, fl.recs(st), fl.seq(st), True{}}
 
 # an alert (content type 21) ends the stream: a peer's close_notify, or an error
 def fl.inner(+inn: H.Inner, +st: Fl, +rest: List<&2, U32>, want: U32) -> Fl:
@@ -147,16 +176,16 @@ def fl.inner(+inn: H.Inner, +st: Fl, +rest: List<&2, U32>, want: U32) -> Fl:
 def fl.add(alert: Bool, take: Bool, +body: List<&2, U32>, +st: Fl, +rest: List<&2, U32>) -> Fl:
   match alert:
     case True{}:
-      Fl{rest, fl.acc(st), Nat.add(fl.seq(st), 1n), True{}}
+      Fl{rest, fl.recs(st), Nat.add(fl.seq(st), 1n), True{}}
     case False{}:
       fl.take(take, body, st, rest)
 
 def fl.take(take: Bool, +body: List<&2, U32>, +st: Fl, +rest: List<&2, U32>) -> Fl:
   match take:
     case True{}:
-      Fl{rest, List.append(&2, U32, fl.acc(st), body), Nat.add(fl.seq(st), 1n), fl.bad(st)}
+      Fl{rest, body <> fl.recs(st), Nat.add(fl.seq(st), 1n), fl.bad(st)}
     case False{}:
-      Fl{rest, fl.acc(st), Nat.add(fl.seq(st), 1n), fl.bad(st)}
+      Fl{rest, fl.recs(st), Nat.add(fl.seq(st), 1n), fl.bad(st)}
 
 # Handshake messages
 # ------------------

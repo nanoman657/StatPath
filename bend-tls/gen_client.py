@@ -38,12 +38,18 @@ fill_entry = f"""
 def io.fill(s: Socket, +buf: List<&2, U32>, +need: Nat) -> IO(Socket & List<&2, U32>):
   io.r0.at(Nat.is_le(need, List.length(&2, U32, buf)), s, buf, need)
 
-# the fill chain ends at io.rK, which gives up with the bytes it has
+# the fill chain ends at io.rK: a record that is still not whole after K reads is an error
 def io.r{K}.at(ok: Bool, s: Socket, +buf: List<&2, U32>, +need: Nat) -> IO(Socket & List<&2, U32>):
-  IO.pure(Socket & List<&2, U32>, (s, buf))
+  match ok:
+    case True{{}}:
+      IO.pure(Socket & List<&2, U32>, (s, buf))
+    case False{{}}:
+      do IO<Socket & List<&2, U32>>:
+        Socket.close(s)
+        IO.die(Socket & List<&2, U32>, 1, "a record was not complete after {K} reads")
 """
 
-def record_chain(prefix, n, want, stop):
+def record_chain(prefix, n, want, stop, strict=False):
     # stage k: at(done) returns when done, else reads one record and goes on;
     # the record's content joins the state when its content type is want
     out = []
@@ -66,14 +72,27 @@ def {prefix}{k}.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>
   {prefix}{k + 1}.at({stop(f"st")}, s, st, key, iv)
 
 """)
-    out.append(f"""def {prefix}{n}.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+    if strict:
+        # the stream did not end within the stages: the response is longer than read
+        out.append(f"""def {prefix}{n}.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+  match done:
+    case True{{}}:
+      IO.pure(Socket & Fl, (s, st))
+    case False{{}}:
+      do IO<Socket & Fl>:
+        Socket.close(s)
+        IO.die(Socket & Fl, 1, "the response is longer than the {n} records read: the stream was cut")
+
+""")
+    else:
+        out.append(f"""def {prefix}{n}.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
   IO.pure(Socket & Fl, (s, st))
 
 """)
     return "".join(out)
 
 flight = record_chain("f", F, "22", lambda st: f"flight.stop(fl.bad({st}), flight.done(fl.acc({st})))")
-app = record_chain("g", G, "23", lambda st: f"fl.bad({st})")
+app = record_chain("g", G, "23", lambda st: f"fl.bad({st})", strict=True)
 
 src = open("client_body.bend").read()
 out = (src.replace("#@@STAGES@@", fill + fill_entry)
