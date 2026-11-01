@@ -1,9 +1,8 @@
 # tcp.bend: the TCP declarations of a page build. They have the signatures of Base's TCP
 # (bend2/base.bend), under the names WebTCP.*, so a page program imports this module and calls
-# WebTCP.connect where a native program calls TCP.connect. Each one imports a browser effect
-# (effs/web_tcp_*.js) instead of the native C and JS files. The JavaScript effects are placeholders
-# until they are written: connect and the send and receive forms answer ENOSYS (38), and listen and
-# accept answer EOPNOTSUPP (95), since a page cannot accept an incoming connection.
+# WebTCP.connect where a native program calls TCP.connect. Each one imports the browser effects
+# (effs/web_tcp.js, over the page's relay) instead of the native C and JS files. Listen and accept
+# answer EOPNOTSUPP (95), since a page cannot accept an incoming connection.
 #
 #   bend tcp.bend --check-only    (checks the declarations and their imports)
 

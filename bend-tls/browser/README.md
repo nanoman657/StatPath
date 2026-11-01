@@ -22,6 +22,8 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `test/errno.test.ts` | The page's failure texts are libc's `strerror` for their errnos, as the native effects give | `bun test browser/test` |
 | `test/web_tcp.test.ts` | The page programs run under the Bend runtime, against the relay | `bun test browser/test` (needs the async runtime, below) |
 | `test/preload.js` | Opens the page's relay before a program runs (`globalThis.bend_relay`) | used by the page program tests |
+| `page/index.html`, `page/app.js` | A page: opens the relay, makes it `globalThis.bend_relay`, and runs the program's `page_main`. Its output goes to `#bend-output` | `test/page.test.ts` |
+| `test/page.test.ts`, `test/page_e2e.cjs` | Builds the page with the Bend CLI, serves it, and runs it in Chromium (Playwright): the program's output must reach the page | `bun test browser/test` (needs Node and the Playwright Chromium) |
 
 ## Run the tests
 
@@ -98,11 +100,28 @@ except three that name the checkout's path and one fork_join ordering that flips
 
 A wait that no event will ever complete hangs the program under Bun (the process stays alive).
 
+## A page
+
+`page/index.html` and `page/app.js` are a page. The build is the Bend CLI's page bundle, from the
+async-scheduler checkout (the installed `bend` does not have the scheduler yet):
+
+    bun /tmp/claude-0/src/bend-async/bend2/main.ts browser/page/index.html -o dist
+
+The page imports a program (`page/program.bend`), opens the relay at `?relay=ws://...`, sets
+`globalThis.bend_relay` to it, and runs the program's `page_main()` (its `main`, through the
+scheduler). The page's output goes to `#bend-output`; `body[data-exit]` holds the exit code when
+the program has finished.
+
+What changed in the runtime for a page (the patch above): no Node or Bun module is named in the
+code (`io_node` looks them up when used), so the bundler resolves nothing it cannot. A page's output
+goes to the page, not a file descriptor, and a system call throws, since a page has none. The
+`page_main` export is added to the module only when the program has a `main`.
+
 ## Not done
 
-- **A page runtime.** The runtime still uses Bun's FFI, `fs`, `Buffer` and `process`. A page needs
-  those replaced, and a browser build target (`bend page.html` bundles through Bun's browser target
-  today, with that runtime).
+- **Output and effects outside TCP.** A page's output is text (`#bend-output`, or
+  `globalThis.bend_stdout`). The file, process and environment effects are not in a page: a program
+  that calls them fails there.
 - **The Lean recheck** (`bend frame_proof.bend --verdict`) is not run: the Lean toolchain download is
   blocked by the sandbox's network policy.
 - Listen and accept are not in the protocol.
