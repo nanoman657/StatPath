@@ -94,9 +94,38 @@ def {prefix}{k}.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>
 flight = record_chain("f", F, "22", lambda st: f"flight.stop(fl.bad({st}), flight.done(fl.acc({st})))")
 app = record_chain("g", G, "23", lambda st: f"fl.bad({st})", strict=True)
 
+# revocation: one stage per link of the chain (a certificate and its issuer); a longer chain is refused
+RV = 8
+
+def rv_stages():
+    out = ""
+    for k in range(RV):
+        out += f"""def rv.s{k}(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+  match links:
+    case Nil{{}}:
+      IO.pure(Bool, True{{}})
+    case +l <> t:
+      do IO<Bool>:
+        a : Bool <- rv.one(l, now)
+        b : Bool <- rv.s{k + 1}(t, now)
+        IO.pure(Bool, Bool.and(a, b))
+
+"""
+    out += f"""# the chain has more links than the stages: it is refused
+def rv.s{RV}(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+  match links:
+    case Nil{{}}:
+      IO.pure(Bool, True{{}})
+    case +l <> t:
+      IO.pure(Bool, False{{}})
+
+"""
+    return out
+
 src = open("client_body.bend").read()
 out = (src.replace("#@@STAGES@@", fill + fill_entry)
           .replace("#@@FLSTAGES@@", flight)
-          .replace("#@@APPSTAGES@@", app))
+          .replace("#@@APPSTAGES@@", app)
+          .replace("#@@REVSTAGES@@", rv_stages()))
 open("client.bend", "w").write(out)
 print("stages: fill", K, "flight", F, "app", G)

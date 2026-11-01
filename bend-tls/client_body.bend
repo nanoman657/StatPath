@@ -21,6 +21,23 @@ import ./handshake.bend as H
 import ./x509.bend as C
 import ./crl.bend as CR
 import ./rsa.bend as R
+import ./http.bend as HTTP
+import ./revoc.bend as RV
+
+# The revocation inputs of a connection: the CRL file (DER; Nil when none is given) and whether the
+# client fetches the revocation status of the chain over HTTP (rv.on)
+type Rev is Data:
+  Rev{crl: List<&2, U32>, fetch: Bool}
+
+def rv.file(+r: Rev) -> List<&2, U32>:
+  match r:
+    case Rev{+c, +f}:
+      c
+
+def rv.on(+r: Rev) -> Bool:
+  match r:
+    case Rev{+c, +f}:
+      f
 
 # Randomness
 # ----------
@@ -238,9 +255,9 @@ def flight.second(+chain: List<&2, List<&2, U32>>) -> List<&2, U32>:
     case +x <> rest:
       flight.leaf(rest)
 
-def flight.chain_ok(+chain: List<&2, List<&2, U32>>, +der: List<&2, U32>, +crl: List<&2, U32>, +host: List<&2, U32>,
+def flight.chain_ok(+chain: List<&2, List<&2, U32>>, +der: List<&2, U32>, +rev: Rev, +host: List<&2, U32>,
   +now: Nat) -> Bool:
-  Bool.and(C.x509.verify_server(chain, der <> Nil{}, host, now), CR.crl.chain.ok(chain, der, crl, now))
+  Bool.and(C.x509.verify_server(chain, der <> Nil{}, host, now), CR.crl.chain.ok(chain, der, rv.file(rev), now))
 
 def flight.verify.at(kinds: Bool, chain: Bool, cv: Bool, fin: Bool) -> Bool:
   Bool.and(kinds, Bool.and(chain, Bool.and(cv, fin)))
@@ -249,9 +266,9 @@ def flight.verify.at(kinds: Bool, chain: Bool, cv: Bool, fin: Bool) -> Bool:
 # host), its CertificateVerify over the transcript through Certificate, and its
 # Finished over the transcript through CertificateVerify
 def flight.verify(+acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +s_hs: List<&2, U32>,
-  +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> Bool:
+  +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> Bool:
   flight.verify.at(flight.kinds(acc),
-    flight.chain_ok(T.tls.certs(flight.msg(acc, flight.msglen(acc))), der, crl, host, now),
+    flight.chain_ok(T.tls.certs(flight.msg(acc, flight.msglen(acc))), der, rev, host, now),
     H.hs.cv_ok(flight.leaf(T.tls.certs(flight.msg(acc, flight.msglen(acc)))),
       flight.th(alg, acc, ch, sh, flight.off3(acc)), flight.msg(acc, flight.off3(acc))),
     H.hs.fin_ok(hello.hl(alg), s_hs, flight.th(alg, acc, ch, sh, flight.off4(acc)), flight.msg(acc, flight.off4(acc))))
@@ -358,21 +375,21 @@ def hello.bad(s: Socket) -> IO(Unit):
   io.fail(s, "first server record is not a ServerHello for one of our suites and groups")
 
 def hello.got(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
-  +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   (s, pr) = t
   (rest, rec) = pr
-  hello.check(s, rest, rec, priv, privs, ch, der, crl, now, host)
+  hello.check(s, rest, rec, priv, privs, ch, der, rev, now, host)
 
 def hello.check(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   hello.at(Bool.and(U32.is_eq(T.tls.tag(rec), 22), hello.ok(T.tls.hm(List.drop(&2, U32, rec, 5n)))),
-    s, rest, rec, priv, privs, ch, der, crl, now, host)
+    s, rest, rec, priv, privs, ch, der, rev, now, host)
 
 def hello.at(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match ok:
     case True{}:
-      hello.kind(hello.hrr_of(T.tls.hm(List.drop(&2, U32, rec, 5n))), s, rest, rec, priv, privs, ch, der, crl, now, host)
+      hello.kind(hello.hrr_of(T.tls.hm(List.drop(&2, U32, rec, 5n))), s, rest, rec, priv, privs, ch, der, rev, now, host)
     case False{}:
       hello.bad(s)
 
@@ -386,78 +403,78 @@ def hello.hrr_of(+m: T.HM) -> Bool:
       hello.is_hrr(body)
 
 def hello.kind(hrr: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match hrr:
     case True{}:
-      hello.retry(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, crl, now, host)
+      hello.retry(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, rev, now, host)
     case False{}:
-      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, crl, now, host)
+      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, ch, der, rev, now, host)
 
 # a HelloRetryRequest that selects secp384r1, the one group we sent no key share for: the second
 # ClientHello sends that key share and echoes the cookie. Any other group is refused.
 def hello.retry(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privs: List<&2, U32>,
-  +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
     case SH{+raw, +pub, +alg, +group}:
-      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, alg, priv, privs, ch, der, crl, now, host)
+      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, alg, priv, privs, ch, der, rev, now, host)
 
 def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat,
-  +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat,
+  +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat,
   +host: List<&2, U32>) -> IO(Unit):
   match is384:
     case True{}:
-      hello.retry.send(s, rest, hrr, alg, priv, privs, ch, der, crl, now, host)
+      hello.retry.send(s, rest, hrr, alg, priv, privs, ch, der, rev, now, host)
     case False{}:
       hello.bad(s)
 
 # the second ClientHello, sent; then the next record, which must be the ServerHello
 def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +ch2 : List<&2, U32> = hello.msg2(privs, hello.random(ch), host, hello.cookie(hrr))
     +pre : List<&2, U32> = T.tls.cat(hello.synth(alg, ch), T.tls.cat(hrr, ch2))
     s1 : Socket <- io.send(s, T.tls.plain(22, ch2))
     t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, rest)
-    hello.round2.first(t, priv, privs, pre, der, crl, now, host)
+    hello.round2.first(t, priv, privs, pre, der, rev, now, host)
 
 def hello.round2.first(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
-  +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   (s, pr) = t
   (rest, rec) = pr
-  hello.round2.check(s, rest, rec, priv, privs, pre, der, crl, now, host)
+  hello.round2.check(s, rest, rec, priv, privs, pre, der, rev, now, host)
 
 def hello.round2.check(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
-  hello.round2.at(U32.is_eq(T.tls.tag(rec), 20), s, rest, rec, priv, privs, pre, der, crl, now, host)
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  hello.round2.at(U32.is_eq(T.tls.tag(rec), 20), s, rest, rec, priv, privs, pre, der, rev, now, host)
 
 # after the second ClientHello, one change_cipher_spec record (sent for middlebox compatibility)
 # is skipped; the record after it must be the ServerHello
 def hello.round2.at(is_ccs: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match is_ccs:
     case True{}:
       do IO<Unit>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, rest)
-        hello.round2.second(t, priv, privs, pre, der, crl, now, host)
+        hello.round2.second(t, priv, privs, pre, der, rev, now, host)
     case False{}:
-      hello.round2.check2(s, rest, rec, priv, privs, pre, der, crl, now, host)
+      hello.round2.check2(s, rest, rec, priv, privs, pre, der, rev, now, host)
 
 def hello.round2.second(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +privs: List<&2, U32>,
-  +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   (s, pr) = t
   (rest, rec) = pr
-  hello.round2.check2(s, rest, rec, priv, privs, pre, der, crl, now, host)
+  hello.round2.check2(s, rest, rec, priv, privs, pre, der, rev, now, host)
 
 def hello.round2.check2(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   hello.at2(Bool.and(U32.is_eq(T.tls.tag(rec), 22), hello.ok2(T.tls.hm(List.drop(&2, U32, rec, 5n)))),
-    s, rest, rec, priv, privs, pre, der, crl, now, host)
+    s, rest, rec, priv, privs, pre, der, rev, now, host)
 
 def hello.at2(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match ok:
     case True{}:
-      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, pre, der, crl, now, host)
+      hello.derive(s, rest, hello.sh(T.tls.hm(List.drop(&2, U32, rec, 5n))), priv, privs, pre, der, rev, now, host)
     case False{}:
       hello.bad(s)
 
@@ -492,10 +509,10 @@ def hello.msg2(+privs: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>,
     host, cookie)
 
 def hello.derive(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +privs: List<&2, U32>,
-  +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
     case SH{+raw, +pub, +alg, +group}:
-      hello.keys(s, rest, raw, pub, alg, group, priv, privs, ch, der, crl, now, host)
+      hello.keys(s, rest, raw, pub, alg, group, priv, privs, ch, der, rev, now, host)
 
 # the shared secret of the server's key share: x25519 for group 29, the secp256r1 x coordinate
 # for group 23 (its key is 04 || x || y), or the secp384r1 x coordinate for group 24
@@ -520,7 +537,7 @@ def hello.dhe.ec(is384: Bool, +privs: List<&2, U32>, +pub: List<&2, U32>) -> Lis
 # exchange, the client and server handshake traffic secrets over the transcript
 # through ServerHello, and the master secret
 def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<&2, U32>,
-  +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +hl : Nat = hello.hl(alg)
     +th1 : List<&2, U32> = K.hash_of(hl, T.tls.cat(ch, raw))
@@ -528,45 +545,149 @@ def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<
     +c_hs : List<&2, U32> = K.derive_secret(hl, hsec, "c hs traffic", th1)
     +s_hs : List<&2, U32> = K.derive_secret(hl, hsec, "s hs traffic", th1)
     +mst : List<&2, U32> = K.master_secret(hl, hsec)
-    flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, crl, now, host, alg)
+    flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, rev, now, host, alg)
 
 # the server's flight, read from rest with the server handshake keys
 def flight.start(s: Socket, +rest: List<&2, U32>, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
-  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat,
+  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat,
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
     +key : List<&2, U32> = K.traffic_keyn(hello.hl(alg), s_hs, hello.keylen(alg))
     +iv : List<&2, U32> = K.traffic_iv(hello.hl(alg), s_hs)
     r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv, alg)
-    flight.finish(r, c_hs, s_hs, mst, ch, sh, der, crl, now, host, alg)
+    flight.finish(r, c_hs, s_hs, mst, ch, sh, der, rev, now, host, alg)
 
 def flight.finish(t: Socket & Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>, +mst: List<&2, U32>,
-  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   (s, st) = t
-  flight.finish.go(s, st, c_hs, s_hs, mst, ch, sh, der, crl, now, host, alg)
+  flight.finish.go(s, st, c_hs, s_hs, mst, ch, sh, der, rev, now, host, alg)
 
 def flight.finish.go(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
-  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat,
+  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat,
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   flight.finish.at(flight.good(fl.bad(st), flight.done(fl.acc(st))), s, st, c_hs, s_hs, mst, ch, sh,
-    der, crl, now, host, alg)
+    der, rev, now, host, alg)
 
 def flight.finish.at(ok: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
-  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +crl: List<&2, U32>, +now: Nat,
+  +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat,
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   match ok:
     case True{}:
-      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, crl, now, host, alg), s, st, c_hs, mst, ch, sh, host, alg)
+      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, rev, now, host, alg), s, st, c_hs, mst, ch, sh, der, rev, now, host, alg)
     case False{}:
       io.fail(s, "the server's flight is incomplete or a record did not open")
 
 def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
-  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>,
+  +alg: Nat) -> IO(Unit):
   match v:
+    case True{}:
+      flight.revocation(s, st, c_hs, mst, ch, sh, der, rev, now, host, alg)
+    case False{}:
+      io.fail(s, "the server's certificate, CertificateVerify or Finished did not check")
+
+# Revocation (rv.on): the status of each certificate of the chain, fetched over HTTP. This runs only
+# after the chain, CertificateVerify and Finished checked, so the URIs in the server's certificates
+# are fetched only for a chain the trust anchor vouches for. Without fetching, the CRL file (if any)
+# was already checked in flight.verify and this passes.
+def flight.revocation(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>,
+  +alg: Nat) -> IO(Unit):
+  do IO<Unit>:
+    r : Bool <- rv.run(rv.on(rev), flight.chain(fl.acc(st)), der, now)
+    flight.revocation.at(r, s, st, c_hs, mst, ch, sh, host, alg)
+
+def flight.revocation.at(ok: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
+  match ok:
     case True{}:
       client.finish(s, st, c_hs, mst, ch, sh, host, alg)
     case False{}:
-      io.fail(s, "the server's certificate, CertificateVerify or Finished did not check")
+      io.fail(s, "a certificate of the chain is revoked, or its revocation status could not be confirmed")
+
+# the certificates of the server's chain, leaf first
+def flight.chain(+acc: List<&2, U32>) -> List<&2, List<&2, U32>>:
+  T.tls.certs(flight.msg(acc, flight.msglen(acc)))
+
+# a certificate of the chain with its issuer: the next certificate, or the anchor for the last one
+type RLink is Data:
+  RLink{c: List<&2, U32>, n: List<&2, U32>}
+
+def rv.links.go(+t: List<&2, List<&2, U32>>, +c: List<&2, U32>, +der: List<&2, U32>) -> List<&2, RLink>:
+  match t:
+    case Nil{}:
+      RLink{c, der} <> Nil{}
+    case +n <> r:
+      RLink{c, n} <> rv.links.go(r, n, der)
+
+def rv.links(+chain: List<&2, List<&2, U32>>, +der: List<&2, U32>) -> List<&2, RLink>:
+  match chain:
+    case Nil{}:
+      Nil{}
+    case +c <> t:
+      rv.links.go(t, c, der)
+
+def rv.present(+xs: List<&2, U32>) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case +x <> t:
+      True{}
+
+# a certificate with an OCSP responder URI is checked by OCSP (the responder's reply must confirm
+# it); one with only a CRL distribution point by that CRL; one with neither is accepted, since
+# there is no revocation information to check. A URI that cannot be fetched refuses the chain.
+def rv.one(+l: RLink, +now: Nat) -> IO(Bool):
+  match l:
+    case RLink{+c, +n}:
+      rv.one.at(rv.present(RV.rev.ocsp_uri(c)), c, n, now)
+
+def rv.one.at(ocsp: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+  match ocsp:
+    case True{}:
+      rv.ocsp.fetch(RV.rev.ocsp_uri(c), c, n, now)
+    case False{}:
+      rv.crl.at(rv.present(RV.rev.first_of(RV.rev.cdp_uris(c))), c, n, now)
+
+def rv.ocsp.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+  do IO<Bool>:
+    r : Maybe<&2, List<&2, U32>> <- HTTP.http.fetch(HTTP.http.url(uri), "POST", "application/ocsp-request", RV.rev.ocsp_request(c, n))
+    IO.pure(Bool, rv.ocsp.got(r, c, n, now))
+
+def rv.ocsp.got(r: Maybe<&2, List<&2, U32>>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> Bool:
+  match r:
+    case Some{+reply}:
+      RV.rev.ocsp_ok(reply, c, n, now)
+    case None{}:
+      False{}
+
+def rv.crl.at(has: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+  match has:
+    case True{}:
+      rv.crl.fetch(RV.rev.first_of(RV.rev.cdp_uris(c)), c, n, now)
+    case False{}:
+      IO.pure(Bool, True{})
+
+def rv.crl.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+  do IO<Bool>:
+    r : Maybe<&2, List<&2, U32>> <- HTTP.http.fetch(HTTP.http.url(uri), "GET", "", Nil{})
+    IO.pure(Bool, rv.crl.got(r, c, n, now))
+
+def rv.crl.got(r: Maybe<&2, List<&2, U32>>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> Bool:
+  match r:
+    case Some{+crl}:
+      CR.crl.verdict(crl, n, c, now)
+    case None{}:
+      False{}
+
+def rv.run(on: Bool, +chain: List<&2, List<&2, U32>>, +der: List<&2, U32>, +now: Nat) -> IO(Bool):
+  match on:
+    case True{}:
+      rv.s0(rv.links(chain, der), now)
+    case False{}:
+      IO.pure(Bool, True{})
+
+#@@REVSTAGES@@
 
 # Our Finished, the request, and the response
 # -------------------------------------------
@@ -639,10 +760,11 @@ def anchor.read(path: String) -> IO(List<&2, U32>):
     p : File & Result<&1, &1, U32 & String, U32> <- File.size(f)
     anchor.size(p)
 
-def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now: Nat) -> IO(Unit):
+def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now: Nat, fetch: Bool) -> IO(Unit):
   do IO<Unit>:
     der : List<&2, U32> <- anchor.read(path)
     crl : List<&2, U32> <- crl.file(crlpath)
+    +rev : Rev = Rev{crl, fetch}
     sock : Socket <- IO.try(Socket, TCP.connect(ip, U32.from_nat(port)))
     +host : List<&2, U32> = S.bytes_of(name)
     +priv : List<&2, U32> <- io.rand(8n)
@@ -653,7 +775,7 @@ def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now:
     +ch : List<&2, U32> = hello.msg(priv, privs, rnd, host)
     s1 : Socket <- io.send(sock, T.tls.plain(22, ch))
     t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, Nil{})
-    hello.got(t, priv, privs, ch, der, crl, now, host)
+    hello.got(t, priv, privs, ch, der, rev, now, host)
 
 # the CRL file, or no CRL (Nil) when no path is given
 def crl.file(+path: String) -> IO(List<&2, U32>):
@@ -668,12 +790,14 @@ def crl.file.at(none: Bool, +path: String) -> IO(List<&2, U32>):
 
 def start(args: List<String>) -> IO(Unit):
   match args:
+    case prog <> (name <> (ip <> (port <> (path <> (now <> (crlp <> (mode <> Nil{}))))))):
+      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), String.eq(mode, "fetch"))
     case prog <> (name <> (ip <> (port <> (path <> (now <> (crlp <> Nil{})))))):
-      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n))
+      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), False{})
     case prog <> (name <> (ip <> (port <> (path <> (now <> Nil{}))))):
-      run(name, ip, arg.nat(port, 0n), path, "", arg.nat(now, 0n))
+      run(name, ip, arg.nat(port, 0n), path, "", arg.nat(now, 0n), False{})
     case _:
-      IO.print("usage: client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der]")
+      IO.print("usage: client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der or \"\"] [fetch]")
 
 def main() -> IO(Unit):
   do IO<Unit>:
