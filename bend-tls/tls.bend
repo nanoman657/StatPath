@@ -72,21 +72,22 @@ def tls.plain(ctype: U32, +body: List<&2, U32>) -> List<&2, U32>:
 # ClientHello (RFC 8446 section 4.1.2) with TLS_CHACHA20_POLY1305_SHA256, x25519
 # key share, supported_versions, supported_groups, signature_algorithms
 # (rsa_pss_rsae_sha256 and rsa_pkcs1_sha256) and the server name
-def tls.key_share(+pub: List<&2, U32>) -> List<&2, U32>:
-  tls.cat(0 <> 51 <> Nil{}, tls.vec(2n, tls.vec(2n, tls.cat(0 <> 29 <> Nil{}, tls.vec(2n, pub)))))
+def tls.key_share(+pub: List<&2, U32>, +pubp: List<&2, U32>) -> List<&2, U32>:
+  tls.cat(0 <> 51 <> Nil{}, tls.vec(2n, tls.vec(2n, tls.cat(0 <> 29 <> Nil{}, tls.cat(tls.vec(2n, pub),
+    tls.cat(0 <> 23 <> Nil{}, tls.vec(2n, pubp)))))))
 
 def tls.server_name(+host: List<&2, U32>) -> List<&2, U32>:
   tls.cat(0 <> 0 <> Nil{}, tls.vec(2n, tls.vec(2n, 0 <> tls.vec(2n, host))))
 
-def tls.exts(+pub: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
-  tls.cat(0 <> 43 <> 0 <> 3 <> 2 <> 3 <> 4 <> Nil{}, tls.cat(0 <> 10 <> 0 <> 4 <> 0 <> 2 <> 0 <> 29 <> Nil{},
+def tls.exts(+pub: List<&2, U32>, +pubp: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
+  tls.cat(0 <> 43 <> 0 <> 3 <> 2 <> 3 <> 4 <> Nil{}, tls.cat(0 <> 10 <> 0 <> 6 <> 0 <> 4 <> 0 <> 29 <> 0 <> 23 <> Nil{},
     tls.cat(0 <> 13 <> 0 <> 8 <> 0 <> 6 <> 8 <> 4 <> 4 <> 1 <> 4 <> 3 <> Nil{},
-    tls.cat(tls.key_share(pub), tls.server_name(host)))))
+    tls.cat(tls.key_share(pub, pubp), tls.server_name(host)))))
 
-def tls.client_hello(+random: List<&2, U32>, +pub: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
+def tls.client_hello(+random: List<&2, U32>, +pub: List<&2, U32>, +pubp: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
   tls.hs(1, tls.cat(3 <> 3 <> Nil{}, tls.cat(random, tls.cat(0 <> Nil{},
     tls.cat(tls.vec(2n, 19 <> 1 <> 19 <> 3 <> Nil{}), tls.cat(1 <> 0 <> Nil{},
-    tls.vec(2n, tls.exts(pub, host))))))))
+    tls.vec(2n, tls.exts(pub, pubp, host))))))))
 
 # Reading the server's messages
 # -----------------------------
@@ -153,6 +154,10 @@ def tls.sh.exts(+body: List<&2, U32>) -> List<&2, U32>:
 # the x25519 key share of a ServerHello: group (2), length (2), the 32 bytes
 def tls.sh.key(+body: List<&2, U32>) -> List<&2, U32>:
   List.drop(&2, U32, tls.ext(tls.sh.exts(body), 51n), 4n)
+
+# the group of the server's key share: 29 (x25519) or 23 (secp256r1)
+def tls.sh.group(+body: List<&2, U32>) -> Nat:
+  tls.num(2n, tls.ext(tls.sh.exts(body), 51n))
 
 # Certificate (RFC 8446 section 4.4.2): the certificate_list entries (DER). Each
 # entry is a 3-byte length and the certificate, then a 2-byte extensions block.

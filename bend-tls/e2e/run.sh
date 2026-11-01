@@ -17,6 +17,7 @@ MODE=${1:-js}
 PORT=${PORT:-4433}
 SUITES=${SUITES:-"TLS_CHACHA20_POLY1305_SHA256 TLS_AES_128_GCM_SHA256"}
 PKIS=${PKIS:-"rsa ec mixed"}
+KEX_GROUPS=${KEX_GROUPS:-"X25519 P-256"}
 WORK=$(mktemp -d)
 SERVER=
 
@@ -59,20 +60,20 @@ for kind in $PKIS; do
   mkdir -p "$PKI"
   python3 -I "$HERE/mkpki.py" "$PKI" "$kind" >/dev/null || { echo "PKI generation failed ($kind)"; exit 1; }
   openssl x509 -in "$PKI/leaf.pem" -outform DER -out "$PKI/leaf.der" || exit 1
-  for suite in $SUITES; do
+  for suite in $SUITES; do for group in $KEX_GROUPS; do
     openssl s_server -accept "$PORT" -cert "$PKI/leaf.pem" -cert_chain "$PKI/inter.pem" \
-      -key "$PKI/leaf.key" -tls1_3 -ciphersuites "$suite" -groups X25519 \
+      -key "$PKI/leaf.key" -tls1_3 -ciphersuites "$suite" -groups "$group" \
       -www > "$PKI/server.log" 2>&1 &
     SERVER=$!
     sleep 1
-    label="$kind/$suite"
+    label="$kind/$suite/$group"
     expect "$label valid" ok example.test "$PKI/root.der" "$NOW"
     expect "$label wrong-anchor" fail example.test "$PKI/leaf.der" "$NOW"
     expect "$label wrong-host" fail other.test "$PKI/root.der" "$NOW"
     expect "$label expired" fail example.test "$PKI/root.der" 4102444800
     kill "$SERVER" 2>/dev/null; wait "$SERVER" 2>/dev/null; SERVER=
     sleep 1
-  done
+  done; done
 done
 echo "e2e ($MODE): $pass passed, $fail failed"
 [ $fail -eq 0 ]

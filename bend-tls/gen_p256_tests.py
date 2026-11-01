@@ -53,6 +53,23 @@ for i, k in enumerate([1, 2, 3, 7, 0xdeadbeef, rnd_below(N - 1) + 1]):
 negG = be(G.x) + be(P - G.y)
 kc("kG-minus-G", hexof(f"P.p256.base_mul({lst(be(N - 1))})"), negG.hex())
 
+# ECDH: the shared x coordinate, against cryptography's exchange
+for i, (dk, dk2) in enumerate([(0x1234, 0xabcdef), (rnd_below(N - 2) + 1, rnd_below(N - 2) + 1)]):
+    a = ec.derive_private_key(dk, ec.SECP256R1())
+    b = ec.derive_private_key(dk2, ec.SECP256R1())
+    pb = b.public_key().public_numbers()
+    shared = a.exchange(ec.ECDH(), b.public_key())
+    kc(f"ecdh-{i}", hexof(f"P.p256.ecdh({lst(be(dk))}, {lst(be(pb.x))}, {lst(be(pb.y))})"), shared.hex())
+# a peer point off the curve, and a zero scalar, give no secret
+boolcase("ecdh-off-curve-empty",
+         f"Nat.is_eq(List.length(&2, U32, P.p256.ecdh({lst(be(0x1234))}, {lst(be(pb.x))}, {lst(be(pb.y + 1))})), 0n)",
+         "True")
+boolcase("ecdh-zero-scalar-empty",
+         f"Nat.is_eq(List.length(&2, U32, P.p256.ecdh({lst(be(0))}, {lst(be(pb.x))}, {lst(be(pb.y))})), 0n)",
+         "True")
+# the private scalar keeps its low 255 bits: the top bit of the first byte is cleared
+kc("scalar-clamp", hexof(f"P.p256.scalar({lst([0xff] * 32)})"), bytes([0x7f] + [0xff] * 31).hex())
+
 # ECDSA verification: signatures from cryptography, checked against the digest
 def signed(seed):
     priv = ec.derive_private_key(seed, ec.SECP256R1())

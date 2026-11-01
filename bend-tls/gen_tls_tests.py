@@ -11,13 +11,13 @@ def lst(b):
 def vec(n, b):
     return len(b).to_bytes(n, "big") + b
 
-def client_hello(rnd, pub, host):
+def client_hello(rnd, pub, pubp, host):
     host = host.encode()
     exts = b""
     exts += b"\x00\x2b" + vec(2, bytes([3, 4]) if False else bytes([2, 3, 4]))          # supported_versions
-    exts += b"\x00\x0a" + vec(2, vec(2, b"\x00\x1d"))                               # supported_groups: x25519
+    exts += b"\x00\x0a" + vec(2, vec(2, b"\x00\x1d\x00\x17"))                       # supported_groups: x25519, secp256r1
     exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01\x04\x03"))                       # signature_algorithms
-    exts += b"\x00\x33" + vec(2, vec(2, b"\x00\x1d" + vec(2, pub)))                     # key_share
+    exts += b"\x00\x33" + vec(2, vec(2, b"\x00\x1d" + vec(2, pub) + b"\x00\x17" + vec(2, pubp)))  # key_share
     exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                        # server_name
     body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))
     return b"\x01" + len(body).to_bytes(3, "big") + body
@@ -37,8 +37,8 @@ def rb(n):
 
 out = []
 for i, host in enumerate(["example.test", "a.b", "www.example.test"]):
-    rnd, pub = rb(32), rb(32)
-    out.append(f'  kcase("clienthello-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, {lst(pub)}, {lst(host.encode())})), "{client_hello(rnd, pub, host).hex()}") <>')
+    rnd, pub, pubp = rb(32), rb(32), b"\x04" + rb(64)
+    out.append(f'  kcase("clienthello-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, {lst(pub)}, {lst(pubp)}, {lst(host.encode())})), "{client_hello(rnd, pub, pubp, host).hex()}") <>')
 for i, (pt_len, seq, ctype) in enumerate([(0, 0, 22), (5, 0, 23), (40, 7, 22), (300, 65536, 23)]):
     key, iv, pt = rb(32), rb(12), rb(pt_len)
     out.append(f'  kcase("seal-{i}", S.hex_of(T.tls.seal({lst(key)}, {lst(iv)}, {seq}n, {ctype}, {lst(pt)})), "{seal(key, iv, seq, ctype, pt).hex()}") <>')
@@ -51,8 +51,8 @@ for i, seq in enumerate([0, 1, 255, 256, 2**31 + 5]):
 def hs(t, body):
     return bytes([t]) + len(body).to_bytes(3, "big") + body
 
-def server_hello(rnd, pub, sid=b""):
-    exts = b"\x00\x2b" + vec(2, bytes([3, 4])) + b"\x00\x33" + vec(2, b"\x00\x1d" + vec(2, pub))
+def server_hello(rnd, pub, sid=b"", group=0x1d):
+    exts = b"\x00\x2b" + vec(2, bytes([3, 4])) + b"\x00\x33" + vec(2, group.to_bytes(2, "big") + vec(2, pub))
     body = b"\x03\x03" + rnd + bytes([len(sid)]) + sid + b"\x13\x03" + b"\x00" + vec(2, exts)
     return hs(2, body)
 
@@ -62,12 +62,17 @@ def certificate(certs):
 
 sh_rnd, sh_pub = rb(32), rb(32)
 sh = server_hello(sh_rnd, sh_pub)
+sh256_pub = b"\x04" + rb(64)
+sh256 = server_hello(sh_rnd, sh256_pub, group=0x17)
 cert_a, cert_b = rb(300), rb(120)
 cert_msg = certificate([cert_a, cert_b])
 fin_msg = hs(20, rb(32))
 out += [
     f'  kcase("sh-cipher", Nat.show(T.tls.sh.cipher(hm_body(T.tls.hm({lst(sh)})))), "4867") <>',
     f'  kcase("sh-key", S.hex_of(T.tls.sh.key(hm_body(T.tls.hm({lst(sh)})))), "{sh_pub.hex()}") <>',
+    f'  kcase("sh-group-x25519", Nat.show(T.tls.sh.group(hm_body(T.tls.hm({lst(sh)})))), "29") <>',
+    f'  kcase("sh-group-p256", Nat.show(T.tls.sh.group(hm_body(T.tls.hm({lst(sh256)})))), "23") <>',
+    f'  kcase("sh-key-p256", S.hex_of(T.tls.sh.key(hm_body(T.tls.hm({lst(sh256)})))), "{sh256_pub.hex()}") <>',
     f'  kcase("cert-count", Nat.show(List.length(&2, List<&2, U32>, T.tls.certs(hm_body(T.tls.hm({lst(cert_msg)}))))), "2") <>',
     f'  kcase("cert-first", S.hex_of(first(T.tls.certs(hm_body(T.tls.hm({lst(cert_msg)}))))), "{cert_a.hex()}") <>',
     f'  kcase("cert-second", S.hex_of(first(List.drop(&2, List<&2, U32>, T.tls.certs(hm_body(T.tls.hm({lst(cert_msg)}))), 1n))), "{cert_b.hex()}") <>',

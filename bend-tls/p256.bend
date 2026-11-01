@@ -381,14 +381,36 @@ def p256.limbs(+bs: List<&2, U32>) -> List<&2, Nat>:
 def p256.base_mul(+k: List<&2, U32>) -> List<&2, U32>:
   p256.affine(p256.smul(p256.bits(p256.limbs(k)), p256.GXM(), p256.GYM()))
 
+# ECDH (SEC 1 3.3.1): the x coordinate of d * Q, 32 bytes. A private scalar is 32
+# bytes below 2^255 (less than n, so a fresh random one needs no reduction).
+# p256.scalar clears the top bit of random bytes.
+def p256.scalar(+bs: List<&2, U32>) -> List<&2, U32>:
+  match bs:
+    case Nil{}:
+      Nil{}
+    case x <> t:
+      U32.and(x, 127) <> t
+
+# the shared x coordinate; Nil when the peer key is malformed (not 32 + 32 bytes, or
+# not on the curve) or the private scalar is out of range
+def p256.ecdh.point(point_ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match point_ok:
+    case True{}:
+      List.take(&2, U32, p256.affine(p256.smul(p256.bits(p256.limbs(d)), p256.tom(p256.limbs(qx)), p256.tom(p256.limbs(qy)))), 32n)
+    case False{}:
+      Nil{}
+
 # ECDSA verification (FIPS 186-4 6.4)
 # -----------------------------------
 
 # big-endian bytes (32 of them) as 18 limbs
-def p256.reduce_n(+e: List<&2, Nat>) -> List<&2, Nat>:
-  B.bi.csub(e, p256.N())
+def p256.ecdh.check(scalar_ok: Bool, point_ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match scalar_ok:
+    case True{}:
+      p256.ecdh.point(point_ok, d, qx, qy)
+    case False{}:
+      Nil{}
 
-# 0 < x < n
 def p256.nonzero.at(z: Bool, +x: List<&2, Nat>) -> Bool:
   match z:
     case True{}:
@@ -405,6 +427,22 @@ def p256.oncurve(+xm: List<&2, Nat>, +ym: List<&2, Nat>) -> Bool:
 
 # the signature (r, s) on the digest e under the public key (qx, qy); all big-endian
 # bytes: qx and qy 32 each, e the 32-byte digest, r and s 32 each
+def p256.ecdh.len(ok: Bool, +d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  match ok:
+    case True{}:
+      p256.ecdh.check(p256.nonzero_lt_n(p256.limbs(d)),
+        p256.oncurve(p256.tom(p256.limbs(qx)), p256.tom(p256.limbs(qy))), d, qx, qy)
+    case False{}:
+      Nil{}
+
+def p256.ecdh(+d: List<&2, U32>, +qx: List<&2, U32>, +qy: List<&2, U32>) -> List<&2, U32>:
+  p256.ecdh.len(Bool.and(Bool.and(Nat.is_eq(List.length(&2, U32, d), 32n), Nat.is_eq(List.length(&2, U32, qx), 32n)),
+    Nat.is_eq(List.length(&2, U32, qy), 32n)), d, qx, qy)
+
+def p256.reduce_n(+e: List<&2, Nat>) -> List<&2, Nat>:
+  B.bi.csub(e, p256.N())
+
+# 0 < x < n
 def p256.verify.cmp4(small: Bool, c2: Bool) -> Bool:
   match small:
     case True{}:

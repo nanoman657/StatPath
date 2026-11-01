@@ -46,6 +46,10 @@ def hs.unpad(+inner: List<&2, U32>) -> Inner:
   hs.strip(List.reverse(&2, U32, inner), hs.zero(List.take(&2, U32, List.reverse(&2, U32, inner), 1n)))
 
 # the handshake secret of the x25519 exchange with the server's key share
+# the handshake secret from the shared secret of the key exchange (x25519 or P-256)
+def hs.hs_secret_dhe(+dhe: List<&2, U32>) -> List<&2, U32>:
+  K.handshake_secret(K.early_secret(), dhe)
+
 def hs.hs_secret(+priv: List<&2, U32>, +spub: List<&2, U32>) -> List<&2, U32>:
   K.handshake_secret(K.early_secret(), X.x25519(priv, spub))
 
