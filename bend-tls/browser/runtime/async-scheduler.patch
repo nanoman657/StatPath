@@ -1,4 +1,4 @@
-From 2855c7e7eb86c3b6abd2209db611677bdc3f0929 Mon Sep 17 00:00:00 2001
+From 045cdd765ad803b040960ca62f4ad70ff2681eac Mon Sep 17 00:00:00 2001
 From: Claude <noreply@anthropic.com>
 Date: Sun, 1 Nov 2026 18:44:42 +0000
 Subject: [PATCH] bend2: an asynchronous scheduler for waits that no file
@@ -22,12 +22,12 @@ both complete, and a compiled program runs.
 
 Claude-Session: https://claude.ai/code/session_01UWNAwgKN83XHGpqNqstwpg
 ---
- bend2/comp.ts | 178 ++++++++++++++++++++++++++++++++++----------------
+ bend2/comp.ts | 180 +++++++++++++++++++++++++++++++++++---------------
  bend2/main.ts |   6 +-
- 2 files changed, 126 insertions(+), 58 deletions(-)
+ 2 files changed, 128 insertions(+), 58 deletions(-)
 
 diff --git a/bend2/comp.ts b/bend2/comp.ts
-index 07d63fd..2225f78 100644
+index 07d63fd..a7e4353 100644
 --- a/bend2/comp.ts
 +++ b/bend2/comp.ts
 @@ -1353,9 +1353,9 @@ export function io_type(book: Bend.Book): HTerm | null {
@@ -63,17 +63,20 @@ index 07d63fd..2225f78 100644
    const soon = io.waits[0]?.at ?? Infinity;
    const ms = !block ? 0 : soon === Infinity ? -1
      : Math.max(0, Math.ceil(soon - performance.now()));
-@@ -6374,7 +6376,8 @@ function io_wait(io, block) {
+@@ -6373,8 +6375,11 @@ function io_wait(io, block) {
+     set.fill(0);
    }
    const now = performance.now();
++  // A notice re-checks every external wait, one with a deadline too: its more() answers when
++  // the event has come, or parks again.
    const due = (w) => w.at <= now || w.fd !== undefined
 -    && set[at(w)] & 1 << (w.fd & 7);
 +    && set[at(w)] & 1 << (w.fd & 7)
-+    || woke && w.fd === undefined && w.at === Infinity;
++    || woke && w.fd === undefined;
    const todo = io.waits;
    io.waits = todo.filter((w) => !due(w));
    for (const w of todo.filter(due)) {
-@@ -6392,61 +6395,126 @@ function io_park_on(fd, out, k, more, at = Infinity) {
+@@ -6392,61 +6397,126 @@ function io_park_on(fd, out, k, more, at = Infinity) {
    return t;
  }
  

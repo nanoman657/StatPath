@@ -3,12 +3,21 @@
 //
 //   bun relay/relay.ts relay/config.json      (or the example config)
 
-export const OP = { CONNECT: 1, SEND: 2, CLOSE: 3, OK: 10, FAIL: 11, DATA: 12, EOF: 13 } as const;
+export const OP = {
+  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14,
+} as const;
 export const MAX_BODY = 65535;
+// bytes a connection may hold in the relay: sent by the page, not yet taken by the socket
+export const SEND_WINDOW = 131072;
+// bytes the page grants a connection to read ahead of what the page has taken
+export const READ_WINDOW = 131072;
+// the most a connection moves in one direction: counts are four bytes
+export const MAX_COUNT = 0xffffffff;
 
 export const ERR = {
-  EIO: 5, EACCES: 13, EMFILE: 24, EADDRNOTAVAIL: 99, ENETUNREACH: 101, ECONNREFUSED: 111,
-  ETIMEDOUT: 110, EHOSTUNREACH: 113, EINVAL: 22,
+  EIO: 5, EACCES: 13, EMFILE: 24, EINVAL: 22, EFBIG: 27, EPIPE: 32, ECONNRESET: 104, EADDRNOTAVAIL: 99,
+  ENETUNREACH: 101, ETIMEDOUT: 110, ECONNREFUSED: 111, EHOSTUNREACH: 113,
 } as const;
 
 export type Allow = { host: string; ports: number[] };
@@ -34,6 +43,15 @@ export function decodeFrame(msg: Uint8Array): { op: number; id: number; body: Ui
   return { op: msg[0], id: msg[1], body: msg.subarray(4) };
 }
 
+// a four-byte count, big-endian
+export function u32(n: number): Uint8Array {
+  return new Uint8Array([n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]);
+}
+
+export function readU32(b: Uint8Array): number {
+  return b[0] * 0x1000000 + (b[1] << 16) + (b[2] << 8) + b[3];
+}
+
 // the destination is allowed: its host, exactly as the page gives it, and its port
 export function allowed(cfg: Config, host: string, port: number): boolean {
   return cfg.allow.some((a) => a.host === host && a.ports.includes(port));
@@ -49,6 +67,8 @@ export function errnoOf(err: unknown): number {
     case "ENETUNREACH": return ERR.ENETUNREACH;
     case "EADDRNOTAVAIL": return ERR.EADDRNOTAVAIL;
     case "EINVAL": return ERR.EINVAL;
+    case "EPIPE": return ERR.EPIPE;
+    case "ECONNRESET": return ERR.ECONNRESET;
     default: return ERR.EIO;
   }
 }
@@ -66,18 +86,34 @@ function failBody(errno: number, message: string): Uint8Array {
 }
 
 type Conn = {
-  tcp?: any;             // the Bun socket, once connected
-  open: boolean;         // the connect has succeeded
-  closed: boolean;       // the page closed it, or it failed
+  tcp?: any;            // the Bun socket, once connected
+  open: boolean;        // the connect has succeeded, and OK was sent
+  closed: boolean;      // the page closed it, or it failed
+  peerClosed: boolean;  // the socket is closed for good (the peer closed it)
+  queue: Uint8Array[];  // SEND bytes the socket has not taken yet, in order
+  queued: number;       // their total length
+  written: number;      // bytes the socket has taken since the connect
+  credit: number;       // bytes the page has granted to be read
+  paused: boolean;      // reads are paused: there is no credit
 };
 
-type Session = { conns: Map<number, Conn> };
+// conns: the connections in progress or open; known: the ids this WebSocket has connected before
+type Session = { conns: Map<number, Conn>; known: Uint8Array };
+
+function newConn(): Conn {
+  return {
+    open: false, closed: false, peerClosed: false, queue: [], queued: 0, written: 0,
+    credit: 0, paused: false,
+  };
+}
 
 export function startRelay(cfg: Config) {
   const server = Bun.serve({
     port: cfg.port,
     fetch(req, server) {
-      if (server.upgrade(req, { data: { conns: new Map() } satisfies Session })) return undefined;
+      if (server.upgrade(req, { data: { conns: new Map(), known: new Uint8Array(256) } satisfies Session })) {
+        return undefined;
+      }
       return new Response("relay: connect with a WebSocket", { status: 426 });
     },
     websocket: {
@@ -91,7 +127,7 @@ export function startRelay(cfg: Config) {
       },
       close(ws) {
         const session = ws.data as Session;
-        for (const c of session.conns.values()) c.tcp?.end?.();
+        for (const c of session.conns.values()) end(c);
         session.conns.clear();
       },
     },
@@ -101,11 +137,59 @@ export function startRelay(cfg: Config) {
     ws.sendBinary(encodeFrame(op, id, body));
   }
 
+  // How many bytes the socket has taken. A reply to DISCARD has flag 1, so the page can tell it
+  // from the counts that came before it.
+  function sendWritten(ws: any, id: number, c: Conn, reply: boolean) {
+    const body = new Uint8Array(5);
+    body.set(u32(c.written));
+    body[4] = reply ? 1 : 0;
+    send(ws, OP.WRITTEN, id, body);
+  }
+
+  function end(c: Conn) {
+    c.closed = true;
+    c.queue = [];
+    c.queued = 0;
+    c.tcp?.end?.();
+  }
+
+  // The connection failed: the page hears how much of its send was taken, then the failure.
+  // A connection gets at most one FAIL.
   function fail(ws: any, session: Session, id: number, errno: number, message: string) {
-    send(ws, OP.FAIL, id, failBody(errno, message));
     const c = session.conns.get(id);
-    if (c) { c.tcp?.end?.(); c.closed = true; }
+    if (!c || c.closed) return;
+    if (c.open) sendWritten(ws, id, c, false);
+    send(ws, OP.FAIL, id, failBody(errno, message));
+    end(c);
     session.conns.delete(id);
+  }
+
+  // Writes what the socket takes now. Bun's write takes part of a buffer and keeps none of the
+  // rest, so the rest stays in the queue until the socket drains.
+  function flush(ws: any, id: number, c: Conn) {
+    if (!c.tcp || c.closed) return;
+    let moved = 0;
+    while (c.queue.length > 0) {
+      const head = c.queue[0];
+      const n: number = c.tcp.write(head);
+      if (n <= 0) break;
+      moved += n;
+      c.queued -= n;
+      c.written += n;
+      if (n < head.length) {
+        c.queue[0] = head.subarray(n);
+        break;
+      }
+      c.queue.shift();
+    }
+    if (moved > 0) sendWritten(ws, id, c, false);
+  }
+
+  // A frame for an id with no connection. An id this WebSocket has used is freed: the page sent the
+  // frame before it saw the FAIL or the CLOSE that freed it, so the frame is dropped. An id never
+  // used is a protocol error.
+  function unknownId(ws: any, session: Session, id: number) {
+    if (!session.known[id]) ws.close(1002, "no such connection");
   }
 
   function handle(ws: any, session: Session, op: number, id: number, body: Uint8Array) {
@@ -120,8 +204,10 @@ export function startRelay(cfg: Config) {
       if (session.conns.size >= cfg.maxConnections) {
         return send(ws, OP.FAIL, id, failBody(ERR.EMFILE, "too many connections"));
       }
-      const conn: Conn = { open: false, closed: false };
+      const conn = newConn();
       session.conns.set(id, conn);
+      session.known[id] = 1;
+      const message = (err: unknown) => String((err as Error)?.message ?? err);
       Bun.connect({
         hostname: host,
         port,
@@ -130,6 +216,8 @@ export function startRelay(cfg: Config) {
             if (conn.closed) return tcp.end();
             conn.tcp = tcp;
             conn.open = true;
+            tcp.pause();   // no reads until the page grants credit (READ)
+            conn.paused = true;
             send(ws, OP.OK, id);
           },
           data(tcp, chunk) {
@@ -137,39 +225,71 @@ export function startRelay(cfg: Config) {
             for (let at = 0; at < chunk.length; at += MAX_BODY) {
               send(ws, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
             }
+            conn.credit -= chunk.length;
+            if (conn.credit <= 0 && !conn.paused) {
+              conn.paused = true;
+              tcp.pause();
+            }
+          },
+          drain() {
+            flush(ws, id, conn);
           },
           end() {
             if (!conn.closed) send(ws, OP.EOF, id);
           },
           close() {
-            if (session.conns.get(id) === conn) session.conns.delete(id);
+            conn.peerClosed = true;
+            // bytes queued for a socket that is closed can never be written
+            if (!conn.closed && conn.queued > 0) fail(ws, session, id, ERR.EPIPE, "Broken pipe");
           },
-          error(tcp, err) {
-            if (conn.closed) return;
-            if (!conn.open) return fail(ws, session, id, errnoOf(err), String((err as Error).message ?? err));
-            fail(ws, session, id, errnoOf(err), String((err as Error).message ?? err));
+          error(_tcp, err) {
+            fail(ws, session, id, errnoOf(err), message(err));
           },
-          connectError(tcp, err) {
-            if (!conn.closed) fail(ws, session, id, errnoOf(err), String((err as Error).message ?? err));
+          connectError(_tcp, err) {
+            fail(ws, session, id, errnoOf(err), message(err));
           },
         },
-      }).catch((err: unknown) => {
-        if (!conn.closed && !conn.open) fail(ws, session, id, errnoOf(err), String((err as Error).message ?? err));
-      });
+      }).catch((err: unknown) => fail(ws, session, id, errnoOf(err), message(err)));
       return;
     }
     const conn = session.conns.get(id);
     if (op === OP.SEND) {
-      if (!conn || !conn.open) return ws.close(1002, "SEND before OK");
+      if (!conn) return unknownId(ws, session, id);
+      if (!conn.open) return ws.close(1002, "SEND before OK");
       if (body.length > MAX_BODY) return ws.close(1002, "SEND too long");
-      conn.tcp.write(body);
+      if (conn.queued + body.length > SEND_WINDOW) return ws.close(1002, "SEND past the window");
+      if (conn.written + conn.queued + body.length > MAX_COUNT) {
+        return fail(ws, session, id, ERR.EFBIG, "file too large");
+      }
+      if (conn.peerClosed) return fail(ws, session, id, ERR.EPIPE, "Broken pipe");
+      conn.queue.push(body.slice());
+      conn.queued += body.length;
+      flush(ws, id, conn);
+      return;
+    }
+    if (op === OP.DISCARD) {
+      if (!conn) return unknownId(ws, session, id);
+      if (!conn.open) return ws.close(1002, "DISCARD before OK");
+      conn.queue = [];
+      conn.queued = 0;
+      sendWritten(ws, id, conn, true);
+      return;
+    }
+    if (op === OP.READ) {
+      if (!conn) return unknownId(ws, session, id);
+      if (!conn.open) return ws.close(1002, "READ before OK");
+      if (body.length !== 4) return ws.close(1002, "READ needs four bytes");
+      conn.credit = Math.min(MAX_COUNT, conn.credit + readU32(body));
+      if (conn.credit > 0 && conn.paused && !conn.closed) {
+        conn.paused = false;
+        conn.tcp.resume();
+      }
       return;
     }
     if (op === OP.CLOSE) {
       if (conn) {
-        conn.closed = true;
-        conn.tcp?.end?.();
         session.conns.delete(id);
+        end(conn);
       }
       return;
     }

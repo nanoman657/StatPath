@@ -1,5 +1,6 @@
-// The page's side of the relay (PROTOCOL.md): TCP connections over one WebSocket.
-// It is plain JavaScript that runs in a browser and under Bun (for the tests).
+// The page's side of the relay (PROTOCOL.md): TCP connections over one WebSocket. It is plain
+// JavaScript, for a browser and for Bun (the tests). The page's effects (effs/web_tcp.js) use the
+// callback calls, which answer once and never block; the promise calls wrap them for JavaScript.
 //
 //   const net = new RelayTcp("ws://127.0.0.1:8765");
 //   await net.open();
@@ -8,14 +9,23 @@
 //   const chunk = await net.recv(id, 4096);   // Uint8Array, or null at the end
 //   net.close(id);
 
-export const OP = { CONNECT: 1, SEND: 2, CLOSE: 3, OK: 10, FAIL: 11, DATA: 12, EOF: 13 };
+export const OP = {
+  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14,
+};
 export const MAX_BODY = 65535;
+export const SEND_WINDOW = 131072;
+export const READ_WINDOW = 131072;
+export const MAX_COUNT = 0xffffffff;
 
 export class TcpError extends Error {
-  constructor(errno, message) {
+  // written: for a failed send, how many of the connection's bytes the relay took (absolute,
+  // counted from the connect), so the caller knows which bytes of its send were not taken
+  constructor(errno, message, written = undefined) {
     super(message);
     this.name = "TcpError";
     this.errno = errno;
+    this.written = written;
   }
 }
 
@@ -39,6 +49,14 @@ export function decodeFrame(msg) {
   return { op: msg[0], id: msg[1], body: msg.subarray(4) };
 }
 
+function u32(n) {
+  return new Uint8Array([n >>> 24, (n >>> 16) & 255, (n >>> 8) & 255, n & 255]);
+}
+
+function readU32(b) {
+  return b[0] * 0x1000000 + (b[1] << 16) + (b[2] << 8) + b[3];
+}
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -57,9 +75,10 @@ export class RelayTcp {
     this.url = url;
     this.WebSocketImpl = WebSocketImpl;
     this.ws = null;
-    this.conns = new Map();          // id -> { state, waiters, chunks, eof, error }
-    this.connectWaiters = new Map(); // id -> { resolve, reject }
-    this.readers = new Map();        // id -> array of { resolve, reject, max }
+    this.conns = new Map();       // id -> connection (#newConn)
+    this.connecting = new Map();  // id -> callback of its connect
+    this.lastError = new Map();   // id -> the TcpError that ended it, while the id is not reused
+    this.lost = null;             // the TcpError once the WebSocket has closed
   }
 
   open() {
@@ -67,56 +86,132 @@ export class RelayTcp {
       const ws = new this.WebSocketImpl(this.url);
       ws.binaryType = "arraybuffer";
       ws.onopen = () => resolve();
-      ws.onerror = (e) => reject(new TcpError(5, "relay connection failed"));
+      ws.onerror = () => reject(new TcpError(5, "relay connection failed"));
       ws.onmessage = (ev) => this.#message(new Uint8Array(ev.data));
       ws.onclose = () => this.#lost();
       this.ws = ws;
     });
   }
 
-  // a free id: 0..255 that the page is not using
-  #freeId() {
-    for (let id = 0; id < 256; id++) if (!this.conns.has(id)) return id;
-    throw new TcpError(24, "too many connections");
+  // Opens a connection; cb({ id }) once the relay has connected it, or cb({ error }).
+  connectAt(host, port, cb) {
+    if (this.lost) return cb({ error: this.lost });
+    let id;
+    try {
+      id = this.#freeId();
+    } catch (e) {
+      return cb({ error: e });
+    }
+    this.conns.set(id, this.#newConn());
+    this.connecting.set(id, cb);
+    this.lastError.delete(id);
+    this.ws.send(encodeFrame(OP.CONNECT, id, connectBody(port, host)));
+    return undefined;
   }
 
   connect(host, port) {
-    const id = this.#freeId();
-    this.conns.set(id, { state: "connecting", chunks: [], eof: false, error: null });
     return new Promise((resolve, reject) => {
-      this.connectWaiters.set(id, { resolve: () => resolve(id), reject });
-      this.ws.send(encodeFrame(OP.CONNECT, id, connectBody(port, host)));
+      this.connectAt(host, port, (r) => (r.error ? reject(r.error) : resolve(r.id)));
     });
   }
 
-  send(id, bytes) {
+  // Sends bytes on a connection, after whatever it has already been asked to send. cb() once the
+  // relay has taken all of them, or cb({ error }) with error.written: how many of the connection's
+  // bytes were taken, so the rest of these are the ones not sent. Returns where these bytes start
+  // in the connection's count (the same count as error.written).
+  startSend(id, bytes, cb) {
     const c = this.conns.get(id);
-    if (!c || c.state !== "open") return Promise.reject(new TcpError(22, "send before the connection is open"));
-    for (let at = 0; at < bytes.length; at += MAX_BODY) {
-      this.ws.send(encodeFrame(OP.SEND, id, bytes.subarray(at, Math.min(bytes.length, at + MAX_BODY))));
+    if (!c || c.state !== "open") {
+      cb({ error: c ? new TcpError(22, "send before the connection is open", c.written) : this.#missing(id) });
+      return 0;
     }
-    return Promise.resolve();
+    if (c.op || c.discard) throw new Error("a connection takes one send at a time");
+    const start = c.tail;
+    c.tail += bytes.length;
+    if (bytes.length === 0) {
+      cb({ ok: true });
+      return start;
+    }
+    c.op = { start, bytes, cb };
+    this.#pump(id, c);
+    return start;
+  }
+
+  send(id, bytes) {
+    return new Promise((resolve, reject) => {
+      this.startSend(id, bytes, (r) => (r.error ? reject(r.error) : resolve()));
+    });
+  }
+
+  // Drops the bytes of the current send that the relay has not taken yet. cb({ written }) with the
+  // final count (the bytes of the send after it were not taken), or cb({ error }).
+  discard(id, cb) {
+    const c = this.conns.get(id);
+    if (!c || c.state !== "open") return cb({ error: this.#missing(id) });
+    c.discard = cb;
+    this.ws.send(encodeFrame(OP.DISCARD, id));
+    return undefined;
+  }
+
+  // What the page can read now: { bytes } (at most max), { eof: true } once the remote end has
+  // finished and nothing is left, or null when it has to wait. Throws the error that ended it.
+  takeNow(id, max) {
+    const c = this.conns.get(id);
+    if (!c) throw this.#missing(id);
+    if (c.buffered > 0) {
+      const bytes = this.#take(c, max);
+      this.ws.send(encodeFrame(OP.READ, id, u32(bytes.length)));
+      return { bytes };
+    }
+    if (c.eof) return { eof: true };
+    return null;
+  }
+
+  // Calls cb once when takeNow would answer (data, the end, or the error). Returns a function
+  // that cancels the call; a cancelled call takes nothing.
+  onReadable(id, cb) {
+    const c = this.conns.get(id);
+    if (!c) {
+      cb();
+      return () => {};
+    }
+    c.readers.push(cb);
+    return () => {
+      const i = c.readers.indexOf(cb);
+      if (i >= 0) c.readers.splice(i, 1);
+    };
   }
 
   // up to max bytes that have arrived; null once the remote end has finished and nothing is left
   recv(id, max) {
-    const c = this.conns.get(id);
-    if (!c) return Promise.reject(new TcpError(22, "no such connection"));
-    if (c.chunks.length > 0) return Promise.resolve(this.#take(c, max));
-    if (c.error) return Promise.reject(c.error);
-    if (c.eof) return Promise.resolve(null);
     return new Promise((resolve, reject) => {
-      const list = this.readers.get(id) ?? [];
-      list.push({ resolve, reject, max });
-      this.readers.set(id, list);
+      if (!(max > 0)) return reject(new TcpError(22, "Invalid argument"));
+      const attempt = () => {
+        let r;
+        try {
+          r = this.takeNow(id, max);
+        } catch (e) {
+          return reject(e);
+        }
+        if (r === null) return this.onReadable(id, attempt);
+        return resolve(r.eof ? null : r.bytes);
+      };
+      attempt();
+      return undefined;
     });
+  }
+
+  // bytes received and not yet read by the page (at most READ_WINDOW beyond what it has read)
+  buffered(id) {
+    return this.conns.get(id)?.buffered ?? 0;
   }
 
   close(id) {
     const c = this.conns.get(id);
     if (!c) return;
+    const err = new TcpError(9, "the connection is closed");
+    this.#die(id, c, err);
     if (this.ws && this.ws.readyState === 1) this.ws.send(encodeFrame(OP.CLOSE, id));
-    this.#forget(id);
   }
 
   shutdown() {
@@ -124,9 +219,66 @@ export class RelayTcp {
     if (this.ws) this.ws.close();
   }
 
+  // a free id: 0..255 that the page is not using
+  #freeId() {
+    for (let id = 0; id < 256; id++) if (!this.conns.has(id)) return id;
+    throw new TcpError(24, "Too many open files");
+  }
+
+  #newConn() {
+    return {
+      state: "connecting",
+      chunks: [],     // data received and not read: Uint8Array pieces, in order
+      buffered: 0,    // their total length
+      eof: false,     // the remote end has finished
+      tail: 0,        // bytes given to startSend so far
+      sent: 0,        // bytes framed as SEND so far
+      written: 0,     // bytes the relay has taken (WRITTEN)
+      op: null,       // the send in progress: { start, bytes, cb }
+      discard: null,  // the callback of a DISCARD waiting for its reply
+      readers: [],    // callbacks waiting for data (onReadable)
+    };
+  }
+
+  #missing(id) {
+    return this.lastError.get(id) ?? new TcpError(9, "no such connection");
+  }
+
+  // Frames as much of the current send as the window allows: SEND frames of at most MAX_BODY bytes,
+  // and no more than SEND_WINDOW bytes beyond what the relay has taken.
+  #pump(id, c) {
+    const op = c.op;
+    if (!op || c.discard || c.state !== "open") return;
+    const end = op.start + op.bytes.length;
+    while (c.sent < end && c.sent - c.written < SEND_WINDOW) {
+      const n = Math.min(MAX_BODY, SEND_WINDOW - (c.sent - c.written), end - c.sent);
+      const off = c.sent - op.start;
+      this.ws.send(encodeFrame(OP.SEND, id, op.bytes.subarray(off, off + n)));
+      c.sent += n;
+    }
+  }
+
+  // The connection has ended with err: the send, the discard and the connect that were waiting on
+  // it hear so, and so does every reader. The id is free after this.
+  #die(id, c, err) {
+    this.conns.delete(id);
+    this.lastError.set(id, err);
+    c.chunks = [];
+    c.buffered = 0;
+    const cb = this.connecting.get(id);
+    this.connecting.delete(id);
+    if (cb) cb({ error: err });
+    const op = c.op;
+    c.op = null;
+    if (op) op.cb({ error: new TcpError(err.errno, err.message, c.written) });
+    const d = c.discard;
+    c.discard = null;
+    if (d) d({ error: new TcpError(err.errno, err.message, c.written) });
+    this.#wake(c);
+  }
+
   #take(c, max) {
-    const total = c.chunks.reduce((n, x) => n + x.length, 0);
-    const want = Math.min(max, total);
+    const want = Math.min(max, c.buffered);
     const out = new Uint8Array(want);
     let at = 0;
     while (at < want) {
@@ -137,89 +289,78 @@ export class RelayTcp {
       if (part.length === first.length) c.chunks.shift();
       else c.chunks[0] = first.subarray(part.length);
     }
+    c.buffered -= want;
     return out;
   }
 
-  #wake(id) {
-    const list = this.readers.get(id);
-    if (!list) return;
-    const c = this.conns.get(id);
-    while (list.length > 0) {
-      const r = list[0];
-      if (c && c.chunks.length > 0) {
-        list.shift();
-        r.resolve(this.#take(c, r.max));
-      } else if (c && c.error) {
-        list.shift();
-        r.reject(c.error);
-      } else if (c && c.eof) {
-        list.shift();
-        r.resolve(null);
-      } else {
-        break;
-      }
-    }
-    if (list.length === 0) this.readers.delete(id);
-  }
-
-  #forget(id) {
-    const c = this.conns.get(id);
-    this.conns.delete(id);
-    this.connectWaiters.delete(id);
-    const list = this.readers.get(id);
-    this.readers.delete(id);
-    if (list) for (const r of list) r.resolve(null);
-    return c;
+  #wake(c) {
+    const readers = c.readers;
+    c.readers = [];
+    for (const r of readers) r();
   }
 
   #message(bytes) {
     const f = decodeFrame(bytes);
     if (!f) return; // a frame that does not fit is ignored; the relay closes the socket on its own errors
-    const c = this.conns.get(f.id);
-    if (f.op === OP.OK) {
-      const w = this.connectWaiters.get(f.id);
-      if (c) c.state = "open";
-      this.connectWaiters.delete(f.id);
-      if (w) w.resolve();
-      return;
-    }
-    if (f.op === OP.FAIL) {
-      const errno = (f.body[0] << 8) | f.body[1];
-      const err = new TcpError(errno, dec.decode(f.body.subarray(2)));
-      const w = this.connectWaiters.get(f.id);
-      if (w) {
-        this.#forget(f.id);
-        w.reject(err);
+    const id = f.id;
+    const c = this.conns.get(id);
+    switch (f.op) {
+      case OP.OK: {
+        if (!c) return;
+        const cb = this.connecting.get(id);
+        this.connecting.delete(id);
+        c.state = "open";
+        this.ws.send(encodeFrame(OP.READ, id, u32(READ_WINDOW)));
+        if (cb) cb({ id });
         return;
       }
-      if (c) {
-        c.error = err;
-        this.#wake(f.id);
-        this.conns.delete(f.id);
+      case OP.FAIL: {
+        const err = new TcpError((f.body[0] << 8) | f.body[1], dec.decode(f.body.subarray(2)));
+        if (c) this.#die(id, c, err);
+        return;
       }
-      return;
-    }
-    if (!c) return;
-    if (f.op === OP.DATA) {
-      c.chunks.push(f.body.slice());
-      this.#wake(f.id);
-      return;
-    }
-    if (f.op === OP.EOF) {
-      c.eof = true;
-      this.#wake(f.id);
+      case OP.WRITTEN: {
+        if (!c || f.body.length !== 5) return;
+        c.written = readU32(f.body);
+        const reply = f.body[4] === 1;
+        if (c.op && c.written >= c.op.start + c.op.bytes.length) {
+          const op = c.op;
+          c.op = null;
+          op.cb({ ok: true });
+        }
+        if (reply && c.discard) {
+          // the relay dropped what it had not taken: the page's count starts again from there
+          const d = c.discard;
+          c.discard = null;
+          c.op = null;
+          c.sent = c.written;
+          c.tail = c.written;
+          d({ written: c.written });
+        }
+        this.#pump(id, c);
+        return;
+      }
+      case OP.DATA: {
+        if (!c) return;
+        c.chunks.push(f.body.slice());
+        c.buffered += f.body.length;
+        this.#wake(c);
+        return;
+      }
+      case OP.EOF: {
+        if (!c) return;
+        c.eof = true;
+        this.#wake(c);
+        return;
+      }
+      default:
+        return;
     }
   }
 
   #lost() {
-    for (const id of [...this.conns.keys()]) {
-      const c = this.conns.get(id);
-      c.error = new TcpError(5, "relay connection closed");
-      this.#wake(id);
-      const w = this.connectWaiters.get(id);
-      if (w) w.reject(c.error);
-    }
-    this.conns.clear();
-    this.connectWaiters.clear();
+    const err = new TcpError(5, "relay connection closed");
+    this.lost = err;
+    for (const [id, c] of [...this.conns]) this.#die(id, c, err);
   }
 }
