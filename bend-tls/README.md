@@ -55,7 +55,7 @@ bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
 bend tls_tests.bend             -> tls: 24 passed, 0 failed
-bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
+bash e2e/run.sh                 -> e2e (js): 120 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
 ```
