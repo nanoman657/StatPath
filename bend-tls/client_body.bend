@@ -276,18 +276,26 @@ def flight.good(bad: Bool, done: Bool) -> Bool:
 # the server's message in the record (its type, its body and its raw bytes) and
 # the x25519 key share
 type SH is Data:
-  SH{raw: List<&2, U32>, pub: List<&2, U32>}
+  SH{raw: List<&2, U32>, pub: List<&2, U32>, alg: Nat}
 
 def hello.sh(+m: T.HM) -> SH:
   match m:
     case T.HM{+t, +body, +rest}:
-      SH{T.tls.hs(t, body), T.tls.sh.key(body)}
+      SH{T.tls.hs(t, body), T.tls.sh.key(body), hello.alg(T.tls.sh.cipher(body))}
 
 # a ServerHello for TLS_CHACHA20_POLY1305_SHA256
 def hello.ok(+m: T.HM) -> Bool:
   match m:
     case T.HM{+t, +body, +rest}:
-      Bool.and(U32.is_eq(t, 2), Nat.is_eq(T.tls.sh.cipher(body), 4867n))
+      Bool.and(U32.is_eq(t, 2), hello.suite_ok(T.tls.sh.cipher(body)))
+
+# the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301) and TLS_CHACHA20_POLY1305_SHA256 (0x1303)
+def hello.suite_ok(+c: Nat) -> Bool:
+  Bool.or(Nat.is_eq(c, 4865n), Nat.is_eq(c, 4867n))
+
+# the record key length of the suite: 16 bytes for AES-128-GCM, 32 for ChaCha20-Poly1305
+def hello.alg(+c: Nat) -> Nat:
+  Bool.pick(Nat, Nat.is_eq(c, 4865n), 16n, 32n)
 
 # the ClientHello message: an x25519 key share from priv (the base point is 9)
 def hello.msg(+priv: List<&2, U32>, +rnd: List<&2, U32>, +host: List<&2, U32>) -> List<&2, U32>:
@@ -318,57 +326,57 @@ def hello.at(ok: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +pr
 def hello.derive(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, +ch: List<&2, U32>,
   +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
-    case SH{+raw, +pub}:
-      hello.keys(s, rest, raw, pub, priv, ch, der, now, host)
+    case SH{+raw, +pub, +alg}:
+      hello.keys(s, rest, raw, pub, alg, priv, ch, der, now, host)
 
 # the handshake keys (RFC 8446 7.1): the handshake secret from the x25519
 # exchange, the client and server handshake traffic secrets over the transcript
 # through ServerHello, and the master secret
 def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<&2, U32>,
-  +priv: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +alg: Nat, +priv: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +th1 : List<&2, U32> = S.sha256_bytes(T.tls.cat(ch, raw))
     +hsec : List<&2, U32> = H.hs.hs_secret(priv, pub)
     +c_hs : List<&2, U32> = K.derive_secret(hsec, "c hs traffic", th1)
     +s_hs : List<&2, U32> = K.derive_secret(hsec, "s hs traffic", th1)
     +mst : List<&2, U32> = K.master_secret(hsec)
-    flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, now, host)
+    flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, now, host, alg)
 
 # the server's flight, read from rest with the server handshake keys
 def flight.start(s: Socket, +rest: List<&2, U32>, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
   +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
-  +host: List<&2, U32>) -> IO(Unit):
+  +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    +key : List<&2, U32> = K.traffic_key32(s_hs)
+    +key : List<&2, U32> = K.traffic_keyn(s_hs, alg)
     +iv : List<&2, U32> = K.traffic_iv(s_hs)
     r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
-    flight.finish(r, c_hs, s_hs, mst, ch, sh, der, now, host)
+    flight.finish(r, c_hs, s_hs, mst, ch, sh, der, now, host, alg)
 
 def flight.finish(t: Socket & Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>, +mst: List<&2, U32>,
-  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   (s, st) = t
-  flight.finish.go(s, st, c_hs, s_hs, mst, ch, sh, der, now, host)
+  flight.finish.go(s, st, c_hs, s_hs, mst, ch, sh, der, now, host, alg)
 
 def flight.finish.go(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
   +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
-  +host: List<&2, U32>) -> IO(Unit):
+  +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   flight.finish.at(flight.good(fl.bad(st), flight.done(fl.acc(st))), s, st, c_hs, s_hs, mst, ch, sh,
-    der, now, host)
+    der, now, host, alg)
 
 def flight.finish.at(ok: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>,
   +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
-  +host: List<&2, U32>) -> IO(Unit):
+  +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   match ok:
     case True{}:
-      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host), s, st, c_hs, mst, ch, sh, host)
+      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host), s, st, c_hs, mst, ch, sh, host, alg)
     case False{}:
       io.fail(s, "the server's flight is incomplete or a record did not open")
 
 def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
-  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   match v:
     case True{}:
-      client.finish(s, st, c_hs, mst, ch, sh, host)
+      client.finish(s, st, c_hs, mst, ch, sh, host, alg)
     case False{}:
       io.fail(s, "the server's certificate, CertificateVerify or Finished did not check")
 
@@ -377,17 +385,17 @@ def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst:
 
 # the client's Finished under c_hs, then the GET under the application keys
 def client.finish(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
-  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>) -> IO(Unit):
+  +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
     +thf : List<&2, U32> = flight.th(fl.acc(st), ch, sh, flight.off5(fl.acc(st)))
-    +ckey : List<&2, U32> = K.traffic_key32(c_hs)
+    +ckey : List<&2, U32> = K.traffic_keyn(c_hs, alg)
     +civ : List<&2, U32> = K.traffic_iv(c_hs)
     +fin : List<&2, U32> = T.tls.hs(20, K.finished_mac(c_hs, thf))
     s1 : Socket <- io.send(s, T.tls.seal(ckey, civ, 0n, 22, fin))
     +capsec : List<&2, U32> = K.derive_secret(mst, "c ap traffic", thf)
     +sapsec : List<&2, U32> = K.derive_secret(mst, "s ap traffic", thf)
-    s2 : Socket <- io.send(s1, T.tls.seal(K.traffic_key32(capsec), K.traffic_iv(capsec), 0n, 23, client.req(host)))
-    app.start(s2, fl.buf(st), K.traffic_key32(sapsec), K.traffic_iv(sapsec))
+    s2 : Socket <- io.send(s1, T.tls.seal(K.traffic_keyn(capsec, alg), K.traffic_iv(capsec), 0n, 23, client.req(host)))
+    app.start(s2, fl.buf(st), K.traffic_keyn(sapsec, alg), K.traffic_iv(sapsec))
 
 # the request: GET / with the host and Connection: close
 def client.req(+host: List<&2, U32>) -> List<&2, U32>:

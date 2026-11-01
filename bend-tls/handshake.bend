@@ -20,7 +20,7 @@ type Inner is Data:
 
 def hs.open(+key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, +rec: List<&2, U32>) ->
   Maybe<&2, List<&2, U32>>:
-  A.aead_open(key, T.tls.nonce(iv, seq), List.take(&2, U32, rec, 5n), List.drop(&2, U32, rec, 5n))
+  A.aead_open_any(key, T.tls.nonce(iv, seq), List.take(&2, U32, rec, 5n), List.drop(&2, U32, rec, 5n))
 
 # the content type is the last nonzero byte of the decrypted record
 def hs.zero(+xs: List<&2, U32>) -> Bool:

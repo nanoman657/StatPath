@@ -19,7 +19,7 @@ def client_hello(rnd, pub, host):
     exts += b"\x00\x0d" + vec(2, vec(2, b"\x08\x04\x04\x01"))                       # signature_algorithms
     exts += b"\x00\x33" + vec(2, vec(2, b"\x00\x1d" + vec(2, pub)))                     # key_share
     exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                        # server_name
-    body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x03") + b"\x01\x00" + vec(2, exts))
+    body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))
     return b"\x01" + len(body).to_bytes(3, "big") + body
 
 def nonce(iv, seq):

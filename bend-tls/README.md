@@ -2,7 +2,7 @@
 
 TLS 1.3 in pure Bend 2. Nothing here uses `@unsafe` or foreign code. The
 client completes a real handshake with `openssl s_server` and fetches a page,
-but it implements one cipher suite and RSA certificates only. See "Limits".
+but it implements two cipher suites and RSA certificates only. See "Limits".
 
 ## Status
 
@@ -12,13 +12,13 @@ but it implements one cipher suite and RSA certificates only. See "Limits".
 | HMAC-SHA256 (RFC 2104) | `hmac.bend` | done, tested |
 | HKDF (RFC 5869) and the TLS 1.3 key schedule | `hkdf.bend` | done, tested |
 | ChaCha20, Poly1305, ChaCha20-Poly1305 (RFC 8439) | `chacha20.bend`, `poly1305.bend`, `aead.bend` | done, tested |
-| AES-128-GCM | | not started |
+| AES-128 and AES-128-GCM (FIPS 197, SP 800-38D) | `aes.bend`, `gcm.bend` | done, tested |
 | X25519 key agreement (RFC 7748) | `x25519.bend` | done, tested |
 | P-256 key agreement | | not started |
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
 | ECDSA, Ed25519 signatures | | not started |
 | DER / ASN.1 and X.509 chain, validity and hostname checks | `asn1.bend`, `x509.bend` | done for RSA chains |
-| Record layer and client handshake | `tls.bend`, `handshake.bend`, `client.bend` | done for one suite; see the e2e test |
+| Record layer and client handshake | `tls.bend`, `handshake.bend`, `client.bend` | done for two suites; see the e2e test |
 
 ## Running
 
@@ -33,8 +33,9 @@ bend rsa_tests.bend                    -> rsa: 4 passed, 0 failed
 bend rsa_sig_tests.bend                -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend                   -> x509: 17 passed, 0 failed
 bend tls_tests.bend                    -> tls: 19 passed, 0 failed
-bash e2e/run.sh                        -> e2e (js): 4 passed, 0 failed
-bash e2e/run.sh native                 -> e2e (native): 4 passed, 0 failed
+bend aes_tests.bend                    -> aes-gcm: 39 passed, 0 failed
+bash e2e/run.sh                        -> e2e (js): 8 passed, 0 failed
+bash e2e/run.sh native                 -> e2e (native): 8 passed, 0 failed
 ```
 
 Each suite also runs natively (`bend X.bend -o X && ./X`) with the same output.
@@ -63,16 +64,18 @@ python3 -I gen_client.py && python3 -I sortfile.py client.bend
 The other generated files are `sha256.bend`, `tests.bend`, `hmac_tests.bend`,
 `hkdf_tests.bend`, `chacha20.bend`, `poly1305.bend`, `x25519.bend`,
 `bigint_tests.bend`, `rsa_tests.bend`, `rsa_sig_tests.bend`, `aead_tests.bend`,
-`x25519_tests.bend`, `x509_tests.bend`, `tls_tests.bend`. Each generator is the
+`x25519_tests.bend`, `x509_tests.bend`, `tls_tests.bend`, `aes_tests.bend`, and
+`aes.bend` (from `aes_body.bend` by `gen_aes.py`). Each generator is the
 `gen_*.py` file with the same stem. They compute expected values with Python:
-`hashlib`, `hmac`, and the `cryptography` package (for X.509, RSA, X25519 and
-ChaCha20-Poly1305).
+`hashlib`, `hmac`, and the `cryptography` package (for X.509, RSA, X25519,
+ChaCha20-Poly1305 and AES-GCM).
 
 ## End-to-end test
 
-`e2e/run.sh` makes a PKI (root, intermediate, and a leaf for `example.test`),
-starts `openssl s_server` with TLS 1.3, `TLS_CHACHA20_POLY1305_SHA256` and X25519,
-and runs the client against it:
+`e2e/run.sh` makes a PKI (root, intermediate, and a leaf for `example.test`).
+For each suite, `TLS_AES_128_GCM_SHA256` and `TLS_CHACHA20_POLY1305_SHA256`, it
+starts `openssl s_server` with TLS 1.3 and X25519 (allowing only that suite), and
+runs the client against it:
 
 - **valid:** the root is the anchor and the host is `example.test`. The page is
   fetched.
@@ -121,14 +124,15 @@ Hashing is about 4 MB/s on JS and 53 MB/s natively. The JS figure is with the
 tail-recursive message pass. The first version overflowed the JS stack somewhere
 between 16 KB and 64 KB.
 
-The e2e run is about 7 s on JS for four handshakes. Native runs are faster.
+The e2e run is about 16 s on JS for eight handshakes. The native build takes
+about 35 s and each run is faster. AES-GCM speed has not been measured.
 
 ## Limits and cautions
 
-- **One cipher suite.** The client offers and accepts only
-  `TLS_CHACHA20_POLY1305_SHA256` with X25519. RFC 8446 section 9.1 requires
-  `TLS_AES_128_GCM_SHA256` as well, and AES-128-GCM is not implemented, so a
-  server without ChaCha20 support will fail the handshake.
+- **Two cipher suites.** The client offers `TLS_AES_128_GCM_SHA256` and
+  `TLS_CHACHA20_POLY1305_SHA256` with X25519, and accepts either. AES-256-GCM is
+  not implemented, nor P-256 key shares, so a server that allows only those will
+  fail the handshake.
 - **RSA certificates only.** ECDSA and Ed25519 keys are not verified. A server
   with an ECDSA certificate will be rejected.
 - **Certificate checks are partial.** Validity dates and hostname matching (DNS
@@ -155,11 +159,11 @@ The e2e run is about 7 s on JS for four handshakes. Native runs are faster.
 
 Roughly in order of difficulty:
 
-1. **AES-128-GCM** (AES round functions, the S-box, and GHASH over GF(2^128)).
-   RFC 8446 section 9.1 requires it.
-2. **P-256**, and ECDSA verification (needs modular inversion and point
-   arithmetic on the curve).
-3. **Ed25519** and certificates signed with ECDSA or Ed25519.
-4. **Certificate extensions:** basicConstraints and keyUsage, and wildcard names.
+1. **P-256**, and ECDSA verification (needs modular inversion and point
+   arithmetic on the curve). Most public servers now use ECDSA certificates,
+   so this is the main gap for real sites.
+2. **Ed25519** and certificates signed with ECDSA or Ed25519.
+3. **Certificate extensions:** basicConstraints and keyUsage, and wildcard names.
+4. **AES-256-GCM** and **P-256** key shares, if the client should offer them.
 5. **Bounded reads:** a stream that outlasts the 24-record limit should be an
    error, not a silent cut.

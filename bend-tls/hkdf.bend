@@ -97,3 +97,7 @@ def finished_mac(+secret: List<&2, U32>, +transcript: List<&2, U32>) -> List<&2,
 # the 32-byte record key of a traffic secret, for TLS_CHACHA20_POLY1305_SHA256
 def traffic_key32(+secret: List<&2, U32>) -> List<&2, U32>:
   expand_label(secret, "key", Nil{}, 32n)
+
+# the record key of a traffic secret of len bytes (16 for AES-128-GCM, 32 for ChaCha20)
+def traffic_keyn(+secret: List<&2, U32>, +len: Nat) -> List<&2, U32>:
+  expand_label(secret, "key", Nil{}, len)
