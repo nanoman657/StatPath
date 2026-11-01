@@ -1,0 +1,387 @@
+From 6273b7f12eb1299c9b684f93d1ebc3ddcfa79863 Mon Sep 17 00:00:00 2001
+From: Claude <noreply@anthropic.com>
+Date: Sun, 1 Nov 2026 18:44:42 +0000
+Subject: [PATCH] bend2: an asynchronous scheduler for waits that no file
+ descriptor backs, and host-neutral I/O for page modules
+
+A wait that no fd backs parks with at = Infinity (or a deadline) and is woken by io_notify, so an event loop can run it. The top-level run awaits; a nested run keeps the blocking poll.
+
+A module that a page imports carries the runtime's input and output and the scheduler, and exports page_main, which runs main. The runtime looks up the host's modules (fs, tty, bun:ffi) when it uses them, through process.getBuiltinModule, and a page has none: its output goes to #bend-output (or console), and a system call throws.
+---
+ bend2/comp.ts | 241 +++++++++++++++++++++++++++++++++++++-------------
+ bend2/main.ts |   6 +-
+ 2 files changed, 181 insertions(+), 66 deletions(-)
+
+diff --git a/bend2/comp.ts b/bend2/comp.ts
+index 07d63fd..81125e4 100644
+--- a/bend2/comp.ts
++++ b/bend2/comp.ts
+@@ -1353,9 +1353,9 @@ export function io_type(book: Bend.Book): HTerm | null {
+   return xs?.length === 1 ? xs[0] : null;
+ }
+ 
+-export function io_run(book: Bend.Book, args: string[]): number {
++export function io_run(book: Bend.Book, args: string[]): Promise<number> {
+   const src = `${js_lib(book)}\n${RUNTIME_MAIN}\ncli_args = ${
+-    JSON.stringify(args)};\nreturn io_run(${name_id("$", "main")});`;
++    JSON.stringify(args)};\nreturn io_run_async(${name_id("$", "main")});`;
+   return new Function("require", src)(import.meta.require);
+ }
+ 
+@@ -3323,7 +3323,9 @@ export function js_lib(book: Bend.Book, mod = false): string {
+     return done_live(t) && !t.b && t.x === 0
+       && io_base(FL.book, t.T) === null;
+   });
+-  file_book(outs ?? ["main"]);
++  // A module keeps main out of its exports (it is an IO), but page_main runs it, so it is compiled too.
++  const io_main = mod && "main" in FL.book.tlds && !(outs ?? []).includes("main");
++  file_book(outs === null ? ["main"] : io_main ? [...outs, "main"] : outs);
+   for (const [k, def] of done_defs(fun_runs)) {
+     unit_emit(unit_new(k, () => js_def(k, def)));
+   }
+@@ -3348,9 +3350,13 @@ export function js_lib(book: Bend.Book, mod = false): string {
+       : f};`;
+   });
+   PROBES.length = 1;
++  // A module (one a page imports) carries the runtime's input and output and its scheduler, and
++  // page_main runs the program's main through the scheduler, as the command line does.
++  const page = !mod || !("main" in FL.book.tlds) ? ""
++    : `\nexport function page_main() {\n  return io_run_async(${name_id("$", "main")});\n}\n`;
+   return RUNTIME + effs + "// Program\n// =======\n\n" + [...funs, ...entries,
+     ...[...FL.tabs].map(([r, i]) => `const TAB_${i} = [${r}];`)].join("\n")
+-    + lib;
++    + lib + (mod ? "\n" + RUNTIME_MAIN + page : "");
+ }
+ 
+ export function js_book(book: Bend.Book): string {
+@@ -6179,17 +6185,42 @@ function cli(argv) {
+ // out) and/or until at; once due, io_wait calls more and resumes k with its
+ // value, or parks it again on undefined. Waits stay in deadline order.
+ 
+-function io_exit(main) {
++async function io_exit(main) {
+   try {
+-    process.exit(io_run(main));
++    process.exit(await io_run_async(main));
+   } catch (e) {
+     io_errs(String(e));
+     process.exit(1);
+   }
+ }
+ 
++// The module called name (fs, tty, bun:ffi) of the Node or Bun host, or null where there is no
++// such host (a browser page). It is looked up when used, so a bundler sees no import to resolve.
++function io_node(name) {
++  return globalThis.process?.getBuiltinModule?.(name) ?? null;
++}
++
++// A page has no file descriptors: its output goes to globalThis.bend_stdout(fd, text) when the page
++// sets that, else to the element #bend-output, else to the console.
++function io_page_out(fd, data) {
++  const text = new TextDecoder().decode(data);
++  if (typeof globalThis.bend_stdout === "function") {
++    globalThis.bend_stdout(fd, text);
++    return;
++  }
++  const el = globalThis.document?.getElementById("bend-output");
++  if (el) {
++    el.textContent += text;
++    return;
++  }
++  (fd === 2 ? console.error : console.log)(text.replace(/\n$/, ""));
++}
++
+ function io_out(fd, data) {
+-  const fs = require("fs");
++  const fs = io_node("fs");
++  if (fs === null) {
++    return io_page_out(fd, data);
++  }
+   for (let at = 0; at < data.length;) {
+     try {
+       const n = fs.writeSync(fd, data.subarray(at));
+@@ -6221,7 +6252,7 @@ function io_out(fd, data) {
+ let io_held = null;
+ 
+ function io_std(data) {
+-  io_held ??= !require("tty").isatty(1) && [];
++  io_held ??= io_node("fs") !== null && !io_node("tty").isatty(1) && [];
+   if (!io_held) {
+     return io_out(1, data);
+   }
+@@ -6235,10 +6266,21 @@ function io_std(data) {
+ function io_sync() {
+   if (io_held?.length > 0) {
+     io_held.n = 0;
+-    io_out(1, Buffer.concat(io_held.splice(0)));
++    io_out(1, io_join(io_held.splice(0)));
+   }
+ }
+ 
++// The bytes of several chunks, as one.
++function io_join(chunks) {
++  const all = new Uint8Array(chunks.reduce((n, c) => n + c.length, 0));
++  let at = 0;
++  for (const c of chunks) {
++    all.set(c, at);
++    at += c.length;
++  }
++  return all;
++}
++
+ function io_errs(message) {
+   io_sync();
+   io_out(2, io_bytes(message + "\n"));
+@@ -6246,13 +6288,16 @@ function io_errs(message) {
+ 
+ function io_sys() {
+   if (globalThis.BEND_SYS === undefined) {
+-    const ffi = require("bun:ffi");
+-    const mac = process.platform === "darwin";
++    const ffi = io_node("bun:ffi");
++    if (ffi === null) {
++      throw new Error("bend: a page has no system calls");
++    }
++    const mac = globalThis.process?.platform === "darwin";
+     const err = mac ? "__error" : "__errno_location";
+     const sel = mac ? "select$DARWIN_EXTSN" : "select";
+     const T = { i: "i32", u: "u32", U: "u64", I: "i64", p: "ptr",
+       c: "cstring" };
+-    const vari = mac && process.arch === "arm64";
++    const vari = mac && globalThis.process?.arch === "arm64";
+     const lib = ffi.dlopen(mac ? "libSystem.dylib" : "libc.so.6",
+       Object.fromEntries(("socket:iii>i bind:ipu>i listen:ii>i connect:ipu>i"
+         + " accept:ipp>i send:ipUi>I recv:ipUi>I read:ipU>I pread:ipUI>I"
+@@ -6350,6 +6395,8 @@ function io_push(fun, arg, fresh, io = io_active) {
+ }
+ 
+ function io_wait(io, block) {
++  const woke = io_woke;
++  io_woke = false;
+   const soon = io.waits[0]?.at ?? Infinity;
+   const ms = !block ? 0 : soon === Infinity ? -1
+     : Math.max(0, Math.ceil(soon - performance.now()));
+@@ -6373,8 +6420,11 @@ function io_wait(io, block) {
+     set.fill(0);
+   }
+   const now = performance.now();
++  // A notice re-checks every external wait, one with a deadline too: its more() answers when
++  // the event has come, or parks again.
+   const due = (w) => w.at <= now || w.fd !== undefined
+-    && set[at(w)] & 1 << (w.fd & 7);
++    && set[at(w)] & 1 << (w.fd & 7)
++    || woke && w.fd === undefined;
+   const todo = io.waits;
+   io.waits = todo.filter((w) => !due(w));
+   for (const w of todo.filter(due)) {
+@@ -6392,61 +6442,126 @@ function io_park_on(fd, out, k, more, at = Infinity) {
+   return t;
+ }
+ 
+-function io_run(m) {
+-  const io = { runs: [], live: 0, waits: [] };
+-  const parent = io_active;
+-  io_active = io;
+-  try {
+-    io_push(run_loop(m()), (x) => ({ $: "Emit", value: x }), true);
+-    let look = 0;
+-    for (let n = 0;; n += 1) {
+-      if (io.runs.length === 0) {
+-        if (io.live === 0) {
+-          return 0;
+-        }
+-        if (io.waits.length === 0) {
+-          io_errs("bend: deadlock: every computation waits on a channel");
++// An external wait is parked with no fd and at = Infinity: its event (a message, a host
++// timer) calls io_notify, and the next io_wait calls its more() to see whether it is done.
++// The runtime never blocks in select for an external wait, so an event loop can run.
++let io_woke = false;
++let io_wake = null;
++
++function io_notify() {
++  io_woke = true;
++  const f = io_wake;
++  io_wake = null;
++  if (f !== null) f();
++}
++
++// Waits without an fd (timers, external events) end on their deadline or a notice; a wait on an
++// fd keeps the blocking poll of the native runtime.
++async function io_wait_async(io) {
++  if (io.waits.some((w) => w.fd !== undefined)) {
++    io_wait(io, true);
++    return;
++  }
++  if (!io_woke) {
++    const soon = io.waits[0]?.at ?? Infinity;
++    await new Promise((resolve) => {
++      io_wake = resolve;
++      if (soon !== Infinity) {
++        setTimeout(resolve, Math.max(0, soon - performance.now()));
++      }
++    });
++    io_wake = null;
++  }
++  io_wait(io, false);
++}
++
++// The run loop, as steps: it yields where it has nothing to run and must wait. The top-level run
++// waits on the event loop (io_wait_async); a nested run, which is called from an effect and
++// cannot wait, polls as the native runtime always did (io_wait with block).
++function* io_steps(io, m) {
++  io_push(run_loop(m()), (x) => ({ $: "Emit", value: x }), true);
++  let look = 0;
++  for (let n = 0;; n += 1) {
++    if (io.runs.length === 0) {
++      if (io.live === 0) {
++        return 0;
++      }
++      if (io.waits.length === 0) {
++        io_errs("bend: deadlock: every computation waits on a channel");
++        return 1;
++      }
++      yield;
++      continue;
++    }
++    if ((n & 63) === 0 && io.waits.length > 0) {
++      const now = performance.now();
++      if (now >= look || io.waits[0].at <= now) {
++        look = now + 10;
++        io_wait(io, false);
++      }
++    }
++    const s = io.runs.shift();
++    let op = s.fun(s.arg);
++    for (let left = 64; op !== undefined; left -= 1) {
++      if (op.$ === "Emit") {
++        io.live -= 1;
++        break;
++      }
++      if (op.$ === "Halt" || op.$ === "Exit") {
++        if (op.$ === "Halt") io_errs(op.message);
++        if (op.code > 255) {
++          io_errs("bend: exit code must be in 0..255");
+           return 1;
+         }
+-        io_wait(io, true);
+-        continue;
++        return op.code;
+       }
+-      if ((n & 63) === 0 && io.waits.length > 0) {
+-        const now = performance.now();
+-        if (now >= look || io.waits[0].at <= now) {
+-          look = now + 10;
+-          io_wait(io, false);
+-        }
++      const run = $0eff[op.$];
++      if (run === undefined) {
++        throw "bend: no effect registers " + op.$;
+       }
+-      const s = io.runs.shift();
+-      let op = s.fun(s.arg);
+-      for (let left = 64; op !== undefined; left -= 1) {
+-        if (op.$ === "Emit") {
+-          io.live -= 1;
+-          break;
+-        }
+-        if (op.$ === "Halt" || op.$ === "Exit") {
+-          if (op.$ === "Halt") io_errs(op.message);
+-          if (op.code > 255) {
+-            io_errs("bend: exit code must be in 0..255");
+-            return 1;
+-          }
+-          return op.code;
+-        }
+-        const run = $0eff[op.$];
+-        if (run === undefined) {
+-          throw "bend: no effect registers " + op.$;
+-        }
+-        const x = run(...op.args, op.kont);
+-        if (x === undefined) {
+-          break;
+-        }
+-        if (left === 1) {
+-          io_push(op.kont, x, false, io);
+-          break;
+-        }
+-        op = op.kont(x);
++      const x = run(...op.args, op.kont);
++      if (x === undefined) {
++        break;
+       }
++      if (left === 1) {
++        io_push(op.kont, x, false, io);
++        break;
++      }
++      op = op.kont(x);
++    }
++  }
++}
++
++// The top-level run: an external event ends a wait, so the event loop keeps running.
++async function io_run_async(m) {
++  const io = { runs: [], live: 0, waits: [] };
++  const parent = io_active;
++  io_active = io;
++  try {
++    const steps = io_steps(io, m);
++    for (let r = steps.next(); ; r = steps.next()) {
++      if (r.done) return r.value;
++      await io_wait_async(io);
++    }
++  } catch (e) {
++    throw e instanceof RangeError ? "bend: ${ERRS[7]}" : e;
++  } finally {
++    io_sync();
++    io.done = true;
++    io_active = parent;
++  }
++}
++
++// A nested run (called from an effect, so it cannot await): the blocking poll, as before.
++function io_run(m) {
++  const io = { runs: [], live: 0, waits: [] };
++  const parent = io_active;
++  io_active = io;
++  try {
++    const steps = io_steps(io, m);
++    for (let r = steps.next(); ; r = steps.next()) {
++      if (r.done) return r.value;
++      io_wait(io, true);
+     }
+   } catch (e) {
+     throw e instanceof RangeError ? "bend: ${ERRS[7]}" : e;
+diff --git a/bend2/main.ts b/bend2/main.ts
+index bbac022..27a37ec 100755
+--- a/bend2/main.ts
++++ b/bend2/main.ts
+@@ -313,7 +313,7 @@ async function cli_file(args: string[]): Promise<void> {
+       return;
+     }
+     if (outs.length === 0) {
+-      process.exitCode = book_run(book, [file, ...argv]);
++      process.exitCode = await book_run(book, [file, ...argv]);
+       return;
+     }
+     const ins = new Set([...seen.keys(), ...Object.values(book.tlds).flatMap((t) =>
+@@ -363,7 +363,7 @@ async function cli_checkup(file: string): Promise<void> {
+     try {
+       const own = /^(?:[\t\r ]*(?:(?:#|import )[^\n]*)?\n)*[\t ]*import Base\s/
+         .test(fs.readFileSync(at, "utf8"));
+-      code = book_run(await book_read(at, own ? base : undefined), [at]);
++      code = await book_run(await book_read(at, own ? base : undefined), [at]);
+     } catch (e) {
+       cli_say(2, book_err(e) + "\n");
+     }
+@@ -1072,7 +1072,7 @@ function book_main(book: Bend.Book): Bend.Def | null {
+     || (main.v === null && main.i === undefined) ? null : main;
+ }
+ 
+-function book_run(book: Bend.Book, argv: string[]): number {
++async function book_run(book: Bend.Book, argv: string[]): Promise<number> {
+   const main = book_main(book);
+   if (main === null) {
+     return cli_verdict(book, false);
+-- 
+2.43.0
+
