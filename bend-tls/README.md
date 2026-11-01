@@ -3,7 +3,7 @@
 TLS 1.3 in pure Bend 2. Nothing here uses `@unsafe` or foreign code. The client
 completes a TLS 1.3 handshake with `openssl s_server` (and with a Python TLS
 server for the response-size test), verifies the server's certificate chain, and
-fetches a page. It supports two cipher suites, three key-exchange groups and three
+fetches a page. It supports three cipher suites, three key-exchange groups and four
 certificate key types. See "Limits" for what is missing.
 
 ## Status
@@ -11,10 +11,10 @@ certificate key types. See "Limits" for what is missing.
 | Layer | File | Status |
 |---|---|---|
 | SHA-256 (FIPS 180-4) | `sha256.bend` | done, tested |
-| HMAC-SHA256 (RFC 2104) | `hmac.bend` | done, tested |
-| HKDF (RFC 5869) and the TLS 1.3 key schedule | `hkdf.bend` | done, tested |
+| HMAC-SHA256 and HMAC-SHA384 (RFC 2104) | `hmac.bend`, `hmac384.bend` | done, tested |
+| HKDF (RFC 5869) and the TLS 1.3 key schedule, for SHA-256 and SHA-384 | `hkdf.bend` | done, tested |
 | ChaCha20, Poly1305, ChaCha20-Poly1305 (RFC 8439) | `chacha20.bend`, `poly1305.bend`, `aead.bend` | done, tested |
-| AES-128 and AES-128-GCM (FIPS 197, SP 800-38D) | `aes.bend`, `gcm.bend` | done, tested |
+| AES-128 and AES-256, with GCM (FIPS 197, SP 800-38D) | `aes.bend`, `gcm.bend` | done, tested |
 | SHA-384 and SHA-512 (FIPS 180-4) | `sha512.bend` | done, tested |
 | X25519 key agreement (RFC 7748) | `x25519.bend` | done, tested |
 | P-256 ECDH and ECDSA verification (SEC 1, FIPS 186-4) | `p256.bend` | done, tested |
@@ -22,9 +22,9 @@ certificate key types. See "Limits" for what is missing.
 | Ed25519 verification (RFC 8032) | `ed25519.bend` | done, tested |
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
 | DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and P-384, and Ed25519 keys |
-| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 2 suites, 3 groups, 4 certificate key types |
+| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 3 suites, 3 groups (HelloRetryRequest for secp384r1), 4 certificate key types |
 
-The client's two suites are `TLS_AES_128_GCM_SHA256` and
+The client's three suites are `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
 `TLS_CHACHA20_POLY1305_SHA256`. Its key shares are x25519, secp256r1 and secp384r1. Its
 signature algorithms are `rsa_pss_rsae_sha256`, `rsa_pkcs1_sha256` (offered, not
 used for CertificateVerify), `ecdsa_secp256r1_sha256`, `ecdsa_secp384r1_sha384`
@@ -38,9 +38,10 @@ natively too (`bend X.bend -o X && ./X`), with the same output.
 ```
 bend tests.bend                 -> sha256: 16 passed, 0 failed
 bend hmac_tests.bend            -> hmac-sha256: 10 passed, 0 failed
-bend hkdf_tests.bend            -> hkdf: 22 passed, 0 failed
+bend hkdf_tests.bend            -> hkdf: 41 passed, 0 failed
+bend hmac384_tests.bend         -> hmac-sha384: 42 passed, 0 failed
 bend aead_tests.bend            -> aead: 29 passed, 0 failed
-bend aes_tests.bend             -> aes-gcm: 39 passed, 0 failed
+bend aes_tests.bend             -> aes-gcm: 48 passed, 0 failed
 bend sha512_tests.bend          -> sha512: 27 passed, 0 failed
 bend x25519_tests.bend          -> x25519: 7 passed, 0 failed
 bend p256_tests.bend            -> p256: 51 passed, 0 failed
@@ -53,9 +54,9 @@ bend x509_tests.bend            -> x509: 17 passed, 0 failed
 bend x509_ext_tests.bend        -> x509-ext: 41 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
-bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
+bend fuzz_tls_tests.bend        -> fuzz-tls: 298 passed, 0 failed
 bend tls_tests.bend             -> tls: 33 passed, 0 failed
-bash e2e/run.sh                 -> e2e (js): 120 passed, 0 failed
+bash e2e/run.sh                 -> e2e (js): 180 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 120 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
 ```
@@ -90,6 +91,7 @@ Several modules are generated; the source is the file with the `_body` or the
 | `p384.bend` | `p256_body.bend` | `python3 -I gen_p384.py` |
 | `fuzz_tests.bend` | `gen_fuzz_tests.py` | `python3 -I gen_fuzz_tests.py` (fresh random keys each run) |
 | `fuzz_tls_tests.bend` | `gen_fuzz_tls_tests.py` | `python3 -I gen_fuzz_tls_tests.py` |
+| `hmac384_tests.bend` | `gen_hmac384_tests.py` | `python3 -I gen_hmac384_tests.py` |
 | `*_tests.bend` | `gen_*_tests.py` | `python3 -I gen_X_tests.py` |
 
 Bend requires definitions in dependency order, so the generated files that
@@ -106,7 +108,8 @@ combination of:
 - PKI kind: `rsa` (RSA keys throughout), `ec` (P-256 keys throughout, so every
   signature is ECDSA), `mixed` (RSA root, P-256 intermediate, RSA leaf), `ed`
   (Ed25519 keys throughout) and `ec384` (P-384 keys, signed with SHA-384);
-- cipher suite: `TLS_AES_128_GCM_SHA256` or `TLS_CHACHA20_POLY1305_SHA256`;
+- cipher suite: `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` or
+  `TLS_CHACHA20_POLY1305_SHA256`;
 - group: X25519, P-256 or P-384 (the server allows only that group, so the client must
   use it).
 
@@ -118,7 +121,7 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 2 x 3 x 4 = 120 runs. A valid run goes through the whole handshake:
+That is 5 x 3 x 3 x 4 = 180 runs. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
@@ -210,11 +213,49 @@ tail-recursive message pass; the first version overflowed the JS stack between
 16 KB and 64 KB. The e2e run (64 handshakes) takes about two minutes on JS. The
 native build takes about 35 s. AES-GCM throughput has not been measured.
 
+## Constant-time review
+
+This is a reading of the code, not a measurement. The question is whether any branch or
+memory access depends on a secret. The secrets are the X25519 and ECDH private scalars,
+the traffic keys and IVs, the AES and ChaCha20 keys, the GCM hash key H, the Poly1305 key
+and the finished keys. Lengths, certificates, signatures, transcripts and record headers
+are public.
+
+The answer is no: several secret-dependent branches remain.
+
+| Where | Secret | Dependence |
+|---|---|---|
+| `p256_body.bend`, `p256.smul.go` (also in `p384.bend`) | the ECDH scalar | a `match` on each bit: the point addition runs only for a 1 bit |
+| `x25519.bend`, `fe.pick` in `ladder.step` | the swap bit (a scalar bit) | a `match` on the swap bit chooses the field elements |
+| `x25519.bend`, `fe.cB3` and `fe.cB2` | field values | a `match` on the high bit of a carry |
+| `bigint.bend`, `B.bi.csub` and the Montgomery code | field values | a conditional subtraction on the borrow |
+| `aes_body.bend`, `aes.sbox.*` | state and key bytes | the S-box is a tree of comparisons on each byte |
+| `aes_body.bend`, `aes.xtime` | state bytes | a `Bool.pick` on the top bit of the byte |
+| `gcm.bend`, `gcm.cond` and `gcm.shr1` | the running product, which depends on H | a `match` on a bit of the product |
+| `poly1305.bend`, `pl.canon.choose` | the accumulator | a `match` on whether the value reaches p |
+
+Not affected, by reading:
+
+- The byte comparisons (`ae.eq` for tags, `rsa.eqb` for Finished and signatures). They
+  walk every byte and branch only on length: `Bool.and` evaluates its second argument
+  even when the first is false (checked by timing a long second argument), so a mismatch
+  does not end the walk early.
+- SHA-256, SHA-384 and SHA-512, HMAC, and HKDF: word operations with public lengths. The
+  HMAC key padding branches on the key length only.
+- ChaCha20: word operations (quarter rounds), no branch on the data.
+
+These claims are about the source. Bend compiles to JavaScript and C through its runtime,
+and the timing of allocation and of the runtime's own control flow is outside this code.
+The fixes would be masked selection (no branch) in the scalar multiplications and the
+ladder, a branch-free S-box and GCM multiply, and a constant-time reduction. None is done.
+Until they are, do not use the client with a key that must stay secret from a timing
+observer.
+
 ## Limits and cautions
 
-- **Two cipher suites.** `TLS_AES_128_GCM_SHA256` and
-  `TLS_CHACHA20_POLY1305_SHA256`. `TLS_AES_256_GCM_SHA384` is not implemented:
-  it needs SHA-384 in the transcript hash and the key schedule.
+- **Three cipher suites.** `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
+  `TLS_CHACHA20_POLY1305_SHA256`. The transcript hash and the key schedule follow the
+  suite's hash (SHA-256 or SHA-384), and the record key length follows its cipher.
 - **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). The first
   ClientHello carries x25519 and P-256 key shares; a server that wants P-384 sends a
   HelloRetryRequest, and the client answers with a P-384 key share (and the cookie,
@@ -243,9 +284,8 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
   messages are read and ignored.
 - **Time and names come from the command line.** The Unix time and the server name
   are arguments, and the connection address is an IP address (no DNS).
-- **Not constant time.** Bend compiles to C and JS, and nothing in the code guards
-  against timing or cache side channels. This is not safe for secrets until it has
-  been reviewed.
+- **Not constant time.** Several secret-dependent branches remain (see the review
+  above). This is not safe for secrets against a timing observer.
 - **No streaming API for hashing.** `sha256_bytes`, `sha512.hash` and `hmac` take
   the whole message at once.
 - **No audit.** The test vectors and the e2e tests show the arithmetic and the
@@ -253,9 +293,8 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 
 ## What remains
 
-1. **`TLS_AES_256_GCM_SHA384`,** with SHA-384 in the transcript hash and the key
-   schedule (HKDF-SHA384, HMAC-SHA384, AES-256 keys). The P-384 key agreement and
-   certificates are done; this suite is an extension of the same code.
-2. **Constant-time arithmetic,** and a review before any use with real secrets.
-3. **Revocation** (CRL, OCSP). The client does not fetch either, and no CRL is given to
+1. **Constant-time arithmetic.** The review below lists the leaks; removing them is
+   the work, and it needs masked selection in the scalar multiplications and the
+   ladder, a branch-free S-box and GCM, and a constant-time reduction.
+2. **Revocation** (CRL, OCSP). The client does not fetch either, and no CRL is given to
    it, so a revoked certificate is accepted.

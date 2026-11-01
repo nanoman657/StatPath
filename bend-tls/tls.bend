@@ -57,14 +57,14 @@ def tls.header(n: Nat) -> List<&2, U32>:
   23 <> 3 <> 3 <> tls.be(2n, n)
 
 # a protected record: header, then the AEAD of the content and its type byte
-def tls.seal.at(+key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, +pt: List<&2, U32>,
+def tls.seal.at(alg: Nat, +key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, +pt: List<&2, U32>,
   +hdr: List<&2, U32>, ctype: U32) -> List<&2, U32>:
-  tls.cat(hdr, A.aead_seal_any(key, tls.nonce(iv, seq), hdr, tls.cat(pt, ctype <> Nil{})))
+  tls.cat(hdr, A.aead_seal_any(alg, key, tls.nonce(iv, seq), hdr, tls.cat(pt, ctype <> Nil{})))
 
 # a plaintext record (no protection): type, legacy version 0x0301, length, body
-def tls.seal(+key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, ctype: U32, +pt: List<&2, U32>) ->
+def tls.seal(alg: Nat, +key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, ctype: U32, +pt: List<&2, U32>) ->
   List<&2, U32>:
-  tls.seal.at(key, iv, seq, pt, tls.header(tls.len(pt, 17n)), ctype)
+  tls.seal.at(alg, key, iv, seq, pt, tls.header(tls.len(pt, 17n)), ctype)
 
 def tls.plain(ctype: U32, +body: List<&2, U32>) -> List<&2, U32>:
   ctype <> 3 <> 1 <> tls.cat(tls.be(2n, tls.len(body, 0n)), body)
@@ -101,7 +101,7 @@ def tls.exts(+entries: List<&2, U32>, +host: List<&2, U32>, +cookie: List<&2, U3
 # a ClientHello with the given key share entries (a secp256r1 entry, a secp384r1 entry ...)
 def tls.client_hello(+random: List<&2, U32>, +entries: List<&2, U32>, +host: List<&2, U32>, +cookie: List<&2, U32>) -> List<&2, U32>:
   tls.hs(1, tls.cat(3 <> 3 <> Nil{}, tls.cat(random, tls.cat(0 <> Nil{},
-    tls.cat(tls.vec(2n, 19 <> 1 <> 19 <> 3 <> Nil{}), tls.cat(1 <> 0 <> Nil{},
+    tls.cat(tls.vec(2n, 19 <> 2 <> 19 <> 1 <> 19 <> 3 <> Nil{}), tls.cat(1 <> 0 <> Nil{},
     tls.vec(2n, tls.exts(entries, host, cookie))))))))
 
 # the random of a ServerHello: after the 2-byte version, 32 bytes

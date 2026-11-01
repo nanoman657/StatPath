@@ -1,4 +1,5 @@
-# Writes aes_tests.bend: AES-128 block encryption and AES-128-GCM seal and open.
+# Writes aes_tests.bend: AES-128 and AES-256 block encryption, and AES-128-GCM and AES-256-GCM
+# seal and open.
 # Expected values come from the cryptography package. Before any are written,
 # the oracle is checked against the published FIPS 197 C.1 block and the
 # McGrew-Viega GCM test cases 1 and 2.
@@ -67,6 +68,20 @@ body_bad = bytes([s[0] ^ 0x80]) + s[1:]
 boolcase("open-body-changed", f"G.gcm.valid({lst(k)}, {lst(n)}, {lst(a)}, {lst(body_bad)})", "False")
 boolcase("open-aad-changed", f"G.gcm.valid({lst(k)}, {lst(n)}, {lst(a[:-1] + bytes([a[-1] ^ 1]))}, {lst(s)})", "False")
 boolcase("open-too-short", f"G.gcm.valid({lst(k)}, {lst(n)}, {lst(a)}, {lst(s[:10])})", "False")
+# AES-256 (FIPS 197 C.3) and GCM with 32-byte keys, against cryptography
+fips256 = bytes(range(32))
+assert block_enc(fips256, fips_pt).hex() == "8ea2b7ca516745bfeafc49904b496089"
+kc("fips197-c3", hexof(f"AES.aes.enc(AES.aes.expand({lst(fips256)}), {lst(fips_pt)})"),
+   block_enc(fips256, fips_pt).hex())
+for i in range(4):
+    key = rb(32); blk = rb(16)
+    kc(f"block256-{i}", hexof(f"AES.aes.enc(AES.aes.expand({lst(key)}), {lst(blk)})"),
+       block_enc(key, blk).hex())
+for aad_n, pt_n in [(0, 0), (16, 17), (5, 40), (33, 1)]:
+    key = rb(32); nonce = rb(12); aad = rb(aad_n); pt = rb(pt_n)
+    want = AESGCM(key).encrypt(nonce, pt, aad if aad_n else None).hex()
+    kc(f"gcm256-a{aad_n}-p{pt_n}",
+       hexof(f"G.gcm.seal({lst(key)}, {lst(nonce)}, {lst(aad)}, {lst(pt)})"), want)
 # the open result is the plaintext: the sealed text of random data round-trips
 pt = rb(40)
 rt_sealed = AESGCM(k).encrypt(n, pt, a)

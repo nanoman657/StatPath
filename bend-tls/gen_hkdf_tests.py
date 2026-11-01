@@ -1,48 +1,50 @@
-# Writes hkdf_tests.bend. Expected values come from the cryptography package:
+# Writes hkdf_tests.bend: HKDF, HKDF-Expand-Label and the TLS 1.3 schedule, for SHA-256
+# (hl = 32) and SHA-384 (hl = 48). Expected values come from the cryptography package:
 # HKDF / HKDFExpand and HMAC for the primitives, and a Python transcription of
-# RFC 8446 section 7.1 for the TLS schedule. RFC 5869 test case 1 is checked
-# against its published output.
+# RFC 8446 section 7.1 for the TLS schedule. RFC 5869 test case 1 is checked against its
+# published output.
 #   python3 -I gen_hkdf_tests.py
 import random
 from cryptography.hazmat.primitives import hashes, hmac
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF, HKDFExpand
 
-def H(key, msg):
-    h = hmac.HMAC(key, hashes.SHA256())
+ALG = {32: hashes.SHA256, 48: hashes.SHA384}
+
+def H(hl, key, msg):
+    h = hmac.HMAC(key, ALG[hl]())
     h.update(msg)
     return h.finalize()
 
-def extract(salt, ikm):
-    return H(salt, ikm)
+def extract(hl, salt, ikm):
+    return H(hl, salt, ikm)
 
-def expand(prk, info, n):
-    return HKDFExpand(algorithm=hashes.SHA256(), length=n, info=info).derive(prk) if n else b""
+def expand(hl, prk, info, n):
+    return HKDFExpand(algorithm=ALG[hl](), length=n, info=info).derive(prk) if n else b""
 
 def hkdf_label(length, label, context):
     full = b"tls13 " + label
     return length.to_bytes(2, "big") + bytes([len(full)]) + full + bytes([len(context)]) + context
 
-def expand_label(secret, label, context, length):
-    return expand(secret, hkdf_label(length, label.encode(), context), length)
+def expand_label(hl, secret, label, context, length):
+    return expand(hl, secret, hkdf_label(length, label.encode(), context), length)
 
-def derive_secret(secret, label, transcript):
-    return expand_label(secret, label, transcript, 32)
+def derive_secret(hl, secret, label, transcript):
+    return expand_label(hl, secret, label, transcript, hl)
 
-EMPTY = hashes.Hash(hashes.SHA256())
-EMPTY.update(b"")
-EMPTY_HASH = EMPTY.finalize()
-ZERO = bytes(32)
+def empty_hash(hl):
+    h = hashes.Hash(ALG[hl]())
+    h.update(b"")
+    return h.finalize()
 
 # RFC 5869 test case 1, published values
 ikm1 = bytes([0x0b] * 22)
 salt1 = bytes(range(0x00, 0x0d))
 info1 = bytes(range(0xf0, 0xfa))
-prk1 = extract(salt1, ikm1)
-okm1 = expand(prk1, info1, 42)
+prk1 = extract(32, salt1, ikm1)
+okm1 = expand(32, prk1, info1, 42)
 assert prk1.hex() == "077709362c2e32df0ddc3f0dc47bba6390b6c73bb50f9c3122ec844ad7c2b3e5", prk1.hex()
 assert okm1.hex() == ("3cb25f25faacd57a90434f64d0362f2a2d2d0a90cf1a5a4c5db02d56ecc4c5bf"
                       "34007208d5b887185865"), okm1.hex()
-# the same case through cryptography's one-shot HKDF
 assert HKDF(hashes.SHA256(), 42, salt1, info1).derive(ikm1) == okm1
 
 rng = random.Random(5869)
@@ -55,48 +57,50 @@ def lst(b):
 def ex(x):
     return "S.hex_of(" + x + ")"
 
-rfc_prk = ex(f"K.hkdf_extract({lst(salt1)}, {lst(ikm1)})")
-rfc_okm = ex(f"K.hkdf_expand({lst(prk1)}, {lst(info1)}, 42n)")
 out = [
-    f'  kcase("rfc5869-1-prk", {rfc_prk}, "{prk1.hex()}") <>',
-    f'  kcase("rfc5869-1-okm", {rfc_okm}, "{okm1.hex()}") <>',
-]
-for n in [1, 16, 32, 33, 42, 64, 100]:
-    prk = rb(32); info = rb(rng.randrange(0, 90))
-    out.append(f'  kcase("expand-{n}", {ex(f"K.hkdf_expand({lst(prk)}, {lst(info)}, {n}n)")}, "{expand(prk, info, n).hex()}") <>')
-for i, (sl, il) in enumerate([(0, 22), (32, 64), (20, 0), (100, 150)]):
-    salt = rb(sl); ikm = rb(il)
-    out.append(f'  kcase("extract-{i}", {ex(f"K.hkdf_extract({lst(salt)}, {lst(ikm)})")}, "{extract(salt, ikm).hex()}") <>')
-for i, n in enumerate([16, 12, 32]):
-    sec = rb(32); lab = ["key", "iv", "finished"][i]
-    ctx = rb(rng.randrange(0, 40))
-    out.append(f'  kcase("label-{lab}-{n}", {ex(f"K.expand_label({lst(sec)}, \"{lab}\", {lst(ctx)}, {n}n)")}, "{expand_label(sec, lab, ctx, n).hex()}") <>')
-
-dhe = rb(32)
-th_ch_sh = rb(32); th_ch_sf = rb(32)
-early = extract(ZERO, ZERO)
-hs = extract(derive_secret(early, "derived", EMPTY_HASH), dhe)
-master = extract(derive_secret(hs, "derived", EMPTY_HASH), ZERO)
-c_hs = derive_secret(hs, "c hs traffic", th_ch_sh)
-c_ap = derive_secret(master, "c ap traffic", th_ch_sf)
-HS = f"K.handshake_secret(K.early_secret(), {lst(dhe)})"
-MS = f"K.master_secret({HS})"
-out += [
-    f'  kcase("sched-early", {ex("K.early_secret()")}, "{early.hex()}") <>',
-    f'  kcase("sched-hs", {ex(HS)}, "{hs.hex()}") <>',
-    f'  kcase("sched-master", {ex(MS)}, "{master.hex()}") <>',
-    f'  kcase("sched-c-hs-traffic", {ex(f"K.derive_secret({HS}, \"c hs traffic\", {lst(th_ch_sh)})")}, "{c_hs.hex()}") <>',
-    f'  kcase("sched-c-ap-key", {ex(f"K.traffic_key(K.derive_secret({MS}, \"c ap traffic\", {lst(th_ch_sf)}))")}, "{expand_label(c_ap, "key", b"", 16).hex()}") <>',
-    f'  kcase("sched-c-hs-finished", {ex(f"K.finished_mac(K.derive_secret({HS}, \"c hs traffic\", {lst(th_ch_sh)}), {lst(th_ch_sh)})")}, "{H(expand_label(c_hs, "finished", b"", 32), th_ch_sh).hex()}") <>',
+    f'  kcase("rfc5869-1-prk", {ex(f"K.hkdf_extract(32n, {lst(salt1)}, {lst(ikm1)})")}, "{prk1.hex()}") <>',
+    f'  kcase("rfc5869-1-okm", {ex(f"K.hkdf_expand(32n, {lst(prk1)}, {lst(info1)}, 42n)")}, "{okm1.hex()}") <>',
 ]
 
-src = '''# hkdf_tests.bend: HKDF, HKDF-Expand-Label and the TLS 1.3 schedule
+# HKDF-Expand and HKDF-Extract, for both hashes
+for hl in [32, 48]:
+    for n in ([1, 16, 32, 33, 42, 64, 100] if hl == 32 else [1, 32, 48, 49, 96, 120]):
+        prk = rb(hl); info = rb(rng.randrange(0, 90))
+        out.append(f'  kcase("expand-{hl}-{n}", {ex(f"K.hkdf_expand({hl}n, {lst(prk)}, {lst(info)}, {n}n)")}, "{expand(hl, prk, info, n).hex()}") <>')
+    for i, (sl, il) in enumerate([(0, 22), (hl, 64), (20, 0), (100, 150)]):
+        salt = rb(sl); ikm = rb(il)
+        out.append(f'  kcase("extract-{hl}-{i}", {ex(f"K.hkdf_extract({hl}n, {lst(salt)}, {lst(ikm)})")}, "{extract(hl, salt, ikm).hex()}") <>')
+    for i, n in enumerate([16, 12, hl]):
+        sec = rb(hl); lab = ["key", "iv", "finished"][i]
+        ctx = rb(rng.randrange(0, 40))
+        out.append(f'  kcase("label-{hl}-{lab}-{n}", {ex(f"K.expand_label({hl}n, {lst(sec)}, \"{lab}\", {lst(ctx)}, {n}n)")}, "{expand_label(hl, sec, lab, ctx, n).hex()}") <>')
+
+    # the TLS 1.3 schedule with an (EC)DHE secret of the hash's size
+    dhe = rb(48 if hl == 48 else 32)
+    th_ch_sh = rb(hl); th_ch_sf = rb(hl)
+    zero = bytes(hl)
+    early = extract(hl, zero, zero)
+    hs = extract(hl, derive_secret(hl, early, "derived", empty_hash(hl)), dhe)
+    master = extract(hl, derive_secret(hl, hs, "derived", empty_hash(hl)), zero)
+    c_hs = derive_secret(hl, hs, "c hs traffic", th_ch_sh)
+    c_ap = derive_secret(hl, master, "c ap traffic", th_ch_sf)
+    HS = f"K.handshake_secret({hl}n, K.early_secret({hl}n), {lst(dhe)})"
+    MS = f"K.master_secret({hl}n, {HS})"
+    out += [
+        f'  kcase("sched-{hl}-early", {ex(f"K.early_secret({hl}n)")}, "{early.hex()}") <>',
+        f'  kcase("sched-{hl}-hs", {ex(HS)}, "{hs.hex()}") <>',
+        f'  kcase("sched-{hl}-master", {ex(MS)}, "{master.hex()}") <>',
+        f'  kcase("sched-{hl}-c-hs-traffic", {ex(f"K.derive_secret({hl}n, {HS}, \"c hs traffic\", {lst(th_ch_sh)})")}, "{c_hs.hex()}") <>',
+        f'  kcase("sched-{hl}-c-ap-key", {ex(f"K.traffic_keyn({hl}n, K.derive_secret({hl}n, {MS}, \"c ap traffic\", {lst(th_ch_sf)}), {16 if hl == 32 else 32}n)")}, "{expand_label(hl, c_ap, "key", b"", 16 if hl == 32 else 32).hex()}") <>',
+        f'  kcase("sched-{hl}-c-hs-finished", {ex(f"K.finished_mac({hl}n, K.derive_secret({hl}n, {HS}, \"c hs traffic\", {lst(th_ch_sh)}), {lst(th_ch_sh)})")}, "{H(hl, expand_label(hl, c_hs, "finished", b"", hl), th_ch_sh).hex()}") <>',
+    ]
+
+src = '''# hkdf_tests.bend: HKDF, HKDF-Expand-Label and the TLS 1.3 schedule for SHA-256 and SHA-384
 # (generated by gen_hkdf_tests.py; expected values from cryptography).
 #   bend hkdf_tests.bend
 
 import Base
 import ./sha256.bend as S
-import ./hmac.bend as H
 import ./hkdf.bend as K
 
 type Case is Data:
@@ -131,6 +135,5 @@ def main() -> IO(Unit):
     List.for_each(~&2, ~String, ~IO.print, fs)
     IO.print("hkdf: " ++ Nat.show(Nat.sub(n, f)) ++ " passed, " ++ Nat.show(f) ++ " failed")
 '''
-src = src.replace("S.hex_of(hkdf_extract(", "S.hex_of(K.hkdf_extract(")
-open('hkdf_tests.bend','w').write(src)
+open('hkdf_tests.bend', 'w').write(src)
 print(len(out), "cases")

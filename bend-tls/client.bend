@@ -1156,16 +1156,16 @@ def fl.open(opened: Maybe<&2, List<&2, U32>>, +st: Fl, +rest: List<&2, U32>, wan
 
 # an alert (content type 21) ends the stream: a peer's close_notify, or an error
 def fl.next.at(hdr: U32, +st: Fl, +rest: List<&2, U32>, +rec: List<&2, U32>,
-  +key: List<&2, U32>, +iv: List<&2, U32>, want: U32) -> Fl:
+  +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat, want: U32) -> Fl:
   match hdr:
     case 20:
       Fl{rest, fl.recs(st), fl.seq(st), fl.bad(st)}
     case _:
-      fl.open(H.hs.open(key, iv, fl.seq(st), rec), st, rest, want)
+      fl.open(H.hs.open(alg, key, iv, fl.seq(st), rec), st, rest, want)
 
 def fl.next(+st: Fl, +rest: List<&2, U32>, +rec: List<&2, U32>, +key: List<&2, U32>,
-  +iv: List<&2, U32>, want: U32) -> Fl:
-  fl.next.at(T.tls.tag(rec), st, rest, rec, key, iv, want)
+  +iv: List<&2, U32>, +alg: Nat, want: U32) -> Fl:
+  fl.next.at(T.tls.tag(rec), st, rest, rec, key, iv, alg, want)
 
 def flight.msglen(+acc: List<&2, U32>) -> Nat:
   Nat.add(4n, T.tls.num(3n, List.drop(&2, U32, acc, 1n)))
@@ -1193,8 +1193,11 @@ def flight.kinds(+acc: List<&2, U32>) -> Bool:
         U32.is_eq(T.tls.tag(List.drop(&2, U32, acc, flight.off4(acc))), 20))))
 
 # the transcript hash of ClientHello, ServerHello and the first n bytes of the flight
-def flight.th(+acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +n: Nat) -> List<&2, U32>:
-  S.sha256_bytes(T.tls.cat(ch, T.tls.cat(sh, List.take(&2, U32, acc, n))))
+def hello.hl(+alg: Nat) -> Nat:
+  Bool.pick(Nat, Nat.is_eq(alg, 4866n), 48n, 32n)
+
+def flight.th(+alg: Nat, +acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +n: Nat) -> List<&2, U32>:
+  K.hash_of(hello.hl(alg), T.tls.cat(ch, T.tls.cat(sh, List.take(&2, U32, acc, n))))
 
 # the leaf is the first certificate of the chain
 def flight.leaf(+chain: List<&2, List<&2, U32>>) -> List<&2, U32>:
@@ -1222,12 +1225,12 @@ def flight.verify.at(kinds: Bool, chain: Bool, cv: Bool, fin: Bool) -> Bool:
 # host), its CertificateVerify over the transcript through Certificate, and its
 # Finished over the transcript through CertificateVerify
 def flight.verify(+acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +s_hs: List<&2, U32>,
-  +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> Bool:
+  +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> Bool:
   flight.verify.at(flight.kinds(acc),
     flight.chain_ok(T.tls.certs(flight.msg(acc, flight.msglen(acc))), der, host, now),
     H.hs.cv_ok(flight.leaf(T.tls.certs(flight.msg(acc, flight.msglen(acc)))),
-      flight.th(acc, ch, sh, flight.off3(acc)), flight.msg(acc, flight.off3(acc))),
-    H.hs.fin_ok(s_hs, flight.th(acc, ch, sh, flight.off4(acc)), flight.msg(acc, flight.off4(acc))))
+      flight.th(alg, acc, ch, sh, flight.off3(acc)), flight.msg(acc, flight.off3(acc))),
+    H.hs.fin_ok(hello.hl(alg), s_hs, flight.th(alg, acc, ch, sh, flight.off4(acc)), flight.msg(acc, flight.off4(acc))))
 
 # true once a complete Finished message is among the messages of acc
 def flight.complete(+acc: List<&2, U32>) -> Bool:
@@ -1274,7 +1277,7 @@ def flight.good(bad: Bool, done: Bool) -> Bool:
 
 # the flight stages: stage k reads one record while the flight is open (every
 # stage calls only the next one)
-def f24.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f24.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   IO.pure(Socket & Fl, (s, st))
 
 
@@ -1284,439 +1287,434 @@ def f24.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U
 
 # the server's message in the record (its raw bytes, its key share and its group),
 # and the record key length of its suite
-def f23.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f24.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f23.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f24.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f23.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f23.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f23.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f23.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f23.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f23.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f23.got(t, st, key, iv)
+        f23.got(t, st, key, iv, alg)
 
-def f22.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f23.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f22.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f23.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f22.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f22.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f22.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f22.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f22.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f22.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f22.got(t, st, key, iv)
+        f22.got(t, st, key, iv, alg)
 
-def f21.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f22.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f21.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f22.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f21.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f21.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f21.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f21.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f21.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f21.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f21.got(t, st, key, iv)
+        f21.got(t, st, key, iv, alg)
 
-def f20.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f21.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f20.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f21.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f20.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f20.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f20.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f20.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f20.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f20.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f20.got(t, st, key, iv)
+        f20.got(t, st, key, iv, alg)
 
-def f19.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f20.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f19.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f20.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f19.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f19.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f19.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f19.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f19.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f19.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f19.got(t, st, key, iv)
+        f19.got(t, st, key, iv, alg)
 
-def f18.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f19.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f18.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f19.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f18.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f18.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f18.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f18.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f18.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f18.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f18.got(t, st, key, iv)
+        f18.got(t, st, key, iv, alg)
 
-def f17.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f18.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f17.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f18.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f17.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f17.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f17.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f17.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f17.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f17.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f17.got(t, st, key, iv)
+        f17.got(t, st, key, iv, alg)
 
-def f16.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f17.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f16.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f17.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f16.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f16.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f16.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f16.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f16.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f16.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f16.got(t, st, key, iv)
+        f16.got(t, st, key, iv, alg)
 
-def f15.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f16.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f15.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f16.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f15.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f15.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f15.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f15.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f15.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f15.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f15.got(t, st, key, iv)
+        f15.got(t, st, key, iv, alg)
 
-def f14.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f15.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f14.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f15.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f14.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f14.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f14.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f14.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f14.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f14.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f14.got(t, st, key, iv)
+        f14.got(t, st, key, iv, alg)
 
-def f13.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f14.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f13.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f14.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f13.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f13.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f13.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f13.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f13.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f13.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f13.got(t, st, key, iv)
+        f13.got(t, st, key, iv, alg)
 
-def f12.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f13.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f12.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f13.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f12.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f12.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f12.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f12.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f12.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f12.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f12.got(t, st, key, iv)
+        f12.got(t, st, key, iv, alg)
 
-def f11.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f12.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f11.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f12.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f11.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f11.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f11.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f11.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f11.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f11.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f11.got(t, st, key, iv)
+        f11.got(t, st, key, iv, alg)
 
-def f10.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f11.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f10.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f11.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f10.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f10.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f10.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f10.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f10.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f10.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f10.got(t, st, key, iv)
+        f10.got(t, st, key, iv, alg)
 
-def f9.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f10.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f9.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f10.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f9.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f9.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f9.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f9.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f9.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f9.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f9.got(t, st, key, iv)
+        f9.got(t, st, key, iv, alg)
 
-def f8.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f9.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f8.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f9.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f8.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f8.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f8.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f8.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f8.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f8.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f8.got(t, st, key, iv)
+        f8.got(t, st, key, iv, alg)
 
-def f7.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f8.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f7.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f8.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f7.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f7.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f7.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f7.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f7.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f7.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f7.got(t, st, key, iv)
+        f7.got(t, st, key, iv, alg)
 
-def f6.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f7.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f6.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f7.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f6.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f6.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f6.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f6.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f6.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f6.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f6.got(t, st, key, iv)
+        f6.got(t, st, key, iv, alg)
 
-def f5.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f6.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f5.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f6.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f5.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f5.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f5.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f5.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f5.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f5.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f5.got(t, st, key, iv)
+        f5.got(t, st, key, iv, alg)
 
-def f4.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f5.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f4.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f5.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f4.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f4.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f4.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f4.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f4.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f4.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f4.got(t, st, key, iv)
+        f4.got(t, st, key, iv, alg)
 
-def f3.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f4.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f3.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f4.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f3.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f3.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f3.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f3.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f3.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f3.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f3.got(t, st, key, iv)
+        f3.got(t, st, key, iv, alg)
 
-def f2.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f3.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f2.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f3.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f2.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f2.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f2.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f2.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f2.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f2.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f2.got(t, st, key, iv)
+        f2.got(t, st, key, iv, alg)
 
-def f1.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f2.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f1.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f2.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f1.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f1.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f1.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f1.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f1.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f1.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f1.got(t, st, key, iv)
+        f1.got(t, st, key, iv, alg)
 
-def f0.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  f1.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv)
+def f0.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  f1.at(flight.stop(fl.bad(st), flight.done(fl.acc(st))), s, st, key, iv, alg)
 
-def f0.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f0.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  f0.next(s, fl.next(st, rest, rec, key, iv, 22), key, iv)
+  f0.next(s, fl.next(st, rest, rec, key, iv, alg, 22), key, iv, alg)
 
-def f0.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def f0.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        f0.got(t, st, key, iv)
+        f0.got(t, st, key, iv, alg)
 
 type SH is Data:
   SH{raw: List<&2, U32>, pub: List<&2, U32>, alg: Nat, group: Nat}
 
-def hello.alg(+c: Nat) -> Nat:
-  Bool.pick(Nat, Nat.is_eq(c, 4865n), 16n, 32n)
-
-# the private scalars: privs is the secp256r1 scalar (32 bytes) then the secp384r1 scalar (48 bytes)
-# the ClientHello message: an x25519 key share from priv (the base point is 9) and a secp256r1
-# key share (04 || x || y). The secp384r1 key share is sent only if a HelloRetryRequest selects it.
 def hello.sh(+m: T.HM) -> SH:
   match m:
     case T.HM{+t, +body, +rest}:
-      SH{T.tls.hs(t, body), T.tls.sh.key(body), hello.alg(T.tls.sh.cipher(body)), T.tls.sh.group(body)}
+      SH{T.tls.hs(t, body), T.tls.sh.key(body), T.tls.sh.cipher(body), T.tls.sh.group(body)}
 
 # a ServerHello for one of our suites: a HelloRetryRequest selects secp384r1 (24), and a
 # ServerHello one of the groups of the first ClientHello's key shares
 def hello.group_ok(+g: Nat) -> Bool:
   Bool.or(Nat.is_eq(g, 29n), Bool.or(Nat.is_eq(g, 23n), Nat.is_eq(g, 24n)))
 
-# the record key length of the suite: 16 bytes for AES-128-GCM, 32 for ChaCha20-Poly1305
+# the hash length of the suite (48 for TLS_AES_256_GCM_SHA384, else 32) and the record key length
+# (16 for TLS_AES_128_GCM_SHA256, else 32)
 def hello.is_hrr(+body: List<&2, U32>) -> Bool:
   R.rsa.eqb(T.tls.sh.random(body), T.tls.hrr_random())
 
 def hello.suite_ok(+c: Nat) -> Bool:
-  Bool.or(Nat.is_eq(c, 4865n), Nat.is_eq(c, 4867n))
+  Bool.or(Nat.is_eq(c, 4865n), Bool.or(Nat.is_eq(c, 4866n), Nat.is_eq(c, 4867n)))
 
 # the groups of the first ClientHello's key shares: x25519 (29) and secp256r1 (23)
 def hello.ok(+m: T.HM) -> Bool:
@@ -1725,7 +1723,14 @@ def hello.ok(+m: T.HM) -> Bool:
       Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)),
         Bool.pick(Bool, hello.is_hrr(body), Nat.is_eq(T.tls.sh.group(body), 24n), hello.group_ok(T.tls.sh.group(body)))))
 
-# the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301) and TLS_CHACHA20_POLY1305_SHA256 (0x1303)
+# the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301), TLS_AES_256_GCM_SHA384 (0x1302) and
+# TLS_CHACHA20_POLY1305_SHA256 (0x1303)
+def hello.keylen(+alg: Nat) -> Nat:
+  Bool.pick(Nat, Nat.is_eq(alg, 4865n), 16n, 32n)
+
+# the private scalars: privs is the secp256r1 scalar (32 bytes) then the secp384r1 scalar (48 bytes)
+# the ClientHello message: an x25519 key share from priv (the base point is 9) and a secp256r1
+# key share (04 || x || y). The secp384r1 key share is sent only if a HelloRetryRequest selects it.
 def hello.p256_scalar(+privs: List<&2, U32>) -> List<&2, U32>:
   List.take(&2, U32, privs, 32n)
 
@@ -1801,7 +1806,7 @@ def app.end(t: Socket & Fl) -> IO(Unit):
   (s, st) = t
   app.print(s, st)
 
-def g24.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g24.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
@@ -1816,417 +1821,417 @@ def g24.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U3
 # ----
 
 # a nonnegative decimal argument
-def g23.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g24.at(fl.bad(st), s, st, key, iv)
+def g23.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g24.at(fl.bad(st), s, st, key, iv, alg)
 
-def g23.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g23.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g23.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g23.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g23.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g23.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g23.got(t, st, key, iv)
+        g23.got(t, st, key, iv, alg)
 
-def g22.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g23.at(fl.bad(st), s, st, key, iv)
+def g22.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g23.at(fl.bad(st), s, st, key, iv, alg)
 
-def g22.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g22.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g22.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g22.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g22.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g22.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g22.got(t, st, key, iv)
+        g22.got(t, st, key, iv, alg)
 
-def g21.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g22.at(fl.bad(st), s, st, key, iv)
+def g21.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g22.at(fl.bad(st), s, st, key, iv, alg)
 
-def g21.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g21.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g21.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g21.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g21.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g21.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g21.got(t, st, key, iv)
+        g21.got(t, st, key, iv, alg)
 
-def g20.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g21.at(fl.bad(st), s, st, key, iv)
+def g20.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g21.at(fl.bad(st), s, st, key, iv, alg)
 
-def g20.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g20.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g20.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g20.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g20.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g20.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g20.got(t, st, key, iv)
+        g20.got(t, st, key, iv, alg)
 
-def g19.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g20.at(fl.bad(st), s, st, key, iv)
+def g19.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g20.at(fl.bad(st), s, st, key, iv, alg)
 
-def g19.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g19.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g19.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g19.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g19.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g19.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g19.got(t, st, key, iv)
+        g19.got(t, st, key, iv, alg)
 
-def g18.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g19.at(fl.bad(st), s, st, key, iv)
+def g18.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g19.at(fl.bad(st), s, st, key, iv, alg)
 
-def g18.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g18.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g18.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g18.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g18.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g18.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g18.got(t, st, key, iv)
+        g18.got(t, st, key, iv, alg)
 
-def g17.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g18.at(fl.bad(st), s, st, key, iv)
+def g17.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g18.at(fl.bad(st), s, st, key, iv, alg)
 
-def g17.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g17.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g17.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g17.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g17.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g17.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g17.got(t, st, key, iv)
+        g17.got(t, st, key, iv, alg)
 
-def g16.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g17.at(fl.bad(st), s, st, key, iv)
+def g16.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g17.at(fl.bad(st), s, st, key, iv, alg)
 
-def g16.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g16.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g16.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g16.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g16.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g16.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g16.got(t, st, key, iv)
+        g16.got(t, st, key, iv, alg)
 
-def g15.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g16.at(fl.bad(st), s, st, key, iv)
+def g15.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g16.at(fl.bad(st), s, st, key, iv, alg)
 
-def g15.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g15.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g15.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g15.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g15.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g15.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g15.got(t, st, key, iv)
+        g15.got(t, st, key, iv, alg)
 
-def g14.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g15.at(fl.bad(st), s, st, key, iv)
+def g14.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g15.at(fl.bad(st), s, st, key, iv, alg)
 
-def g14.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g14.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g14.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g14.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g14.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g14.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g14.got(t, st, key, iv)
+        g14.got(t, st, key, iv, alg)
 
-def g13.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g14.at(fl.bad(st), s, st, key, iv)
+def g13.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g14.at(fl.bad(st), s, st, key, iv, alg)
 
-def g13.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g13.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g13.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g13.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g13.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g13.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g13.got(t, st, key, iv)
+        g13.got(t, st, key, iv, alg)
 
-def g12.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g13.at(fl.bad(st), s, st, key, iv)
+def g12.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g13.at(fl.bad(st), s, st, key, iv, alg)
 
-def g12.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g12.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g12.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g12.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g12.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g12.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g12.got(t, st, key, iv)
+        g12.got(t, st, key, iv, alg)
 
-def g11.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g12.at(fl.bad(st), s, st, key, iv)
+def g11.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g12.at(fl.bad(st), s, st, key, iv, alg)
 
-def g11.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g11.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g11.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g11.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g11.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g11.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g11.got(t, st, key, iv)
+        g11.got(t, st, key, iv, alg)
 
-def g10.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g11.at(fl.bad(st), s, st, key, iv)
+def g10.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g11.at(fl.bad(st), s, st, key, iv, alg)
 
-def g10.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g10.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g10.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g10.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g10.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g10.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g10.got(t, st, key, iv)
+        g10.got(t, st, key, iv, alg)
 
-def g9.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g10.at(fl.bad(st), s, st, key, iv)
+def g9.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g10.at(fl.bad(st), s, st, key, iv, alg)
 
-def g9.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g9.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g9.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g9.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g9.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g9.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g9.got(t, st, key, iv)
+        g9.got(t, st, key, iv, alg)
 
-def g8.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g9.at(fl.bad(st), s, st, key, iv)
+def g8.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g9.at(fl.bad(st), s, st, key, iv, alg)
 
-def g8.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g8.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g8.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g8.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g8.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g8.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g8.got(t, st, key, iv)
+        g8.got(t, st, key, iv, alg)
 
-def g7.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g8.at(fl.bad(st), s, st, key, iv)
+def g7.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g8.at(fl.bad(st), s, st, key, iv, alg)
 
-def g7.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g7.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g7.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g7.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g7.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g7.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g7.got(t, st, key, iv)
+        g7.got(t, st, key, iv, alg)
 
-def g6.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g7.at(fl.bad(st), s, st, key, iv)
+def g6.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g7.at(fl.bad(st), s, st, key, iv, alg)
 
-def g6.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g6.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g6.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g6.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g6.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g6.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g6.got(t, st, key, iv)
+        g6.got(t, st, key, iv, alg)
 
-def g5.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g6.at(fl.bad(st), s, st, key, iv)
+def g5.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g6.at(fl.bad(st), s, st, key, iv, alg)
 
-def g5.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g5.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g5.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g5.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g5.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g5.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g5.got(t, st, key, iv)
+        g5.got(t, st, key, iv, alg)
 
-def g4.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g5.at(fl.bad(st), s, st, key, iv)
+def g4.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g5.at(fl.bad(st), s, st, key, iv, alg)
 
-def g4.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g4.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g4.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g4.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g4.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g4.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g4.got(t, st, key, iv)
+        g4.got(t, st, key, iv, alg)
 
-def g3.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g4.at(fl.bad(st), s, st, key, iv)
+def g3.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g4.at(fl.bad(st), s, st, key, iv, alg)
 
-def g3.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g3.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g3.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g3.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g3.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g3.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g3.got(t, st, key, iv)
+        g3.got(t, st, key, iv, alg)
 
-def g2.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g3.at(fl.bad(st), s, st, key, iv)
+def g2.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g3.at(fl.bad(st), s, st, key, iv, alg)
 
-def g2.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g2.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g2.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g2.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g2.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g2.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g2.got(t, st, key, iv)
+        g2.got(t, st, key, iv, alg)
 
-def g1.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g2.at(fl.bad(st), s, st, key, iv)
+def g1.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g2.at(fl.bad(st), s, st, key, iv, alg)
 
-def g1.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g1.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g1.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g1.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g1.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g1.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g1.got(t, st, key, iv)
+        g1.got(t, st, key, iv, alg)
 
-def g0.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  g1.at(fl.bad(st), s, st, key, iv)
+def g0.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  g1.at(fl.bad(st), s, st, key, iv, alg)
 
-def g0.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g0.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  g0.next(s, fl.next(st, rest, rec, key, iv, 23), key, iv)
+  g0.next(s, fl.next(st, rest, rec, key, iv, alg, 23), key, iv, alg)
 
-def g0.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def g0.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{}:
       IO.pure(Socket & Fl, (s, st))
     case False{}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        g0.got(t, st, key, iv)
+        g0.got(t, st, key, iv, alg)
 
-def app.start(s: Socket, +rest: List<&2, U32>, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Unit):
+def app.start(s: Socket, +rest: List<&2, U32>, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    t : Socket & Fl <- g0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
+    t : Socket & Fl <- g0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv, alg)
     app.end(t)
 
 def client.req(+host: List<&2, U32>) -> List<&2, U32>:
@@ -2236,15 +2241,16 @@ def client.req(+host: List<&2, U32>) -> List<&2, U32>:
 def client.finish(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
   +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    +thf : List<&2, U32> = flight.th(fl.acc(st), ch, sh, flight.off5(fl.acc(st)))
-    +ckey : List<&2, U32> = K.traffic_keyn(c_hs, alg)
-    +civ : List<&2, U32> = K.traffic_iv(c_hs)
-    +fin : List<&2, U32> = T.tls.hs(20, K.finished_mac(c_hs, thf))
-    s1 : Socket <- io.send(s, T.tls.seal(ckey, civ, 0n, 22, fin))
-    +capsec : List<&2, U32> = K.derive_secret(mst, "c ap traffic", thf)
-    +sapsec : List<&2, U32> = K.derive_secret(mst, "s ap traffic", thf)
-    s2 : Socket <- io.send(s1, T.tls.seal(K.traffic_keyn(capsec, alg), K.traffic_iv(capsec), 0n, 23, client.req(host)))
-    app.start(s2, fl.buf(st), K.traffic_keyn(sapsec, alg), K.traffic_iv(sapsec))
+    +hl : Nat = hello.hl(alg)
+    +thf : List<&2, U32> = flight.th(alg, fl.acc(st), ch, sh, flight.off5(fl.acc(st)))
+    +ckey : List<&2, U32> = K.traffic_keyn(hl, c_hs, hello.keylen(alg))
+    +civ : List<&2, U32> = K.traffic_iv(hl, c_hs)
+    +fin : List<&2, U32> = T.tls.hs(20, K.finished_mac(hl, c_hs, thf))
+    s1 : Socket <- io.send(s, T.tls.seal(alg, ckey, civ, 0n, 22, fin))
+    +capsec : List<&2, U32> = K.derive_secret(hl, mst, "c ap traffic", thf)
+    +sapsec : List<&2, U32> = K.derive_secret(hl, mst, "s ap traffic", thf)
+    s2 : Socket <- io.send(s1, T.tls.seal(alg, K.traffic_keyn(hl, capsec, hello.keylen(alg)), K.traffic_iv(hl, capsec), 0n, 23, client.req(host)))
+    app.start(s2, fl.buf(st), K.traffic_keyn(hl, sapsec, hello.keylen(alg)), K.traffic_iv(hl, sapsec), alg)
 
 # the request: GET / with the host and Connection: close
 def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
@@ -2264,7 +2270,7 @@ def flight.finish.at(ok: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: 
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   match ok:
     case True{}:
-      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host), s, st, c_hs, mst, ch, sh, host, alg)
+      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host, alg), s, st, c_hs, mst, ch, sh, host, alg)
     case False{}:
       io.fail(s, "the server's flight is incomplete or a record did not open")
 
@@ -2283,9 +2289,9 @@ def flight.start(s: Socket, +rest: List<&2, U32>, +c_hs: List<&2, U32>, +s_hs: L
   +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    +key : List<&2, U32> = K.traffic_keyn(s_hs, alg)
-    +iv : List<&2, U32> = K.traffic_iv(s_hs)
-    r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
+    +key : List<&2, U32> = K.traffic_keyn(hello.hl(alg), s_hs, hello.keylen(alg))
+    +iv : List<&2, U32> = K.traffic_iv(hello.hl(alg), s_hs)
+    r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv, alg)
     flight.finish(r, c_hs, s_hs, mst, ch, sh, der, now, host, alg)
 
 def hello.dhe.ec(is384: Bool, +privs: List<&2, U32>, +pub: List<&2, U32>) -> List<&2, U32>:
@@ -2311,11 +2317,12 @@ def hello.dhe(+group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +pub: Li
 def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<&2, U32>,
   +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
-    +th1 : List<&2, U32> = S.sha256_bytes(T.tls.cat(ch, raw))
-    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hello.dhe(group, priv, privs, pub))
-    +c_hs : List<&2, U32> = K.derive_secret(hsec, "c hs traffic", th1)
-    +s_hs : List<&2, U32> = K.derive_secret(hsec, "s hs traffic", th1)
-    +mst : List<&2, U32> = K.master_secret(hsec)
+    +hl : Nat = hello.hl(alg)
+    +th1 : List<&2, U32> = K.hash_of(hl, T.tls.cat(ch, raw))
+    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hl, hello.dhe(group, priv, privs, pub))
+    +c_hs : List<&2, U32> = K.derive_secret(hl, hsec, "c hs traffic", th1)
+    +s_hs : List<&2, U32> = K.derive_secret(hl, hsec, "s hs traffic", th1)
+    +mst : List<&2, U32> = K.master_secret(hl, hsec)
     flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, now, host, alg)
 
 # the server's flight, read from rest with the server handshake keys
@@ -2360,7 +2367,7 @@ def hello.ok2(+m: T.HM) -> Bool:
         Bool.and(Nat.is_eq(T.tls.sh.group(body), 24n), Bool.pick(Bool, hello.is_hrr(body), False{}, True{}))))
 
 # the transcript before the ServerHello after a HelloRetryRequest (RFC 8446 4.4.1): the first
-# ClientHello as a message_hash message (type 254, a 3-byte length of the SHA-256 digest, the digest)
+# ClientHello as a message_hash message (type 254, a 3-byte length of the digest, the digest)
 def hello.round2.check2(s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
   +privs: List<&2, U32>, +pre: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   hello.at2(Bool.and(U32.is_eq(T.tls.tag(rec), 22), hello.ok2(T.tls.hm(List.drop(&2, U32, rec, 5n)))),
@@ -2394,24 +2401,25 @@ def hello.round2.first(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2
   (rest, rec) = pr
   hello.round2.check(s, rest, rec, priv, privs, pre, der, now, host)
 
-def hello.synth(+ch: List<&2, U32>) -> List<&2, U32>:
-  T.tls.cat(254 <> 0 <> 0 <> 32 <> Nil{}, S.sha256_bytes(ch))
+def hello.synth(+alg: Nat, +ch: List<&2, U32>) -> List<&2, U32>:
+  T.tls.cat(254 <> 0 <> 0 <> U32.from_nat(hello.hl(alg)) <> Nil{}, K.hash_of(hello.hl(alg), ch))
 
 # the random of a ClientHello: after its header (4 bytes) and its version (2 bytes)
-def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
+def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat, +priv: List<&2, U32>,
   +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +ch2 : List<&2, U32> = hello.msg2(privs, hello.random(ch), host, hello.cookie(hrr))
-    +pre : List<&2, U32> = T.tls.cat(hello.synth(ch), T.tls.cat(hrr, ch2))
+    +pre : List<&2, U32> = T.tls.cat(hello.synth(alg, ch), T.tls.cat(hrr, ch2))
     s1 : Socket <- io.send(s, T.tls.plain(22, ch2))
     t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, rest)
     hello.round2.first(t, priv, privs, pre, der, now, host)
 
-def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat,
+  +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
+  +host: List<&2, U32>) -> IO(Unit):
   match is384:
     case True{}:
-      hello.retry.send(s, rest, hrr, priv, privs, ch, der, now, host)
+      hello.retry.send(s, rest, hrr, alg, priv, privs, ch, der, now, host)
     case False{}:
       hello.bad(s)
 
@@ -2420,7 +2428,7 @@ def hello.retry(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, 
   +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
     case SH{+raw, +pub, +alg, +group}:
-      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, priv, privs, ch, der, now, host)
+      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, alg, priv, privs, ch, der, now, host)
 
 def hello.kind(hrr: Bool, s: Socket, +rest: List<&2, U32>, +rec: List<&2, U32>, +priv: List<&2, U32>,
   +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):

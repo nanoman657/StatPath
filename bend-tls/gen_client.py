@@ -54,27 +54,27 @@ def record_chain(prefix, n, want, stop, strict=False):
     # the record's content joins the state when its content type is want
     out = []
     for k in range(n):
-        out.append(f"""def {prefix}{k}.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+        out.append(f"""def {prefix}{k}.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{{}}:
       IO.pure(Socket & Fl, (s, st))
     case False{{}}:
       do IO<Socket & Fl>:
         t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s, fl.buf(st))
-        {prefix}{k}.got(t, st, key, iv)
+        {prefix}{k}.got(t, st, key, iv, alg)
 
-def {prefix}{k}.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+def {prefix}{k}.got(t: Socket & List<&2, U32> & List<&2, U32>, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   (s, pr) = t
   (rest, rec) = pr
-  {prefix}{k}.next(s, fl.next(st, rest, rec, key, iv, {want}), key, iv)
+  {prefix}{k}.next(s, fl.next(st, rest, rec, key, iv, alg, {want}), key, iv, alg)
 
-def {prefix}{k}.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
-  {prefix}{k + 1}.at({stop(f"st")}, s, st, key, iv)
+def {prefix}{k}.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
+  {prefix}{k + 1}.at({stop(f"st")}, s, st, key, iv, alg)
 
 """)
     if strict:
         # the stream did not end within the stages: the response is longer than read
-        out.append(f"""def {prefix}{n}.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+        out.append(f"""def {prefix}{n}.at(done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   match done:
     case True{{}}:
       IO.pure(Socket & Fl, (s, st))
@@ -85,7 +85,7 @@ def {prefix}{k}.next(s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>
 
 """)
     else:
-        out.append(f"""def {prefix}{n}.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Socket & Fl):
+        out.append(f"""def {prefix}{n}.at(+done: Bool, s: Socket, +st: Fl, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Socket & Fl):
   IO.pure(Socket & Fl, (s, st))
 
 """)

@@ -73,5 +73,9 @@ tree(0, 256, "", out)
 sbox = "\n".join(out)
 body = open("aes_body.bend").read()
 assert body.count("#@@SBOX@@") == 1
-open("aes.bend", "w").write(body.replace("#@@SBOX@@", sbox))
+import sys
+sys.path.insert(0, __file__.rsplit("/", 1)[0] if "/" in __file__ else ".")
+from bendsort import sort_defs
+# the compiler needs each definition after the ones it uses: sort as sortfile.py does
+open("aes.bend", "w").write(sort_defs(body.replace("#@@SBOX@@", sbox)))
 print("aes.bend: S-box tree with", len(out) * 2, "functions")

@@ -22,9 +22,9 @@ import ./ed25519.bend as ED
 type Inner is Data:
   Inner{ctype: U32, body: List<&2, U32>}
 
-def hs.open(+key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, +rec: List<&2, U32>) ->
+def hs.open(alg: Nat, +key: List<&2, U32>, +iv: List<&2, U32>, seq: Nat, +rec: List<&2, U32>) ->
   Maybe<&2, List<&2, U32>>:
-  A.aead_open_any(key, T.tls.nonce(iv, seq), List.take(&2, U32, rec, 5n), List.drop(&2, U32, rec, 5n))
+  A.aead_open_any(alg, key, T.tls.nonce(iv, seq), List.take(&2, U32, rec, 5n), List.drop(&2, U32, rec, 5n))
 
 # the content type is the last nonzero byte of the decrypted record
 def hs.zero(+xs: List<&2, U32>) -> Bool:
@@ -50,14 +50,14 @@ def hs.unpad(+inner: List<&2, U32>) -> Inner:
 
 # the handshake secret of the x25519 exchange with the server's key share
 # the handshake secret from the shared secret of the key exchange (x25519 or P-256)
-def hs.hs_secret_dhe(+dhe: List<&2, U32>) -> List<&2, U32>:
-  K.handshake_secret(K.early_secret(), dhe)
+def hs.hs_secret_dhe(+hl: Nat, +dhe: List<&2, U32>) -> List<&2, U32>:
+  K.handshake_secret(hl, K.early_secret(hl), dhe)
 
 def hs.hs_secret(+priv: List<&2, U32>, +spub: List<&2, U32>) -> List<&2, U32>:
-  K.handshake_secret(K.early_secret(), X.x25519(priv, spub))
+  K.handshake_secret(32n, K.early_secret(32n), X.x25519(priv, spub))
 
 def hs.master(+priv: List<&2, U32>, +spub: List<&2, U32>) -> List<&2, U32>:
-  K.master_secret(hs.hs_secret(priv, spub))
+  K.master_secret(32n, hs.hs_secret(priv, spub))
 
 # the bytes of a message: its header and body (the raw encoding)
 def hs.raw.at(+m: T.HM) -> List<&2, U32>:
@@ -166,7 +166,7 @@ def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> 
     leaf, th, body)
 
 # the signature's 2-byte length is the length of the bytes after it
-def hs.fin_ok(+s_hs: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
-  R.rsa.eqb(K.finished_mac(s_hs, th), body)
+def hs.fin_ok(+hl: Nat, +s_hs: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
+  R.rsa.eqb(K.finished_mac(hl, s_hs, th), body)
 
 # ecdsa_secp384r1_sha384 (1283): the leaf's P-384 key verifies SHA-384 of the content

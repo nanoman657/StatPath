@@ -48,7 +48,7 @@ def boolcase(name, expr, want):
     out.append(f'  kcase("{name}", Bool.show({expr}), "{want}") <>')
 
 # records: each suite, a valid record (control) and mutations of it
-for suite, aead, klen in [("aes", AESGCM, 16), ("chacha", ChaCha20Poly1305, 32)]:
+for suite, aead, klen, alg in [("aes", AESGCM, 16, 4865), ("aes256", AESGCM, 32, 4866), ("chacha", ChaCha20Poly1305, 32, 4867)]:
     for i in range(30):
         key = bytes(rng.randrange(256) for _ in range(klen))
         iv = bytes(rng.randrange(256) for _ in range(12))
@@ -57,9 +57,9 @@ for suite, aead, klen in [("aes", AESGCM, 16), ("chacha", ChaCha20Poly1305, 32)]
         rec, _ = record(aead, key, iv, seq, 22, pt)
         if i < 2:
             boolcase(f"record-{suite}-control-{i}",
-                     f"is_some(H.hs.open({lst(list(key))}, {lst(list(iv))}, {seq}n, {lst(list(rec))}))", "True")
+                     f"is_some(H.hs.open({alg}n, {lst(list(key))}, {lst(list(iv))}, {seq}n, {lst(list(rec))}))", "True")
         boolcase(f"record-{suite}-mutated-{i}",
-                 f"is_some(H.hs.open({lst(list(key))}, {lst(list(iv))}, {seq}n, {lst(list(mutated(rec)))}))", "False")
+                 f"is_some(H.hs.open({alg}n, {lst(list(key))}, {lst(list(iv))}, {seq}n, {lst(list(mutated(rec)))}))", "False")
 
 # ServerHello bodies: the parsers return values (bounded), whatever the bytes
 def server_hello():

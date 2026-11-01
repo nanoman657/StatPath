@@ -151,16 +151,16 @@ def fl.bad(+st: Fl) -> Bool:
 # (header type 20) is skipped; any other record is opened under key and iv, and
 # its content joins the state when its content type is want
 def fl.next(+st: Fl, +rest: List<&2, U32>, +rec: List<&2, U32>, +key: List<&2, U32>,
-  +iv: List<&2, U32>, want: U32) -> Fl:
-  fl.next.at(T.tls.tag(rec), st, rest, rec, key, iv, want)
+  +iv: List<&2, U32>, +alg: Nat, want: U32) -> Fl:
+  fl.next.at(T.tls.tag(rec), st, rest, rec, key, iv, alg, want)
 
 def fl.next.at(hdr: U32, +st: Fl, +rest: List<&2, U32>, +rec: List<&2, U32>,
-  +key: List<&2, U32>, +iv: List<&2, U32>, want: U32) -> Fl:
+  +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat, want: U32) -> Fl:
   match hdr:
     case 20:
       Fl{rest, fl.recs(st), fl.seq(st), fl.bad(st)}
     case _:
-      fl.open(H.hs.open(key, iv, fl.seq(st), rec), st, rest, want)
+      fl.open(H.hs.open(alg, key, iv, fl.seq(st), rec), st, rest, want)
 
 def fl.open(opened: Maybe<&2, List<&2, U32>>, +st: Fl, +rest: List<&2, U32>, want: U32) -> Fl:
   match opened:
@@ -219,8 +219,8 @@ def flight.kinds(+acc: List<&2, U32>) -> Bool:
         U32.is_eq(T.tls.tag(List.drop(&2, U32, acc, flight.off4(acc))), 20))))
 
 # the transcript hash of ClientHello, ServerHello and the first n bytes of the flight
-def flight.th(+acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +n: Nat) -> List<&2, U32>:
-  S.sha256_bytes(T.tls.cat(ch, T.tls.cat(sh, List.take(&2, U32, acc, n))))
+def flight.th(+alg: Nat, +acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +n: Nat) -> List<&2, U32>:
+  K.hash_of(hello.hl(alg), T.tls.cat(ch, T.tls.cat(sh, List.take(&2, U32, acc, n))))
 
 # the leaf is the first certificate of the chain
 def flight.leaf(+chain: List<&2, List<&2, U32>>) -> List<&2, U32>:
@@ -248,12 +248,12 @@ def flight.verify.at(kinds: Bool, chain: Bool, cv: Bool, fin: Bool) -> Bool:
 # host), its CertificateVerify over the transcript through Certificate, and its
 # Finished over the transcript through CertificateVerify
 def flight.verify(+acc: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +s_hs: List<&2, U32>,
-  +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> Bool:
+  +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>, +alg: Nat) -> Bool:
   flight.verify.at(flight.kinds(acc),
     flight.chain_ok(T.tls.certs(flight.msg(acc, flight.msglen(acc))), der, host, now),
     H.hs.cv_ok(flight.leaf(T.tls.certs(flight.msg(acc, flight.msglen(acc)))),
-      flight.th(acc, ch, sh, flight.off3(acc)), flight.msg(acc, flight.off3(acc))),
-    H.hs.fin_ok(s_hs, flight.th(acc, ch, sh, flight.off4(acc)), flight.msg(acc, flight.off4(acc))))
+      flight.th(alg, acc, ch, sh, flight.off3(acc)), flight.msg(acc, flight.off3(acc))),
+    H.hs.fin_ok(hello.hl(alg), s_hs, flight.th(alg, acc, ch, sh, flight.off4(acc)), flight.msg(acc, flight.off4(acc))))
 
 # true once a complete Finished message is among the messages of acc
 def flight.done(+acc: List<&2, U32>) -> Bool:
@@ -313,7 +313,7 @@ type SH is Data:
 def hello.sh(+m: T.HM) -> SH:
   match m:
     case T.HM{+t, +body, +rest}:
-      SH{T.tls.hs(t, body), T.tls.sh.key(body), hello.alg(T.tls.sh.cipher(body)), T.tls.sh.group(body)}
+      SH{T.tls.hs(t, body), T.tls.sh.key(body), T.tls.sh.cipher(body), T.tls.sh.group(body)}
 
 # a ServerHello for one of our suites: a HelloRetryRequest selects secp384r1 (24), and a
 # ServerHello one of the groups of the first ClientHello's key shares
@@ -323,17 +323,22 @@ def hello.ok(+m: T.HM) -> Bool:
       Bool.and(U32.is_eq(t, 2), Bool.and(hello.suite_ok(T.tls.sh.cipher(body)),
         Bool.pick(Bool, hello.is_hrr(body), Nat.is_eq(T.tls.sh.group(body), 24n), hello.group_ok(T.tls.sh.group(body)))))
 
-# the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301) and TLS_CHACHA20_POLY1305_SHA256 (0x1303)
+# the suites we accept: TLS_AES_128_GCM_SHA256 (0x1301), TLS_AES_256_GCM_SHA384 (0x1302) and
+# TLS_CHACHA20_POLY1305_SHA256 (0x1303)
 def hello.suite_ok(+c: Nat) -> Bool:
-  Bool.or(Nat.is_eq(c, 4865n), Nat.is_eq(c, 4867n))
+  Bool.or(Nat.is_eq(c, 4865n), Bool.or(Nat.is_eq(c, 4866n), Nat.is_eq(c, 4867n)))
 
 # the groups of the first ClientHello's key shares: x25519 (29) and secp256r1 (23)
 def hello.group_ok(+g: Nat) -> Bool:
   Bool.or(Nat.is_eq(g, 29n), Bool.or(Nat.is_eq(g, 23n), Nat.is_eq(g, 24n)))
 
-# the record key length of the suite: 16 bytes for AES-128-GCM, 32 for ChaCha20-Poly1305
-def hello.alg(+c: Nat) -> Nat:
-  Bool.pick(Nat, Nat.is_eq(c, 4865n), 16n, 32n)
+# the hash length of the suite (48 for TLS_AES_256_GCM_SHA384, else 32) and the record key length
+# (16 for TLS_AES_128_GCM_SHA256, else 32)
+def hello.hl(+alg: Nat) -> Nat:
+  Bool.pick(Nat, Nat.is_eq(alg, 4866n), 48n, 32n)
+
+def hello.keylen(+alg: Nat) -> Nat:
+  Bool.pick(Nat, Nat.is_eq(alg, 4865n), 16n, 32n)
 
 # the private scalars: privs is the secp256r1 scalar (32 bytes) then the secp384r1 scalar (48 bytes)
 # the ClientHello message: an x25519 key share from priv (the base point is 9) and a secp256r1
@@ -393,22 +398,23 @@ def hello.retry(s: Socket, +rest: List<&2, U32>, +sh: SH, +priv: List<&2, U32>, 
   +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   match sh:
     case SH{+raw, +pub, +alg, +group}:
-      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, priv, privs, ch, der, now, host)
+      hello.retry.at(Nat.is_eq(group, 24n), s, rest, raw, alg, priv, privs, ch, der, now, host)
 
-def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
-  +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
+def hello.retry.at(is384: Bool, s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat,
+  +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
+  +host: List<&2, U32>) -> IO(Unit):
   match is384:
     case True{}:
-      hello.retry.send(s, rest, hrr, priv, privs, ch, der, now, host)
+      hello.retry.send(s, rest, hrr, alg, priv, privs, ch, der, now, host)
     case False{}:
       hello.bad(s)
 
 # the second ClientHello, sent; then the next record, which must be the ServerHello
-def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +priv: List<&2, U32>,
+def hello.retry.send(s: Socket, +rest: List<&2, U32>, +hrr: List<&2, U32>, +alg: Nat, +priv: List<&2, U32>,
   +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
     +ch2 : List<&2, U32> = hello.msg2(privs, hello.random(ch), host, hello.cookie(hrr))
-    +pre : List<&2, U32> = T.tls.cat(hello.synth(ch), T.tls.cat(hrr, ch2))
+    +pre : List<&2, U32> = T.tls.cat(hello.synth(alg, ch), T.tls.cat(hrr, ch2))
     s1 : Socket <- io.send(s, T.tls.plain(22, ch2))
     t : Socket & List<&2, U32> & List<&2, U32> <- io.record(s1, rest)
     hello.round2.first(t, priv, privs, pre, der, now, host)
@@ -462,9 +468,9 @@ def hello.ok2(+m: T.HM) -> Bool:
         Bool.and(Nat.is_eq(T.tls.sh.group(body), 24n), Bool.pick(Bool, hello.is_hrr(body), False{}, True{}))))
 
 # the transcript before the ServerHello after a HelloRetryRequest (RFC 8446 4.4.1): the first
-# ClientHello as a message_hash message (type 254, a 3-byte length of the SHA-256 digest, the digest)
-def hello.synth(+ch: List<&2, U32>) -> List<&2, U32>:
-  T.tls.cat(254 <> 0 <> 0 <> 32 <> Nil{}, S.sha256_bytes(ch))
+# ClientHello as a message_hash message (type 254, a 3-byte length of the digest, the digest)
+def hello.synth(+alg: Nat, +ch: List<&2, U32>) -> List<&2, U32>:
+  T.tls.cat(254 <> 0 <> 0 <> U32.from_nat(hello.hl(alg)) <> Nil{}, K.hash_of(hello.hl(alg), ch))
 
 # the random of a ClientHello: after its header (4 bytes) and its version (2 bytes)
 def hello.random(+ch: List<&2, U32>) -> List<&2, U32>:
@@ -515,11 +521,12 @@ def hello.dhe.ec(is384: Bool, +privs: List<&2, U32>, +pub: List<&2, U32>) -> Lis
 def hello.keys(s: Socket, +rest: List<&2, U32>, +raw: List<&2, U32>, +pub: List<&2, U32>,
   +alg: Nat, +group: Nat, +priv: List<&2, U32>, +privs: List<&2, U32>, +ch: List<&2, U32>, +der: List<&2, U32>, +now: Nat, +host: List<&2, U32>) -> IO(Unit):
   do IO<Unit>:
-    +th1 : List<&2, U32> = S.sha256_bytes(T.tls.cat(ch, raw))
-    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hello.dhe(group, priv, privs, pub))
-    +c_hs : List<&2, U32> = K.derive_secret(hsec, "c hs traffic", th1)
-    +s_hs : List<&2, U32> = K.derive_secret(hsec, "s hs traffic", th1)
-    +mst : List<&2, U32> = K.master_secret(hsec)
+    +hl : Nat = hello.hl(alg)
+    +th1 : List<&2, U32> = K.hash_of(hl, T.tls.cat(ch, raw))
+    +hsec : List<&2, U32> = H.hs.hs_secret_dhe(hl, hello.dhe(group, priv, privs, pub))
+    +c_hs : List<&2, U32> = K.derive_secret(hl, hsec, "c hs traffic", th1)
+    +s_hs : List<&2, U32> = K.derive_secret(hl, hsec, "s hs traffic", th1)
+    +mst : List<&2, U32> = K.master_secret(hl, hsec)
     flight.start(s, rest, c_hs, s_hs, mst, ch, raw, der, now, host, alg)
 
 # the server's flight, read from rest with the server handshake keys
@@ -527,9 +534,9 @@ def flight.start(s: Socket, +rest: List<&2, U32>, +c_hs: List<&2, U32>, +s_hs: L
   +mst: List<&2, U32>, +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    +key : List<&2, U32> = K.traffic_keyn(s_hs, alg)
-    +iv : List<&2, U32> = K.traffic_iv(s_hs)
-    r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
+    +key : List<&2, U32> = K.traffic_keyn(hello.hl(alg), s_hs, hello.keylen(alg))
+    +iv : List<&2, U32> = K.traffic_iv(hello.hl(alg), s_hs)
+    r : Socket & Fl <- f0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv, alg)
     flight.finish(r, c_hs, s_hs, mst, ch, sh, der, now, host, alg)
 
 def flight.finish(t: Socket & Fl, +c_hs: List<&2, U32>, +s_hs: List<&2, U32>, +mst: List<&2, U32>,
@@ -548,7 +555,7 @@ def flight.finish.at(ok: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +s_hs: 
   +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   match ok:
     case True{}:
-      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host), s, st, c_hs, mst, ch, sh, host, alg)
+      flight.finish.check(flight.verify(fl.acc(st), ch, sh, s_hs, der, now, host, alg), s, st, c_hs, mst, ch, sh, host, alg)
     case False{}:
       io.fail(s, "the server's flight is incomplete or a record did not open")
 
@@ -567,24 +574,25 @@ def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst:
 def client.finish(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
   +ch: List<&2, U32>, +sh: List<&2, U32>, +host: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    +thf : List<&2, U32> = flight.th(fl.acc(st), ch, sh, flight.off5(fl.acc(st)))
-    +ckey : List<&2, U32> = K.traffic_keyn(c_hs, alg)
-    +civ : List<&2, U32> = K.traffic_iv(c_hs)
-    +fin : List<&2, U32> = T.tls.hs(20, K.finished_mac(c_hs, thf))
-    s1 : Socket <- io.send(s, T.tls.seal(ckey, civ, 0n, 22, fin))
-    +capsec : List<&2, U32> = K.derive_secret(mst, "c ap traffic", thf)
-    +sapsec : List<&2, U32> = K.derive_secret(mst, "s ap traffic", thf)
-    s2 : Socket <- io.send(s1, T.tls.seal(K.traffic_keyn(capsec, alg), K.traffic_iv(capsec), 0n, 23, client.req(host)))
-    app.start(s2, fl.buf(st), K.traffic_keyn(sapsec, alg), K.traffic_iv(sapsec))
+    +hl : Nat = hello.hl(alg)
+    +thf : List<&2, U32> = flight.th(alg, fl.acc(st), ch, sh, flight.off5(fl.acc(st)))
+    +ckey : List<&2, U32> = K.traffic_keyn(hl, c_hs, hello.keylen(alg))
+    +civ : List<&2, U32> = K.traffic_iv(hl, c_hs)
+    +fin : List<&2, U32> = T.tls.hs(20, K.finished_mac(hl, c_hs, thf))
+    s1 : Socket <- io.send(s, T.tls.seal(alg, ckey, civ, 0n, 22, fin))
+    +capsec : List<&2, U32> = K.derive_secret(hl, mst, "c ap traffic", thf)
+    +sapsec : List<&2, U32> = K.derive_secret(hl, mst, "s ap traffic", thf)
+    s2 : Socket <- io.send(s1, T.tls.seal(alg, K.traffic_keyn(hl, capsec, hello.keylen(alg)), K.traffic_iv(hl, capsec), 0n, 23, client.req(host)))
+    app.start(s2, fl.buf(st), K.traffic_keyn(hl, sapsec, hello.keylen(alg)), K.traffic_iv(hl, sapsec), alg)
 
 # the request: GET / with the host and Connection: close
 def client.req(+host: List<&2, U32>) -> List<&2, U32>:
   T.tls.cat(S.bytes_of("GET / HTTP/1.1\r\nHost: "), T.tls.cat(host, S.bytes_of("\r\nConnection: close\r\n\r\n")))
 
 # the application records, read until the peer closes or a record does not open
-def app.start(s: Socket, +rest: List<&2, U32>, +key: List<&2, U32>, +iv: List<&2, U32>) -> IO(Unit):
+def app.start(s: Socket, +rest: List<&2, U32>, +key: List<&2, U32>, +iv: List<&2, U32>, +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    t : Socket & Fl <- g0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv)
+    t : Socket & Fl <- g0.at(False{}, s, Fl{rest, Nil{}, 0n, False{}}, key, iv, alg)
     app.end(t)
 
 def app.end(t: Socket & Fl) -> IO(Unit):

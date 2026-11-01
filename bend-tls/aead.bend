@@ -121,28 +121,29 @@ def aead_open(+key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
   aead.open.at(key, nonce, aad, ae.take(Nat.sub(ae.len(sealed, 0n), 16n), sealed),
     ae.drop(Nat.sub(ae.len(sealed, 0n), 16n), sealed))
 
-# By key length: a 16-byte key is AES-128-GCM (TLS_AES_128_GCM_SHA256), a 32-byte
-# key is ChaCha20-Poly1305 (TLS_CHACHA20_POLY1305_SHA256).
-def aead.any.seal(gcm: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
+# By cipher suite (RFC 8446 B.4): TLS_CHACHA20_POLY1305_SHA256 (4867) is ChaCha20-Poly1305 with
+# a 32-byte key; TLS_AES_128_GCM_SHA256 (4865, 16-byte key) and TLS_AES_256_GCM_SHA384 (4866,
+# 32-byte key) are AES-GCM (gcm.bend takes either key length).
+def aead.any.seal(chacha: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
   +pt: List<&2, U32>) -> List<&2, U32>:
-  match gcm:
+  match chacha:
     case True{}:
-      GC.gcm.seal(key, nonce, aad, pt)
-    case False{}:
       aead_seal(key, nonce, aad, pt)
-
-def aead_seal_any(+key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
-  +pt: List<&2, U32>) -> List<&2, U32>:
-  aead.any.seal(Nat.is_eq(List.length(&2, U32, key), 16n), key, nonce, aad, pt)
-
-def aead.any.open(gcm: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
-  +sealed: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
-  match gcm:
-    case True{}:
-      GC.gcm.open(key, nonce, aad, sealed)
     case False{}:
-      aead_open(key, nonce, aad, sealed)
+      GC.gcm.seal(key, nonce, aad, pt)
 
-def aead_open_any(+key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
+def aead_seal_any(alg: Nat, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
+  +pt: List<&2, U32>) -> List<&2, U32>:
+  aead.any.seal(Nat.is_eq(alg, 4867n), key, nonce, aad, pt)
+
+def aead.any.open(chacha: Bool, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
   +sealed: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
-  aead.any.open(Nat.is_eq(List.length(&2, U32, key), 16n), key, nonce, aad, sealed)
+  match chacha:
+    case True{}:
+      aead_open(key, nonce, aad, sealed)
+    case False{}:
+      GC.gcm.open(key, nonce, aad, sealed)
+
+def aead_open_any(alg: Nat, +key: List<&2, U32>, +nonce: List<&2, U32>, +aad: List<&2, U32>,
+  +sealed: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
+  aead.any.open(Nat.is_eq(alg, 4867n), key, nonce, aad, sealed)

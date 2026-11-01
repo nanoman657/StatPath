@@ -24,7 +24,7 @@ def client_hello(rnd, entries, host, cookie=b""):
     exts += b"\x00\x00" + vec(2, vec(2, b"\x00" + vec(2, host)))                      # server_name
     if cookie:
         exts += b"\x00\x2c" + vec(2, vec(2, cookie))                                  # cookie
-    body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))
+    body = (b"\x03\x03" + rnd + b"\x00" + vec(2, b"\x13\x02\x13\x01\x13\x03") + b"\x01\x00" + vec(2, exts))
     return b"\x01" + len(body).to_bytes(3, "big") + body
 
 def nonce(iv, seq):
@@ -50,7 +50,7 @@ for i, host in enumerate(["example.test", "a.b", "www.example.test"]):
     out.append(f'  kcase("clienthello-retry-{i}", S.hex_of(T.tls.client_hello({lst(rnd)}, T.tls.share(24, {lst(pubq)}), {lst(host.encode())}, {lst(cookie)})), "{client_hello(rnd, share(24, pubq), host, cookie).hex()}") <>')
 for i, (pt_len, seq, ctype) in enumerate([(0, 0, 22), (5, 0, 23), (40, 7, 22), (300, 65536, 23)]):
     key, iv, pt = rb(32), rb(12), rb(pt_len)
-    out.append(f'  kcase("seal-{i}", S.hex_of(T.tls.seal({lst(key)}, {lst(iv)}, {seq}n, {ctype}, {lst(pt)})), "{seal(key, iv, seq, ctype, pt).hex()}") <>')
+    out.append(f'  kcase("seal-{i}", S.hex_of(T.tls.seal(4867n, {lst(key)}, {lst(iv)}, {seq}n, {ctype}, {lst(pt)})), "{seal(key, iv, seq, ctype, pt).hex()}") <>')
 for i, seq in enumerate([0, 1, 255, 256, 2**31 + 5]):
     iv = rb(12)
     out.append(f'  kcase("nonce-{i}", S.hex_of(T.tls.nonce({lst(iv)}, {seq}n)), "{nonce(iv, seq).hex()}") <>')
