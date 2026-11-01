@@ -50,7 +50,7 @@ bend bigint_tests.bend          -> bigint: 10 passed, 0 failed
 bend rsa_tests.bend             -> rsa: 4 passed, 0 failed
 bend rsa_sig_tests.bend         -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend            -> x509: 17 passed, 0 failed
-bend x509_ext_tests.bend        -> x509-ext: 23 passed, 0 failed
+bend x509_ext_tests.bend        -> x509-ext: 41 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend fuzz_tls_tests.bend        -> fuzz-tls: 266 passed, 0 failed
@@ -225,9 +225,12 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
   case-insensitive, a wildcard for the leftmost label only), signatures up to a
   trust anchor given as DER, `basicConstraints` cA on each issuer, `keyUsage`
   keyCertSign on each issuer when present, `pathLenConstraint` on each issuer, and
-  extended key usage on the leaf when present. Not checked: revocation (CRL, OCSP),
-  name constraints, certificate policies, the anchor's own path length, subject
-  common names (only SAN is used), and IP-address SANs.
+  extended key usage on the leaf when present, the anchor's path length, and name
+  constraints for DNS names (permitted and excluded subtrees, on every issuer and the
+  anchor, over the certificates below each). Name constraints in other name forms,
+  and a constraint with a minimum or maximum (which the profile forbids), fail the
+  chain. Not checked: revocation (CRL, OCSP), certificate policies, subject common
+  names (only SAN is used), and IP-address SANs.
 - **Bounded reads.** The handshake flight may use at most 24 records and the
   response at most 24 records (each up to 16 KB, about 384 KB in all). A longer
   one is an error and the client exits 1. A record that is not complete after 48

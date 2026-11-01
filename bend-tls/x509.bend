@@ -726,27 +726,148 @@ def x509.sigok(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pss()),
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ed25519()), cert, issuer)
 
-# ECDSA certificates are checked by the P-256 verifier, RSA ones by the RSA path
-def x509.anchor.match(+c: List<&2, U32>, +a: List<&2, U32>, now: Nat) -> Bool:
-  Bool.or(R.rsa.eqb(c, a), Bool.and(x509.valid(c, now), Bool.and(x509.issuer_ok(a), x509.sigok(c, a))))
+# name constraints (RFC 5280 4.2.1.10), for the DNS names only: a DNS name below an issuer
+# (the SAN names of the certificates below it) must match a permitted DNS subtree when the
+# issuer has any, and must match no excluded one. Other name forms are not checked.
+def x509.oid_nc() -> List<&2, U32>:
+  85 <> 29 <> 30 <> Nil{}
 
-def x509.anchor.any(+c: List<&2, U32>, anchors: List<&2, List<&2, U32>>, +now: Nat) -> Bool:
-  match anchors:
+# the DNS name of a GeneralSubtree element (a SEQUENCE): its base is a dNSName, tag 130
+def x509.nc.is_dns(+sub: List<&2, U32>) -> Bool:
+  match sub:
     case Nil{}:
       False{}
-    case a <> more:
-      Bool.or(x509.anchor.match(c, a, now), x509.anchor.any(c, more, now))
+    case _:
+      U32.is_eq(A.asn1.tag(x509.valof(A.asn1.read(sub))), 130)
 
-# each certificate of the chain is exactly one DER element: no bytes after it
-def x509.exact_all(chain: List<&2, List<&2, U32>>) -> Bool:
-  match chain:
+# the dNSName bases of the GeneralSubtree elements xs, in order (other base forms are skipped)
+def x509.nc.dns.find(fuel: Nat, +xs: List<&2, U32>, ok: Bool) -> List<&2, List<&2, U32>>:
+  match fuel:
+    case 0n:
+      Nil{}
+    case 1n+p:
+      match xs:
+        case Nil{}:
+          Nil{}
+        case _:
+          match ok:
+            case True{}:
+              x509.valof(A.asn1.read(x509.valof(A.asn1.read(xs)))) <> x509.nc.dns.find(p, List.drop(&2, U32, xs, A.asn1.total(xs)), x509.nc.is_dns(List.drop(&2, U32, xs, A.asn1.total(xs))))
+            case False{}:
+              x509.nc.dns.find(p, List.drop(&2, U32, xs, A.asn1.total(xs)), x509.nc.is_dns(List.drop(&2, U32, xs, A.asn1.total(xs))))
+
+def x509.nc.dns.start(+xs: List<&2, U32>) -> List<&2, List<&2, U32>>:
+  x509.nc.dns.find(1000000n, xs, x509.nc.is_dns(xs))
+
+# the content of the element of ncs with tag want (160 permitted, 161 excluded), or Nil
+def x509.nc.field.second.at(hit: Bool, +rest: List<&2, U32>) -> List<&2, U32>:
+  match hit:
+    case True{}:
+      x509.valof(A.asn1.read(rest))
+    case False{}:
+      Nil{}
+
+# each GeneralSubtree is its base name and nothing else (RFC 5280: no minimum, no maximum)
+def x509.nc.field.second(+want: U32, +rest: List<&2, U32>) -> List<&2, U32>:
+  x509.nc.field.second.at(U32.is_eq(A.asn1.tag(rest), want), rest)
+
+def x509.nc.field.at(first: Bool, +want: U32, +ncs: List<&2, U32>) -> List<&2, U32>:
+  match first:
+    case True{}:
+      x509.valof(A.asn1.read(ncs))
+    case False{}:
+      x509.nc.field.second(want, List.drop(&2, U32, ncs, A.asn1.total(ncs)))
+
+def x509.nc.field(+ncs: List<&2, U32>, +want: U32) -> List<&2, U32>:
+  x509.nc.field.at(U32.is_eq(A.asn1.tag(ncs), want), want, ncs)
+
+def x509.nc.one_plain(+c: List<&2, U32>) -> Bool:
+  Bool.and(x509.nonempty(c), Nat.is_eq(A.asn1.total(c), List.length(&2, U32, c)))
+
+def x509.nc.plain(fuel: Nat, +xs: List<&2, U32>) -> Bool:
+  match fuel:
+    case 0n:
+      False{}
+    case 1n+p:
+      match xs:
+        case Nil{}:
+          True{}
+        case _:
+          Bool.and(x509.nc.one_plain(x509.valof(A.asn1.read(xs))), x509.nc.plain(p, List.drop(&2, U32, xs, A.asn1.total(xs))))
+
+# name is under suf (the end of name is suf, at a label boundary when suf starts with a dot)
+def x509.nc.ends(+name: List<&2, U32>, +suf: List<&2, U32>) -> Bool:
+  Bool.and(Nat.is_le(List.length(&2, U32, suf), List.length(&2, U32, name)),
+    R.rsa.eqb(List.drop(&2, U32, name, Nat.sub(List.length(&2, U32, name), List.length(&2, U32, suf))), suf))
+
+# lowercase name and base: equal, or under base; a base with a leading dot matches names under it only
+def x509.nc.match.at(dotted: Bool, +name: List<&2, U32>, +base: List<&2, U32>) -> Bool:
+  match dotted:
+    case True{}:
+      x509.nc.ends(name, base)
+    case False{}:
+      Bool.or(R.rsa.eqb(name, base), x509.nc.ends(name, List.append(&2, U32, 46 <> Nil{}, base)))
+
+# the name is under one of the bases
+def x509.nc.match(+name: List<&2, U32>, +base: List<&2, U32>) -> Bool:
+  x509.nc.match.at(R.rsa.eqb(List.take(&2, U32, base, 1n), 46 <> Nil{}), name, base)
+
+def x509.nc.under(+name: List<&2, U32>, bases: List<&2, List<&2, U32>>) -> Bool:
+  match bases:
+    case Nil{}:
+      False{}
+    case b <> more:
+      Bool.or(x509.nc.match(x509.lower(name), x509.lower(b)), x509.nc.under(name, more))
+
+def x509.nc.has(+xs: List<&2, List<&2, U32>>) -> Bool:
+  match xs:
+    case Nil{}:
+      False{}
+    case _:
+      True{}
+
+# one name: under a permitted base (when there are permitted DNS bases) and under no excluded one
+def x509.nc.one_ok.at(has: Bool, in_p: Bool, in_e: Bool) -> Bool:
+  Bool.and(Bool.pick(Bool, has, in_p, True{}), Bool.pick(Bool, in_e, False{}, True{}))
+
+def x509.nc.one_ok(+n: List<&2, U32>, +pd: List<&2, List<&2, U32>>, +ed: List<&2, List<&2, U32>>) -> Bool:
+  x509.nc.one_ok.at(x509.nc.has(pd), x509.nc.under(n, pd), x509.nc.under(n, ed))
+
+def x509.nc.names_ok(names: List<&2, List<&2, U32>>, +pd: List<&2, List<&2, U32>>, +ed: List<&2, List<&2, U32>>) -> Bool:
+  match names:
     case Nil{}:
       True{}
-    case +c <> t:
-      Bool.and(Nat.is_eq(A.asn1.total(c), List.length(&2, U32, c)), x509.exact_all(t))
+    case n <> more:
+      Bool.and(x509.nc.one_ok(n, pd, ed), x509.nc.names_ok(more, pd, ed))
 
-# the path length of a CA (basicConstraints pathLenConstraint): the number of CA
-# certificates allowed below it in a chain; 1000000 when there is no limit
+# a malformed or unsupported constraint fails the chain
+def x509.nc.ok.go(plain: Bool, +pd: List<&2, List<&2, U32>>, +ed: List<&2, List<&2, U32>>, names: List<&2, List<&2, U32>>) -> Bool:
+  match plain:
+    case True{}:
+      x509.nc.names_ok(names, pd, ed)
+    case False{}:
+      False{}
+
+def x509.nc.ok.parse(+ncs: List<&2, U32>, +names: List<&2, List<&2, U32>>) -> Bool:
+  x509.nc.ok.go(Bool.and(x509.nc.plain(1000000n, x509.nc.field(ncs, 160)), x509.nc.plain(1000000n, x509.nc.field(ncs, 161))),
+    x509.nc.dns.start(x509.nc.field(ncs, 160)), x509.nc.dns.start(x509.nc.field(ncs, 161)), names)
+
+def x509.nc.ok.at(present: Bool, +nc: List<&2, U32>, +names: List<&2, List<&2, U32>>) -> Bool:
+  match present:
+    case True{}:
+      x509.nc.ok.parse(x509.valof(A.asn1.read(nc)), names)
+    case False{}:
+      True{}
+
+# the name constraints of issuer n (none, when it has no extension) allow the DNS names names
+def x509.nc.ok(+n: List<&2, U32>, +names: List<&2, List<&2, U32>>) -> Bool:
+  x509.nc.ok.at(x509.nonempty(x509.ext.value(x509.exts(n), x509.oid_nc())), x509.ext.value(x509.exts(n), x509.oid_nc()), names)
+
+# the trust anchor a for the last certificate c of a chain at position k, below which the DNS names
+# of the certificates before c are below. When c is the anchor itself, the anchor's path length
+# counts the k - 1 CA certificates between the leaf and it, and its name constraints cover those
+# certificates. Otherwise the anchor signs c, and the k CA certificates from c down count, with the
+# names of c and below.
 def x509.be.acc(+bs: List<&2, U32>, acc: Nat) -> Nat:
   match bs:
     case Nil{}:
@@ -810,19 +931,44 @@ def x509.pathlen(+der: List<&2, U32>) -> Nat:
 def x509.path_ok(k: Nat, +n: List<&2, U32>) -> Bool:
   Nat.is_le(k, x509.pathlen(n))
 
-# each certificate is valid at now and signed by the next one; the last is
-# trusted through an anchor. k is the position of the first certificate (the leaf is 0).
-def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>, +now: Nat, +k: Nat) -> Bool:
+# each certificate is valid at now and signed by the next one; the last is trusted through an
+# anchor. k is the position of the first certificate (the leaf is 0); below holds the DNS names
+# of the certificates before it (positions 0 to k - 1), which the name constraints of issuers see.
+def x509.anchor.match(+c: List<&2, U32>, +a: List<&2, U32>, +now: Nat, +k: Nat, +below: List<&2, List<&2, U32>>) -> Bool:
+  Bool.or(
+    Bool.and(R.rsa.eqb(c, a), Bool.and(x509.path_ok(Nat.sub(k, 1n), a), x509.nc.ok(a, below))),
+    Bool.and(x509.valid(c, now), Bool.and(x509.issuer_ok(a), Bool.and(x509.sigok(c, a), Bool.and(x509.path_ok(k, a),
+      x509.nc.ok(a, List.append(&2, List<&2, U32>, below, x509.dns_names(c))))))))
+
+def x509.anchor.any(+c: List<&2, U32>, anchors: List<&2, List<&2, U32>>, +now: Nat, +k: Nat, +below: List<&2, List<&2, U32>>) -> Bool:
+  match anchors:
+    case Nil{}:
+      False{}
+    case a <> more:
+      Bool.or(x509.anchor.match(c, a, now, k, below), x509.anchor.any(c, more, now, k, below))
+
+# each certificate of the chain is exactly one DER element: no bytes after it
+def x509.exact_all(chain: List<&2, List<&2, U32>>) -> Bool:
+  match chain:
+    case Nil{}:
+      True{}
+    case +c <> t:
+      Bool.and(Nat.is_eq(A.asn1.total(c), List.length(&2, U32, c)), x509.exact_all(t))
+
+# the path length of a CA (basicConstraints pathLenConstraint): the number of CA
+# certificates allowed below it in a chain; 1000000 when there is no limit
+def x509.chain.ok(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>, +now: Nat, +k: Nat, +below: List<&2, List<&2, U32>>) -> Bool:
   match chain:
     case Nil{}:
       False{}
     case +c <> rest:
       match rest:
         case Nil{}:
-          x509.anchor.any(c, anchors, now)
+          x509.anchor.any(c, anchors, now, k, below)
         case +n <> more:
           Bool.and(x509.valid(c, now), Bool.and(x509.sigok(c, n), Bool.and(x509.issuer_ok(n),
-            Bool.and(x509.path_ok(k, n), x509.chain.ok(rest, anchors, now, Nat.add(k, 1n))))))
+            Bool.and(x509.path_ok(k, n), Bool.and(x509.nc.ok(n, List.append(&2, List<&2, U32>, below, x509.dns_names(c))),
+              x509.chain.ok(rest, anchors, now, Nat.add(k, 1n), List.append(&2, List<&2, U32>, below, x509.dns_names(c))))))))
 
 # the server authentication check: the leaf (first in chain) names host, and the
 # chain verifies against the anchors at time now (Unix seconds)
@@ -832,7 +978,7 @@ def x509.verify_server.at(+chain: List<&2, List<&2, U32>>, anchors: List<&2, Lis
     case Nil{}:
       False{}
     case +leaf <> more:
-      Bool.and(x509.host_ok(leaf, host), Bool.and(x509.eku_ok(leaf), Bool.and(x509.exact_all(chain), x509.chain.ok(chain, anchors, now, 0n))))
+      Bool.and(x509.host_ok(leaf, host), Bool.and(x509.eku_ok(leaf), Bool.and(x509.exact_all(chain), x509.chain.ok(chain, anchors, now, 0n, Nil{}))))
 
 def x509.verify_server(chain: List<&2, List<&2, U32>>, anchors: List<&2, List<&2, U32>>,
   +host: List<&2, U32>, now: Nat) -> Bool:

@@ -22,7 +22,7 @@ def ku(cert_sign):
                        data_encipherment=False, key_agreement=False, key_cert_sign=cert_sign,
                        crl_sign=cert_sign, encipher_only=False, decipher_only=False)
 
-def make(subject, key, issuer_name, issuer_key, nb, na, bc=None, usage=None, san=None, eku=None, pathlen=None):
+def make(subject, key, issuer_name, issuer_key, nb, na, bc=None, usage=None, san=None, eku=None, pathlen=None, nc=None):
     """bc: None (no basicConstraints), True (CA) or False (not a CA); usage: None or a
     KeyUsage extension value; san: a list of DNS names or None."""
     b = (cx.CertificateBuilder().subject_name(name(subject)).issuer_name(issuer_name)
@@ -36,6 +36,11 @@ def make(subject, key, issuer_name, issuer_key, nb, na, bc=None, usage=None, san
         b = b.add_extension(cx.SubjectAlternativeName([cx.DNSName(s) for s in san]), critical=False)
     if eku is not None:
         b = b.add_extension(cx.ExtendedKeyUsage(eku), critical=False)
+    if nc is not None:
+        permitted, excluded = nc
+        b = b.add_extension(cx.NameConstraints(
+            permitted_subtrees=[cx.DNSName(s) for s in permitted] if permitted else None,
+            excluded_subtrees=[cx.DNSName(s) for s in excluded] if excluded else None), critical=True)
     return b.sign(issuer_key, hashes.SHA256())
 
 def der(c):
@@ -142,6 +147,63 @@ boolcase("wild-names-host-direct",
 boolcase("wild-names-host-not-leftmost",
          f"X.x509.names_host({host('www.a.example.test')}, [{host('a.*.example.test')}])", "False")
 boolcase("exact-still-matches", f"X.x509.names_host({host('example.test')}, [{host('example.test')}])", "True")
+
+
+# anchor path length and name constraints. The chain is root (the anchor) -> i1 -> leaf, or
+# root -> leaf; a chain may also end with the anchor itself.
+def nc_chain(root_pathlen=None, root_nc=None, i1_nc=None, i1_san=None, leaf_san=("example.test",), leaf_under_i1=True):
+    root_k, i1_k, leaf_k = ecp(), ecp(), ecp()
+    root = make("NC Root", root_k, name("NC Root"), root_k, now - 30 * day, now + 3650 * day,
+                bc=True, usage=ku(True), pathlen=root_pathlen, nc=root_nc)
+    i1 = make("NC I1", i1_k, root.subject, root_k, now - 30 * day, now + 1000 * day,
+              bc=True, usage=ku(True), san=i1_san, nc=i1_nc)
+    issuer, issuer_k = (i1, i1_k) if leaf_under_i1 else (root, root_k)
+    leaf = make("example.test", leaf_k, issuer.subject, issuer_k, now - day, now + 365 * day,
+                bc=False, san=list(leaf_san))
+    return der(leaf), der(i1), der(root)
+
+def vs(chain, anchors, h="example.test"):
+    return f"X.x509.verify_server([{', '.join(lst(c) for c in chain)}], [{', '.join(lst(a) for a in anchors)}], {host(h)}, {NOW}n)"
+
+# the anchor's pathLenConstraint counts the CA certificates between the leaf and the anchor
+l, i, r = nc_chain(root_pathlen=0)
+boolcase("anchor-pathlen-0-ca-below", vs([l, i], [r]), "False")
+l, i, r = nc_chain(root_pathlen=1)
+boolcase("anchor-pathlen-1-ca-below", vs([l, i], [r]), "True")
+l, i, r = nc_chain(root_pathlen=0, leaf_under_i1=False)
+boolcase("anchor-pathlen-0-leaf-below", vs([l], [r]), "True")
+l, i, r = nc_chain(root_pathlen=0)
+boolcase("anchor-in-chain-pathlen-0", vs([l, i, r], [r]), "False")
+l, i, r = nc_chain(root_pathlen=1)
+boolcase("anchor-in-chain-pathlen-1", vs([l, i, r], [r]), "True")
+l, i, r = nc_chain(root_pathlen=0, leaf_under_i1=False)
+boolcase("anchor-in-chain-leaf-pathlen-0", vs([l, r], [r]), "True")
+
+# name constraints (DNS): permitted subtrees, excluded subtrees, leading dots, and the anchor's
+l, i, r = nc_chain(i1_nc=(["example.test"], None), leaf_san=("www.example.test",))
+boolcase("nc-permitted-subdomain", vs([l, i], [r], "www.example.test"), "True")
+l, i, r = nc_chain(i1_nc=(["example.test"], None))
+boolcase("nc-permitted-exact", vs([l, i], [r]), "True")
+l, i, r = nc_chain(i1_nc=(["example.test"], None), leaf_san=("example.org",))
+boolcase("nc-permitted-other-domain", vs([l, i], [r], "example.org"), "False")
+l, i, r = nc_chain(i1_nc=(["example.test"], None), leaf_san=("notexample.test",))
+boolcase("nc-permitted-not-a-label-suffix", vs([l, i], [r], "notexample.test"), "False")
+l, i, r = nc_chain(i1_nc=(None, ["example.test"]))
+boolcase("nc-excluded-match", vs([l, i], [r]), "False")
+l, i, r = nc_chain(i1_nc=(None, ["evil.test"]))
+boolcase("nc-excluded-other", vs([l, i], [r]), "True")
+l, i, r = nc_chain(i1_nc=([".example.test"], None))
+boolcase("nc-leading-dot-excludes-exact", vs([l, i], [r]), "False")
+l, i, r = nc_chain(i1_nc=([".example.test"], None), leaf_san=("www.example.test",))
+boolcase("nc-leading-dot-subdomain", vs([l, i], [r], "www.example.test"), "True")
+l, i, r = nc_chain(root_nc=(["example.test"], None), leaf_san=("example.org",))
+boolcase("nc-anchor-permitted-other", vs([l, i], [r], "example.org"), "False")
+l, i, r = nc_chain(root_nc=(["example.test"], None))
+boolcase("nc-anchor-identity-names-below", vs([l, i, r], [r]), "True")
+l, i, r = nc_chain(root_nc=(["example.test"], None), i1_san=("other.example.org",))
+boolcase("nc-anchor-checks-intermediate-san", vs([l, i], [r]), "False")
+l, i, r = nc_chain(root_nc=(["example.test"], None), i1_san=("sub.example.test",))
+boolcase("nc-anchor-intermediate-san-permitted", vs([l, i], [r]), "True")
 
 src = r'''# x509_ext_tests.bend: basicConstraints, keyUsage and wildcard DNS names (generated by
 # gen_x509_ext_tests.py; expected values from the cryptography package).
