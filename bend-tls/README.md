@@ -132,8 +132,9 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client. The JS interpreter's run of the matrix was
-done before the revocation changes and is not recorded here; it has not been rerun. A valid run goes through the whole handshake:
+That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client. The JS interpreter's
+run of the matrix was done before the revocation changes and is not recorded here; it has not
+been rerun. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
@@ -143,11 +144,11 @@ and decryption of the response.
 (`e2e/big_server.py`). A 200 KB body is printed in full. A 500 KB body, which is
 more than the client reads, is refused with `the stream was cut`.
 
-`e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs: 15
-of 15 pass on the native client.
-`e2e/rejects.py` runs the rejection paths against a scripted fake server (see "What is
-checked"): 7 of 7 pass on the native client. `e2e/fetch.py` runs the revocation fetch against `openssl ocsp` and a CRL HTTP
-server, nine cases, with `native` for the native binary and the default for the interpreter.
+`e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs: 15 of 15
+pass on the native client. `e2e/rejects.py` runs the rejection paths against a scripted fake
+server (see "What is checked"): 7 of 7 pass on the native client. `e2e/fetch.py` runs the
+revocation fetch against `openssl ocsp` and a CRL HTTP server, nine cases, with `native` for
+the native binary and the default for the interpreter.
 
 ## What is checked
 
@@ -286,10 +287,120 @@ select laws below.
 
 ### What remains
 
-1. **Timing.** The constant-time claims are about the source. The next step is to measure
-   the compiled client (the runtime's big-number arithmetic and C division are not
-   constant-time), and to remove the zero test on the ECDH scalar if that matters.
-2. **Fetching.** `https://` URLs and host names (which need TLS for HTTP and DNS), more
-   than the first revocation URI of a certificate, delta CRLs, OCSP nonces, caching, a
-   read timeout, and a response size limit below about 1 MB. The fetch matrix has run on
+- **One branch on a secret.** `p256.ecdh` checks whether the private scalar is zero
+  (`p256.nonzero_lt_n`). A scalar is random with its top bit cleared, so the branch is
+  taken only for the zero scalar, a probability of about 2^-255. A zero scalar is also
+  refused by the handshake.
+- **The runtime.** The interpreter's arithmetic on big numbers (JS `BigInt`) and the C
+  code's division are not constant-time. The source is branch-free, but the runtime is
+  not, so a timing measurement of the compiled client would still show the runtime's
+  behaviour. The timing measurement below covers only the scalar multiplications, as whole-process CPU time.
+- **Allocation and memory.** Lists are walked in order and no table is indexed by a
+  secret, as far as the source shows. The runtime's allocation and garbage collection are
+  outside this code.
+- **Range and format checks** on public inputs (lengths, the peer's point, signatures)
+  branch, as they must: those values are public.
+
+### Proofs (what they establish)
+
+`bend PROOF.bend` checks four laws with Bend's kernel (`ALL PROOFS CHECK`):
+
+- `sel_nat_zero` and `sel_nat_one`: the scalar select `a * (1 - s) + b * s` returns `a`
+  when s = 0 and `b` when s = 1.
+- `bi_sel_zero` and `bi_sel_one`: `bi.sel` on two limb lists of the same shape returns
+  `y` when s = 0 and `x` when s = 1, limb by limb.
+
+The laws are about values. They show that the selects pick the right operand, which is what
+the branch-free code relies on. They say nothing about timing, which Bend's logic does not
+describe. The Lean recheck (`--verdict`) was not run: it needs a Lean toolchain, which this
+environment does not have.
+
+The timing measurement below is indicative only. Do not rely on the client to keep a key
+secret from a timing observer until the compiled client is measured more thoroughly.
+
+### Timing measurement
+
+`e2e/ct_timing.py` runs one native X25519 or P-256 scalar multiplication per process
+(`ct_timing_x25519.bend`, `ct_timing_p256.bend`) for three classes of scalar: all bits set,
+only the top bit set, and random. It records each process's CPU time, alternates the
+classes, and computes Welch t-statistics between them.
+
+- X25519, 2,000 processes per class: means 4.39, 4.39 and 4.40 ms (sd 0.36 to 0.58 ms);
+  largest |t| 1.12.
+- P-256, 200 processes per class: means 285 to 292 ms (sd about 40 ms); largest |t| 1.62.
+
+No dependence on the scalar was seen. This is weak evidence. Process CPU time includes
+startup, which dilutes the X25519 difference, and with 200 runs the P-256 test detects only
+differences of a few percent. The JS interpreter is not measured.
+
+## Limits and cautions
+
+- **Three cipher suites.** `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
+  `TLS_CHACHA20_POLY1305_SHA256`. The transcript hash and the key schedule follow the
+  suite's hash (SHA-256 or SHA-384), and the record key length follows its cipher.
+- **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). The first
+  ClientHello carries x25519 and P-256 key shares; a server that wants P-384 sends a
+  HelloRetryRequest, and the client answers with a P-384 key share (and the cookie,
+  if any). There is no P-521 or X448, and a server that wants another group fails.
+- **Certificates.** RSA (verified with SHA-256, PSS or PKCS#1 v1.5), ECDSA on P-256
+  with SHA-256, ECDSA on P-384 with SHA-384 (or SHA-256), and Ed25519. P-521 ECDSA,
+  Ed448, and RSA with hashes other than SHA-256 are not verified.
+- **Certificate checks are partial.** Checked: validity dates, hostnames (DNS SAN,
+  case-insensitive, a wildcard for the leftmost label only), signatures up to a
+  trust anchor given as DER, `basicConstraints` cA on each issuer, `keyUsage`
+  keyCertSign on each issuer when present, `pathLenConstraint` on each issuer, and
+  extended key usage on the leaf when present, the anchor's path length, and name
+  constraints for DNS names (permitted and excluded subtrees, on every issuer and the
+  anchor, over the certificates below each). Name constraints in other name forms,
+  and a constraint with a minimum or maximum (which the profile forbids), fail the
+  chain. Revocation: the CRL file given on the command line is checked along the chain,
+  and with the `fetch` argument the client also fetches each certificate's status (see
+  the next bullet). Not checked: certificate policies, subject common
+  names (only SAN is used), and IP-address SANs.
+- **Bounded reads.** The handshake flight may use at most 24 records and the
+  response at most 24 records (each up to 16 KB, about 384 KB in all). A longer
+  one is an error and the client exits 1. A record that is not complete after 48
+  socket reads, or a connection that closes inside a record, is an error too. A
+  close at a record boundary ends the stream.
+- **Client behaviour.** One request, `GET /`. The response is printed raw, HTTP
+  headers included. No session resumption, no 0-RTT, no client certificates, no
+  key update, no `close_notify` sent, and no HTTP parsing. NewSessionTicket
+  messages are read and ignored.
+- **Time and names come from the command line.** The Unix time and the server name
+  are arguments, and the connection address is an IP address (no DNS).
+- **Fetching revocation status (`fetch`).** Only `http://` URLs with an IP address are
+  used. `TCP.connect` accepts no host names (`localhost` fails with "Invalid argument"), and
+  there is no TLS for HTTP, so an `https://` URL or a host name refuses the chain. For each
+  certificate the client takes its first OCSP responder URI, or else its first CRL
+  distribution point. A URL that cannot be fetched, or a reply that does not confirm the
+  certificate, refuses the handshake; a refused connection is no reply and does the same. A
+  certificate with no revocation URI is accepted, and so is the trust anchor (it is not
+  checked). A chain longer than 8 certificates is refused. The client sends no OCSP nonce,
+  and a reply's time window must hold at the given time, with no clock skew allowed. A
+  response is read up to 64 reads of 16 KB (about 1 MB); a longer body is cut and fails its
+  check. There is no read timeout: the installed Bend (2.0.39) has no timed receive for
+  bytes (its `TCP.try_recv` returns text), so a responder that accepts the connection and
+  never answers stops the client. Responses are not cached.
+- **Constant time: source, and a first measurement.** See the review above. The timing
+  measurement covers only the native X25519 and P-256 scalar multiplications, and is
+  indicative (see "Timing measurement" in the review).
+- **No streaming API for hashing.** `sha256_bytes`, `sha512.hash` and `hmac` take
+  the whole message at once.
+- **No audit.** The test vectors and the e2e tests show the arithmetic and the
+  protocol are right for these inputs. They don't show the code is secure.
+
+## What remains
+
+1. **Timing.** A finer measurement: the whole client rather than the scalar multiplications,
+   a clock inside the program, and more runs. The zero test on the ECDH scalar is also open.
+2. **Host names and `https://` revocation URLs.** `TCP.connect` accepts only IP addresses,
+   and there is no TLS for HTTP. Two options are an operator-supplied address for each host,
+   like a hosts file, and TLS for the fetch, which needs a trust anchor for the revocation
+   endpoints. Both are design decisions and neither is done.
+3. **Read timeout.** The installed Bend (2.0.39) has no timed receive for bytes. A newer Bend
+   release describes a `TCP.poll` with a deadline; using it would mean changing the toolchain.
+4. **Fetching, more.** More than the first revocation URI of a certificate, delta CRLs, OCSP
+   nonces, caching, and a response size limit below about 1 MB. The fetch matrix has run on
    the native client only; the JS interpreter has not run it.
+5. **Audit.** No independent review of the code has been done. The tests show the arithmetic
+   and the protocol for the inputs tried; they do not show the code is secure.
