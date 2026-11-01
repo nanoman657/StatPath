@@ -100,19 +100,19 @@ RV = 8
 def rv_stages():
     out = ""
     for k in range(RV):
-        out += f"""def rv.s{k}(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+        out += f"""def rv.s{k}(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{{}}:
       IO.pure(Bool, True{{}})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s{k + 1}(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s{k + 1}(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
 """
     out += f"""# the chain has more links than the stages: it is refused
-def rv.s{RV}(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s{RV}(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{{}}:
       IO.pure(Bool, True{{}})
@@ -122,10 +122,12 @@ def rv.s{RV}(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
 """
     return out
 
-src = open("client_body.bend").read()
-out = (src.replace("#@@STAGES@@", fill + fill_entry)
-          .replace("#@@FLSTAGES@@", flight)
-          .replace("#@@APPSTAGES@@", app)
-          .replace("#@@REVSTAGES@@", rv_stages()))
-open("client.bend", "w").write(out)
-print("stages: fill", K, "flight", F, "app", G)
+def build(src):
+    return (src.replace("#@@STAGES@@", fill + fill_entry)
+              .replace("#@@FLSTAGES@@", flight)
+              .replace("#@@APPSTAGES@@", app)
+              .replace("#@@REVSTAGES@@", rv_stages()))
+
+if __name__ == "__main__":
+    open("client.bend", "w").write(build(open("client_body.bend").read()))
+    print("stages: fill", K, "flight", F, "app", G)

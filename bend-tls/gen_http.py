@@ -264,6 +264,95 @@ def http.post_url(url: String, ctype: String, +body: List<&2, U32>) -> IO(Maybe<
   http.fetch(http.url(S.bytes_of(url)), "POST", ctype, body)
 
 """
+body += r"""
+# A revocation URL: http:// or https://, then a host, an optional port and a path. The host is a
+# name (the operator gives its address, see http.lookup) or an IP address. Tgt holds the host name
+# as written (the Host header, and the name the certificate must match), the address to connect
+# to, the port and the path.
+type Tgt is Data:
+  Tgt{tls: Bool, name: List<&2, U32>, ip: String, port: Nat, path: List<&2, U32>}
+
+# an ASCII byte in lower case
+def http.lc(+c: U32) -> U32:
+  Bool.pick(U32, Bool.and(U32.is_ge(c, 65), U32.is_lt(c, 91)), U32.add(c, 32), c)
+
+# two byte lists are the same, ignoring ASCII case
+def http.beq(+a: List<&2, U32>, +b: List<&2, U32>) -> Bool:
+  match a:
+    case Nil{}:
+      match b:
+        case Nil{}:
+          True{}
+        case +y <> yt:
+          False{}
+    case +x <> t:
+      match b:
+        case Nil{}:
+          False{}
+        case +y <> yt:
+          Bool.and(U32.is_eq(http.lc(x), http.lc(y)), http.beq(t, yt))
+
+# the address the operator gave for name: hosts holds entries "name=address" (the address as text)
+def http.lookup(+hosts: List<&2, List<&2, U32>>, +name: List<&2, U32>) -> Maybe<&2, List<&2, U32>>:
+  match hosts:
+    case Nil{}:
+      None{}
+    case +e <> t:
+      Bool.pick(Maybe<&2, List<&2, U32>>, http.beq(http.before(e, 61), name),
+        Some{List.drop(&2, U32, http.from(e, 61), 1n)}, http.lookup(t, name))
+
+# the port after the colon in the authority, or the default when there is none
+def http.port.or(dflt: Nat, +colon: List<&2, U32>) -> Nat:
+  match colon:
+    case Nil{}:
+      dflt
+    case +c <> digits:
+      http.num(digits, 0n)
+
+def http.target.found(tls: Bool, +name: List<&2, U32>, port: Nat, +path: List<&2, U32>,
+  +found: Maybe<&2, List<&2, U32>>) -> Maybe<&2, Tgt>:
+  match found:
+    case Some{+addr}:
+      Some{Tgt{tls, name, http.ip_str(addr), port, path}}
+    case None{}:
+      None{}
+
+def http.target.resolve(tls: Bool, +hosts: List<&2, List<&2, U32>>, +name: List<&2, U32>, port: Nat,
+  +path: List<&2, U32>) -> Maybe<&2, Tgt>:
+  http.target.found(tls, name, port, path, http.lookup(hosts, name))
+
+# an address is used as it is; a name is looked up in the operator's hosts
+def http.target.ip(is_ip: Bool, +tls: Bool, +hosts: List<&2, List<&2, U32>>, +name: List<&2, U32>, +port: Nat,
+  +path: List<&2, U32>) -> Maybe<&2, Tgt>:
+  Bool.pick(Maybe<&2, Tgt>, is_ip, Some{Tgt{tls, name, http.ip_str(name), port, path}},
+    http.target.resolve(tls, hosts, name, port, path))
+
+def http.target.named(tls: Bool, +hosts: List<&2, List<&2, U32>>, +auth: List<&2, U32>,
+  +path: List<&2, U32>, dflt: Nat) -> Maybe<&2, Tgt>:
+  http.target.ip(http.ip_ok(http.before(auth, 58)), tls, hosts, http.before(auth, 58),
+    http.port.or(dflt, http.from(auth, 58)), path)
+
+def http.target.auth(tls: Bool, dflt: Nat, +hosts: List<&2, List<&2, U32>>, +rest: List<&2, U32>) -> Maybe<&2, Tgt>:
+  http.target.named(tls, hosts, http.before(rest, 47), http.path.at(http.from(rest, 47)), dflt)
+
+def http.target.at(tls: Bool, plain: Bool, +hosts: List<&2, List<&2, U32>>, +u: List<&2, U32>) -> Maybe<&2, Tgt>:
+  Bool.pick(Maybe<&2, Tgt>, tls, http.target.auth(True{}, 443n, hosts, List.drop(&2, U32, u, 8n)),
+    Bool.pick(Maybe<&2, Tgt>, plain, http.target.auth(False{}, 80n, hosts, List.drop(&2, U32, u, 7n)), None{}))
+
+# the target of an http:// or https:// URL; None for another scheme
+def http.target(+hosts: List<&2, List<&2, U32>>, +u: List<&2, U32>) -> Maybe<&2, Tgt>:
+  http.target.at(R.rsa.eqb(List.take(&2, U32, u, 8n), http.b("https://")),
+    R.rsa.eqb(List.take(&2, U32, u, 7n), http.b("http://")), hosts, u)
+
+# a request: the method, the Host header (the name as written), the path, the content type and the
+# body (a POST when there is a body)
+def http.req.bytes(method: String, +name: List<&2, U32>, +path: List<&2, U32>, ctype: String,
+  +body: List<&2, U32>) -> List<&2, U32>:
+  List.append(&2, U32, http.b(method), List.append(&2, U32, http.b(" "), List.append(&2, U32, path,
+    List.append(&2, U32, http.b(" HTTP/1.0\r\nHost: "), List.append(&2, U32, name,
+    List.append(&2, U32, http.b("\r\nConnection: close\r\n"), http.request.body(ctype, body)))))))
+
+"""
 body += stages
 open("http.bend", "w").write(body)
 print("http.bend written:", K, "read stages")

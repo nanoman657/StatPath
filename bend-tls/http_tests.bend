@@ -10,7 +10,20 @@ type Case is Data:
 def kcase(name: String, +got: String, want: String) -> Case:
   Case{name, got, want}
 
+# a target as text: tls|name|address|port|path, or none
+def show_tgt.at(m: Maybe<&2, H.Tgt>) -> String:
+  match m:
+    case Some{+t}:
+      match t:
+        case H.Tgt{+tls, +name, +ip, +port, +path}:
+          Bool.pick(String, tls, "True", "False") ++ "|" ++ H.http.ip_str(name) ++ "|" ++ ip ++ "|" ++ Nat.show(port) ++ "|" ++ H.http.ip_str(path)
+    case None{}:
+      "none"
+
 # a reply body as text, or none
+def show_tgt(+hosts: List<&2, List<&2, U32>>, +u: List<&2, U32>) -> String:
+  show_tgt.at(H.http.target(hosts, u))
+
 def show_reply(m: Maybe<&2, List<&2, U32>>) -> String:
   match m:
     case Some{+body}:
@@ -35,6 +48,14 @@ def cases() -> List<&2, Case>:
   kcase("url-bare", show_url(H.http.url([104, 116, 116, 112, 58, 47, 47, 49, 46, 50, 46, 51, 46, 52])), "1.2.3.4|80|/") <>
   kcase("url-host-name-refused", show_url(H.http.url([104, 116, 116, 112, 58, 47, 47, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 47, 120])), "none") <>
   kcase("url-https-refused", show_url(H.http.url([104, 116, 116, 112, 115, 58, 47, 47, 49, 48, 46, 48, 46, 48, 46, 53, 47, 120])), "none") <>
+  kcase("target-http-ip", show_tgt([], [104, 116, 116, 112, 58, 47, 47, 49, 48, 46, 48, 46, 48, 46, 53, 58, 56, 48, 56, 48, 47, 120]), "False|10.0.0.5|10.0.0.5|8080|/x") <>
+  kcase("target-https-default-port", show_tgt([], [104, 116, 116, 112, 115, 58, 47, 47, 49, 48, 46, 48, 46, 48, 46, 55, 47, 99, 114, 108]), "True|10.0.0.7|10.0.0.7|443|/crl") <>
+  kcase("target-name-from-hosts", show_tgt([[99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 57]], [104, 116, 116, 112, 58, 47, 47, 99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 47, 97, 46, 99, 114, 108]), "False|crl.example.test|10.0.0.9|80|/a.crl") <>
+  kcase("target-name-ignores-case", show_tgt([[99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 57]], [104, 116, 116, 112, 58, 47, 47, 67, 82, 76, 46, 69, 120, 97, 109, 112, 108, 101, 46, 84, 69, 83, 84, 47, 97]), "False|CRL.Example.TEST|10.0.0.9|80|/a") <>
+  kcase("target-name-with-port", show_tgt([[99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 57]], [104, 116, 116, 112, 115, 58, 47, 47, 99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 58, 56, 52, 52, 51, 47, 120]), "True|crl.example.test|10.0.0.9|8443|/x") <>
+  kcase("target-second-entry", show_tgt([[97, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 49], [98, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 50]], [104, 116, 116, 112, 58, 47, 47, 98, 46, 116, 101, 115, 116, 47]), "False|b.test|10.0.0.2|80|/") <>
+  kcase("target-name-not-in-hosts", show_tgt([[99, 114, 108, 46, 101, 120, 97, 109, 112, 108, 101, 46, 116, 101, 115, 116, 61, 49, 48, 46, 48, 46, 48, 46, 57]], [104, 116, 116, 112, 58, 47, 47, 111, 116, 104, 101, 114, 46, 116, 101, 115, 116, 47]), "none") <>
+  kcase("target-other-scheme", show_tgt([], [102, 116, 112, 58, 47, 47, 49, 48, 46, 48, 46, 48, 46, 53, 47]), "none") <>
   kcase("reply-200-body", show_reply(H.http.reply([72, 84, 84, 80, 47, 49, 46, 48, 32, 50, 48, 48, 32, 79, 75, 13, 10, 67, 111, 110, 116, 101, 110, 116, 45, 76, 101, 110, 103, 116, 104, 58, 32, 54, 13, 10, 13, 10, 67, 82, 76, 68, 69, 82])), "body CRLDER") <>
   kcase("reply-404-none", show_reply(H.http.reply([72, 84, 84, 80, 47, 49, 46, 48, 32, 52, 48, 52, 32, 78, 111, 116, 32, 70, 111, 117, 110, 100, 13, 10, 13, 10, 110, 111, 112, 101])), "none") <>
   Nil{}

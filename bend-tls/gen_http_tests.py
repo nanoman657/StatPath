@@ -21,6 +21,26 @@ for name, url, want in cases:
 out.append('  kcase("url-host-name-refused", show_url(H.http.url(' + lst("http://example.test/x") + ')), "none") <>')
 out.append('  kcase("url-https-refused", show_url(H.http.url(' + lst("https://10.0.0.5/x") + ')), "none") <>')
 
+# revocation URLs: the target of an http:// or https:// URL, with the operator's hosts (name=address)
+def lst_hosts(entries):
+    return "[" + ", ".join(lst(e) for e in entries) + "]"
+targets = [
+    ("target-http-ip", "http://10.0.0.5:8080/x", [], "False|10.0.0.5|10.0.0.5|8080|/x"),
+    ("target-https-default-port", "https://10.0.0.7/crl", [], "True|10.0.0.7|10.0.0.7|443|/crl"),
+    ("target-name-from-hosts", "http://crl.example.test/a.crl", ["crl.example.test=10.0.0.9"],
+     "False|crl.example.test|10.0.0.9|80|/a.crl"),
+    ("target-name-ignores-case", "http://CRL.Example.TEST/a", ["crl.example.test=10.0.0.9"],
+     "False|CRL.Example.TEST|10.0.0.9|80|/a"),
+    ("target-name-with-port", "https://crl.example.test:8443/x", ["crl.example.test=10.0.0.9"],
+     "True|crl.example.test|10.0.0.9|8443|/x"),
+    ("target-second-entry", "http://b.test/", ["a.test=10.0.0.1", "b.test=10.0.0.2"],
+     "False|b.test|10.0.0.2|80|/"),
+    ("target-name-not-in-hosts", "http://other.test/", ["crl.example.test=10.0.0.9"], "none"),
+    ("target-other-scheme", "ftp://10.0.0.5/", [], "none"),
+]
+for name, url, hosts, want in targets:
+    out.append(f'  kcase("{name}", show_tgt({lst_hosts(hosts)}, {lst(url)}), "{want}") <>')
+
 def lst_bytes(b):
     return "[" + ", ".join(str(x) for x in b) + "]"
 replies = [
@@ -40,6 +60,19 @@ type Case is Data:
 
 def kcase(name: String, +got: String, want: String) -> Case:
   Case{name, got, want}
+
+# a target as text: tls|name|address|port|path, or none
+def show_tgt(+hosts: List<&2, List<&2, U32>>, +u: List<&2, U32>) -> String:
+  show_tgt.at(H.http.target(hosts, u))
+
+def show_tgt.at(m: Maybe<&2, H.Tgt>) -> String:
+  match m:
+    case Some{+t}:
+      match t:
+        case H.Tgt{+tls, +name, +ip, +port, +path}:
+          Bool.pick(String, tls, "True", "False") ++ "|" ++ H.http.ip_str(name) ++ "|" ++ ip ++ "|" ++ Nat.show(port) ++ "|" ++ H.http.ip_str(path)
+    case None{}:
+      "none"
 
 # a reply body as text, or none
 def show_reply(m: Maybe<&2, List<&2, U32>>) -> String:

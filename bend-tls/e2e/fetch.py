@@ -9,6 +9,9 @@
 # Needs openssl and Python's cryptography package.
 import datetime as dt
 import os
+import ssl
+import threading
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import shutil
 import socket
 import subprocess
@@ -16,7 +19,7 @@ import sys
 import tempfile
 import time
 from cryptography import x509 as cx
-from cryptography.x509 import ocsp as _ocsp  # noqa: F401  (the responder is openssl's)
+from cryptography.x509 import ocsp
 from cryptography.x509.oid import NameOID, AuthorityInformationAccessOID
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import ec
@@ -104,6 +107,55 @@ def index_line(status, serial, now, cn):
     return f"V\t{exp}\t\t{serial:X}\tunknown\t/CN={cn}\n"
 
 
+def start_https(port, crl_dir, status, inter, ik, chain_pem, key_pem):
+    now = dt.datetime.now(dt.timezone.utc)
+
+    class Handler(BaseHTTPRequestHandler):
+        protocol_version = "HTTP/1.0"
+
+        def log_message(self, *args):
+            pass
+
+        def reply(self, code, ctype, body):
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_GET(self):
+            path = os.path.join(crl_dir, self.path.lstrip("/"))
+            if os.path.isfile(path):
+                self.reply(200, "application/pkix-crl", open(path, "rb").read())
+            else:
+                self.reply(404, "text/plain", b"no such file")
+
+        def do_POST(self):
+            n = int(self.headers.get("Content-Length", "0"))
+            req = ocsp.load_der_ocsp_request(self.rfile.read(n))
+            entry = status.get(req.serial_number)
+            if entry is None:
+                self.reply(404, "text/plain", b"unknown")
+                return
+            word, leaf_cert = entry
+            good = word == "good"
+            builder = ocsp.OCSPResponseBuilder().add_response(
+                cert=leaf_cert, issuer=inter, algorithm=hashes.SHA256(),
+                cert_status=ocsp.OCSPCertStatus.GOOD if good else ocsp.OCSPCertStatus.REVOKED,
+                this_update=now - DAY / 24, next_update=now + DAY,
+                revocation_time=None if good else now - DAY, revocation_reason=None)
+            builder = builder.responder_id(ocsp.OCSPResponderEncoding.HASH, inter)
+            resp = builder.sign(ik, hashes.SHA256()).public_bytes(serialization.Encoding.DER)
+            self.reply(200, "application/ocsp-response", resp)
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER)
+    ctx.load_cert_chain(certfile=chain_pem, keyfile=key_pem)
+    httpd.socket = ctx.wrap_socket(httpd.socket, server_side=True)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    return httpd
+
+
 def main():
     work = tempfile.mkdtemp(prefix="fetch-e2e-")
     procs = []
@@ -119,6 +171,9 @@ def main():
         crl_base = f"http://127.0.0.1:{cport}"
         dead_ocsp = f"http://127.0.0.1:{dead}/"
         dead_crl = f"http://127.0.0.1:{dead}/crl.der"
+        hport = free_port()         # the TLS server: a CRL by GET, and the OCSP responder by POST
+        hosts_arg = ["crl.example.test=127.0.0.1"]   # the operator's address for that name
+        https_crl = f"https://crl.example.test:{hport}"
 
         rk, ik = ec.generate_private_key(ec.SECP256R1()), ec.generate_private_key(ec.SECP256R1())
         root = ca("Fetch Root", rk, name("Fetch Root"), rk, now_dt)
@@ -138,7 +193,19 @@ def main():
             ("crl-revoked",      None, f"{crl_base}/revoked.der", None, True, "fail"),
             ("crl-unreachable",  None, dead_crl,       None, False, "fail"),
             ("no-urls",          None, None,           None, False, "ok"),
+            # https URLs, with the name given its address by the operator (hosts_arg)
+            ("https-ocsp-good",    f"{https_crl}/ocsp", None,            None, False, "ok"),
+            ("https-ocsp-revoked", f"{https_crl}/ocsp", None,            None, False, "fail"),
+            ("https-crl-clean",    None, f"{https_crl}/clean.der",       None, False, "ok"),
+            ("https-crl-revoked",  None, f"{https_crl}/revoked.der",     None, True,  "fail"),
+            # a host name: with its entry in the operator's hosts, and without it (refused)
+            ("name-http-with-hosts", None, f"http://crl.example.test:{cport}/clean.der", None, False, "ok"),
+            ("name-http-no-hosts",   None, f"http://crl.example.test:{cport}/clean.der", None, False, "fail"),
         ]
+        # which scenarios get the operator's hosts on the command line
+        host_args = {n: hosts_arg for n in [
+            "https-ocsp-good", "https-ocsp-revoked", "https-crl-clean", "https-crl-revoked",
+            "name-http-with-hosts"]}
         index = ""
         leaves = {}
         serials = {}
@@ -157,8 +224,28 @@ def main():
         os.makedirs(f"{work}/crl")
         with open(f"{work}/crl/clean.der", "wb") as f:
             f.write(crl_for(inter, ik, [], now_dt))
+        revoked_serials = [serials[sn] for sn, _, _, _, rv, _ in scenarios if rv]
         with open(f"{work}/crl/revoked.der", "wb") as f:
-            f.write(crl_for(inter, ik, [serials["crl-revoked"]], now_dt))
+            f.write(crl_for(inter, ik, revoked_serials, now_dt))
+        # the TLS server's certificate for the name in the https URLs, issued by the intermediate
+        sk = ec.generate_private_key(ec.SECP256R1())
+        server_cert = (cx.CertificateBuilder().subject_name(name("crl.example.test"))
+                       .issuer_name(inter.subject).public_key(sk.public_key())
+                       .serial_number(cx.random_serial_number())
+                       .not_valid_before(now_dt - DAY).not_valid_after(now_dt + 365 * DAY)
+                       .add_extension(cx.SubjectAlternativeName([cx.DNSName("crl.example.test")]), critical=False)
+                       .sign(ik, hashes.SHA256()))
+        with open(f"{work}/tls-chain.pem", "wb") as f:
+            f.write(server_cert.public_bytes(serialization.Encoding.PEM) + inter.public_bytes(serialization.Encoding.PEM))
+        pem_key(sk, f"{work}/tls.key")
+        # the OCSP answers over https: the status of each leaf, by serial number
+        https_status = {}
+        for sn, c in leaves.items():
+            if sn == "https-ocsp-good":
+                https_status[serials[sn]] = ("good", c[0])
+            elif sn == "https-ocsp-revoked":
+                https_status[serials[sn]] = ("revoked", c[0])
+        start_https(hport, f"{work}/crl", https_status, inter, ik, f"{work}/tls-chain.pem", f"{work}/tls.key")
 
         ocsp_proc = subprocess.Popen(
             ["openssl", "ocsp", "-index", f"{work}/index.txt", "-port", str(oport),
@@ -206,6 +293,7 @@ def main():
                 args = run_prefix + ["example.test", "127.0.0.1", str(sport), f"{work}/root.der", str(int(time.time()) + 60), ""]
                 if fetch:
                     args.append("fetch")
+                    args += host_args.get(sname, [])
                 try:
                     p = subprocess.run(args, cwd=ROOT, capture_output=True, text=True, timeout=600)
                     out = p.stdout + p.stderr

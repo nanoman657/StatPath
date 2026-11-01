@@ -23,21 +23,27 @@ import ./crl.bend as CR
 import ./rsa.bend as R
 import ./http.bend as HTTP
 import ./revoc.bend as RV
+import ./tlsget.bend as TG
 
 # The revocation inputs of a connection: the CRL file (DER; Nil when none is given) and whether the
 # client fetches the revocation status of the chain over HTTP (rv.on)
 type Rev is Data:
-  Rev{crl: List<&2, U32>, fetch: Bool}
+  Rev{crl: List<&2, U32>, fetch: Bool, hosts: List<&2, List<&2, U32>>}
 
 def rv.file(+r: Rev) -> List<&2, U32>:
   match r:
-    case Rev{+c, +f}:
+    case Rev{+c, +f, +h}:
       c
 
 def rv.on(+r: Rev) -> Bool:
   match r:
-    case Rev{+c, +f}:
+    case Rev{+c, +f, +h}:
       f
+
+def rv.hosts(+r: Rev) -> List<&2, List<&2, U32>>:
+  match r:
+    case Rev{+c, +f, +h}:
+      h
 
 # Randomness
 # ----------
@@ -2308,15 +2314,52 @@ def rv.crl.got(r: Maybe<&2, List<&2, U32>>, +c: List<&2, U32>, +n: List<&2, U32>
     case None{}:
       False{}
 
-def rv.crl.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+# A revocation URL, a CRL (GET) or an OCSP responder (POST of the request as body): http, or https,
+# whose server certificate must chain to der (the trust anchor). An unusable URL is no reply.
+def rv.get.tls(tls: Bool, +ip: String, port: Nat, +req: List<&2, U32>, +name: List<&2, U32>, +der: List<&2, U32>,
+  now: Nat) -> IO(Maybe<&2, List<&2, U32>>):
+  match tls:
+    case True{}:
+      TG.tg.get(ip, port, req, name, der, now)
+    case False{}:
+      HTTP.http.call.at(ip, port, req)
+
+# the revocation run over the chain, when fetching is on (rv.on)
+def rv.method(+body: List<&2, U32>) -> String:
+  match body:
+    case Nil{}:
+      "GET"
+    case +x <> t:
+      "POST"
+
+# http is plain; https is a TLS connection to the address, with the name and the trust anchor der
+def rv.get.go(+t: HTTP.Tgt, +body: List<&2, U32>, +der: List<&2, U32>, +now: Nat) -> IO(Maybe<&2, List<&2, U32>>):
+  match t:
+    case HTTP.Tgt{+tls, +name, +ip, +port, +path}:
+      rv.get.tls(tls, ip, port, HTTP.http.req.bytes(rv.method(body), name, path, "application/ocsp-request", body), name, der, now)
+
+def rv.get.at(m: Maybe<&2, HTTP.Tgt>, +body: List<&2, U32>, +der: List<&2, U32>, +now: Nat) -> IO(Maybe<&2, List<&2, U32>>):
+  match m:
+    case Some{+t}:
+      rv.get.go(t, body, der, now)
+    case None{}:
+      IO.pure(Maybe<&2, List<&2, U32>>, None{})
+
+def rv.get(+uri: List<&2, U32>, +body: List<&2, U32>, +der: List<&2, U32>, +now: Nat,
+  +hosts: List<&2, List<&2, U32>>) -> IO(Maybe<&2, List<&2, U32>>):
+  rv.get.at(HTTP.http.target(hosts, uri), body, der, now)
+
+def rv.crl.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat, +der: List<&2, U32>,
+  +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   do IO<Bool>:
-    r : Maybe<&2, List<&2, U32>> <- HTTP.http.fetch(HTTP.http.url(uri), "GET", "", Nil{})
+    r : Maybe<&2, List<&2, U32>> <- rv.get(uri, Nil{}, der, now, hosts)
     IO.pure(Bool, rv.crl.got(r, c, n, now))
 
-def rv.crl.at(has: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+def rv.crl.at(has: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat, +der: List<&2, U32>,
+  +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match has:
     case True{}:
-      rv.crl.fetch(RV.rev.first_of(RV.rev.cdp_uris(c)), c, n, now)
+      rv.crl.fetch(RV.rev.first_of(RV.rev.cdp_uris(c)), c, n, now, der, hosts)
     case False{}:
       IO.pure(Bool, True{})
 
@@ -2327,9 +2370,10 @@ def rv.ocsp.got(r: Maybe<&2, List<&2, U32>>, +c: List<&2, U32>, +n: List<&2, U32
     case None{}:
       False{}
 
-def rv.ocsp.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+def rv.ocsp.fetch(+uri: List<&2, U32>, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat, +der: List<&2, U32>,
+  +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   do IO<Bool>:
-    r : Maybe<&2, List<&2, U32>> <- HTTP.http.fetch(HTTP.http.url(uri), "POST", "application/ocsp-request", RV.rev.ocsp_request(c, n))
+    r : Maybe<&2, List<&2, U32>> <- rv.get(uri, RV.rev.ocsp_request(c, n), der, now, hosts)
     IO.pure(Bool, rv.ocsp.got(r, c, n, now))
 
 def rv.present(+xs: List<&2, U32>) -> Bool:
@@ -2342,19 +2386,20 @@ def rv.present(+xs: List<&2, U32>) -> Bool:
 # a certificate with an OCSP responder URI is checked by OCSP (the responder's reply must confirm
 # it); one with only a CRL distribution point by that CRL; one with neither is accepted, since
 # there is no revocation information to check. A URI that cannot be fetched refuses the chain.
-def rv.one.at(ocsp: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat) -> IO(Bool):
+def rv.one.at(ocsp: Bool, +c: List<&2, U32>, +n: List<&2, U32>, +now: Nat, +der: List<&2, U32>,
+  +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match ocsp:
     case True{}:
-      rv.ocsp.fetch(RV.rev.ocsp_uri(c), c, n, now)
+      rv.ocsp.fetch(RV.rev.ocsp_uri(c), c, n, now, der, hosts)
     case False{}:
-      rv.crl.at(rv.present(RV.rev.first_of(RV.rev.cdp_uris(c))), c, n, now)
+      rv.crl.at(rv.present(RV.rev.first_of(RV.rev.cdp_uris(c))), c, n, now, der, hosts)
 
-def rv.one(+l: RLink, +now: Nat) -> IO(Bool):
+def rv.one(+l: RLink, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match l:
     case RLink{+c, +n}:
-      rv.one.at(rv.present(RV.rev.ocsp_uri(c)), c, n, now)
+      rv.one.at(rv.present(RV.rev.ocsp_uri(c)), c, n, now, der, hosts)
 
-def rv.s8(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s8(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
@@ -2367,99 +2412,104 @@ def rv.s8(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
 # -------------------------------------------
 
 # the client's Finished under c_hs, then the GET under the application keys
-def rv.s7(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s7(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s8(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s8(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
 # the chain has more links than the stages: it is refused
-def rv.s6(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s6(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s7(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s7(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s5(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s5(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s6(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s6(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s4(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s4(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s5(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s5(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s3(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s3(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s4(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s4(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s2(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s2(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s3(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s3(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s1(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s1(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s2(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s2(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.s0(+links: List<&2, RLink>, +now: Nat) -> IO(Bool):
+def rv.s0(+links: List<&2, RLink>, +now: Nat, +der: List<&2, U32>, +hosts: List<&2, List<&2, U32>>) -> IO(Bool):
   match links:
     case Nil{}:
       IO.pure(Bool, True{})
     case +l <> t:
       do IO<Bool>:
-        a : Bool <- rv.one(l, now)
-        b : Bool <- rv.s1(t, now)
+        a : Bool <- rv.one(l, now, der, hosts)
+        b : Bool <- rv.s1(t, now, der, hosts)
         IO.pure(Bool, Bool.and(a, b))
 
-def rv.run(on: Bool, +chain: List<&2, List<&2, U32>>, +der: List<&2, U32>, +now: Nat) -> IO(Bool):
+def rv.run.at(on: Bool, +hosts: List<&2, List<&2, U32>>, +chain: List<&2, List<&2, U32>>, +der: List<&2, U32>,
+  +now: Nat) -> IO(Bool):
   match on:
     case True{}:
-      rv.s0(rv.links(chain, der), now)
+      rv.s0(rv.links(chain, der), now, der, hosts)
     case False{}:
       IO.pure(Bool, True{})
+
+# the operator's hosts: each argument is name=address
+def rv.run(+rev: Rev, +chain: List<&2, List<&2, U32>>, +der: List<&2, U32>, +now: Nat) -> IO(Bool):
+  rv.run.at(rv.on(rev), rv.hosts(rev), chain, der, now)
 
 def flight.revocation(s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
   +ch: List<&2, U32>, +sh: List<&2, U32>, +der: List<&2, U32>, +rev: Rev, +now: Nat, +host: List<&2, U32>,
   +alg: Nat) -> IO(Unit):
   do IO<Unit>:
-    r : Bool <- rv.run(rv.on(rev), flight.chain(fl.acc(st)), der, now)
+    r : Bool <- rv.run(rev, flight.chain(fl.acc(st)), der, now)
     flight.revocation.at(r, s, st, c_hs, mst, ch, sh, host, alg)
 
 def flight.finish.check(v: Bool, s: Socket, +st: Fl, +c_hs: List<&2, U32>, +mst: List<&2, U32>,
@@ -2670,6 +2720,13 @@ def hello.got(t: Socket & List<&2, U32> & List<&2, U32>, +priv: List<&2, U32>, +
   (rest, rec) = pr
   hello.check(s, rest, rec, priv, privs, ch, der, rev, now, host)
 
+def rv.hosts.parse(args: List<String>) -> List<&2, List<&2, U32>>:
+  match args:
+    case Nil{}:
+      Nil{}
+    case +a <> t:
+      S.bytes_of(a) <> rv.hosts.parse(t)
+
 def arg.nat(s: String, +acc: Nat) -> Nat:
   match s:
     case SNil{}:
@@ -2707,11 +2764,12 @@ def crl.file.at(none: Bool, +path: String) -> IO(List<&2, U32>):
 def crl.file(+path: String) -> IO(List<&2, U32>):
   crl.file.at(String.eq(path, ""), path)
 
-def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now: Nat, fetch: Bool) -> IO(Unit):
+def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now: Nat, fetch: Bool,
+  hosts: List<&2, List<&2, U32>>) -> IO(Unit):
   do IO<Unit>:
     der : List<&2, U32> <- anchor.read(path)
     crl : List<&2, U32> <- crl.file(crlpath)
-    +rev : Rev = Rev{crl, fetch}
+    +rev : Rev = Rev{crl, fetch, hosts}
     sock : Socket <- IO.try(Socket, TCP.connect(ip, U32.from_nat(port)))
     +host : List<&2, U32> = S.bytes_of(name)
     +priv : List<&2, U32> <- io.rand(8n)
@@ -2727,14 +2785,14 @@ def run(name: String, ip: String, port: Nat, path: String, crlpath: String, now:
 # the CRL file, or no CRL (Nil) when no path is given
 def start(args: List<String>) -> IO(Unit):
   match args:
-    case prog <> (name <> (ip <> (port <> (path <> (now <> (crlp <> (mode <> Nil{}))))))):
-      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), String.eq(mode, "fetch"))
+    case prog <> (name <> (ip <> (port <> (path <> (now <> (crlp <> (mode <> hosts))))))):
+      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), String.eq(mode, "fetch"), rv.hosts.parse(hosts))
     case prog <> (name <> (ip <> (port <> (path <> (now <> (crlp <> Nil{})))))):
-      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), False{})
+      run(name, ip, arg.nat(port, 0n), path, crlp, arg.nat(now, 0n), False{}, Nil{})
     case prog <> (name <> (ip <> (port <> (path <> (now <> Nil{}))))):
-      run(name, ip, arg.nat(port, 0n), path, "", arg.nat(now, 0n), False{})
+      run(name, ip, arg.nat(port, 0n), path, "", arg.nat(now, 0n), False{}, Nil{})
     case _:
-      IO.print("usage: client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der or \"\"] [fetch]")
+      IO.print("usage: client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der or \"\"] [fetch [name=address ...]]")
 
 def main() -> IO(Unit):
   do IO<Unit>:
