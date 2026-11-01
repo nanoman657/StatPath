@@ -133,7 +133,8 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client. The JS interpreter's
+That is 5 x 3 x 3 x 4 = 180 runs. All 180 pass on the native client, both before and after
+the host-name and https revocation changes. The JS interpreter's
 run of the matrix was done before the revocation changes and is not recorded here; it has not
 been rerun. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
