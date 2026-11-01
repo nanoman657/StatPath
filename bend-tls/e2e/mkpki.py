@@ -66,6 +66,22 @@ files = {
     "leaf.key": leaf_key.private_bytes(serialization.Encoding.PEM,
         serialization.PrivateFormat.PKCS8, serialization.NoEncryption()),
 }
+# revocation lists, signed by the intermediate: one that lists the leaf, and one that lists nothing
+def crl(revoked):
+    b = (cx.CertificateRevocationListBuilder().issuer_name(inter.subject)
+         .last_update(now - day).next_update(now + 30 * day))
+    if revoked:
+        b = b.add_revoked_certificate(cx.RevokedCertificateBuilder()
+            .serial_number(leaf.serial_number).revocation_date(now - day).build())
+    hash_alg = None if isinstance(inter_key, ed25519.Ed25519PrivateKey) else (
+        hashes.SHA384() if isinstance(inter_key, ec.EllipticCurvePrivateKey) and inter_key.curve.name == "secp384r1"
+        else hashes.SHA256())
+    return b.sign(inter_key, hash_alg).public_bytes(serialization.Encoding.DER)
+
+files["crl-revoked.der"] = crl(True)
+files["crl-clean.der"] = crl(False)
+files["inter.key"] = inter_key.private_bytes(serialization.Encoding.PEM,
+    serialization.PrivateFormat.PKCS8, serialization.NoEncryption())
 for fname, data in files.items():
     with open(os.path.join(out, fname), "wb") as f:
         f.write(data)

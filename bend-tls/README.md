@@ -53,20 +53,23 @@ bend rsa_sig_tests.bend         -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend            -> x509: 17 passed, 0 failed
 bend x509_ext_tests.bend        -> x509-ext: 41 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
+bend crl_tests.bend             -> crl: 13 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
 bend fuzz_tls_tests.bend        -> fuzz-tls: 298 passed, 0 failed
 bend tls_tests.bend             -> tls: 33 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 180 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 120 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
+bash e2e/crl.sh                 -> e2e crl (js): 15 passed, 0 failed
 ```
 
 The client:
 
 ```
 bend client.bend -o client
-./client <server-name> <ip> <port> <anchor.der> <unix-time>
+./client <server-name> <ip> <port> <anchor.der> <unix-time> [crl.der]
 ./client example.test 127.0.0.1 4433 root.der 1793495136
+./client example.test 127.0.0.1 4433 root.der 1793495136 crl.der
 ```
 
 It sends `GET /` over TLS 1.3 and prints the response, HTTP headers included.
@@ -74,7 +77,8 @@ It sends `GET /` over TLS 1.3 and prints the response, HTTP headers included.
 `<ip>` is the address to connect to, because the TCP kit has no DNS.
 `<anchor.der>` is the trust anchor, a DER certificate. `<unix-time>` is the
 current time in seconds, because Bend has no wall clock: `IO.now()` is
-monotonic. Exit status is 0 on success and 1 on any error, with a message.
+monotonic. `[crl.der]` is an optional certificate revocation list (DER); see
+"Revocation" below. Exit status is 0 on success and 1 on any error, with a message.
 
 ### Generated files
 
@@ -92,6 +96,7 @@ Several modules are generated; the source is the file with the `_body` or the
 | `fuzz_tests.bend` | `gen_fuzz_tests.py` | `python3 -I gen_fuzz_tests.py` (fresh random keys each run) |
 | `fuzz_tls_tests.bend` | `gen_fuzz_tls_tests.py` | `python3 -I gen_fuzz_tls_tests.py` |
 | `hmac384_tests.bend` | `gen_hmac384_tests.py` | `python3 -I gen_hmac384_tests.py` |
+| `crl_tests.bend` | `gen_crl_tests.py` | `python3 -I gen_crl_tests.py` |
 | `*_tests.bend` | `gen_*_tests.py` | `python3 -I gen_X_tests.py` |
 
 Bend requires definitions in dependency order, so the generated files that
@@ -166,6 +171,12 @@ more than the client reads, is refused with `the stream was cut`.
   seed, and the reduction mod L. The base point's order is checked by the generator.
 - **RSA:** PSS and PKCS#1 v1.5 verification of real signatures, and rejection of
   altered messages and signatures.
+- **Revocation:** `crl_tests.bend` (13 cases) builds CRLs with `cryptography` and checks
+  them along a chain: a listed leaf or intermediate is refused; a CRL past its
+  nextUpdate, not yet current, signed by another key, tampered, or for another
+  name is no use; the anchor in the chain is not checked. `e2e/crl.sh` runs the
+  client with a clean CRL, with a CRL that lists the leaf, and without a CRL, for
+  five PKIs (RSA, P-256, mixed, Ed25519, P-384).
 - **X.509:** certificates made with `cryptography`, with RSA, ECDSA P-256 and
   Ed25519 keys, each in its own chain: validity dates, hostnames (SAN, with wildcard
   names matching one label), chain signatures to a DER anchor, `basicConstraints`
@@ -271,7 +282,9 @@ observer.
   constraints for DNS names (permitted and excluded subtrees, on every issuer and the
   anchor, over the certificates below each). Name constraints in other name forms,
   and a constraint with a minimum or maximum (which the profile forbids), fail the
-  chain. Not checked: revocation (CRL, OCSP), certificate policies, subject common
+  chain. Revocation is checked only against a CRL given on the command line (see
+  "Revocation" under "What is checked"); OCSP and CRL distribution points are not
+  fetched. Not checked: certificate policies, subject common
   names (only SAN is used), and IP-address SANs.
 - **Bounded reads.** The handshake flight may use at most 24 records and the
   response at most 24 records (each up to 16 KB, about 384 KB in all). A longer
@@ -296,5 +309,6 @@ observer.
 1. **Constant-time arithmetic.** The review below lists the leaks; removing them is
    the work, and it needs masked selection in the scalar multiplications and the
    ladder, a branch-free S-box and GCM, and a constant-time reduction.
-2. **Revocation** (CRL, OCSP). The client does not fetch either, and no CRL is given to
+2. **Revocation without a CRL.** OCSP, and fetching CRLs from their distribution points,
+   are not done; the check runs only on a CRL given to the client. The client does not fetch either, and no CRL is given to
    it, so a revoked certificate is accepted.
