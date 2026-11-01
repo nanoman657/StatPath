@@ -58,9 +58,9 @@ bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutat
 bend fuzz_tls_tests.bend        -> fuzz-tls: 298 passed, 0 failed
 bend tls_tests.bend             -> tls: 33 passed, 0 failed
 bash e2e/run.sh                 -> e2e (js): 180 passed, 0 failed
-bash e2e/run.sh native          -> e2e (native): 120 passed, 0 failed
+bash e2e/run.sh native          -> e2e (native): 180 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
-bash e2e/crl.sh                 -> e2e crl (js): 15 passed, 0 failed
+bash e2e/crl.sh                 -> e2e crl (js): 15 passed, 0 failed (native: 15)
 ```
 
 The client:
