@@ -9,6 +9,10 @@
 //   const chunk = await net.recv(id, 4096);   // Uint8Array, or null at the end
 //   net.close(id);
 
+// The arithmetic of the connection's counts is the proven model's (core/tcp_transitions.bend, compiled to
+// core/tcp_transitions.mjs): every change to a count the invariants talk about is one of its functions.
+import M from "./core/tcp_transitions.mjs";
+
 export const OP = {
   CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
   OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16,
@@ -137,7 +141,7 @@ export class RelayTcp {
     }
     if (c.op || c.discard) throw new Error("a connection takes one send at a time");
     const start = c.tail;
-    c.tail += bytes.length;
+    c.tail = M.pg_start(c.tail, bytes.length);
     if (bytes.length === 0) {
       cb({ ok: true });
       return start;
@@ -168,7 +172,7 @@ export class RelayTcp {
   takeNow(id, max) {
     const c = this.conns.get(id);
     if (!c) throw this.#missing(id);
-    if (c.buffered > 0) {
+    if (c.received > c.taken) {
       const bytes = this.#take(c, max);
       this.ws.send(encodeFrame(OP.READ, id, u32(bytes.length)));
       return { bytes };
@@ -213,7 +217,8 @@ export class RelayTcp {
 
   // bytes received and not yet read by the page (at most READ_WINDOW beyond what it has read)
   buffered(id) {
-    return this.conns.get(id)?.buffered ?? 0;
+    const c = this.conns.get(id);
+    return c ? c.received - c.taken : 0;
   }
 
   close(id) {
@@ -239,7 +244,8 @@ export class RelayTcp {
     return {
       state: "connecting",
       chunks: [],     // data received and not read: Uint8Array pieces, in order
-      buffered: 0,    // their total length
+      taken: 0,       // bytes the program has taken (each one granted to the relay by a READ)
+      received: 0,    // bytes received as DATA: the bytes buffered are received - taken
       eof: false,     // the remote end has finished
       tail: 0,        // bytes given to startSend so far
       sent: 0,        // bytes framed as SEND so far
@@ -259,12 +265,14 @@ export class RelayTcp {
   #pump(id, c) {
     const op = c.op;
     if (!op || c.discard || c.state !== "open") return;
-    const end = op.start + op.bytes.length;
-    while (c.sent < end && c.sent - c.written < SEND_WINDOW) {
-      const n = Math.min(MAX_BODY, SEND_WINDOW - (c.sent - c.written), end - c.sent);
+    // the send in progress is the last one started, so its end is the tail
+    if (op.start + op.bytes.length !== c.tail) throw new Error("a send is not the last one started");
+    for (;;) {
+      const n = M.pg_frame_n(c.sent, c.written, SEND_WINDOW, c.tail, MAX_BODY);
+      if (n === 0) break;
       const off = c.sent - op.start;
       this.ws.send(encodeFrame(OP.SEND, id, op.bytes.subarray(off, off + n)));
-      c.sent += n;
+      c.sent = M.pg_sent(c.sent, n);
     }
   }
 
@@ -274,7 +282,7 @@ export class RelayTcp {
     this.conns.delete(id);
     this.lastError.set(id, err);
     c.chunks = [];
-    c.buffered = 0;
+    c.received = c.taken;
     const cb = this.connecting.get(id);
     this.connecting.delete(id);
     if (cb) cb({ error: err });
@@ -288,7 +296,7 @@ export class RelayTcp {
   }
 
   #take(c, max) {
-    const want = Math.min(max, c.buffered);
+    const want = M.pg_take_n(c.taken, c.received, max);
     const out = new Uint8Array(want);
     let at = 0;
     while (at < want) {
@@ -299,7 +307,7 @@ export class RelayTcp {
       if (part.length === first.length) c.chunks.shift();
       else c.chunks[0] = first.subarray(part.length);
     }
-    c.buffered -= want;
+    c.taken = M.pg_taken(c.taken, want);
     return out;
   }
 
@@ -353,7 +361,7 @@ export class RelayTcp {
       case OP.DATA: {
         if (!c) return;
         c.chunks.push(f.body.slice());
-        c.buffered += f.body.length;
+        c.received = M.pg_recv_data(c.received, f.body.length);
         this.#wake(c);
         return;
       }

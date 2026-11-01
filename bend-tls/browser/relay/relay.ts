@@ -7,6 +7,9 @@
 import { readFileSync } from "node:fs";
 import { createHash, timingSafeEqual } from "node:crypto";
 import { type Config, type Allow, readConfig, ConfigError } from "./config.ts";
+// The arithmetic of the connection's counts is the proven model's (core/tcp_transitions.bend, compiled to
+// core/tcp_transitions.mjs): every change to a count the invariants talk about is one of its functions.
+import M from "../core/tcp_transitions.mjs";
 
 export const OP = {
   CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
@@ -19,6 +22,8 @@ export const SEND_WINDOW = 131072;
 export const READ_WINDOW = 131072;
 // the most a connection moves in one direction: counts are four bytes
 export const MAX_COUNT = 0xffffffff;
+// the largest chunk the socket delivers in one read: the model's C (a read past it fails the connection)
+export const CHUNK_MAX = 1 << 20;
 // the longest token the page may send in AUTH
 export const MAX_TOKEN = 256;
 
@@ -103,7 +108,8 @@ type Conn = {
   queue: Uint8Array[];  // SEND bytes the socket has not taken yet, in order
   queued: number;       // their total length
   written: number;      // bytes the socket has taken since the connect
-  credit: number;       // bytes the page has granted to be read, less the bytes read since
+  rd: number;           // bytes read from the socket since the connect
+  gr: number;           // bytes the page has granted to be read, clamped to the window
   paused: boolean;      // the socket's reads are paused
   wsPaused: boolean;    // paused because the WebSocket's send buffer is full
 };
@@ -256,7 +262,7 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
   // and the WebSocket's send buffer has room.
   function sync(s: Session, c: Conn) {
     if (!c.tcp || c.closed) return;
-    const want = c.credit > 0 && s.budget > 0 && !c.wsPaused;
+    const want = c.gr > c.rd && s.budget > 0 && !c.wsPaused;
     if (want && c.paused) {
       c.paused = false;
       c.tcp.resume();
@@ -275,9 +281,13 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
       const head = c.queue[0];
       const n: number = c.tcp.write(head);
       if (n <= 0) break;
+      if (n > head.length) {
+        fail(s, c.id, ERR.EIO, "the socket took more than it was given");
+        return;
+      }
       moved += n;
-      c.queued -= n;
-      c.written += n;
+      c.queued = M.rl_unqueue(c.queued, n);
+      c.written = M.rl_written(c.written, n);
       s.budget -= n;
       if (n < head.length) {
         c.queue[0] = head.subarray(n);
@@ -369,7 +379,7 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
       s.connects -= 1;
       const conn: Conn = {
         id, open: false, closed: false, peerClosed: false, queue: [], queued: 0, written: 0,
-        credit: 0, paused: false, wsPaused: false,
+        rd: 0, gr: 0, paused: false, wsPaused: false,
       };
       s.conns.set(id, conn);
       s.known[id] = 1;
@@ -388,10 +398,14 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
           },
           data(_tcp, chunk) {
             if (conn.closed) return;
+            // the socket delivers only while the page has credit (its reads are paused otherwise), and
+            // in chunks of at most CHUNK_MAX: the two assumptions of the model's bound
+            if (conn.rd > conn.gr) return fail(s, id, ERR.EIO, "data beyond the page's credit");
+            if (chunk.length > CHUNK_MAX) return fail(s, id, ERR.EIO, "a read past the chunk limit");
+            conn.rd = M.rl_read(conn.rd, chunk.length);
             for (let at = 0; at < chunk.length; at += MAX_BODY) {
               sendFrame(s, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
             }
-            conn.credit -= chunk.length;
             s.budget -= chunk.length;
             if (s.ws.getBufferedAmount() > lim.maxBufferedBytes) conn.wsPaused = true;
             sync(s, conn);
@@ -422,13 +436,15 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
       if (!conn) return unknownId(s, id);
       if (!conn.open) return s.ws.close(1002, "SEND before OK");
       if (body.length > MAX_BODY) return s.ws.close(1002, "SEND too long");
-      if (conn.queued + body.length > SEND_WINDOW) return s.ws.close(1002, "SEND past the window");
+      if (M.rl_over(body.length, M.rl_room(SEND_WINDOW, conn.queued)) !== 0) {
+        return s.ws.close(1002, "SEND past the window");
+      }
       if (conn.written + conn.queued + body.length > MAX_COUNT) {
         return fail(s, id, ERR.EFBIG, "file too large");
       }
       if (conn.peerClosed) return fail(s, id, ERR.EPIPE, "Broken pipe");
       conn.queue.push(body.slice());
-      conn.queued += body.length;
+      conn.queued = M.rl_queue(conn.queued, body.length);
       flush(s, conn);
       return;
     }
@@ -444,8 +460,8 @@ export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
       if (!conn) return unknownId(s, id);
       if (!conn.open) return s.ws.close(1002, "READ before OK");
       if (body.length !== 4) return s.ws.close(1002, "READ needs four bytes");
-      // the page's credit never exceeds the window: what it has not taken is what it can hold
-      conn.credit = Math.min(READ_WINDOW, conn.credit + readU32(body));
+      // the grant is clamped to the window past what was read (the model's rl_grant)
+      conn.gr = M.rl_grant(conn.rd, conn.gr, READ_WINDOW, readU32(body));
       sync(s, conn);
       return;
     }

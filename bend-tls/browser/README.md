@@ -11,6 +11,9 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `frame_lists.bend` | List lemmas (append, take, drop) and `le` on sums | the same checker |
 | `tcp_contract_proof.bend` | The arithmetic and invariants of the TCP effects: the send split and resume, the send window, the read credit and the bound on what the page holds (33 lemmas) | Bend's kernel: `bend tcp_contract_proof.bend` prints `ALL PROOFS CHECK` |
 | `tcp_contract_false.bend` | A false claim, to show the checker rejects it | `bend tcp_contract_false.bend` must print `SOME PROOFS FAIL` |
+| `core/tcp_transitions.bend` | The transitions the code calls: every change to a connection's counts (the page's `startSend`, frames, WRITTEN, takes and READs; the relay's SEND check, writes, DISCARD, READ and grants). Compiled to `core/tcp_transitions.mjs`, which `relay.ts` and `tcp_relay_client.js` import | `core/tcp_model.bend` and `test/model.test.ts` |
+| `core/tcp_model.bend` | The proofs that the transitions keep the invariants (48 lemmas and their helpers, all checked, using the 33 of `tcp_contract_proof.bend`): see "The code, proven against its model" below | `bend core/tcp_model.bend` prints `ALL PROOFS CHECK` |
+| `test/model.test.ts` | The compiled transitions compute the intended arithmetic; random protocol traces, with an adversarial page too, keep every invariant after every step; the committed `.mjs` is the compiler's output for the proven file | `bun test browser/test` (needs `bend` on the PATH) |
 | `PROTOCOL.md` | The wire protocol: frames, operations, authentication and the origin, the windows and limits, errors | read it |
 | `RELAY.md` | Running the relay for real use: the configuration, tokens, TLS, limits, the log, the checklist | read it |
 | `DECISIONS.md` | The decisions, and their approval | read it |
@@ -170,3 +173,43 @@ goes to the page, not a file descriptor, and a system call throws, since a page 
 - Listen and accept are not in the protocol.
 - The relay is ready for real use as `RELAY.md` describes; what it does not do is listed there, and
   the open decisions are in `DECISIONS.md`.
+
+## The code, proven against its model
+
+The relay and the page's client do not do the arithmetic of their counts themselves. Every change to a
+count that the invariants talk about is a call to a function of `core/tcp_transitions.bend`, compiled to
+`core/tcp_transitions.mjs`. The lemmas in `core/tcp_model.bend` are about those same functions, so what
+the code executes is what the proofs cover, given the compiler and the assumptions below.
+
+The invariants, and the lemma for each transition that keeps each one, are in the header of
+`core/tcp_model.bend`. In short, after every transition:
+
+- the page never frames more than its window (`sent - wp <= WIN`), and what it has framed is within what
+  it has accepted (`sent <= tail`);
+- the relay's queue never exceeds the window, and a SEND from a conforming page always passes the relay's
+  test (`fits_zero`);
+- the counts the page and the relay keep agree, up to the bytes in flight and the bytes dropped by a
+  DISCARD (`wp <= wr`, `wr + q + f == sent`);
+- the relay's credit is at most the window, whatever the page asks for (the clamp), and the relay reads
+  no further ahead than the grant plus one chunk;
+- for an honest page, what the page holds is at most the window plus one chunk.
+
+Assumptions about the environment. The code checks each one at run time and fails the connection closed
+(an errno of 5 or 22) if it is broken; none is assumed silently:
+
+1. The socket takes at most the bytes it was given (`write` returns no more than the chunk).
+2. The socket delivers data only while the relay's credit is positive (Bun's `pause` is honoured).
+3. A chunk is at most 1 MiB (`CHUNK_MAX`, the model's `C`).
+4. The WebSocket and the TCP socket deliver in order (the FIFO channels of the model).
+5. The page does not frame while a DISCARD is pending (the page's `pump` checks it).
+6. The page's own bound (what it holds) assumes an honest page: a page that asks for more than it takes
+   only fills its own memory; the relay's bounds hold for it regardless.
+7. The relay's WRITTEN counts are not ahead of the bytes it took, and the page trusts them.
+
+Not proven:
+- That the compiler and the JavaScript runtime are correct (the proofs are about Bend's definitions;
+  the test checks that the committed `.mjs` is the compiler's output and computes the intended arithmetic).
+- The timing and liveness of anything: that a send completes, that a read returns, when a `try_` answers.
+- Bun's socket and WebSocket behaviour beyond the assumptions above, and the glue (the event handlers
+  that call the model), which is tested, not proven.
+- The Lean recheck (`--verdict`), which is blocked by the sandbox.
