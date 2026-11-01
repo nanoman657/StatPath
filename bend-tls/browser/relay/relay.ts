@@ -1,11 +1,16 @@
 // The relay: a WebSocket server that opens TCP connections for a browser page (PROTOCOL.md).
-// Default-deny: it connects only to the destinations listed in its config.
+// Default-deny: it connects only to the destinations in its configuration (relay/config.ts), and
+// only for a WebSocket that presented a token and came from an allowed origin.
 //
 //   bun relay/relay.ts relay/config.json      (or the example config)
 
+import { readFileSync } from "node:fs";
+import { createHash, timingSafeEqual } from "node:crypto";
+import { type Config, type Allow, readConfig, ConfigError } from "./config.ts";
+
 export const OP = {
-  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5,
-  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14,
+  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16,
 } as const;
 export const MAX_BODY = 65535;
 // bytes a connection may hold in the relay: sent by the page, not yet taken by the socket
@@ -14,14 +19,13 @@ export const SEND_WINDOW = 131072;
 export const READ_WINDOW = 131072;
 // the most a connection moves in one direction: counts are four bytes
 export const MAX_COUNT = 0xffffffff;
+// the longest token the page may send in AUTH
+export const MAX_TOKEN = 256;
 
 export const ERR = {
-  EIO: 5, EACCES: 13, EMFILE: 24, EINVAL: 22, EFBIG: 27, EPIPE: 32, ECONNRESET: 104, EADDRNOTAVAIL: 99,
-  ENETUNREACH: 101, ETIMEDOUT: 110, ECONNREFUSED: 111, EHOSTUNREACH: 113,
+  EIO: 5, EACCES: 13, EAGAIN: 11, EMFILE: 24, EINVAL: 22, EFBIG: 27, EPIPE: 32, ECONNRESET: 104,
+  EADDRNOTAVAIL: 99, ENETUNREACH: 101, ETIMEDOUT: 110, ECONNREFUSED: 111, EHOSTUNREACH: 113,
 } as const;
-
-export type Allow = { host: string; ports: number[] };
-export type Config = { port: number; maxConnections: number; allow: Allow[] };
 
 // one frame, as bytes: op, id, the length (high, low), the body
 export function encodeFrame(op: number, id: number, body: Uint8Array = new Uint8Array(0)): Uint8Array {
@@ -53,7 +57,7 @@ export function readU32(b: Uint8Array): number {
 }
 
 // the destination is allowed: its host, exactly as the page gives it, and its port
-export function allowed(cfg: Config, host: string, port: number): boolean {
+export function allowed(cfg: { allow: Allow[] }, host: string, port: number): boolean {
   return cfg.allow.some((a) => a.host === host && a.ports.includes(port));
 }
 
@@ -73,6 +77,11 @@ export function errnoOf(err: unknown): number {
   }
 }
 
+// What the relay reports: { time, event, ...fields }, one JSON line. Never a token or payload.
+export type Log = (event: string, fields: Record<string, unknown>) => void;
+const stdoutLog: Log = (event, fields) =>
+  console.log(JSON.stringify({ time: new Date().toISOString(), event, ...fields }));
+
 const enc = new TextEncoder();
 const dec = new TextDecoder();
 
@@ -86,6 +95,7 @@ function failBody(errno: number, message: string): Uint8Array {
 }
 
 type Conn = {
+  id: number;
   tcp?: any;            // the Bun socket, once connected
   open: boolean;        // the connect has succeeded, and OK was sent
   closed: boolean;      // the page closed it, or it failed
@@ -93,57 +103,135 @@ type Conn = {
   queue: Uint8Array[];  // SEND bytes the socket has not taken yet, in order
   queued: number;       // their total length
   written: number;      // bytes the socket has taken since the connect
-  credit: number;       // bytes the page has granted to be read
-  paused: boolean;      // reads are paused: there is no credit
+  credit: number;       // bytes the page has granted to be read, less the bytes read since
+  paused: boolean;      // the socket's reads are paused
+  wsPaused: boolean;    // paused because the WebSocket's send buffer is full
 };
 
-// conns: the connections in progress or open; known: the ids this WebSocket has connected before
-type Session = { conns: Map<number, Conn>; known: Uint8Array };
+type Session = {
+  ws: any;              // the WebSocket, once open
+  origin: string;
+  address: string;      // the client's address, for the log
+  name: string | null;  // the token's name, once authenticated
+  authed: boolean;
+  closed: boolean;
+  conns: Map<number, Conn>;
+  known: Uint8Array;    // the ids this WebSocket has connected before
+  budget: number;       // bytes the session may still move; refilled over time
+  connects: number;     // CONNECTs it may still make; refilled over time
+  refilled: number;     // the time of the last refill (ms)
+  authTimer: ReturnType<typeof setTimeout> | null;
+};
 
-function newConn(): Conn {
-  return {
-    open: false, closed: false, peerClosed: false, queue: [], queued: 0, written: 0,
-    credit: 0, paused: false,
-  };
-}
+export function startRelay(cfg: Config, opts: { log?: Log } = {}) {
+  const log = opts.log ?? stdoutLog;
+  const lim = cfg.limits;
+  const digests = cfg.tokens.map((t) => ({ name: t.name, digest: Buffer.from(t.sha256, "hex") }));
+  const sessions = new Set<Session>();
+  const upgrades = new Map<string, number[]>();
 
-export function startRelay(cfg: Config) {
+  // an upgrade from this address is admitted unless the address has used its quota this minute
+  function admit(address: string): boolean {
+    const now = Date.now();
+    const recent = (upgrades.get(address) ?? []).filter((t) => now - t < 60000);
+    const ok = recent.length < lim.upgradesPerMinute;
+    if (ok) recent.push(now);
+    upgrades.set(address, recent);
+    return ok;
+  }
+
   const server = Bun.serve({
+    hostname: cfg.host,
     port: cfg.port,
+    tls: cfg.tls ? { cert: readFileSync(cfg.tls.cert), key: readFileSync(cfg.tls.key) } : undefined,
     fetch(req, server) {
-      if (server.upgrade(req, { data: { conns: new Map(), known: new Uint8Array(256) } satisfies Session })) {
-        return undefined;
+      const url = new URL(req.url);
+      if (url.pathname === "/healthz" && req.method === "GET" && !req.headers.get("upgrade")) {
+        return new Response("ok\n");
       }
-      return new Response("relay: connect with a WebSocket", { status: 426 });
+      if (!req.headers.get("upgrade")) {
+        return new Response("relay: connect with a WebSocket", { status: 426 });
+      }
+      const origin = req.headers.get("origin");
+      if (origin === null || !cfg.origins.includes(origin)) {
+        log("origin_denied", { origin: origin?.slice(0, 200) ?? null });
+        return new Response("origin not allowed\n", { status: 403 });
+      }
+      const address = server.requestIP(req)?.address ?? "unknown";
+      if (!admit(address)) {
+        log("upgrade_limited", { address });
+        return new Response("too many connections from this address\n", { status: 429 });
+      }
+      if (sessions.size >= lim.maxSessions) {
+        log("sessions_full", { address });
+        return new Response("the relay is full\n", { status: 503 });
+      }
+      const data: Session = {
+        ws: null, origin, address, name: null, authed: false, closed: false,
+        conns: new Map(), known: new Uint8Array(256),
+        budget: lim.bytesPerSecond, connects: 2 * lim.connectsPerSecond, refilled: Date.now(),
+        authTimer: null,
+      };
+      if (server.upgrade(req, { data })) return undefined;
+      return new Response("upgrade failed\n", { status: 400 });
     },
     websocket: {
       maxPayloadLength: 1 << 20,
+      idleTimeout: lim.idleSeconds,
+      sendPings: true,
+      open(ws) {
+        const s = ws.data as Session;
+        s.ws = ws;
+        sessions.add(s);
+        log("session_open", { origin: s.origin, address: s.address });
+        s.authTimer = setTimeout(() => {
+          if (!s.authed) ws.close(1008, "authenticate in time");
+        }, lim.authSeconds * 1000);
+      },
       message(ws, message) {
-        const session = ws.data as Session;
+        const s = ws.data as Session;
         const bytes = typeof message === "string" ? enc.encode(message) : new Uint8Array(message as ArrayBuffer);
         const f = decodeFrame(bytes);
         if (!f) return ws.close(1002, "not one frame");
-        handle(ws, session, f.op, f.id, f.body);
+        if (!s.authed) {
+          if (f.op !== OP.AUTH) return ws.close(1008, "authenticate first");
+          return authenticate(s, f.body);
+        }
+        if (f.op === OP.AUTH) return ws.close(1002, "already authenticated");
+        handle(s, f.op, f.id, f.body);
       },
-      close(ws) {
-        const session = ws.data as Session;
-        for (const c of session.conns.values()) end(c);
-        session.conns.clear();
+      drain(ws) {
+        const s = ws.data as Session;
+        for (const c of s.conns.values()) {
+          if (!c.wsPaused) continue;
+          c.wsPaused = false;
+          sync(s, c);
+          flush(s, c);
+        }
+      },
+      close(ws, code) {
+        const s = ws.data as Session;
+        s.closed = true;
+        if (s.authTimer) clearTimeout(s.authTimer);
+        for (const c of s.conns.values()) end(c);
+        s.conns.clear();
+        sessions.delete(s);
+        log("session_close", { name: s.name, origin: s.origin, code });
       },
     },
   });
 
-  function send(ws: any, op: number, id: number, body?: Uint8Array) {
-    ws.sendBinary(encodeFrame(op, id, body));
+  function sendFrame(s: Session, op: number, id: number, body?: Uint8Array) {
+    if (!s.closed) s.ws.sendBinary(encodeFrame(op, id, body));
   }
 
   // How many bytes the socket has taken. A reply to DISCARD has flag 1, so the page can tell it
   // from the counts that came before it.
-  function sendWritten(ws: any, id: number, c: Conn, reply: boolean) {
+  function sendWritten(s: Session, c: Conn, reply: boolean) {
     const body = new Uint8Array(5);
     body.set(u32(c.written));
     body[4] = reply ? 1 : 0;
-    send(ws, OP.WRITTEN, id, body);
+    sendFrame(s, OP.WRITTEN, c.id, body);
   }
 
   function end(c: Conn) {
@@ -155,58 +243,137 @@ export function startRelay(cfg: Config) {
 
   // The connection failed: the page hears how much of its send was taken, then the failure.
   // A connection gets at most one FAIL.
-  function fail(ws: any, session: Session, id: number, errno: number, message: string) {
-    const c = session.conns.get(id);
+  function fail(s: Session, id: number, errno: number, message: string) {
+    const c = s.conns.get(id);
     if (!c || c.closed) return;
-    if (c.open) sendWritten(ws, id, c, false);
-    send(ws, OP.FAIL, id, failBody(errno, message));
+    if (c.open) sendWritten(s, c, false);
+    sendFrame(s, OP.FAIL, id, failBody(errno, message));
     end(c);
-    session.conns.delete(id);
+    s.conns.delete(id);
+  }
+
+  // The reads of a connection run only while the page has credit, the session has bytes to spare,
+  // and the WebSocket's send buffer has room.
+  function sync(s: Session, c: Conn) {
+    if (!c.tcp || c.closed) return;
+    const want = c.credit > 0 && s.budget > 0 && !c.wsPaused;
+    if (want && c.paused) {
+      c.paused = false;
+      c.tcp.resume();
+    } else if (!want && !c.paused) {
+      c.paused = true;
+      c.tcp.pause();
+    }
   }
 
   // Writes what the socket takes now. Bun's write takes part of a buffer and keeps none of the
-  // rest, so the rest stays in the queue until the socket drains.
-  function flush(ws: any, id: number, c: Conn) {
+  // rest, so the rest stays in the queue until the socket drains. Writes wait for the budget.
+  function flush(s: Session, c: Conn) {
     if (!c.tcp || c.closed) return;
     let moved = 0;
-    while (c.queue.length > 0) {
+    while (c.queue.length > 0 && s.budget > 0) {
       const head = c.queue[0];
       const n: number = c.tcp.write(head);
       if (n <= 0) break;
       moved += n;
       c.queued -= n;
       c.written += n;
+      s.budget -= n;
       if (n < head.length) {
         c.queue[0] = head.subarray(n);
         break;
       }
       c.queue.shift();
     }
-    if (moved > 0) sendWritten(ws, id, c, false);
+    if (moved > 0) sendWritten(s, c, false);
+  }
+
+  function refill(s: Session, now: number) {
+    const dt = now - s.refilled;
+    s.refilled = now;
+    s.budget = Math.min(lim.bytesPerSecond, s.budget + (dt * lim.bytesPerSecond) / 1000);
+    s.connects = Math.min(2 * lim.connectsPerSecond, s.connects + (dt * lim.connectsPerSecond) / 1000);
+  }
+
+  // Every 50 ms: the budgets refill, and the connections that were held may run again. A
+  // connection held for its WebSocket's send buffer runs again once the buffer has half drained
+  // (this does not wait for the drain event alone, which Bun need not send). Addresses that have
+  // not upgraded for a minute are forgotten.
+  let lastForget = Date.now();
+  const ticker = setInterval(() => {
+    const now = Date.now();
+    for (const s of sessions) {
+      refill(s, now);
+      const buffered = s.ws.getBufferedAmount();
+      for (const c of s.conns.values()) {
+        if (c.wsPaused && buffered <= lim.maxBufferedBytes / 2) c.wsPaused = false;
+        sync(s, c);
+        flush(s, c);
+      }
+    }
+    if (now - lastForget >= 60000) {
+      lastForget = now;
+      for (const [address, times] of upgrades) {
+        if (!times.some((t) => now - t < 60000)) upgrades.delete(address);
+      }
+    }
+  }, 50);
+
+  function totalConnections(): number {
+    let n = 0;
+    for (const s of sessions) n += s.conns.size;
+    return n;
+  }
+
+  function authenticate(s: Session, body: Uint8Array) {
+    const digest = createHash("sha256").update(body).digest();
+    const hit = body.length > 0 && body.length <= MAX_TOKEN
+      ? digests.find((d) => timingSafeEqual(d.digest, digest))
+      : undefined;
+    if (!hit) {
+      log("auth_fail", { origin: s.origin, address: s.address });
+      return s.ws.close(1008, "bad token");
+    }
+    s.authed = true;
+    s.name = hit.name;
+    if (s.authTimer) clearTimeout(s.authTimer);
+    sendFrame(s, OP.AUTHOK, 0);
+    log("auth_ok", { name: hit.name, origin: s.origin, address: s.address });
   }
 
   // A frame for an id with no connection. An id this WebSocket has used is freed: the page sent the
   // frame before it saw the FAIL or the CLOSE that freed it, so the frame is dropped. An id never
   // used is a protocol error.
-  function unknownId(ws: any, session: Session, id: number) {
-    if (!session.known[id]) ws.close(1002, "no such connection");
+  function unknownId(s: Session, id: number) {
+    if (!s.known[id]) s.ws.close(1002, "no such connection");
   }
 
-  function handle(ws: any, session: Session, op: number, id: number, body: Uint8Array) {
+  function handle(s: Session, op: number, id: number, body: Uint8Array) {
     if (op === OP.CONNECT) {
-      if (session.conns.has(id)) return ws.close(1002, "id in use");
-      if (body.length < 3) return ws.close(1002, "CONNECT without a port and host");
+      if (s.conns.has(id)) return s.ws.close(1002, "id in use");
+      if (body.length < 3) return s.ws.close(1002, "CONNECT without a port and host");
       const port = (body[0] << 8) | body[1];
       const host = dec.decode(body.subarray(2));
       if (!allowed(cfg, host, port)) {
-        return send(ws, OP.FAIL, id, failBody(ERR.EACCES, "destination not allowed"));
+        log("connect_denied", { host: host.slice(0, 255), port, name: s.name });
+        return sendFrame(s, OP.FAIL, id, failBody(ERR.EACCES, "destination not allowed"));
       }
-      if (session.conns.size >= cfg.maxConnections) {
-        return send(ws, OP.FAIL, id, failBody(ERR.EMFILE, "too many connections"));
+      if (s.conns.size >= lim.maxConnections || totalConnections() >= lim.maxConnectionsTotal) {
+        return sendFrame(s, OP.FAIL, id, failBody(ERR.EMFILE, "too many connections"));
       }
-      const conn = newConn();
-      session.conns.set(id, conn);
-      session.known[id] = 1;
+      refill(s, Date.now());
+      if (s.connects < 1) {
+        log("connect_limited", { name: s.name });
+        return sendFrame(s, OP.FAIL, id, failBody(ERR.EAGAIN, "connect rate limit"));
+      }
+      s.connects -= 1;
+      const conn: Conn = {
+        id, open: false, closed: false, peerClosed: false, queue: [], queued: 0, written: 0,
+        credit: 0, paused: false, wsPaused: false,
+      };
+      s.conns.set(id, conn);
+      s.known[id] = 1;
+      log("connect", { host: host.slice(0, 255), port, name: s.name });
       const message = (err: unknown) => String((err as Error)?.message ?? err);
       Bun.connect({
         hostname: host,
@@ -216,92 +383,113 @@ export function startRelay(cfg: Config) {
             if (conn.closed) return tcp.end();
             conn.tcp = tcp;
             conn.open = true;
-            tcp.pause();   // no reads until the page grants credit (READ)
-            conn.paused = true;
-            send(ws, OP.OK, id);
+            sync(s, conn);   // no credit yet: the socket's reads wait for the page's READ
+            sendFrame(s, OP.OK, id);
           },
-          data(tcp, chunk) {
+          data(_tcp, chunk) {
             if (conn.closed) return;
             for (let at = 0; at < chunk.length; at += MAX_BODY) {
-              send(ws, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
+              sendFrame(s, OP.DATA, id, chunk.subarray(at, Math.min(chunk.length, at + MAX_BODY)));
             }
             conn.credit -= chunk.length;
-            if (conn.credit <= 0 && !conn.paused) {
-              conn.paused = true;
-              tcp.pause();
-            }
+            s.budget -= chunk.length;
+            if (s.ws.getBufferedAmount() > lim.maxBufferedBytes) conn.wsPaused = true;
+            sync(s, conn);
           },
           drain() {
-            flush(ws, id, conn);
+            flush(s, conn);
           },
           end() {
-            if (!conn.closed) send(ws, OP.EOF, id);
+            if (!conn.closed) sendFrame(s, OP.EOF, id);
           },
           close() {
             conn.peerClosed = true;
             // bytes queued for a socket that is closed can never be written
-            if (!conn.closed && conn.queued > 0) fail(ws, session, id, ERR.EPIPE, "Broken pipe");
+            if (!conn.closed && conn.queued > 0) fail(s, id, ERR.EPIPE, "Broken pipe");
           },
           error(_tcp, err) {
-            fail(ws, session, id, errnoOf(err), message(err));
+            fail(s, id, errnoOf(err), message(err));
           },
           connectError(_tcp, err) {
-            fail(ws, session, id, errnoOf(err), message(err));
+            fail(s, id, errnoOf(err), message(err));
           },
         },
-      }).catch((err: unknown) => fail(ws, session, id, errnoOf(err), message(err)));
+      }).catch((err: unknown) => fail(s, id, errnoOf(err), message(err)));
       return;
     }
-    const conn = session.conns.get(id);
+    const conn = s.conns.get(id);
     if (op === OP.SEND) {
-      if (!conn) return unknownId(ws, session, id);
-      if (!conn.open) return ws.close(1002, "SEND before OK");
-      if (body.length > MAX_BODY) return ws.close(1002, "SEND too long");
-      if (conn.queued + body.length > SEND_WINDOW) return ws.close(1002, "SEND past the window");
+      if (!conn) return unknownId(s, id);
+      if (!conn.open) return s.ws.close(1002, "SEND before OK");
+      if (body.length > MAX_BODY) return s.ws.close(1002, "SEND too long");
+      if (conn.queued + body.length > SEND_WINDOW) return s.ws.close(1002, "SEND past the window");
       if (conn.written + conn.queued + body.length > MAX_COUNT) {
-        return fail(ws, session, id, ERR.EFBIG, "file too large");
+        return fail(s, id, ERR.EFBIG, "file too large");
       }
-      if (conn.peerClosed) return fail(ws, session, id, ERR.EPIPE, "Broken pipe");
+      if (conn.peerClosed) return fail(s, id, ERR.EPIPE, "Broken pipe");
       conn.queue.push(body.slice());
       conn.queued += body.length;
-      flush(ws, id, conn);
+      flush(s, conn);
       return;
     }
     if (op === OP.DISCARD) {
-      if (!conn) return unknownId(ws, session, id);
-      if (!conn.open) return ws.close(1002, "DISCARD before OK");
+      if (!conn) return unknownId(s, id);
+      if (!conn.open) return s.ws.close(1002, "DISCARD before OK");
       conn.queue = [];
       conn.queued = 0;
-      sendWritten(ws, id, conn, true);
+      sendWritten(s, conn, true);
       return;
     }
     if (op === OP.READ) {
-      if (!conn) return unknownId(ws, session, id);
-      if (!conn.open) return ws.close(1002, "READ before OK");
-      if (body.length !== 4) return ws.close(1002, "READ needs four bytes");
-      conn.credit = Math.min(MAX_COUNT, conn.credit + readU32(body));
-      if (conn.credit > 0 && conn.paused && !conn.closed) {
-        conn.paused = false;
-        conn.tcp.resume();
-      }
+      if (!conn) return unknownId(s, id);
+      if (!conn.open) return s.ws.close(1002, "READ before OK");
+      if (body.length !== 4) return s.ws.close(1002, "READ needs four bytes");
+      // the page's credit never exceeds the window: what it has not taken is what it can hold
+      conn.credit = Math.min(READ_WINDOW, conn.credit + readU32(body));
+      sync(s, conn);
       return;
     }
     if (op === OP.CLOSE) {
       if (conn) {
-        session.conns.delete(id);
+        s.conns.delete(id);
         end(conn);
       }
       return;
     }
-    ws.close(1002, "unknown op");
+    s.ws.close(1002, "unknown op");
   }
 
-  return server;
+  return {
+    port: server.port,
+    url: `${cfg.tls ? "wss" : "ws"}://${cfg.host.includes(":") ? `[${cfg.host}]` : cfg.host}:${server.port}`,
+    // closes every WebSocket (1001, going away), then stops listening
+    stop() {
+      clearInterval(ticker);
+      for (const s of [...sessions]) s.ws?.close(1001, "relay stopping");
+      server.stop(true);
+    },
+  };
 }
 
+// The command line: bun relay/relay.ts <config.json>
 if (import.meta.main) {
   const path = process.argv[2] ?? "relay/config.example.json";
-  const cfg = JSON.parse(await Bun.file(path).text()) as Config;
-  const server = startRelay(cfg);
-  console.log(`relay listening on ws://127.0.0.1:${server.port}, ${cfg.allow.length} allowed host(s)`);
+  let cfg: Config;
+  try {
+    cfg = await readConfig(path);
+  } catch (e) {
+    if (e instanceof ConfigError) {
+      console.error(e.message);
+      process.exit(2);
+    }
+    throw e;
+  }
+  const relay = startRelay(cfg);
+  console.log(JSON.stringify({ time: new Date().toISOString(), event: "listening", url: relay.url, destinations: cfg.allow.length }));
+  const stop = () => {
+    relay.stop();
+    setTimeout(() => process.exit(0), 100);
+  };
+  process.on("SIGINT", stop);
+  process.on("SIGTERM", stop);
 }

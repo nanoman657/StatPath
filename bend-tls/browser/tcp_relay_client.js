@@ -3,15 +3,15 @@
 // callback calls, which answer once and never block; the promise calls wrap them for JavaScript.
 //
 //   const net = new RelayTcp("ws://127.0.0.1:8765");
-//   await net.open();
+//   await net.open(token);
 //   const id = await net.connect("127.0.0.1", 4433);
 //   await net.send(id, bytes);
 //   const chunk = await net.recv(id, 4096);   // Uint8Array, or null at the end
 //   net.close(id);
 
 export const OP = {
-  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5,
-  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14,
+  CONNECT: 1, SEND: 2, CLOSE: 3, DISCARD: 4, READ: 5, AUTH: 15,
+  OK: 10, FAIL: 11, DATA: 12, EOF: 13, WRITTEN: 14, AUTHOK: 16,
 };
 export const MAX_BODY = 65535;
 export const SEND_WINDOW = 131072;
@@ -79,16 +79,26 @@ export class RelayTcp {
     this.connecting = new Map();  // id -> callback of its connect
     this.lastError = new Map();   // id -> the TcpError that ended it, while the id is not reused
     this.lost = null;             // the TcpError once the WebSocket has closed
+    this.authWaiter = null;       // { resolve, reject } until the relay accepts the token
   }
 
-  open() {
+  // Opens the WebSocket and presents the relay's token. Resolves once the relay has accepted it;
+  // rejects with a TcpError (13) if the relay refuses the token or closes first.
+  open(token) {
     return new Promise((resolve, reject) => {
+      if (typeof token !== "string" || token.length === 0) {
+        return reject(new TcpError(13, "no relay token"));
+      }
       const ws = new this.WebSocketImpl(this.url);
       ws.binaryType = "arraybuffer";
-      ws.onopen = () => resolve();
-      ws.onerror = () => reject(new TcpError(5, "relay connection failed"));
+      this.authWaiter = { resolve, reject };
+      ws.onopen = () => ws.send(encodeFrame(OP.AUTH, 0, enc.encode(token)));
+      ws.onerror = () => this.#authFailed("the relay could not be reached");
       ws.onmessage = (ev) => this.#message(new Uint8Array(ev.data));
-      ws.onclose = () => this.#lost();
+      ws.onclose = () => {
+        this.#authFailed("the relay refused the connection");
+        this.#lost();
+      };
       this.ws = ws;
     });
   }
@@ -353,9 +363,21 @@ export class RelayTcp {
         this.#wake(c);
         return;
       }
+      case OP.AUTHOK: {
+        const w = this.authWaiter;
+        this.authWaiter = null;
+        if (w) w.resolve();
+        return;
+      }
       default:
         return;
     }
+  }
+
+  #authFailed(message) {
+    const w = this.authWaiter;
+    this.authWaiter = null;
+    if (w) w.reject(new TcpError(13, message));
   }
 
   #lost() {

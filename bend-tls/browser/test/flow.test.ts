@@ -1,8 +1,8 @@
 // Flow control, partial writes and the ends of a connection (PROTOCOL.md): a slow peer, a peer
 // that never reads, a peer that closes, and the frames the relay must refuse or drop.
 import { test, expect } from "bun:test";
-import { startRelay } from "../relay/relay.ts";
 import { RelayTcp, TcpError, encodeFrame, decodeFrame, OP, SEND_WINDOW, READ_WINDOW } from "../tcp_relay_client.js";
+import { testRelay, PageSocket, TEST_TOKEN, rawSocket } from "./support.ts";
 
 const MB = 1024 * 1024;
 const enc = new TextEncoder();
@@ -15,8 +15,7 @@ async function waitFor(cond: () => boolean, ms: number) {
 }
 
 function relay(allow: { host: string; ports: number[] }[]) {
-  const server = startRelay({ port: 0, maxConnections: 256, allow });
-  return { url: `ws://127.0.0.1:${server.port}`, stop: () => server.stop(true) };
+  return testRelay(allow);
 }
 
 // A peer that counts the bytes it reads. It reads nothing for pauseMs (Infinity: never, until
@@ -99,8 +98,8 @@ function connectBody(port: number, host: string) {
 test("bytes the socket does not take at once are written later: none are lost", async () => {
   const peer = sink(400); // reads nothing for 400 ms, so the socket's buffers fill
   const r = relay([{ host: "127.0.0.1", ports: [peer.port] }]);
-  const net = new RelayTcp(r.url);
-  await net.open();
+  const net = new RelayTcp(r.url, PageSocket);
+  await net.open(TEST_TOKEN);
   const id = await net.connect("127.0.0.1", peer.port);
   const data = new Uint8Array(16 * MB).fill(9); // more than the socket buffers hold
   await net.send(id, data);
@@ -114,7 +113,7 @@ test("bytes the socket does not take at once are written later: none are lost", 
 test("a dropped send reports exactly the bytes the socket took; the page's flow stays within its window", async () => {
   const peer = sink(Infinity); // never reads
   let framed = 0; // the SEND payload bytes this page has put on the WebSocket
-  class Counting extends WebSocket {
+  class Counting extends PageSocket {
     send(data: any) {
       const f = decodeFrame(new Uint8Array(data));
       if (f && f.op === OP.SEND) framed += f.body.length;
@@ -123,7 +122,7 @@ test("a dropped send reports exactly the bytes the socket took; the page's flow 
   }
   const r = relay([{ host: "127.0.0.1", ports: [peer.port] }]);
   const net = new RelayTcp(r.url, Counting as any);
-  await net.open();
+  await net.open(TEST_TOKEN);
   const id = await net.connect("127.0.0.1", peer.port);
   const total = 16 * MB;
   let outcome: any = null;
@@ -155,8 +154,8 @@ test("the relay reads no further ahead of the page than the read window", async 
   const bytes = new Uint8Array(2 * MB).fill(5);
   const src = source(bytes, true);
   const r = relay([{ host: "127.0.0.1", ports: [src.port] }]);
-  const net = new RelayTcp(r.url);
-  await net.open();
+  const net = new RelayTcp(r.url, PageSocket);
+  await net.open(TEST_TOKEN);
   const id = await net.connect("127.0.0.1", src.port);
   await sleep(500); // the page reads nothing for a while
   const ahead = net.buffered(id);
@@ -181,8 +180,8 @@ test("a send after the peer has closed fails with the broken pipe (EPIPE), and t
     { host: "127.0.0.1", ports: [src.port] },
     { host: "127.0.0.1", ports: [other.port] },
   ]);
-  const net = new RelayTcp(r.url);
-  await net.open();
+  const net = new RelayTcp(r.url, PageSocket);
+  await net.open(TEST_TOKEN);
   const id = await net.connect("127.0.0.1", src.port);
   expect(dec.decode(await net.recv(id, 100))).toBe("bye");
   expect(await net.recv(id, 100)).toBeNull(); // the peer has finished
@@ -211,13 +210,9 @@ test("a send after the peer has closed fails with the broken pipe (EPIPE), and t
 test("a READ whose count is not four bytes is a protocol error", async () => {
   const other = echo();
   const r = relay([{ host: "127.0.0.1", ports: [other.port] }]);
-  const ws = new WebSocket(r.url);
-  ws.binaryType = "arraybuffer";
-  await new Promise((res) => (ws.onopen = res));
-  const reply = new Promise<any>((res) => (ws.onmessage = (e) => res(new Uint8Array(e.data as ArrayBuffer))));
+  const { ws, next, closed } = await rawSocket(r.url);
   ws.send(encodeFrame(OP.CONNECT, 1, connectBody(other.port, "127.0.0.1")));
-  expect(decodeFrame(await reply)?.op).toBe(OP.OK);
-  const closed = new Promise<number>((res) => (ws.onclose = (e) => res(e.code)));
+  expect(decodeFrame(await next())?.op).toBe(OP.OK);
   ws.send(encodeFrame(OP.READ, 1, new Uint8Array(3)));
   expect(await closed).toBe(1002);
   r.stop();
@@ -229,30 +224,19 @@ test("a frame for an id never connected is a protocol error; for a freed id it i
   const r = relay([{ host: "127.0.0.1", ports: [other.port] }]);
 
   // never connected: an error
-  const a = new WebSocket(r.url);
-  a.binaryType = "arraybuffer";
-  await new Promise((res) => (a.onopen = res));
-  const aClosed = new Promise<number>((res) => (a.onclose = (e) => res(e.code)));
-  a.send(encodeFrame(OP.DISCARD, 7));
-  expect(await aClosed).toBe(1002);
+  const a = await rawSocket(r.url);
+  a.ws.send(encodeFrame(OP.DISCARD, 7));
+  expect(await a.closed).toBe(1002);
 
   // connected, then closed by the page: a SEND still in flight after the CLOSE is dropped
-  const b = new WebSocket(r.url);
-  b.binaryType = "arraybuffer";
-  await new Promise((res) => (b.onopen = res));
-  let opened = false;
-  b.onmessage = (e) => {
-    if (decodeFrame(new Uint8Array(e.data as ArrayBuffer))?.op === OP.OK) opened = true;
-  };
-  b.send(encodeFrame(OP.CONNECT, 2, connectBody(other.port, "127.0.0.1")));
-  await waitFor(() => opened, 2000);
-  expect(opened).toBe(true);
-  b.send(encodeFrame(OP.CLOSE, 2));
-  b.send(encodeFrame(OP.SEND, 2, enc.encode("late")));
+  const b = await rawSocket(r.url);
+  b.ws.send(encodeFrame(OP.CONNECT, 2, connectBody(other.port, "127.0.0.1")));
+  expect(decodeFrame(await b.next())?.op).toBe(OP.OK);
+  b.ws.send(encodeFrame(OP.CLOSE, 2));
+  b.ws.send(encodeFrame(OP.SEND, 2, enc.encode("late")));
   await sleep(200);
-  expect(b.readyState).toBe(1); // still open
-  b.close();
-  a.close();
+  expect(b.ws.readyState).toBe(1); // still open
+  b.ws.close();
   r.stop();
   other.stop();
 });

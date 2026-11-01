@@ -1,7 +1,8 @@
 // Tests of the relay and the page's client over real TCP sockets (bun test browser/test).
 // The frames are checked against the Bend definitions' encodings (frame_vectors.json).
 import { test, expect } from "bun:test";
-import { startRelay, encodeFrame as relayFrame, decodeFrame as relayDecode, OP as RELAY_OP } from "../relay/relay.ts";
+import { encodeFrame as relayFrame, decodeFrame as relayDecode, OP as RELAY_OP } from "../relay/relay.ts";
+import { testRelay, PageSocket, TEST_TOKEN, rawSocket, connectBody } from "./support.ts";
 import { RelayTcp, TcpError, encodeFrame, decodeFrame, OP } from "../tcp_relay_client.js";
 import vectors from "./frame_vectors.json";
 
@@ -30,13 +31,12 @@ function closedPort(): number {
 
 // a relay on a free port with the given allowlist and connection limit
 function relay(allow: { host: string; ports: number[] }[], maxConnections = 256) {
-  const server = startRelay({ port: 0, maxConnections, allow });
-  return { url: `ws://127.0.0.1:${server.port}`, stop: () => server.stop(true) };
+  return testRelay(allow, { maxConnections });
 }
 
 async function client(url: string) {
-  const net = new RelayTcp(url);
-  await net.open();
+  const net = new RelayTcp(url, PageSocket);
+  await net.open(TEST_TOKEN);
   return net;
 }
 
@@ -197,13 +197,10 @@ test("the connection limit answers the next connect with errno 24", async () => 
   echo.stop();
 });
 
-test("a SEND before OK is a protocol error: the relay closes the WebSocket", async () => {
+test("a SEND for an id never connected is a protocol error: the relay closes the WebSocket", async () => {
   const echo = echoServer();
   const r = relay([{ host: "127.0.0.1", ports: [echo.port] }]);
-  const ws = new WebSocket(r.url);
-  ws.binaryType = "arraybuffer";
-  await new Promise((res) => (ws.onopen = res));
-  const closed = new Promise((res) => (ws.onclose = (e) => res(e.code)));
+  const { ws, closed } = await rawSocket(r.url);
   ws.send(encodeFrame(OP.SEND, 5, new Uint8Array([1, 2, 3])));
   expect(await closed).toBe(1002);
   r.stop();

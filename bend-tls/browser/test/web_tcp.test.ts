@@ -2,7 +2,7 @@
 // runs under the Bend runtime with the asynchronous scheduler (BEND_MAIN: its main.ts), with the
 // relay the page would have open (preload.js). A program with no relay gets ENOTCONN.
 import { test, expect } from "bun:test";
-import { startRelay } from "../relay/relay.ts";
+import { testRelay, TEST_TOKEN } from "./support.ts";
 import { resolve, join } from "node:path";
 import { existsSync, readFileSync, writeFileSync, unlinkSync } from "node:fs";
 
@@ -45,7 +45,11 @@ async function bendRun(name: string, ports: Record<string, number>, relayUrl?: s
   try {
     const env: Record<string, string> = { ...(process.env as Record<string, string>) };
     delete env.BEND_RELAY;
-    if (relayUrl) env.BEND_RELAY = relayUrl;
+    delete env.BEND_RELAY_TOKEN;
+    if (relayUrl) {
+      env.BEND_RELAY = relayUrl;
+      env.BEND_RELAY_TOKEN = TEST_TOKEN;
+    }
     const p = Bun.spawn([process.execPath, "--preload", PRELOAD, MAIN, file], { env, stdout: "pipe", stderr: "pipe" });
     const [out, err] = await Promise.all([new Response(p.stdout).text(), new Response(p.stderr).text()]);
     await p.exited;
@@ -57,14 +61,9 @@ async function bendRun(name: string, ports: Record<string, number>, relayUrl?: s
 
 // one relay for a program: it allows the echo, silent, closer and refused peers, not denied
 function withRelay(p: ReturnType<typeof peers>) {
-  const server = startRelay({
-    port: 0,
-    maxConnections: 256,
-    allow: [
-      { host: "127.0.0.1", ports: [p.ports.ECHO, p.ports.SILENT, p.ports.CLOSER, p.ports.REFUSED] },
-    ],
-  });
-  return { url: `ws://127.0.0.1:${server.port}`, stop: () => server.stop(true) };
+  return testRelay([
+    { host: "127.0.0.1", ports: [p.ports.ECHO, p.ports.SILENT, p.ports.CLOSER, p.ports.REFUSED] },
+  ]);
 }
 
 const cases: [string, string][] = [

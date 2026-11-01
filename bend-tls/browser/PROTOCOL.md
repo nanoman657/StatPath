@@ -1,14 +1,15 @@
 # Relay protocol (browser TCP)
 
 A browser page cannot open TCP connections, so a relay does it for the page. The page talks to the
-relay over one WebSocket. Each WebSocket message carries exactly one frame.
+relay over one WebSocket. Each WebSocket message carries exactly one frame. The relay's operator
+decides who may use it and where it may connect (RELAY.md).
 
 ## Frame
 
 | field  | size      | meaning                                   |
 |--------|-----------|-------------------------------------------|
 | op     | 1 byte    | what the frame does (table below)         |
-| id     | 1 byte    | the connection, 0..255, chosen by the page |
+| id     | 1 byte    | the connection, 0..255, chosen by the page (0 for AUTH and AUTHOK) |
 | len    | 2 bytes   | payload length, big-endian: high, then low |
 | body   | len bytes | the payload (at most 65535 bytes)         |
 
@@ -19,6 +20,8 @@ closes the WebSocket (code 1002).
 
 | op | name    | direction   | body                                                       |
 |----|---------|-------------|------------------------------------------------------------|
+| 15 | AUTH    | page->relay | the token, as UTF-8 (1 to 256 bytes). The first frame of the WebSocket |
+| 16 | AUTHOK  | relay->page | none; the token was accepted                               |
 | 1  | CONNECT | page->relay | port (2 bytes, big-endian), then the host name or address (UTF-8) |
 | 2  | SEND    | page->relay | data to write to the connection                            |
 | 3  | CLOSE   | page->relay | none; the connection is closed and the id is free          |
@@ -29,6 +32,16 @@ closes the WebSocket (code 1002).
 | 12 | DATA    | relay->page | data read from the connection                              |
 | 13 | EOF     | relay->page | none; the remote end has finished sending                  |
 | 14 | WRITTEN | relay->page | count (4 bytes, big-endian), then a flag byte: 1 answers a DISCARD, 0 does not |
+
+## Authentication and the origin
+
+- The WebSocket must come from an origin the relay lists. The browser sends the Origin header; a
+  WebSocket from any other origin, or with none, is refused at the upgrade (HTTP 403).
+- The first frame of the WebSocket must be AUTH, with a token the relay has a digest of. The relay
+  answers AUTHOK. Until then nothing else is accepted: any other first frame closes the WebSocket
+  (1008), a wrong token closes it (1008), and no AUTH within the relay's authSeconds closes it (1008).
+  A second AUTH closes it (1002).
+- The token travels in the first frame, not the URL, so it is not written to proxy or server logs.
 
 ## Rules
 
@@ -58,8 +71,22 @@ A connection counts the bytes of SEND data from its connect: the first SEND byte
 ### Reading and the read window
 
 - After OK the page grants credit: READ(131072). After each read that takes n bytes, it grants READ(n).
-- The relay reads from the socket only while its credit is above zero. So the page holds at most
-  about 131072 bytes it has not taken, plus one read from the socket.
+- The relay reads from the socket only while its credit is above zero, and only while the session
+  has bytes to spare (below) and the WebSocket's send buffer has room. So the page holds at most
+  about 131072 bytes it has not taken, plus one read from the socket. A grant past the window is
+  cut to the window.
+
+### Limits (the relay's, from its configuration)
+
+- **CONNECT rate:** a WebSocket may make connectsPerSecond CONNECTs a second, with a burst of twice
+  that. A CONNECT past the rate is answered with FAIL 11 (EAGAIN, "connect rate limit").
+- **Connections:** at most maxConnections open per WebSocket and maxConnectionsTotal in the relay;
+  past either, FAIL 24 (EMFILE).
+- **Bytes:** a WebSocket moves at most bytesPerSecond bytes a second, both ways together, with one
+  second's worth allowed up front. Past that the relay holds the data (writes wait in the queue,
+  reads wait in the socket). Nothing fails; the page sees the delay.
+- **Upgrades and sessions:** a client address may open upgradesPerMinute WebSockets a minute (429
+  past that), and the relay holds at most maxSessions at once (503 past that).
 
 ### Ends of a connection
 
@@ -81,21 +108,27 @@ never connected is a protocol error (1002).
 
 ## Errors
 
-Errors use Linux errno numbers: 13 EACCES (destination not allowed), 111 ECONNREFUSED,
-110 ETIMEDOUT, 113 EHOSTUNREACH, 101 ENETUNREACH, 99 EADDRNOTAVAIL, 24 EMFILE (too many
-connections), 32 EPIPE (the peer has closed), 104 ECONNRESET, 27 EFBIG (a count past 4 GiB),
-5 EIO (anything else).
+Errors use Linux errno numbers: 13 EACCES (destination not allowed, or a token refused by the
+client), 11 EAGAIN (connect rate limit), 111 ECONNREFUSED, 110 ETIMEDOUT, 113 EHOSTUNREACH, 101
+ENETUNREACH, 99 EADDRNOTAVAIL, 24 EMFILE (too many connections), 32 EPIPE (the peer has closed),
+104 ECONNRESET, 27 EFBIG (a count past 4 GiB), 5 EIO (anything else).
+
+WebSocket close codes: 1001 the relay is stopping; 1002 a protocol error; 1008 the first frame was
+not AUTH, the token was wrong, or the token came too late.
 
 ## Access
 
-The relay is default-deny. It connects only to a destination listed in its config
-(`config.example.json`): a host (exact string, as the page gives it) and a list of ports. Anything
-else gets FAIL with errno 13 and is not connected.
+The relay is default-deny. It connects only to a destination listed in its configuration: a host
+(exact string, as the page gives it) and a list of ports. Anything else gets FAIL with errno 13 and
+is not connected.
 
-## Limits
+## Limits of the protocol
 
-- At most 256 connections per WebSocket (ids are one byte).
-- Each connection holds at most 131072 bytes of unsent SEND data and at most about 131072 bytes of
-  unread DATA beyond the page's reads, so a WebSocket holds at most about 64 MiB in each direction
-  with 256 connections.
+- At most 256 connections per WebSocket (ids are one byte). The relay's own limits (RELAY.md) are
+  lower by default.
 - Listen and accept are not in the protocol: a page cannot accept incoming connections.
+
+## Health
+
+`GET /healthz` answers `ok` (a load balancer or a systemd check can use it). Any other plain GET
+answers 426.

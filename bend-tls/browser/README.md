@@ -1,4 +1,4 @@
-# Browser TCP (in progress)
+# Browser TCP
 
 A page cannot open TCP connections, so this folder has a relay that opens them for the page, the
 page's side of the protocol, and the effects that give a page's Bend program its TCP operations.
@@ -9,15 +9,21 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `frame_proof.bend` | Laws: a frame decodes to itself, and is complete | Bend's kernel: `bend frame_proof.bend` prints `ALL PROOFS CHECK` |
 | `frame_arith.bend` | Euclid's identity for the division routine of the base library, from its invariant | the same checker |
 | `frame_lists.bend` | List lemmas (append, take, drop) and `le` on sums | the same checker |
-| `PROTOCOL.md` | The wire protocol: frames, operations, the send and read windows, errors, the access rule | read it |
-| `relay/relay.ts` | The relay: a WebSocket server (Bun) that opens TCP connections, default-deny | `test/relay.test.ts`, `test/flow.test.ts` |
-| `relay/config.example.json` | Which destinations the relay may connect to | |
+| `PROTOCOL.md` | The wire protocol: frames, operations, authentication and the origin, the windows and limits, errors | read it |
+| `RELAY.md` | Running the relay for real use: the configuration, tokens, TLS, limits, the log, the checklist | read it |
+| `DECISIONS.md` | The decisions, and their approval | read it |
+| `relay/relay.ts` | The relay: a WebSocket server (Bun) that opens TCP connections, default-deny, with tokens, origins, TLS and limits | `test/relay*.test.ts`, `test/flow.test.ts` |
+| `relay/config.ts` | The configuration: loaded and checked, every mistake named | `test/relay_safety.test.ts` |
+| `relay/token.ts` | Makes a token for a user, and its digest for the configuration | `test/relay_safety.test.ts` |
+| `relay/config.example.json` | The shape of a configuration (its placeholder digest is refused on purpose) | |
 | `tcp_relay_client.js` | The page's side: `RelayTcp`, with callback calls for the effects and promises for JavaScript | `test/*.test.ts` |
 | `vectors.bend` | Frames encoded by the Bend definitions | `test/frame_vectors.json` is its output |
 | `tcp.bend` | The `WebTCP.*` declarations: Base's TCP signatures, each importing `effs/web_tcp.js` | `tests/decl_listen.bend`, the page programs |
 | `effs/web_tcp.js` | The effects of `WebTCP.*`, over the page's relay | `test/web_tcp.test.ts` |
 | `tests/web/*.bend.tpl` | Page programs (templates: the ports are filled in by the test) | `test/web_tcp.test.ts` |
-| `test/relay.test.ts` | 12 tests over real TCP: echo, 300 KB both ways, default-deny (13), refused (111), end of stream, 20 connections, id reuse, the connection limit (24), protocol errors | `bun test browser/test` |
+| `test/relay.test.ts` | 12 tests over real TCP, with a token: echo, 300 KB both ways, default-deny (13), refused (111), end of stream, 20 connections, id reuse, the connection limit (24), protocol errors | `bun test browser/test` |
+| `test/relay_safety.test.ts` | 17 tests: the configuration, the example's placeholder, a token from `token.ts`, the origin, AUTH first and wrong tokens, the authentication deadline, TLS (wss), /healthz, the connect rate, the connection caps, the session and upgrade caps, the byte rate, shutdown, and no token in the log | `bun test browser/test` |
+| `test/support.ts` | The test token and origin, `PageSocket` (a WebSocket with the origin), `rawSocket` (authenticated), and the relay built from a checked configuration | used by the tests |
 | `test/flow.test.ts` | Partial writes (a slow peer gets every byte), a dropped send reports exactly what was taken, the read window, EPIPE after a peer's close, the protocol rules for READ and freed ids | `bun test browser/test` |
 | `test/errno.test.ts` | The page's failure texts are libc's `strerror` for their errnos, as the native effects give | `bun test browser/test` |
 | `test/web_tcp.test.ts` | The page programs run under the Bend runtime, against the relay | `bun test browser/test` (needs the async runtime, below) |
@@ -31,10 +37,17 @@ page's side of the protocol, and the effects that give a page's Bend program its
     bun test browser/test                # the relay, the flow rules, the errno texts, the page programs
     bend browser/frame_proof.bend        # ALL PROOFS CHECK
 
-    bun browser/relay/relay.ts browser/relay/config.example.json   # the relay, on port 8765
+    bun browser/relay/token.ts alice                                # a token for a user
+    bun browser/relay/relay.ts <config.json>                        # the relay (RELAY.md)
 
-The page programs need the asynchronous runtime (below), at the path in `BEND_MAIN`
-(default `/tmp/claude-0/src/bend-async/bend2/main.ts`). They are skipped without it.
+The page programs and the page need the Bend toolchain with the patch (below), at the path in
+`BEND_MAIN`. Make it with `sh patches/bend/apply.sh <dir>` on the branch `browser-async-scheduler`,
+then:
+
+    BEND_MAIN=<dir>/bend2/main.ts bun test browser/test
+
+The default `BEND_MAIN` is `/tmp/claude-0/src/bend-async/bend2/main.ts`. Without a Bend toolchain
+the page tests are skipped; the page's end-to-end test also needs Node and Playwright's Chromium.
 
 ## What is proven, and what is tested
 
@@ -84,32 +97,29 @@ Timing: a try_ call answers as soon as the relay's answer comes back, so a send 
 within its deadline may still answer `Wait` if the answer arrives after the deadline; the bytes it
 reports are exact in either case.
 
-## The asynchronous scheduler (done as a patch)
+## The asynchronous scheduler (a patch, on its own branch)
 
-`runtime/async-scheduler.patch` changes Bend's JavaScript runtime (bend2/comp.ts, bend2/main.ts) so a
-program can wait on an event that is not a file descriptor, such as a WebSocket message or a host
-timer, without blocking the host's event loop. An external wait parks with no fd, and its event calls
-`io_notify`; a notice re-checks every external wait, one with a deadline too. The top-level run
-awaits; a nested run (from inside an effect) keeps the blocking poll, as before. The patch is one
-commit on the branch `browser-async-scheduler` of the Bend checkout at /tmp/claude-0/src/bend-async
-(not pushed; the installed `bend` is unchanged). It applies to Bend's `main`.
-
-Checked earlier: the 234 I/O tests of tests/io give the same results under the patched runtime,
-except three that name the checkout's path and one fork_join ordering that flips under parallel load
-(it matches its expected order alone). `runtime/async_wake.bend` checks host timers.
+The Bend runtime change is on the branch `browser-async-scheduler` of this repository, as
+`patches/bend/0001-…patch` on bendlang/bend `9d514f3`, with `patches/bend/apply.sh` to apply it to a
+fresh clone. It lets a program wait on an event that is not a file descriptor, such as a WebSocket
+message or a host timer, without blocking the host's event loop: an external wait parks with no fd,
+and its event calls `io_notify`; a notice re-checks every external wait. A nested run keeps the
+blocking poll. The patch also makes the runtime host-neutral and adds `page_main` to page modules.
+Approved for use from that branch (`DECISIONS.md`); not proposed upstream.
 
 A wait that no event will ever complete hangs the program under Bun (the process stays alive).
 
 ## A page
 
 `page/index.html` and `page/app.js` are a page. The build is the Bend CLI's page bundle, from the
-async-scheduler checkout (the installed `bend` does not have the scheduler yet):
+patched toolchain (the installed `bend` does not have the scheduler):
 
-    bun /tmp/claude-0/src/bend-async/bend2/main.ts browser/page/index.html -o dist
+    bun <dir>/bend2/main.ts browser/page/index.html -o dist
 
-The page imports a program (`page/program.bend`), opens the relay at `?relay=ws://...`, sets
-`globalThis.bend_relay` to it, and runs the program's `page_main()` (its `main`, through the
-scheduler). The page's output goes to `#bend-output`; `body[data-exit]` holds the exit code when
+The page imports a program (`page/program.bend`), opens the relay at `?relay=wss://...`, with the
+token its server puts in `<meta name="bend-relay-token">`, sets `globalThis.bend_relay` to it, and
+runs the program's `page_main()` (its `main`, through the scheduler). The page is served from one
+of the relay's `origins`. The page's output goes to `#bend-output`; `body[data-exit]` holds the exit code when
 the program has finished.
 
 What changed in the runtime for a page (the patch above): no Node or Bun module is named in the
@@ -125,5 +135,5 @@ goes to the page, not a file descriptor, and a system call throws, since a page 
 - **The Lean recheck** (`bend frame_proof.bend --verdict`) is not run: the Lean toolchain download is
   blocked by the sandbox's network policy.
 - Listen and accept are not in the protocol.
-- A relay in production needs an owner, an allowlist, and TLS (wss) and an origin check, decided by
-  you (see `PROTOCOL.md`).
+- The relay is ready for real use as `RELAY.md` describes; what it does not do is listed there, and
+  the open decisions are in `DECISIONS.md`.
