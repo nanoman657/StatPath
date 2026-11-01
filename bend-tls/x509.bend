@@ -8,6 +8,8 @@
 import Base
 import ./asn1.bend as A
 import ./rsa.bend as R
+import ./sha256.bend as S
+import ./p256.bend as P
 
 # Accessors
 # ---------
@@ -278,7 +280,69 @@ def x509.host_ok(+der: List<&2, U32>, +host: List<&2, U32>) -> Bool:
 # RSA keys
 # --------
 
+# the algorithm OID and the curve OID of a subjectPublicKeyInfo content
+def x509.spki_alg_oid(+spki: List<&2, U32>) -> List<&2, U32>:
+  x509.valof(A.asn1.nth(0n, x509.valof(A.asn1.nth(0n, spki))))
+
+def x509.spki_curve(+spki: List<&2, U32>) -> List<&2, U32>:
+  x509.valof(A.asn1.nth(1n, x509.valof(A.asn1.nth(0n, spki))))
+
+def x509.oid_rsa_enc() -> List<&2, U32>:
+  42 <> 134 <> 72 <> 134 <> 247 <> 13 <> 1 <> 1 <> 1 <> Nil{}
+
+# the signature algorithm OIDs of sha256WithRSAEncryption and RSASSA-PSS
+def x509.is_rsa(+spki: List<&2, U32>) -> Bool:
+  R.rsa.eqb(x509.spki_alg_oid(spki), x509.oid_rsa_enc())
+
+# a P-256 key: id-ecPublicKey on prime256v1
+def x509.oid_ec_pub() -> List<&2, U32>:
+  42 <> 134 <> 72 <> 206 <> 61 <> 2 <> 1 <> Nil{}
+
+def x509.oid_p256() -> List<&2, U32>:
+  42 <> 134 <> 72 <> 206 <> 61 <> 3 <> 1 <> 7 <> Nil{}
+
+def x509.is_ec(+spki: List<&2, U32>) -> Bool:
+  Bool.and(R.rsa.eqb(x509.spki_alg_oid(spki), x509.oid_ec_pub()),
+    R.rsa.eqb(x509.spki_curve(spki), x509.oid_p256()))
+
+# the uncompressed point (04 || X || Y) is the BIT STRING after its unused-bits byte;
+# ec_xy is X || Y, 64 bytes
+def x509.ec_xy(+spki: List<&2, U32>) -> List<&2, U32>:
+  List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 2n)
+
+def x509.ec_qx(+spki: List<&2, U32>) -> List<&2, U32>:
+  List.take(&2, U32, x509.ec_xy(spki), 32n)
+
+def x509.ec_qy(+spki: List<&2, U32>) -> List<&2, U32>:
+  List.drop(&2, U32, x509.ec_xy(spki), 32n)
+
+# the r and s INTEGERs of an ECDSA signature (a DER SEQUENCE), as 32 bytes each
+def x509.zeros(n: Nat) -> List<&2, U32>:
+  match n:
+    case 0n:
+      Nil{}
+    case 1n+p:
+      0 <> x509.zeros(p)
+
 # the RSAPublicKey content of a subjectPublicKeyInfo content
+def x509.pad32.at(ok: Bool, +xs: List<&2, U32>) -> List<&2, U32>:
+  match ok:
+    case True{}:
+      List.append(&2, U32, x509.zeros(Nat.sub(32n, List.length(&2, U32, xs))), xs)
+    case False{}:
+      x509.zeros(32n)
+
+def x509.pad32(+xs: List<&2, U32>) -> List<&2, U32>:
+  x509.pad32.at(Nat.is_le(List.length(&2, U32, xs), 32n), xs)
+
+# an integer longer than 32 bytes is not a P-256 scalar: it becomes 0, which fails
+def x509.ecdsa.r(+sig: List<&2, U32>) -> List<&2, U32>:
+  x509.pad32(x509.strip0(x509.valof(A.asn1.nth(0n, x509.valof(A.asn1.read(sig))))))
+
+def x509.ecdsa.s(+sig: List<&2, U32>) -> List<&2, U32>:
+  x509.pad32(x509.strip0(x509.valof(A.asn1.nth(1n, x509.valof(A.asn1.read(sig))))))
+
+# big-endian bytes left-padded with zeros to 32
 def x509.rk(+spki: List<&2, U32>) -> List<&2, U32>:
   x509.valof(A.asn1.read(List.drop(&2, U32, x509.valof(A.asn1.nth(1n, spki)), 1n)))
 
@@ -296,7 +360,10 @@ def x509.e65537() -> List<&2, U32>:
 # Chains
 # ------
 
-# the signature algorithm OIDs of sha256WithRSAEncryption and RSASSA-PSS
+# the algorithm OIDs of ECDSA with SHA-256, id-ecPublicKey, prime256v1 and rsaEncryption
+def x509.oid_ecdsa() -> List<&2, U32>:
+  42 <> 134 <> 72 <> 206 <> 61 <> 4 <> 3 <> 2 <> Nil{}
+
 def x509.oid_pkcs1() -> List<&2, U32>:
   42 <> 134 <> 72 <> 134 <> 247 <> 13 <> 1 <> 1 <> 11 <> Nil{}
 
@@ -355,12 +422,32 @@ def x509.sigok.key(pkcs1: Bool, pss: Bool, +cert: List<&2, U32>, +issuer: List<&
 
 def x509.sigok.alg(pkcs1: Bool, pss: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
   x509.sigok.key(pkcs1, pss, cert, issuer,
-    R.rsa.eqb(x509.ekey(x509.spki(issuer)), x509.e65537()))
+    Bool.and(x509.is_rsa(x509.spki(issuer)), R.rsa.eqb(x509.ekey(x509.spki(issuer)), x509.e65537())))
+
+def x509.sigok.ec.at(ok: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      P.p256.verify(x509.ec_qx(x509.spki(issuer)), x509.ec_qy(x509.spki(issuer)),
+        S.sha256_bytes(x509.tbs_raw(cert)), x509.ecdsa.r(x509.signature(cert)), x509.ecdsa.s(x509.signature(cert)))
+    case False{}:
+      False{}
+
+def x509.sigok.ec(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  x509.sigok.ec.at(x509.is_ec(x509.spki(issuer)), cert, issuer)
+
+def x509.sigok.by(ecdsa: Bool, pkcs1: Bool, pss: Bool, +cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
+  match ecdsa:
+    case True{}:
+      x509.sigok.ec(cert, issuer)
+    case False{}:
+      x509.sigok.alg(pkcs1, pss, cert, issuer)
 
 def x509.sigok(+cert: List<&2, U32>, +issuer: List<&2, U32>) -> Bool:
-  x509.sigok.alg(R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pkcs1()),
+  x509.sigok.by(R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_ecdsa()),
+    R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pkcs1()),
     R.rsa.eqb(x509.sigalg_oid(cert), x509.oid_pss()), cert, issuer)
 
+# ECDSA certificates are checked by the P-256 verifier, RSA ones by the RSA path
 def x509.anchor.match(+c: List<&2, U32>, +a: List<&2, U32>, now: Nat) -> Bool:
   Bool.or(R.rsa.eqb(c, a), Bool.and(x509.valid(c, now), x509.sigok(c, a)))
 

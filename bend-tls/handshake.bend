@@ -12,6 +12,7 @@ import ./x25519.bend as X
 import ./tls.bend as T
 import ./x509.bend as C
 import ./rsa.bend as R
+import ./p256.bend as P
 
 # the server's protected records: the AEAD open of a record body under the key
 # and nonce, with the record header as the associated data (RFC 8446 5.2)
@@ -76,10 +77,41 @@ def hs.spaces(n: Nat) -> List<&2, U32>:
 def hs.cv_content(+th: List<&2, U32>) -> List<&2, U32>:
   T.tls.cat(hs.spaces(64n), T.tls.cat(hs.label(), T.tls.cat(0 <> Nil{}, th)))
 
-def hs.cv_ok.at(alg: Nat, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
-  Bool.and(Nat.is_eq(alg, 2052n), R.rsa.verify_pss(C.x509.nkey(C.x509.spki(leaf)), sig, hs.cv_content(th)))
+def hs.cv_ok.ec.at(ok: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match ok:
+    case True{}:
+      P.p256.verify(C.x509.ec_qx(C.x509.spki(leaf)), C.x509.ec_qy(C.x509.spki(leaf)),
+        S.sha256_bytes(hs.cv_content(th)), C.x509.ecdsa.r(sig), C.x509.ecdsa.s(sig))
+    case False{}:
+      False{}
 
 # the server's Finished: the MAC of the transcript under its traffic key
+# the RSA-PSS check runs only for an RSA leaf (no RSA arithmetic on an EC key)
+def hs.cv_ok.pss(rsa: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match rsa:
+    case True{}:
+      R.rsa.verify_pss(C.x509.nkey(C.x509.spki(leaf)), sig, hs.cv_content(th))
+    case False{}:
+      False{}
+
+def hs.cv_ok.ec(+leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  hs.cv_ok.ec.at(C.x509.is_ec(C.x509.spki(leaf)), leaf, th, sig)
+
+def hs.cv_ok.pick(pss: Bool, ecdsa: Bool, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  match pss:
+    case True{}:
+      hs.cv_ok.pss(C.x509.is_rsa(C.x509.spki(leaf)), leaf, th, sig)
+    case False{}:
+      match ecdsa:
+        case True{}:
+          hs.cv_ok.ec(leaf, th, sig)
+        case False{}:
+          False{}
+
+def hs.cv_ok.at(+alg: Nat, +leaf: List<&2, U32>, +th: List<&2, U32>, +sig: List<&2, U32>) -> Bool:
+  hs.cv_ok.pick(Nat.is_eq(alg, 2052n), Nat.is_eq(alg, 1027n), leaf, th, sig)
+
+# rsa_pss_rsae_sha256 (2052) for an RSA leaf, ecdsa_secp256r1_sha256 (1027) for a P-256 leaf
 def hs.cv_ok(+leaf: List<&2, U32>, +th: List<&2, U32>, +body: List<&2, U32>) -> Bool:
   hs.cv_ok.at(T.tls.num(2n, body), leaf, th, List.drop(&2, U32, body, 4n))
 

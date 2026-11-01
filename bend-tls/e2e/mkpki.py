@@ -1,10 +1,12 @@
-# Writes a test PKI into a directory (default: the current one) for e2e/run.sh:
+# Writes a test PKI into a directory for e2e/run.sh:
 #   root.der   the trust anchor, DER
 #   inter.pem  the intermediate CA, PEM
 #   leaf.pem   the server's certificate for example.test (SAN), PEM
-#   leaf.key   its RSA key, PEM
-# The leaf is valid from a day ago for a year; the root and intermediate longer.
-#   python3 -I e2e/mkpki.py <dir>
+#   leaf.key   its private key, PEM
+# The kind picks the key types: rsa (all RSA), ec (all P-256, so every signature
+# is ECDSA), or mixed (RSA root, P-256 intermediate, RSA leaf). The leaf is valid
+# from a day ago for a year; the root and intermediate for longer.
+#   python3 -I e2e/mkpki.py <dir> [rsa|ec|mixed]
 import datetime as dt
 import os
 import sys
@@ -12,7 +14,7 @@ import time
 from cryptography import x509 as cx
 from cryptography.x509.oid import NameOID
 from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.asymmetric import ec, rsa
 
 def name(cn):
     return cx.Name([cx.NameAttribute(NameOID.COMMON_NAME, cn)])
@@ -27,10 +29,19 @@ def make(subject, key, issuer_name, issuer_key, nb, na, ca=False, san=None):
         b = b.add_extension(cx.SubjectAlternativeName([cx.DNSName(s) for s in san]), critical=False)
     return b.sign(issuer_key, hashes.SHA256())
 
+KINDS = {
+    "rsa": ("rsa", "rsa", "rsa"),
+    "ec": ("ec", "ec", "ec"),
+    "mixed": ("rsa", "ec", "rsa"),
+}
 out = sys.argv[1] if len(sys.argv) > 1 else "."
+kind = sys.argv[2] if len(sys.argv) > 2 else "rsa"
+root_t, inter_t, leaf_t = KINDS[kind]
+new_key = {"rsa": lambda: rsa.generate_private_key(65537, 2048),
+           "ec": lambda: ec.generate_private_key(ec.SECP256R1())}
 now = dt.datetime.fromtimestamp(time.time(), dt.timezone.utc)
 day = dt.timedelta(days=1)
-root_key, inter_key, leaf_key = (rsa.generate_private_key(65537, 2048) for _ in range(3))
+root_key, inter_key, leaf_key = (new_key[root_t](), new_key[inter_t](), new_key[leaf_t]())
 root = make("E2E Root", root_key, name("E2E Root"), root_key, now - 30 * day, now + 3650 * day, ca=True)
 inter = make("E2E Intermediate", inter_key, root.subject, root_key, now - 30 * day, now + 1000 * day, ca=True)
 leaf = make("example.test", leaf_key, inter.subject, inter_key, now - day, now + 365 * day,
@@ -41,9 +52,9 @@ files = {
     "inter.pem": pem(inter),
     "leaf.pem": pem(leaf),
     "leaf.key": leaf_key.private_bytes(serialization.Encoding.PEM,
-        serialization.PrivateFormat.TraditionalOpenSSL, serialization.NoEncryption()),
+        serialization.PrivateFormat.PKCS8, serialization.NoEncryption()),
 }
 for fname, data in files.items():
     with open(os.path.join(out, fname), "wb") as f:
         f.write(data)
-print("wrote", ", ".join(files), "to", out)
+print("wrote", kind, "PKI:", ", ".join(files), "to", out)
