@@ -360,7 +360,7 @@ removed; both fail it.
 
 **Every trace up to a length** (`RELAY_EXHAUSTIVE=n`): the same check on every trace of up to n steps over a
 14-letter alphabet (the page's calls on id 1, and two sockets of its connections). Length 4 (41,371 traces) agrees.
-Length 5 (about 600,000 traces) was started on an earlier commit of the relay (before the empty-SEND and ticker-order changes, which the alphabet does not reach); its result is given below once it is complete.
+Length 5 (579,195 traces) agrees too. That run used the relay of commit 64265e3, before the empty-SEND and ticker-order changes; the alphabet does not reach either of them, and the budget changes do not bind with the default budget that the run uses.
 The exhaustive run found one thing: a socket that reports open twice made the relay send OK twice. Bun does not
 do that, and the model assumes it does not, but the relay now ignores a second open anyway.
 
