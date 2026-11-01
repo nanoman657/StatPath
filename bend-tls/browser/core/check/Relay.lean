@@ -1,28 +1,44 @@
 /-
-Relay.lean: the relay's connection machine (relay/relay.ts) as a Lean model, with theorems about it.
+Relay.lean: the relay's connection machine (relay/relay.ts), the page client (tcp_relay_client.js), the clock,
+and the search of the two composed. The file is one program; `lean --run Relay.lean MODE` runs it:
 
-The machine has one slot per connection id. A slot holds the connection that the id is in use for. Each
-connection has a generation: a CONNECT that the relay accepts starts a connection with the next generation.
-Socket events carry the id and the generation of the socket they come from, so a late event from a socket
-that has been closed (and whose id may have been reused) can be told apart from the events of the connection
-that has the id now. That is the point of the generations: without it, a late failure of an old socket fails
-the new connection (the bug fixed in relay.ts; test/lifecycle.test.ts).
+  (no argument)     the relay: traces on stdin, one per "trace" line (see below), each answered by its frames
+                    and a line "end" (the relay conformance test)
+  page              the page client: traces of calls and frames on stdin, each answered by the frames sent and
+                    the callbacks made, and "end" (the client conformance test)
+  search old|fixed N  every interleaving of the page and the relay, up to N steps, over a small alphabet: the
+                    first violation of "the page applies a frame to the connection that sent it", or none
 
-The model is what the relay is tested against: relay_conformance.test.ts (in this folder) drives the relay with
-random traces of page frames and socket events, and compares the frames it sends with the output of this program
-on the same trace. The theorems are about the model: what it guarantees for every trace. The assumptions are
-stated where they are used:
-  * a socket opens once, and its events come after its open (the events Bun produces);
-  * for liveness, the environment is fair: a socket that is offered a byte takes one, and the relay's
-    budget refills (the model has no budget).
+The relay model. The machine has one slot per connection id. A slot holds the connection that the id is in use
+for. Each connection has a generation: a CONNECT that the relay accepts starts a connection with the next
+generation. Socket events carry the id and the generation of the socket they come from, so a late event from a
+socket that has been closed (and whose id may have been reused) can be told apart from the events of the
+connection that has the id now (the bug fixed in relay.ts; test/lifecycle.test.ts). A CLOSE is answered with
+CLOSED once the id has been used (PROTOCOL.md).
 
-Input: traces, each starting with a "trace" line. In a trace, one event per line, after an optional "cap N"
-line (the count limit; default 2^32 - 1):
+Trace lines: "trace" starts a trace; then optionally "cap N" (the count limit, default 2^32 - 1) and "rate N"
+(connects per second, default 100000), then events and clock steps, one per line:
   connect ID | deny ID | send ID N | discard ID | read ID K | close ID
   sock ID GEN open | sock ID GEN data N | sock ID GEN eof | sock ID GEN peerclose
   sock ID GEN error E | sock ID GEN drain A
-Output: for each trace, one line per frame or session event, then a line "end":
-  ok ID | data ID N | eof ID | written ID COUNT FLAG | fail ID ERRNO | wsclose CODE
+  tick MS                                  (the clock goes on by MS, and the timer runs once)
+Output: one line per frame or session event, then "end":
+  ok ID | data ID N | eof ID | written ID COUNT FLAG | fail ID ERRNO | closed ID | wsclose CODE
+
+The page model (Page): the client's connections, as the client keeps them: its calls, the sends framed in SEND
+frames of at most 65535 bytes and within the send window, the recv calls waiting in order, the discard, the
+closing ids, and the callbacks. The client's observable behaviour is what the conformance test compares.
+
+Theorems (no sorry; `lean Relay.lean` checks them): stale_noop, freed_sock_silent, sockStep_fail_frees,
+ok_only_from_open, step_outs_id (a step names only its own id), freed_run (a freed id is named only by the CLOSED
+that answers a CLOSE), counters_bounded (the counts stay within the count limit, the queue within the send window,
+the credit within the read window), drain_empties and open_resolves and error_resolves (liveness, under fairness),
+rate_run (THE RATE BOUND: from the start, no more connects are accepted than two seconds' burst plus the rate
+for the time that has passed).
+
+The assumptions: a socket opens once and its events come after its open (the events Bun produces); for liveness,
+the environment is fair: a socket that is offered a byte takes one, and the timer keeps running. The byte budget
+of the relay is not modelled (it gates whole writes, by chunk; the queue would need to be a list of chunks).
 -/
 
 import Std.Data.HashSet
@@ -928,48 +944,299 @@ theorem freed_run (cap : Nat) (id : Nat) (es : List Ev) :
       exact ih (step cap s e).1 hstate (fun e' he' => hfree e' (by simp [he']) ) o h2
 
 -- ================================================================================================
--- The page's side, composed with the relay: the page client's connections (core: tcp_relay_client.js), the
--- two queues of frames between them, and a search over every interleaving up to a depth.
+-- The page client (tcp_relay_client.js) as a model: the page's observable behaviour, from its calls and
+-- the frames of the relay. It is the same model the search below composes with the relay.
 -- ================================================================================================
 
-namespace Client
+namespace Page
 
--- the page's connection: the number of its CONNECT (the sequence number), and whether it is open
+def MAX_BODY : Nat := 65535
+def MAX_IDS : Nat := 256
+def SEND_W : Nat := Relay.SEND_WINDOW
+def READ_W : Nat := Relay.READ_WINDOW
+
+-- one connection, as the page keeps it. seq: the number of its CONNECT (the page's own count).
 structure PConn where
   seq : Nat
   isOpen : Bool
+  tail : Nat           -- bytes given to sends so far
+  sent : Nat           -- bytes framed as SEND
+  written : Nat        -- bytes the relay has taken
+  received : Nat       -- bytes received as DATA
+  taken : Nat          -- bytes the page has taken
+  eof : Bool
+  op : Option (Nat × Nat)  -- the send in progress: its start and length
+  discardPending : Bool
+  readers : List Nat   -- the recv calls waiting for data: their maxima, in order
   deriving Repr
 
 structure PSlot where
   conn : Option PConn
-  -- the id was closed by the page, and the relay's CLOSED has not come: the id is not reused (variant "fixed")
+  -- closed by the page, and the relay's CLOSED not yet come (the fixed client): not reused, frames dropped
   closing : Bool
+  -- the errno that ended the id's last connection (the page's answer for a call on an id with none)
+  lastErr : Option Nat
   deriving Repr
 
--- the composed system. toRelay: the page's frames, each with the page's CONNECT sequence number (0 for the
--- others). toPage: the relay's frames, each with the relay generation of the connection that sent it. genOf:
--- the relay generation given to each page CONNECT. bad: the page applied a frame to a connection that did not
--- send it (the generation of the frame is not the generation of the page's connection).
+structure State where
+  slots : Nat → PSlot
+  nextSeq : Nat
+  -- true: the closed id is closing until CLOSED (the client of this protocol); false: reused at once
+  fixed : Bool
+
+inductive Obs where
+  | toRelay (e : Relay.Ev) (seq : Nat)
+  | cb (s : String)
+  | thrown
+  deriving Repr
+
+-- the page's calls and the relay's frames
+inductive In where
+  | connect
+  | close (id : Nat)
+  | send (id n : Nat)
+  | recv (id max : Nat)
+  | discard (id : Nat)
+  | frame (o : Relay.Out)
+  deriving Repr
+
+def emptySlot : PSlot := { conn := none, closing := false, lastErr := none }
+
+def init (fixed : Bool) : State :=
+  { slots := fun _ => emptySlot, nextSeq := 1, fixed := fixed }
+
+def setSlot (st : State) (id : Nat) (sl : PSlot) : State :=
+  { st with slots := fun i => if i = id then sl else st.slots i }
+
+-- the errno a call on an id without a connection answers with
+def missing (sl : PSlot) : Nat := sl.lastErr.getD 9
+
+-- the send in progress, pumped: SEND frames of at most MAX_BODY, and no more than SEND_WINDOW beyond what
+-- the relay has taken; fuel bounds the loop
+def pump (id : Nat) (c : PConn) (fuel : Nat) : PConn × List Obs :=
+  match fuel with
+  | 0 => (c, [])
+  | fuel + 1 =>
+    if c.op.isNone || c.discardPending || !c.isOpen then (c, [])
+    else
+      let n := min MAX_BODY (min (SEND_W - (c.sent - c.written)) (c.tail - c.sent))
+      if n = 0 then (c, [])
+      else
+        let (c', obs) := pump id { c with sent := c.sent + n } fuel
+        (c', Obs.toRelay (Relay.Ev.send id n) 0 :: obs)
+
+-- takes what it can for a recv call of max bytes: the data, the end, or nothing yet
+def takeFor (id : Nat) (c : PConn) (max : Nat) : PConn × Option Obs × Bool :=
+  -- returns the connection, the answer (none: the call waits), and whether it answered with an error
+  if c.received > c.taken then
+    let want := min max (c.received - c.taken)
+    ({ c with taken := c.taken + want }, some (Obs.toRelay (Relay.Ev.read id want) 0), false)
+  else (c, none, false)
+
+-- a connection ends with errno: its waiting calls hear it, and the id is free (not closing)
+def die (st : State) (id : Nat) (c : PConn) (errno : Nat) : State × List Obs :=
+  let obsConnect := if c.isOpen then [] else [Obs.cb s!"connectErr {id} {errno}"]
+  let obsOp := match c.op with
+    | some _ => [Obs.cb s!"sendErr {id} {errno} {c.written}"]
+    | none => []
+  let obsDiscard := if c.discardPending then [Obs.cb s!"discardErr {id} {errno}"] else []
+  let obsReaders := c.readers.map (fun _ => Obs.cb s!"recvErr {id} {errno}")
+  let sl := st.slots id
+  (setSlot st id { sl with conn := none, lastErr := some errno }, obsConnect ++ obsOp ++ obsDiscard ++ obsReaders)
+
+-- the waiting calls take what has arrived, in order
+def wake (st : State) (id : Nat) : State × List Obs := Id.run do
+  let sl := st.slots id
+  match sl.conn with
+  | none => return (st, [])
+  | some c0 =>
+    let mut c := c0
+    let mut keep : List Nat := []
+    let mut obs : List Obs := []
+    for mx in c0.readers do
+      let (c', o, _) := takeFor id c mx
+      match o with
+      | some ob => obs := obs ++ [ob, Obs.cb s!"data {id} {c'.taken - c.taken}"]
+                   c := c'
+      | none =>
+        if c.eof then obs := obs ++ [Obs.cb s!"eof {id}"]
+        else keep := keep ++ [mx]
+    let st' := setSlot st id { sl with conn := some { c with readers := keep } }
+    return (st', obs)
+
+-- ---- the calls ----
+
+def doConnect (st : State) : State × List Obs :=
+  match (List.range MAX_IDS).find? (fun id => (st.slots id).conn.isNone && !(st.slots id).closing) with
+  | none => (st, [Obs.cb "connectErr -1 24"])
+  | some id =>
+    let seq := st.nextSeq
+    let c : PConn := { seq := seq, isOpen := false, tail := 0, sent := 0, written := 0, received := 0,
+                       taken := 0, eof := false, op := none, discardPending := false, readers := [] }
+    let sl := st.slots id
+    ({ setSlot st id { sl with conn := some c, lastErr := none } with nextSeq := seq + 1 },
+     [Obs.toRelay (Relay.Ev.connect id) seq])
+
+def doClose (st : State) (id : Nat) : State × List Obs :=
+  match (st.slots id).conn with
+  | none => (st, [])
+  | some c =>
+    let sl := st.slots id
+    let st1 := setSlot st id { sl with closing := st.fixed }
+    let (st2, obs) := die st1 id c 9
+    (st2, obs ++ [Obs.toRelay (Relay.Ev.close id) 0])
+
+def doSend (st : State) (id n : Nat) : State × List Obs :=
+  match (st.slots id).conn with
+  | none => (st, [Obs.cb s!"sendErr {id} {missing (st.slots id)} -"])
+  | some c =>
+    if !c.isOpen then (st, [Obs.cb s!"sendErr {id} 22 {c.written}"])
+    else if c.op.isSome || c.discardPending then (st, [Obs.thrown])
+    else
+      let start := c.tail
+      let c1 := { c with tail := c.tail + n }
+      if n = 0 then
+        (setSlot st id { (st.slots id) with conn := some c1 }, [Obs.cb s!"sent {id}"])
+      else
+        let c2 := { c1 with op := some (start, n) }
+        let (c3, obs) := pump id c2 (c2.tail - c2.sent + 1)
+        (setSlot st id { (st.slots id) with conn := some c3 }, obs)
+
+def doRecv (st : State) (id max : Nat) : State × List Obs :=
+  match (st.slots id).conn with
+  | none => (st, [Obs.cb s!"recvErr {id} {missing (st.slots id)}"])
+  | some c =>
+    if c.received > c.taken then
+      let (c', o, _) := takeFor id c max
+      (setSlot st id { (st.slots id) with conn := some c' },
+       (o.toList) ++ [Obs.cb s!"data {id} {c'.taken - c.taken}"])
+    else if c.eof then (st, [Obs.cb s!"eof {id}"])
+    else (setSlot st id { (st.slots id) with conn := some { c with readers := c.readers ++ [max] } }, [])
+
+def doDiscard (st : State) (id : Nat) : State × List Obs :=
+  match (st.slots id).conn with
+  | some c =>
+    if c.isOpen then
+      (setSlot st id { (st.slots id) with conn := some { c with discardPending := true } },
+       [Obs.toRelay (Relay.Ev.discard id) 0])
+    else (st, [Obs.cb s!"discardErr {id} {missing (st.slots id)}"])
+  | none => (st, [Obs.cb s!"discardErr {id} {missing (st.slots id)}"])
+
+-- ---- the relay's frames ----
+
+-- the page applies a frame to its connection of id only when the id is not closing
+def applies (st : State) (o : Relay.Out) : Option Nat :=
+  match o with
+  | .closed _ => none
+  | .ok id => if (st.slots id).closing then none else ((st.slots id).conn.map (fun c => c.seq))
+  | .data id _ => if (st.slots id).closing then none else
+      (match (st.slots id).conn with | some c => some c.seq | none => none)
+  | .eof id => if (st.slots id).closing then none else
+      (match (st.slots id).conn with | some c => some c.seq | none => none)
+  | .written id _ _ => if (st.slots id).closing then none else
+      (match (st.slots id).conn with | some c => some c.seq | none => none)
+  | .fail id _ => if (st.slots id).closing then none else
+      (match (st.slots id).conn with | some c => some c.seq | none => none)
+  | .wsclose _ => none
+
+def frame (st : State) (o : Relay.Out) : State × List Obs :=
+  match o with
+  | .closed id => (setSlot st id { (st.slots id) with closing := false }, [])
+  | .wsclose _ => (st, [])
+  | _ =>
+    match applies st o with
+    | none => (st, [])
+    | some _ =>
+      match o with
+      | .ok id =>
+        match (st.slots id).conn with
+        | some c =>
+          let wasOpen := c.isOpen
+          (setSlot st id { (st.slots id) with conn := some { c with isOpen := true } },
+           [Obs.toRelay (Relay.Ev.read id READ_W) 0] ++ (if wasOpen then [] else [Obs.cb s!"connected {id}"]))
+        | none => (st, [])
+      | .fail id e =>
+        match (st.slots id).conn with
+        | some c => die st id c e
+        | none => (st, [])
+      | .data id n =>
+        match (st.slots id).conn with
+        | some c =>
+          let st1 := setSlot st id { (st.slots id) with conn := some { c with received := c.received + n } }
+          wake st1 id
+        | none => (st, [])
+      | .eof id =>
+        match (st.slots id).conn with
+        | some c =>
+          let st1 := setSlot st id { (st.slots id) with conn := some { c with eof := true } }
+          wake st1 id
+        | none => (st, [])
+      | .written id cnt flag =>
+        match (st.slots id).conn with
+        | some c0 =>
+          let c1 := { c0 with written := cnt }
+          let (c2, obsOk) :=
+            match c1.op with
+            | some (start, len) =>
+              if cnt >= start + len then ({ c1 with op := none }, [Obs.cb s!"sent {id}"])
+              else (c1, [])
+            | none => (c1, [])
+          let (c3, obsD) :=
+            if flag = 1 && c2.discardPending then
+              ({ c2 with discardPending := false, op := none, sent := c2.written, tail := c2.written },
+               [Obs.cb s!"discarded {id} {cnt}"])
+            else (c2, [])
+          let st1 := setSlot st id { (st.slots id) with conn := some c3 }
+          let (c4, obsP) :=
+            match (st1.slots id).conn with
+            | some c => pump id c (c.tail - c.sent + 1)
+            | none => (c3, [])
+          (setSlot st1 id { (st1.slots id) with conn := some c4 }, obsOk ++ obsD ++ obsP)
+        | none => (st, [])
+      | _ => (st, [])
+
+def step (st : State) (i : In) : State × List Obs :=
+  match i with
+  | .connect => doConnect st
+  | .close id => doClose st id
+  | .send id n => doSend st id n
+  | .recv id max => doRecv st id max
+  | .discard id => doDiscard st id
+  | .frame o => frame st o
+
+-- the frames the page sends, as text (the conformance test's rendering)
+def renderEv : Relay.Ev → String
+  | .connect id => s!"CONNECT {id}"
+  | .close id => s!"CLOSE {id}"
+  | .send id n => s!"SEND {id} {n}"
+  | .read id k => s!"READ {id} {k}"
+  | .discard id => s!"DISCARD {id}"
+  | _ => "?"
+
+def renderObs : Obs → List String
+  | .toRelay e _ => [s!"out {renderEv e}"]
+  | .cb s => [s]
+  | .thrown => ["thrown"]
+
+end Page
+
+namespace Client
+
+-- the composed system: the page, the relay, and the two queues between them. Each frame of the relay
+-- carries the relay generation of the connection that sent it; each CONNECT of the page carries its sequence
+-- number, and genOf records the generation the relay gave it.
 structure Sys where
   rs : Relay.St
-  page : Nat → PSlot
-  nextSeq : Nat
+  page : Page.State
   toRelay : List (Relay.Ev × Nat)
   toPage : List (Relay.Out × Nat)
   genOf : List (Nat × Nat)
   bad : Bool
-  -- true: the page keeps a closed id closing until the relay's CLOSED (the protocol of PROTOCOL.md);
-  -- false: the page reuses a closed id at once (the protocol before the fix)
-  fixed : Bool
 
 def cap : Nat := Relay.DEFAULT_CAP
 
-def setP (f : Nat → PSlot) (id : Nat) (x : PSlot) : Nat → PSlot :=
-  fun i => if i = id then x else f i
-
 def initSys (fixed : Bool) : Sys :=
-  { rs := Relay.init, page := fun _ => { conn := none, closing := false }, nextSeq := 1,
-    toRelay := [], toPage := [], genOf := [], bad := false, fixed := fixed }
+  { rs := Relay.init, page := Page.init fixed, toRelay := [], toPage := [], genOf := [], bad := false }
 
 -- the relay generation a frame of the relay's step belongs to (the connection before the step)
 def tagOf (rs : Relay.St) (e : Relay.Ev) : Nat :=
@@ -979,33 +1246,11 @@ def tagOf (rs : Relay.St) (e : Relay.Ev) : Nat :=
     | some c => c.gen
     | none => 0
 
--- ---- the page's calls ----
-
-def doConnect (v : Sys) (id : Nat) : Option Sys :=
-  if (v.page id).conn.isSome || (v.fixed && (v.page id).closing) then none
-  else some { v with
-    nextSeq := v.nextSeq + 1,
-    page := setP v.page id { conn := some { seq := v.nextSeq, isOpen := false }, closing := (v.page id).closing },
-    toRelay := v.toRelay ++ [(Relay.Ev.connect id, v.nextSeq)] }
-
-def doClose (v : Sys) (id : Nat) : Option Sys :=
-  match (v.page id).conn with
-  | none => none
-  | some _ => some { v with
-      page := setP v.page id { conn := none, closing := v.fixed },
-      toRelay := v.toRelay ++ [(Relay.Ev.close id, 0)] }
-
-def doSend (v : Sys) (id n : Nat) : Option Sys :=
-  match (v.page id).conn with
-  | some c => if c.isOpen then some { v with toRelay := v.toRelay ++ [(Relay.Ev.send id n, 0)] } else none
-  | none => none
-
-def doRead (v : Sys) (id k : Nat) : Option Sys :=
-  match (v.page id).conn with
-  | some c => if c.isOpen then some { v with toRelay := v.toRelay ++ [(Relay.Ev.read id k, 0)] } else none
-  | none => none
-
--- ---- the relay ----
+-- the page's calls: their observations go to the queue of the page's frames
+def pageCall (v : Sys) (i : Page.In) : Option Sys :=
+  let (st', obs) := Page.step v.page i
+  some { v with page := st', toRelay := v.toRelay ++ obs.filterMap (fun o => match o with
+    | .toRelay e p => some (e, p) | _ => none) }
 
 -- the relay takes the oldest frame of the page
 def doRelay (v : Sys) : Option Sys :=
@@ -1019,77 +1264,35 @@ def doRelay (v : Sys) : Option Sys :=
       | _ => v.genOf
     some { v with rs := r.1, toRelay := rest, toPage := v.toPage ++ r.2.map (fun o => (o, t)), genOf := genOf' }
 
--- a socket of the relay does something (the environment)
+-- a socket of the relay does something: the environment
 def doEnv (v : Sys) (e : Relay.Ev) : Option Sys :=
   let t := tagOf v.rs e
   let r := Relay.step cap v.rs e
   some { v with rs := r.1, toPage := v.toPage ++ r.2.map (fun o => (o, t)) }
 
--- ---- the page takes the oldest frame of the relay ----
-
-def gotGen (v : Sys) (c : PConn) : Option Nat :=
-  (v.genOf.find? (fun q => q.1 == c.seq)).map (fun q => q.2)
-
--- the frame of generation t must belong to the connection of the page: the relay's generation for the
--- page's connect (its sequence number) must be t, and it must already be known
-def checkFrame (v : Sys) (c : PConn) (t : Nat) : Sys :=
-  match gotGen v c with
-  | some g => if g == t then v else { v with bad := true }
-  | none => { v with bad := true }
-
-def applyFrame (v : Sys) (o : Relay.Out) (t : Nat) : Sys :=
-  match o with
-  | .closed id =>
-    if v.fixed then { v with page := setP v.page id { (v.page id) with closing := false } } else v
-  | .ok id =>
-    let sl := v.page id
-    if sl.closing then v
-    else match sl.conn with
-      | some c =>
-        if c.isOpen then v
-        else
-          let v' := checkFrame v c t
-          { v' with page := setP v'.page id { sl with conn := some { c with isOpen := true } } }
-      | none => v
-  | .data id _ =>
-    let sl := v.page id
-    if sl.closing then v
-    else match sl.conn with
-      | some c => if c.isOpen then checkFrame v c t else v
-      | none => v
-  | .eof id =>
-    let sl := v.page id
-    if sl.closing then v
-    else match sl.conn with
-      | some c => if c.isOpen then checkFrame v c t else v
-      | none => v
-  | .written id _ _ =>
-    let sl := v.page id
-    if sl.closing then v
-    else match sl.conn with
-      | some c => if c.isOpen then checkFrame v c t else v
-      | none => v
-  | .fail id _ =>
-    let sl := v.page id
-    if sl.closing then v
-    else match sl.conn with
-      | some c =>
-        let v' := checkFrame v c t
-        { v' with page := setP v'.page id { sl with conn := none } }
-      | none => v
-  | .wsclose _ => v
-
+-- the page takes the oldest frame of the relay. A frame that the page applies must belong to the
+-- connection the page has: the generation of the page's connect must be the frame's.
 def doPage (v : Sys) : Option Sys :=
   match v.toPage with
   | [] => none
-  | (o, t) :: rest => some (applyFrame { v with toPage := rest } o t)
+  | (o, t) :: rest =>
+    let v1 := { v with toPage := rest }
+    let bad' := match Page.applies v.page o with
+      | none => false
+      | some seq =>
+        match (v.genOf.find? (fun q => q.1 == seq)) with
+        | some q => q.2 != t
+        | none => true
+    let (st', obs) := Page.frame v.page o
+    some { v1 with page := st', bad := v.bad || bad',
+                   toRelay := v1.toRelay ++ obs.filterMap (fun x => match x with
+                     | .toRelay e p => some (e, p) | _ => none) }
 
--- ---- the search ----
-
+-- the search over every interleaving up to a depth
 def actions (v : Sys) : List (String × Option Sys) :=
-  [ ("connect 0", doConnect v 0), ("connect 1", doConnect v 1),
-    ("close 0", doClose v 0), ("close 1", doClose v 1),
-    ("send 0 1", doSend v 0 1), ("read 0 131072", doRead v 0 131072),
+  [ ("connect", pageCall v .connect), ("close 0", pageCall v (.close 0)), ("close 1", pageCall v (.close 1)),
+    ("send 0 1", pageCall v (.send 0 1)), ("send 1 1", pageCall v (.send 1 1)),
+    ("recv 0 1", pageCall v (.recv 0 1)), ("discard 0", pageCall v (.discard 0)),
     ("relay", doRelay v), ("page", doPage v) ] ++
   ((List.range 2).flatMap (fun id =>
     (List.range 3).flatMap (fun g =>
@@ -1103,11 +1306,11 @@ def actions (v : Sys) : List (String × Option Sys) :=
 def keyOf (v : Sys) : String :=
   let ids := List.range 2
   s!"{repr v.rs.nextGen}|{repr v.rs.closed}|{ids.map (fun i => repr (v.rs.slot i))}|" ++
-  s!"{ids.map (fun i => repr (v.page i))}|{v.nextSeq}|{repr v.toRelay}|{repr v.toPage}|" ++
+  s!"{ids.map (fun i => repr (v.page.slots i))}|{v.page.nextSeq}|{repr v.toRelay}|{repr v.toPage}|" ++
   s!"{repr v.genOf}|{v.bad}"
 
--- the search: every interleaving, up to depth steps, each state once. Returns the first violation, with the
--- steps that reach it, or none within the depth.
+-- the search: every interleaving up to depth steps, each state once; the first violation, with the steps
+-- that reach it, or none
 def search (fixed : Bool) (depth : Nat) : Option (List String) × Nat := Id.run do
   let init := initSys fixed
   let mut frontier : Array (Sys × List String) := #[(init, [])]
@@ -1133,6 +1336,200 @@ def search (fixed : Bool) (depth : Nat) : Option (List String) × Nat := Id.run 
   return (found, visited.size)
 
 end Client
+
+-- ================================================================================================
+-- Time: the connect tokens and the ticker (relay/relay.ts: refill, tick). The model is exact: the tokens are
+-- kept in thousandths (a CONNECT takes 1000), so the relay's floating-point arithmetic agrees with it where the
+-- test's clock steps keep it exact. The byte budget is not modelled: it gates whole writes, by chunk, which
+-- needs the queue as a list of chunks; see README.
+-- ================================================================================================
+
+namespace Clock
+
+structure Clk where
+  now : Nat            -- the time, in ms
+  refilled : Nat       -- the time of the last refill
+  tokens : Int         -- connect tokens, in thousandths of a token
+  acc : Nat            -- connects accepted (a ghost count: the theorem is about it)
+  cps : Nat            -- connects per second
+  deriving Repr
+
+def init (cps : Nat) : Clk :=
+  { now := 0, refilled := 0, tokens := 2000 * cps, acc := 0, cps := cps }
+
+-- refill (relay/relay.ts): the tokens for the time since the last refill, up to two seconds' worth
+def refill (k : Clk) : Clk :=
+  let dt : Int := (k.now : Int) - (k.refilled : Int)
+  { k with refilled := k.now,
+           tokens := min (2000 * (k.cps : Int)) (k.tokens + dt * (k.cps : Int)) }
+
+-- the ticker's flush: every connection's queue, written as far as the socket takes it (the test socket takes
+-- all of it), in id order (the relay's order is the connections' insertion order; the tests use one id)
+def flushAll (s : Relay.St) : Relay.St × List Relay.Out := Id.run do
+  let mut st := s
+  let mut outs : List Relay.Out := []
+  for id in List.range 256 do
+    match (st.slot id).conn with
+    | some c =>
+      let r := Relay.flushConn st id c 4294967295
+      st := r.1
+      outs := outs ++ r.2
+    | none => pure ()
+  return (st, outs)
+
+-- one event with the clock. A CONNECT of a free id is refused with FAIL 11 while there is less than one token.
+def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St × List Relay.Out :=
+  if s.closed.isSome then (k, s, []) else
+  match e with
+  | .connect id =>
+    match (s.slot id).conn with
+    | some _ =>
+      let r := Relay.step cap s e
+      (k, r.1, r.2)
+    | none =>
+      let k1 := refill k
+      if k1.tokens < 1000 then (k1, s, [Relay.Out.fail id 11])
+      else
+        let r := Relay.step cap s e
+        ({ k1 with tokens := k1.tokens - 1000, acc := k1.acc + 1 }, r.1, r.2)
+  | _ =>
+    let r := Relay.step cap s e
+    (k, r.1, r.2)
+
+-- the ticker: the time goes on, the tokens refill, and the queues are flushed
+def tickK (k : Clk) (s : Relay.St) (ms : Nat) : Clk × Relay.St × List Relay.Out :=
+  if s.closed.isSome then (k, s, []) else
+  let k1 := refill { k with now := k.now + ms }
+  let r := flushAll s
+  (k1, r.1, r.2)
+
+-- what the connection tokens promise: no more connects accepted than the rate allows, for the time elapsed
+def Good (k : Clk) : Prop :=
+  0 ≤ k.tokens ∧ k.refilled ≤ k.now ∧ k.tokens + 1000 * (k.acc : Int) ≤ 2000 * (k.cps : Int) + (k.cps : Int) * (k.refilled : Int)
+
+theorem good_init (cps : Nat) : Good (init cps) := by
+  unfold Good init
+  simp only
+  refine ⟨?_, ?_, ?_⟩
+  · omega
+  · omega
+  · omega
+
+-- refill keeps the invariant: the tokens gained are the rate for the time since the last refill, and the
+-- refill sets the last refill to now (the products are written in one order, so omega sees them as one atom)
+theorem good_refill (k : Clk) (h : Good k) : Good (refill k) := by
+  obtain ⟨h1, h2, h3⟩ := h
+  unfold Good refill
+  simp only
+  have hdt : ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int)
+      = (k.cps : Int) * (k.now : Int) - (k.cps : Int) * (k.refilled : Int) := by
+    rw [Int.sub_mul, Int.mul_comm (k.now : Int), Int.mul_comm (k.refilled : Int)]
+  have hnn : 0 ≤ ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int) := by
+    apply Int.mul_nonneg
+    · omega
+    · exact Int.natCast_nonneg _
+  have hmin : min (2000 * (k.cps : Int)) (k.tokens + ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int))
+      ≤ k.tokens + ((k.now : Int) - (k.refilled : Int)) * (k.cps : Int) := Int.min_le_right _ _
+  have hcn : (k.cps : Int) * (k.now : Int) = (k.now : Int) * (k.cps : Int) := Int.mul_comm _ _
+  refine ⟨?_, ?_, ?_⟩
+  · apply Int.le_min.mpr
+    refine ⟨?_, ?_⟩
+    · have : (0 : Int) ≤ (k.cps : Int) := Int.natCast_nonneg _
+      omega
+    · omega
+  · exact Nat.le_refl _
+  · omega
+
+theorem good_tick (k : Clk) (h : Good k) (ms : Nat) : Good (refill { k with now := k.now + ms }) := by
+  apply good_refill
+  unfold Good at h ⊢
+  obtain ⟨h1, h2, h3⟩ := h
+  simp only
+  omega
+
+-- the rate bound: the connects accepted so far, against the rate and the time (refilled never passes now)
+theorem rate_bound (k : Clk) (h : Good k) :
+    1000 * (k.acc : Int) ≤ 2000 * (k.cps : Int) + (k.cps : Int) * (k.now : Int) := by
+  obtain ⟨h1, h2, h3⟩ := h
+  have hc : (k.cps : Int) * (k.refilled : Int) ≤ (k.cps : Int) * (k.now : Int) := by
+    apply Int.mul_le_mul_of_nonneg_left
+    · omega
+    · exact Int.natCast_nonneg _
+  omega
+
+theorem good_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (h : Good k) :
+    Good (stepK cap k s e).1 := by
+  unfold stepK
+  by_cases hc : s.closed.isSome = true
+  · rw [if_pos hc]
+    exact h
+  · rw [if_neg hc]
+    cases e with
+    | connect id =>
+      simp only
+      split
+      · exact h
+      · have hg := good_refill k h
+        split
+        · exact hg
+        · obtain ⟨g1, g2, g3⟩ := hg
+          unfold Good
+          simp only
+          refine ⟨?_, ?_, ?_⟩
+          · omega
+          · exact g2
+          · push_cast
+            omega
+    | deny id => exact h
+    | send id n => exact h
+    | discard id => exact h
+    | read id k' => exact h
+    | close id => exact h
+    | sock id g kk => exact h
+
+-- an item of a trace: an event of the relay, or a tick of the timer (ms later)
+inductive Item where
+  | ev (e : Relay.Ev)
+  | tick (ms : Nat)
+
+def runK (cap : Nat) (k : Clk) (s : Relay.St) : List Item → Clk × Relay.St × List Relay.Out
+  | [] => (k, s, [])
+  | it :: its =>
+    let r := match it with
+      | .ev e => stepK cap k s e
+      | .tick ms => tickK k s ms
+    let r2 := runK cap r.1 r.2.1 its
+    (r2.1, r2.2.1, r.2.2 ++ r2.2.2)
+
+theorem good_runK (cap : Nat) (items : List Item) : ∀ (k : Clk) (s : Relay.St), Good k →
+    Good (runK cap k s items).1 := by
+  induction items with
+  | nil =>
+    intro k s h
+    exact h
+  | cons it its ih =>
+    intro k s h
+    cases it with
+    | ev e => exact ih _ _ (good_stepK cap k s e h)
+    | tick ms =>
+      have hT : Good (tickK k s ms).1 := by
+        unfold tickK
+        by_cases hc : s.closed.isSome = true
+        · rw [if_pos hc]
+          exact h
+        · rw [if_neg hc]
+          exact good_tick k h ms
+      exact ih _ _ hT
+
+-- THE RATE BOUND: from the start, for any trace of events and ticks, the connects accepted are at most the
+-- burst of two seconds' worth plus the rate for the time that has passed.
+theorem rate_run (cap cps : Nat) (items : List Item) :
+    1000 * ((runK cap (init cps) Relay.init items).1.acc : Int)
+      ≤ 2000 * ((runK cap (init cps) Relay.init items).1.cps : Int)
+        + ((runK cap (init cps) Relay.init items).1.cps : Int) * ((runK cap (init cps) Relay.init items).1.now : Int) :=
+  rate_bound _ (good_runK cap items (init cps) Relay.init (good_init cps))
+
+end Clock
 
 -- ================================================================================================
 -- The executable: the trace on stdin, the frames on stdout
@@ -1199,24 +1596,28 @@ partial def readLines (h : IO.FS.Stream) (acc : Array String) : IO (Array String
   if line.isEmpty then return acc
   readLines h (acc.push line.trimAscii.toString)
 
-def emitTrace (cap : Nat) (evs : Array Ev) : IO Unit := do
-  let (_, outs) := run cap init evs.toList
+def emitTrace (cap cps : Nat) (items : Array Clock.Item) : IO Unit := do
+  let (_, _, outs) := Clock.runK cap (Clock.init cps) init items.toList
   for o in outs do
     IO.println (showOut o)
   IO.println "end"
 
+-- the traces on stdin: "trace" starts one; in it, "cap N" (the count limit), "rate N" (connects per second:
+-- the default is far above any trace's), "tick MS" (the clock goes on), and the events, one per line
 def traceMode : IO UInt32 := do
   let lines ← readLines (← IO.getStdin) #[]
   let mut cap := DEFAULT_CAP
-  let mut evs : Array Ev := #[]
+  let mut cps := 100000
+  let mut items : Array Clock.Item := #[]
   let mut started := false
   let mut bad := false
   for l in lines do
     if bad || l.isEmpty then continue
     if l == "trace" then
-      if started then emitTrace cap evs
+      if started then emitTrace cap cps items
       cap := DEFAULT_CAP
-      evs := #[]
+      cps := 100000
+      items := #[]
       started := true
     else
       let ws := l.splitOn " "
@@ -1225,18 +1626,83 @@ def traceMode : IO UInt32 := do
         match n.toNat? with
         | some k => cap := k
         | none => bad := true
+      | ["rate", n] =>
+        match n.toNat? with
+        | some k => cps := k
+        | none => bad := true
+      | ["tick", n] =>
+        match n.toNat? with
+        | some k => items := items.push (Clock.Item.tick k)
+        | none => bad := true
       | _ =>
         match parseEv ws with
-        | some e => evs := evs.push e
+        | some e => items := items.push (Clock.Item.ev e)
         | none => bad := true
   if bad then
     IO.println "BAD"
     return 1
-  if started then emitTrace cap evs
+  if started then emitTrace cap cps items
   return 0
 
--- `lean --run Relay.lean search old|fixed DEPTH`: the composed search of the page and the relay, up to DEPTH
--- steps; anything else: the traces on stdin (the conformance test's mode)
+def parsePage (ws : List String) : Option Page.In :=
+  match ws with
+  | ["connect"] => some Page.In.connect
+  | ["close", a] => a.toNat?.map Page.In.close
+  | ["send", a, b] => do
+      let i ← a.toNat?
+      let n ← b.toNat?
+      pure (Page.In.send i n)
+  | ["recv", a, b] => do
+      let i ← a.toNat?
+      let m ← b.toNat?
+      pure (Page.In.recv i m)
+  | ["discard", a] => a.toNat?.map Page.In.discard
+  | ["frame", "OK", a] => a.toNat?.map (fun i => Page.In.frame (Relay.Out.ok i))
+  | ["frame", "FAIL", a, e] => do
+      let i ← a.toNat?
+      let x ← e.toNat?
+      pure (Page.In.frame (Relay.Out.fail i x))
+  | ["frame", "WRITTEN", a, c, f] => do
+      let i ← a.toNat?
+      let x ← c.toNat?
+      let y ← f.toNat?
+      pure (Page.In.frame (Relay.Out.written i x y))
+  | ["frame", "DATA", a, n] => do
+      let i ← a.toNat?
+      let x ← n.toNat?
+      pure (Page.In.frame (Relay.Out.data i x))
+  | ["frame", "EOF", a] => a.toNat?.map (fun i => Page.In.frame (Relay.Out.eof i))
+  | ["frame", "CLOSED", a] => a.toNat?.map (fun i => Page.In.frame (Relay.Out.closed i))
+  | _ => none
+
+-- one trace of the page's calls and frames, from the fixed client: each call's observations, then "end"
+def pageTrace (lines : List String) : IO Bool := do
+  let mut st := Page.init true
+  for l in lines do
+    match parsePage (l.splitOn " ") with
+    | none => return false
+    | some i =>
+      let (st', obs) := Page.step st i
+      st := st'
+      for o in obs do
+        for line in Page.renderObs o do
+          IO.println line
+  IO.println "end"
+  return true
+
+def pageMode : IO UInt32 := do
+  let lines ← readLines (← IO.getStdin) #[]
+  let mut cur : List String := []
+  let mut ok := true
+  for l in lines do
+    if l.isEmpty then continue
+    if l == "trace" then
+      if !cur.isEmpty then ok := ok && (← pageTrace cur)
+      cur := []
+    else cur := cur ++ [l]
+  if !cur.isEmpty then ok := ok && (← pageTrace cur)
+  return if ok then 0 else 1
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["search", mode, d] =>
@@ -1255,4 +1721,5 @@ def main (args : List String) : IO UInt32 := do
     | none =>
       IO.println "BAD"
       return 1
+  | ["page"] => pageMode
   | _ => traceMode

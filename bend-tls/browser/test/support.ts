@@ -48,7 +48,7 @@ export function testRelay(
   opts: Parameters<typeof startRelay>[1] = {},
 ) {
   const server = startRelay(testConfig(allow, limits, extra), opts);
-  return { url: server.url, port: server.port, stop: () => server.stop() };
+  return { url: server.url, port: server.port, tick: server.tick, stop: () => server.stop() };
 }
 
 // A raw WebSocket to the relay, authenticated: resolves once AUTHOK has arrived. Its messages are

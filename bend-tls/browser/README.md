@@ -38,9 +38,12 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `core/check/Transitions.lean` | The Lean model of the thirteen compiled transitions: the theorems about them, and an executable copy that `transitions.test.ts` runs | `lean --run` by `transitions.test.ts` (needs Lean 4.34.0) |
 | `core/check/transitions.test.ts` | The compiled JavaScript against the Lean model, 18,000 calls up to 2^53 (values and throws) | `bun test browser/core/check` (skipped without Lean) |
 | `core/check/bendtt.test.ts`, `build-bendtt-eval.sh`, `bendtt-eval.patch` | The compiled JavaScript against BendTT's own evaluator on the Bend source, 1,300 probes; the kernel with its `eval` mode is built by the script | `bun test browser/core/check` (skipped without the kernel or the bend CLI) |
-| `core/check/Relay.lean` | The relay's connection machine as a Lean model, with the theorems of "The protocol, checked" (no `sorry`), and the executable that the conformance test runs | `lean --run` by `relay_conformance.test.ts` (needs Lean 4.34.0) |
-| `core/check/relay_conformance.test.ts` | The relay against the model on 300 random traces: every frame the page receives, in order, must be the model's output (11,434 frames, 4,068 socket events of a closed or reused connection) | `bun test browser/core/check` (skipped without Lean) |
-| `test/lifecycle.test.ts` | The regression for the bug the model found: a connect that fails after its id was closed and reused must not fail the new connection | `bun test browser/test` |
+| `core/check/Relay.lean` | The relay's connection machine, the page client, the clock and the search, as one Lean program (no `sorry`); its header lists its modes and theorems | `lean --run` by the conformance tests (needs Lean 4.34.0) |
+| `core/check/relay_conformance.test.ts` | The relay against the model on 300 random traces (with the clock and the connect rate), line for line; with `RELAY_EXHAUSTIVE=n`, every trace of up to n steps over the alphabet | `bun test browser/core/check` (skipped without Lean; the exhaustive run is opt-in) |
+| `core/check/client_conformance.test.ts` | The page client against the page model on 300 random traces of calls and frames, every frame and callback in order | `bun test browser/core/check` (skipped without Lean) |
+| `test/lifecycle.test.ts` | The regression for the relay's bug: a connect that fails after its id was closed and reused must not fail the new connection | `bun test browser/test` |
+| `test/client_lifecycle.test.ts` | The page client's race (a frame of a closed connection in flight), and the CLOSED rules: the id is not reused until CLOSED, and a FAIL in flight does not fail the reuse | `bun test browser/test` |
+| `test/bun_assumptions.test.ts` | The four socket behaviours the model assumes of Bun, checked with real sockets | `bun test browser/test` |
 
 ## Run the tests
 
@@ -227,11 +230,12 @@ Not proven:
   Two checks compare that output with independent models, without proving either (see "The compiler,
   checked").
 - The timing and liveness of anything: that a send completes, that a read returns, when a `try_` answers.
-- Bun's socket and WebSocket behaviour beyond the assumptions above. The relay's connection handlers are
-  checked against the Lean model on random traces, not proven (see "The protocol, checked"). The page's
-  client is not modelled yet, so its handlers are tested only.
-- Real time: the model has no clock and no budget. Its liveness results assume that a socket that is
-  offered bytes takes some, and that a connecting socket opens or fails.
+- Bun's socket and WebSocket behaviour beyond the four assumptions checked in `test/bun_assumptions.test.ts`.
+  The relay's connection handlers and the page client are checked against Lean models on random traces, and
+  the relay exhaustively over a small alphabet, not proven for the JavaScript (see "The protocol, checked").
+- Real time: the model has the clock as an input and the connect rate exactly, but not the byte budget (it gates
+  whole writes, by chunk). Its liveness results assume that a socket that is offered bytes takes some, and that a
+  connecting socket opens or fails.
 - The Lean recheck is done (see below), but it checks Bend's kernel's proofs, not the compiler.
 
 ## The Lean recheck
@@ -307,46 +311,76 @@ glue around them.
 
 ## The protocol, checked
 
-The relay's connection machine is written as a Lean model, `core/check/Relay.lean`, with the connection
-generations that the relay needed to get right. A socket event carries the generation of the socket it
-came from, so a late event of a closed socket cannot touch the connection that reuses its id.
+The relay's connection machine, the page client, the clock, and the search over the page and the relay are one
+Lean program, `core/check/Relay.lean` (see its header for its modes). Each part is checked against the code.
 
-**The bug the model found.** A socket's error callback failed the connection that held its id at that
-moment, not the connection that the callback belonged to. A CLOSE and a CONNECT on the same id, with a
-connect still failing, sent the new connection a FAIL. `test/lifecycle.test.ts` reproduces it, and the fix
-(`fail` takes the connection, and acts only while that connection holds the id) is in `relay/relay.ts`.
+**Two bugs, and one protocol change.** Writing the models found them.
 
-**The theorems** (`lean Relay.lean` checks them, with no `sorry`):
+- *The relay.* A socket's error callback failed the connection that held its id at that moment, not the
+  connection the callback belonged to. After CLOSE and a reused id, a connect that failed late sent the new
+  connection a FAIL. Fixed with generations on the connections (`fail` acts only while its own connection holds
+  the id). `test/lifecycle.test.ts` reproduces it.
+- *The client, a race in the protocol.* The relay sends a frame before it processes a CLOSE, so a frame of the
+  closed connection can still be in flight when the page has closed the id and connected it again. The page
+  handed the frame to the new connection: a stale DATA was read as its data, a stale FAIL failed it, a stale OK
+  opened it. `test/client_lifecycle.test.ts` reproduces it with the real client, and the search (below) finds it
+  six steps deep.
+- *The change.* A new frame, CLOSED (op 17). The relay answers every CLOSE for an id it has used; the page keeps a
+  closed id closing until the CLOSED, dropping the frames for it meanwhile (`PROTOCOL.md`).
 
-- `stale_noop`, `freed_sock_silent`: a socket event does nothing for an id with no connection, or for a
-  connection of another generation.
-- `sockStep_fail_frees`: a FAIL leaves the id free. `ok_only_from_open`: an OK comes only from the open of
-  a connection that is not open yet.
-- `freed_run`: once an id is free, a trace that does not connect or deny it sends no frame that names it.
-- `step_outs_id`: a step names only the id of its event in its frames (or closes the session).
-- `counters_bounded`: for every trace from the start, the bytes sent (written and queued) and the bytes read
-  stay within the count limit, the queue within the send window, and the read credit within the read
-  window: the credit is never more than the window past what was read, and what was read is never more
-  than a chunk past the credit.
-- `drain_empties`, `open_resolves`, `error_resolves` (liveness, under fairness): a connection with q bytes
-  queued is emptied by q drains that each take a byte; a connecting socket's open or failure resolves it.
+**The search** (`lean --run Relay.lean search old|fixed N`) explores every interleaving of the page's calls, the
+relay's processing of the page's frames, the socket events, and the delivery of the relay's frames to the page,
+up to N steps, each state once. The page applies a frame only to the connection that sent it; the search checks
+that as a ghost (each frame carries the relay generation of the connection that sent it). Results: the page of
+the protocol before the fix violates it at 6 steps (the first violation: a connect, a close, a reuse connect, the
+relay's processing, and the old OK arriving at the new connection). The page with CLOSED has no violation within 10
+steps (187,943 states). That is a bounded search over a small alphabet (two ids, two generations, the page's
+calls and the socket events), not a proof for all depths.
 
-The model has no clock and no budget: the timing of the relay's timer, and the budget that limits the
-bytes a WebSocket moves, are outside it.
+**The page client** (`core/check/client_conformance.test.ts`). The page model in `Relay.lean` (`Page`) gives the
+client's observable behaviour: the frames it sends (CONNECT, SEND in frames of at most 65535 bytes and within the
+window, READ with the bytes taken, DISCARD, CLOSE), and the callbacks it makes (connected, sent, discarded, data,
+eof, and the errors with their errnos and written counts), in order. The test runs 300 random traces of calls and
+frames through the real client over a fake WebSocket, and through the model (`lean --run Relay.lean page`); the
+two agree on every frame and callback (6,419 of them: every kind occurs). Two negative controls fail it: a READ
+count off by one, and the fixed id reuse removed.
 
-**The conformance test** (`core/check/relay_conformance.test.ts`) runs the relay itself on 300 random traces.
-Its sockets are scripted, so the order of events is the trace's order, and a sentinel after each step shows
-that the relay is done with it. The frames the page receives must be the model's output on the same trace,
-line for line. The traces are plausible page behaviour with some it should not do (sends before OK, sends to
-an id not in use, socket events after the page has closed the connection or the id has been reused), and a
-small count limit in some traces. The test checks that every kind of frame occurs, and that 4,068 socket
-events of a closed or reused connection occur.
+One behaviour is worth stating, because the effects rely on it: a send that is discarded does not call its own
+callback; the discard's callback reports it (the effects wait on the discard for that case).
 
-Negative controls: with the lifecycle bug put back, the conformance test fails on trace 4 (a stale FAIL). With
-the read-side count check removed from `relay/relay.ts`, it fails on trace 18 (a DATA frame where the model has
-EFBIG). Both changes were made in a copy and then reverted.
+**The relay against the model.** `core/check/relay_conformance.test.ts` runs the relay itself on 300 random traces
+with scripted sockets; the order of events is the trace's, and a sentinel after each step shows that the relay is
+done with it. Its frames must be the model's, line for line: 16,845 frames, 3,740 socket events of a closed or
+reused connection, 136 protocol-violation closes, the count limit, the connect rate (1,810 refusals, with
+clock steps), and every kind of frame. Negative controls: the lifecycle bug put back, and the read-side count check
+removed; both fail it.
 
-**Not checked by this:** the page's client (`tcp_relay_client.js`), which has the same kind of glue; that the
-relay's JavaScript matches the model for traces that the test does not generate (the test samples); the
-timer, budget and rate limits; Bun's socket and WebSocket behaviour, which the scripted sockets stand in
-for; and real-time liveness.
+**Every trace up to a length** (`RELAY_EXHAUSTIVE=n`): the same check on every trace of up to n steps over a
+14-letter alphabet (the page's calls on id 1, and two sockets of its connections). Length 4 (41,371 traces) agrees.
+Length 5 (about 600,000 traces) was run in the background; its result is recorded in the commit that adds it.
+The exhaustive run found one thing: a socket that reports open twice made the relay send OK twice. Bun does not
+do that, and the model assumes it does not, but the relay now ignores a second open anyway.
+
+**The clock** (`Clock` in `Relay.lean`). The connect tokens, the ticker's flush, and the injected time are modelled
+exactly (the tokens in thousandths, so the relay's floating-point arithmetic agrees where the test's clock steps
+keep it exact: multiples of half a second at two connects a second). `rate_run` is the rate bound: for every trace,
+the connects accepted are at most two seconds' burst plus the rate for the time that has passed, and a connect is
+refused with FAIL 11 only while less than one token is left. The conformance test drives the relay's clock and
+ticks, and the model agrees.
+
+**Bun's socket behaviour** (`test/bun_assumptions.test.ts`). The assumptions the model makes of Bun, checked with
+real sockets: a partial write keeps none of its remainder, drain comes after a partial write, pause stops the data
+callbacks and resume starts them, and a connection's data comes before its end. They hold on Bun 1.4.4. A change in
+Bun shows there first.
+
+**Not checked by this:**
+- The byte budget of the relay (it gates whole writes, by chunk; the queue is a count in the model). The timer's
+  effect on the budget and on reads is therefore not modelled either.
+- The session limits per address (upgrades per minute) and the total of sessions.
+- Real time. The model has the clock as an input, and its liveness results assume the environment is fair; the
+  rate bound is exact for any clock. Real latency, and how long a fair environment takes, are not in the model.
+- That the relay's JavaScript matches the model for traces not generated (the random and the bounded traces are
+  samples of the trace space; the length-4 result is exhaustive only over its alphabet).
+- The page's pump and the effects above the client (the program's own code); the search uses the page model, not
+  the client's code.
+- Compiler correctness, and Bun's socket and WebSocket behaviour beyond the four assumptions above.

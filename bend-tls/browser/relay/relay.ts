@@ -133,9 +133,13 @@ type Session = {
 // ticker (whether the 50 ms timer runs: it refills the budgets and flushes the writes the socket held).
 export function startRelay(
   cfg: Config,
-  opts: { log?: Log; maxCount?: number; connect?: (o: any) => Promise<unknown>; ticker?: boolean } = {},
+  opts: {
+    log?: Log; maxCount?: number; connect?: (o: any) => Promise<unknown>; ticker?: boolean;
+    now?: () => number; // the clock, in ms (the tests drive it)
+  } = {},
 ) {
   const log = opts.log ?? stdoutLog;
+  const clock = opts.now ?? (() => Date.now());
   const connect = opts.connect ?? ((o: any) => Bun.connect(o));
   // the most a connection moves in one direction: MAX_COUNT in production, lower only in tests
   const cap = opts.maxCount ?? MAX_COUNT;
@@ -147,7 +151,7 @@ export function startRelay(
 
   // an upgrade from this address is admitted unless the address has used its quota this minute
   function admit(address: string): boolean {
-    const now = Date.now();
+    const now = clock();
     const recent = (upgrades.get(address) ?? []).filter((t) => now - t < 60000);
     const ok = recent.length < lim.upgradesPerMinute;
     if (ok) recent.push(now);
@@ -184,7 +188,7 @@ export function startRelay(
       const data: Session = {
         ws: null, origin, address, name: null, authed: false, closed: false,
         conns: new Map(), known: new Uint8Array(256),
-        budget: lim.bytesPerSecond, connects: 2 * lim.connectsPerSecond, refilled: Date.now(),
+        budget: lim.bytesPerSecond, connects: 2 * lim.connectsPerSecond, refilled: clock(),
         authTimer: null,
       };
       if (server.upgrade(req, { data })) return undefined;
@@ -319,9 +323,10 @@ export function startRelay(
   // connection held for its WebSocket's send buffer runs again once the buffer has half drained
   // (this does not wait for the drain event alone, which Bun need not send). Addresses that have
   // not upgraded for a minute are forgotten.
-  let lastForget = Date.now();
-  const ticker = opts.ticker === false ? null : setInterval(() => {
-    const now = Date.now();
+  let lastForget = clock();
+  // the ticker's work: the budgets and the connect tokens refill, held writes and reads run again
+  function tick() {
+    const now = clock();
     for (const s of sessions) {
       refill(s, now);
       const buffered = s.ws.getBufferedAmount();
@@ -337,7 +342,8 @@ export function startRelay(
         if (!times.some((t) => now - t < 60000)) upgrades.delete(address);
       }
     }
-  }, 50);
+  }
+  const ticker = opts.ticker === false ? null : setInterval(tick, 50);
 
   function totalConnections(): number {
     let n = 0;
@@ -381,7 +387,7 @@ export function startRelay(
       if (s.conns.size >= lim.maxConnections || totalConnections() >= lim.maxConnectionsTotal) {
         return sendFrame(s, OP.FAIL, id, failBody(ERR.EMFILE, "too many connections"));
       }
-      refill(s, Date.now());
+      refill(s, clock());
       if (s.connects < 1) {
         log("connect_limited", { name: s.name });
         return sendFrame(s, OP.FAIL, id, failBody(ERR.EAGAIN, "connect rate limit"));
@@ -401,6 +407,7 @@ export function startRelay(
         socket: {
           open(tcp) {
             if (conn.closed) return tcp.end();
+            if (conn.open) return; // a socket opens once; a second open must not send a second OK
             conn.tcp = tcp;
             conn.open = true;
             sync(s, conn);   // no credit yet: the socket's reads wait for the page's READ
@@ -490,6 +497,8 @@ export function startRelay(
 
   return {
     port: server.port,
+    // one tick of the timer, now (the tests run it on their own clock)
+    tick,
     url: `${cfg.tls ? "wss" : "ws"}://${cfg.host.includes(":") ? `[${cfg.host}]` : cfg.host}:${server.port}`,
     // closes every WebSocket (1001, going away), then stops listening
     stop() {
