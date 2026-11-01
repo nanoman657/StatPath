@@ -25,7 +25,7 @@ certificate key types. See "Limits" for what is missing.
 | TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 3 suites, 3 groups (HelloRetryRequest for secp384r1), 4 certificate key types |
 | HTTP/1.1 GET and POST over TCP to IP-literal `http://` URLs (for CRL and OCSP) | `http.bend` | done, tested |
 | OCSP request and response check (RFC 6960), CRL distribution points and OCSP URIs | `revoc.bend` | done, tested |
-| Revocation fetching in the client (`fetch` argument) | `client.bend`, `crl.bend` | in progress: builds and runs; `e2e/fetch.py` not yet passing |
+| Revocation fetching in the client (`fetch` argument) | `client.bend`, `crl.bend` | done on the native client: all 9 cases of `e2e/fetch.py` pass; the JS run is not done |
 | Proofs of the branch-free selects (`LAWS.bend`, `PROOF.bend`) | `LAWS.bend`, `PROOF.bend` | 4 laws, `ALL PROOFS CHECK`; Lean recheck not run |
 
 The client's three suites are `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
@@ -82,8 +82,9 @@ It sends `GET /` over TLS 1.3 and prints the response, HTTP headers included.
 `<ip>` is the address to connect to, because the TCP kit has no DNS.
 `<anchor.der>` is the trust anchor, a DER certificate. `<unix-time>` is the
 current time in seconds, because Bend has no wall clock: `IO.now()` is
-monotonic. `[crl.der]` is an optional certificate revocation list (DER); see
-"Revocation" below. Exit status is 0 on success and 1 on any error, with a message.
+monotonic. `[crl.der]` is an optional certificate revocation list (DER), or `""` for none,
+and a further `fetch` makes the client fetch the revocation status of the chain over HTTP;
+see "Revocation" below. Exit status is 0 on success and 1 on any error, with a message.
 
 ### Generated files
 
@@ -141,6 +142,11 @@ and decryption of the response.
 (`e2e/big_server.py`). A 200 KB body is printed in full. A 500 KB body, which is
 more than the client reads, is refused with `the stream was cut`.
 
+`e2e/crl.sh` runs the client with a CRL file (clean, revoked, or none) for five PKIs.
+`e2e/rejects.py` runs the rejection paths against a scripted fake server (see "What is
+checked"). `e2e/fetch.py` runs the revocation fetch against `openssl ocsp` and a CRL HTTP
+server, nine cases, with `native` for the native binary and the default for the interpreter.
+
 ## What is checked
 
 - **SHA-256:** the NIST `""`, `"abc"` and 56-byte vectors, every padding boundary
@@ -188,6 +194,19 @@ more than the client reads, is refused with `the stream was cut`.
   name is no use; the anchor in the chain is not checked. `e2e/crl.sh` runs the
   client with a clean CRL, with a CRL that lists the leaf, and without a CRL, for
   five PKIs (RSA, P-256, mixed, Ed25519, P-384).
+- **OCSP and fetching:** `revoc_tests.bend` (15 cases) builds the OCSP request with
+  `cryptography`, and its bytes match `cryptography`'s exactly. It checks the CRL and
+  OCSP URIs of a certificate, and replies made by `cryptography`: good; revoked;
+  unknown; for another certificate; tampered; outside the time window; a delegated
+  responder with the OCSP-signing purpose (accepted) and without it (refused); and a
+  try-later status. `e2e/fetch.py` runs the native client with the `fetch` argument
+  against `openssl ocsp`, with a status index, and a CRL HTTP server. Its nine cases:
+  a good, a revoked and an unknown OCSP status; an unreachable responder; a clean CRL;
+  a CRL that lists the leaf; an unreachable CRL server; a certificate with no revocation
+  URI (accepted); and a revoked certificate without the argument (accepted). All nine
+  pass on the native client.
+- **HTTP:** `http_tests.bend` (8 cases) for URL and reply parsing, and
+  `e2e/http_test.py` (3 cases) against a local server.
 - **X.509:** certificates made with `cryptography`, with RSA, ECDSA P-256 and
   Ed25519 keys, each in its own chain: validity dates, hostnames (SAN, with wildcard
   names matching one label), chain signatures to a DER anchor, `basicConstraints`
@@ -265,85 +284,10 @@ select laws below.
 
 ### What remains
 
-- **One branch on a secret.** `p256.ecdh` checks whether the private scalar is zero
-  (`p256.nonzero_lt_n`). A scalar is random with its top bit cleared, so the branch is
-  taken only for the zero scalar, a probability of about 2^-255. A zero scalar is also
-  refused by the handshake.
-- **The runtime.** The interpreter's arithmetic on big numbers (JS `BigInt`) and the C
-  code's division are not constant-time. The source is branch-free, but the runtime is
-  not, so a timing measurement of the compiled client would still show the runtime's
-  behaviour. No timing measurement of the constant-time claims has been made.
-- **Allocation and memory.** Lists are walked in order and no table is indexed by a
-  secret, as far as the source shows. The runtime's allocation and garbage collection are
-  outside this code.
-- **Range and format checks** on public inputs (lengths, the peer's point, signatures)
-  branch, as they must: those values are public.
-
-### Proofs (what they establish)
-
-`bend PROOF.bend` checks four laws with Bend's kernel (`ALL PROOFS CHECK`):
-
-- `sel_nat_zero` and `sel_nat_one`: the scalar select `a * (1 - s) + b * s` returns `a`
-  when s = 0 and `b` when s = 1.
-- `bi_sel_zero` and `bi_sel_one`: `bi.sel` on two limb lists of the same shape returns
-  `y` when s = 0 and `x` when s = 1, limb by limb.
-
-The laws are about values. They show that the selects pick the right operand, which is what
-the branch-free code relies on. They say nothing about timing, which Bend's logic does not
-describe. The Lean recheck (`--verdict`) was not run: it needs a Lean toolchain, which this
-environment does not have.
-
-Until the timing of the compiled client is measured, do not rely on it to keep a key
-secret from a timing observer.
-
-## Limits and cautions
-
-- **Three cipher suites.** `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
-  `TLS_CHACHA20_POLY1305_SHA256`. The transcript hash and the key schedule follow the
-  suite's hash (SHA-256 or SHA-384), and the record key length follows its cipher.
-- **Three groups.** x25519, secp256r1 (P-256) and secp384r1 (P-384). The first
-  ClientHello carries x25519 and P-256 key shares; a server that wants P-384 sends a
-  HelloRetryRequest, and the client answers with a P-384 key share (and the cookie,
-  if any). There is no P-521 or X448, and a server that wants another group fails.
-- **Certificates.** RSA (verified with SHA-256, PSS or PKCS#1 v1.5), ECDSA on P-256
-  with SHA-256, ECDSA on P-384 with SHA-384 (or SHA-256), and Ed25519. P-521 ECDSA,
-  Ed448, and RSA with hashes other than SHA-256 are not verified.
-- **Certificate checks are partial.** Checked: validity dates, hostnames (DNS SAN,
-  case-insensitive, a wildcard for the leftmost label only), signatures up to a
-  trust anchor given as DER, `basicConstraints` cA on each issuer, `keyUsage`
-  keyCertSign on each issuer when present, `pathLenConstraint` on each issuer, and
-  extended key usage on the leaf when present, the anchor's path length, and name
-  constraints for DNS names (permitted and excluded subtrees, on every issuer and the
-  anchor, over the certificates below each). Name constraints in other name forms,
-  and a constraint with a minimum or maximum (which the profile forbids), fail the
-  chain. Revocation is checked only against a CRL given on the command line (see
-  "Revocation" under "What is checked"); OCSP and CRL distribution points are not
-  fetched. Not checked: certificate policies, subject common
-  names (only SAN is used), and IP-address SANs.
-- **Bounded reads.** The handshake flight may use at most 24 records and the
-  response at most 24 records (each up to 16 KB, about 384 KB in all). A longer
-  one is an error and the client exits 1. A record that is not complete after 48
-  socket reads, or a connection that closes inside a record, is an error too. A
-  close at a record boundary ends the stream.
-- **Client behaviour.** One request, `GET /`. The response is printed raw, HTTP
-  headers included. No session resumption, no 0-RTT, no client certificates, no
-  key update, no `close_notify` sent, and no HTTP parsing. NewSessionTicket
-  messages are read and ignored.
-- **Time and names come from the command line.** The Unix time and the server name
-  are arguments, and the connection address is an IP address (no DNS).
-- **Constant time is claimed for the source, not measured.** The secret-dependent
-  branches are removed (see the review above), with one zero-scalar test and the runtime
-  left out. Do not rely on it against a timing observer until the compiled client is measured.
-- **No streaming API for hashing.** `sha256_bytes`, `sha512.hash` and `hmac` take
-  the whole message at once.
-- **No audit.** The test vectors and the e2e tests show the arithmetic and the
-  protocol are right for these inputs. They don't show the code is secure.
-
-## What remains
-
-1. **Constant-time arithmetic.** The review below lists the leaks; removing them is
-   the work, and it needs masked selection in the scalar multiplications and the
-   ladder, a branch-free S-box and GCM, and a constant-time reduction.
-2. **Revocation without a CRL.** OCSP, and fetching CRLs from their distribution points,
-   are not done; the check runs only on a CRL given to the client. The client does not fetch either, and no CRL is given to
-   it, so a revoked certificate is accepted.
+1. **Timing.** The constant-time claims are about the source. The next step is to measure
+   the compiled client (the runtime's big-number arithmetic and C division are not
+   constant-time), and to remove the zero test on the ECDH scalar if that matters.
+2. **Fetching.** `https://` URLs and host names (which need TLS for HTTP and DNS), more
+   than the first revocation URI of a certificate, delta CRLs, OCSP nonces, caching, a
+   read timeout, and a response size limit below about 1 MB. The fetch matrix has run on
+   the native client only; the JS interpreter has not run it.
