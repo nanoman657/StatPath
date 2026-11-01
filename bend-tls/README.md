@@ -15,18 +15,20 @@ certificate key types. See "Limits" for what is missing.
 | HKDF (RFC 5869) and the TLS 1.3 key schedule | `hkdf.bend` | done, tested |
 | ChaCha20, Poly1305, ChaCha20-Poly1305 (RFC 8439) | `chacha20.bend`, `poly1305.bend`, `aead.bend` | done, tested |
 | AES-128 and AES-128-GCM (FIPS 197, SP 800-38D) | `aes.bend`, `gcm.bend` | done, tested |
-| SHA-512 (FIPS 180-4) | `sha512.bend` | done, tested |
+| SHA-384 and SHA-512 (FIPS 180-4) | `sha512.bend` | done, tested |
 | X25519 key agreement (RFC 7748) | `x25519.bend` | done, tested |
 | P-256 ECDH and ECDSA verification (SEC 1, FIPS 186-4) | `p256.bend` | done, tested |
+| P-384 ECDSA verification (FIPS 186-4) | `p384.bend` | done, tested |
 | Ed25519 verification (RFC 8032) | `ed25519.bend` | done, tested |
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
-| DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and Ed25519 keys |
-| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 2 suites, 2 groups, 3 certificate key types |
+| DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and P-384, and Ed25519 keys |
+| TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 2 suites, 2 groups, 4 certificate key types |
 
 The client's two suites are `TLS_AES_128_GCM_SHA256` and
 `TLS_CHACHA20_POLY1305_SHA256`. Its key shares are x25519 and secp256r1. Its
 signature algorithms are `rsa_pss_rsae_sha256`, `rsa_pkcs1_sha256` (offered, not
-used for CertificateVerify), `ecdsa_secp256r1_sha256` and `ed25519`.
+used for CertificateVerify), `ecdsa_secp256r1_sha256`, `ecdsa_secp384r1_sha384`
+and `ed25519`.
 
 ## Running
 
@@ -39,19 +41,20 @@ bend hmac_tests.bend            -> hmac-sha256: 10 passed, 0 failed
 bend hkdf_tests.bend            -> hkdf: 22 passed, 0 failed
 bend aead_tests.bend            -> aead: 29 passed, 0 failed
 bend aes_tests.bend             -> aes-gcm: 39 passed, 0 failed
-bend sha512_tests.bend          -> sha512: 19 passed, 0 failed
+bend sha512_tests.bend          -> sha512: 27 passed, 0 failed
 bend x25519_tests.bend          -> x25519: 7 passed, 0 failed
 bend p256_tests.bend            -> p256: 51 passed, 0 failed
+bend p384_tests.bend            -> p384: 41 passed, 0 failed
 bend ed25519_tests.bend         -> ed25519: 30 passed, 0 failed
 bend bigint_tests.bend          -> bigint: 10 passed, 0 failed
 bend rsa_tests.bend             -> rsa: 4 passed, 0 failed
 bend rsa_sig_tests.bend         -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend            -> x509: 17 passed, 0 failed
 bend x509_ext_tests.bend        -> x509-ext: 22 passed, 0 failed
-bend ec_tests.bend              -> ec: 17 passed, 0 failed
+bend ec_tests.bend              -> ec: 25 passed, 0 failed
 bend tls_tests.bend             -> tls: 22 passed, 0 failed
-bash e2e/run.sh                 -> e2e (js): 64 passed, 0 failed
-bash e2e/run.sh native          -> e2e (native): 64 passed, 0 failed
+bash e2e/run.sh                 -> e2e (js): 80 passed, 0 failed
+bash e2e/run.sh native          -> e2e (native): 80 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
 ```
 
@@ -82,6 +85,7 @@ Several modules are generated; the source is the file with the `_body` or the
 | `sha512.bend` | `sha512_body.bend` | `python3 -I gen_sha512.py` |
 | `p256.bend` | `p256_body.bend` | `python3 -I gen_p256.py` |
 | `ed25519.bend` | `ed25519_body.bend` | `python3 -I gen_ed25519.py` |
+| `p384.bend` | `p256_body.bend` | `python3 -I gen_p384.py` |
 | `*_tests.bend` | `gen_*_tests.py` | `python3 -I gen_X_tests.py` |
 
 Bend requires definitions in dependency order, so the generated files that
@@ -96,8 +100,8 @@ generators compute expected values with `hashlib`, `hmac` and the
 combination of:
 
 - PKI kind: `rsa` (RSA keys throughout), `ec` (P-256 keys throughout, so every
-  signature is ECDSA), `mixed` (RSA root, P-256 intermediate, RSA leaf) and `ed`
-  (Ed25519 keys throughout);
+  signature is ECDSA), `mixed` (RSA root, P-256 intermediate, RSA leaf), `ed`
+  (Ed25519 keys throughout) and `ec384` (P-384 keys, signed with SHA-384);
 - cipher suite: `TLS_AES_128_GCM_SHA256` or `TLS_CHACHA20_POLY1305_SHA256`;
 - group: X25519 or P-256 (the server allows only that group, so the client must use
   it).
@@ -110,7 +114,7 @@ For each, the client runs four cases:
 - **wrong host:** the host is `other.test`. Rejected.
 - **expired:** the time is in 2100. Rejected.
 
-That is 4 x 2 x 2 x 4 = 64 runs. A valid run goes through the whole handshake:
+That is 5 x 2 x 2 x 4 = 80 runs. A valid run goes through the whole handshake:
 the ServerHello key share and group, the handshake traffic keys, decryption of
 the encrypted flight, the chain check, the CertificateVerify signature (RSA-PSS,
 ECDSA or Ed25519, as the leaf's key requires), the server Finished, our Finished,
@@ -125,9 +129,9 @@ more than the client reads, is refused with `the stream was cut`.
 - **SHA-256:** the NIST `""`, `"abc"` and 56-byte vectors, every padding boundary
   (lengths 1, 3, 55, 56, 57, 63, 64, 65, 119, 120, 128, 1000), and a message with
   every byte value. Digests match `hashlib` on JS and native.
-- **SHA-512:** 19 cases against `hashlib`: the empty message, `abc`, the padding
-  boundaries (111, 112, 113, 127, 128, 129), and multi-block messages. The
-  constants are the roots of the first primes, computed exactly and checked
+- **SHA-512 and SHA-384:** 27 cases against `hashlib`: the empty message, `abc`,
+  the padding boundaries (111, 112, 113, 127, 128, 129), and multi-block messages.
+  The constants are the roots of the first primes, computed exactly and checked
   against `hashlib` by the generator.
 - **HMAC-SHA256:** RFC 4231 test cases 1, 2, 3 and 6. Key lengths 0, 1, 63, 64,
   65 and 200 are checked against Python too.
@@ -144,6 +148,9 @@ more than the client reads, is refused with `the stream was cut`.
   r or s zero or equal to n, another key, an off-curve key, and s replaced by n-s
   (valid, since ECDSA has no low-s rule). The constants are checked by the
   generator against `cryptography` and an independent affine implementation.
+- **P-384:** the same kinds of checks as P-256 (field arithmetic, `k G` against
+  `cryptography`, and ECDSA with SHA-384 and SHA-256 digests from `cryptography`,
+  with the rejections). The constants are checked by the generator as well.
 - **Ed25519:** RFC 8032 test 1 (the key and signature are checked against
   `cryptography` first), valid signatures from `cryptography`, a changed message,
   R or S, a non-reduced S (S + L), another key, a key or signature of the wrong
@@ -158,7 +165,7 @@ more than the client reads, is refused with `the stream was cut`.
   `keyUsage` (a CA without `keyCertSign`), `pathLenConstraint`, extended key usage
   (`serverAuth`, `anyExtendedKeyUsage`, and a leaf with `clientAuth` only), and
   tampered or wrong-anchor chains.
-- **CertificateVerify:** RSA-PSS, ECDSA and Ed25519 over a transcript hash, each
+- **CertificateVerify:** RSA-PSS, ECDSA P-256, ECDSA P-384 and Ed25519 over a transcript hash, each
   with a changed transcript, a wrong algorithm code, and a key of the wrong type.
 - **TLS encoding:** the ClientHello layout (both key shares, both groups, all the
   signature algorithms), the record header and nonce, and ServerHello and
@@ -191,8 +198,8 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 - **Two groups.** x25519 and secp256r1 (P-256). There is no P-384, P-521 or X448,
   and no HelloRetryRequest, so a server that requires another group fails.
 - **Certificates.** RSA (verified with SHA-256, PSS or PKCS#1 v1.5), ECDSA on P-256
-  with SHA-256, and Ed25519. P-384 and P-521 ECDSA, Ed448, and RSA with hashes
-  other than SHA-256 are not verified.
+  with SHA-256, ECDSA on P-384 with SHA-384 (or SHA-256), and Ed25519. P-521 ECDSA,
+  Ed448, and RSA with hashes other than SHA-256 are not verified.
 - **Certificate checks are partial.** Checked: validity dates, hostnames (DNS SAN,
   case-insensitive, a wildcard for the leftmost label only), signatures up to a
   trust anchor given as DER, `basicConstraints` cA on each issuer, `keyUsage`
@@ -221,9 +228,9 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 
 ## What remains
 
-1. **P-384** (ECDSA verification and ECDH), and the `TLS_AES_256_GCM_SHA384` suite
-   with SHA-384 in the key schedule. P-256 and the current suites cover the
-   common cases; these are extensions of the same code.
+1. **P-384 key agreement** (ECDH), and the `TLS_AES_256_GCM_SHA384` suite with
+   SHA-384 in the key schedule. P-384 certificates are verified already; these are
+   extensions of the same code.
 2. **HelloRetryRequest,** so a server that wants another group can be served.
 3. **Constant-time arithmetic,** and a review before any use with real secrets.
 4. **Revocation, name constraints, and the anchor's path length** in the
