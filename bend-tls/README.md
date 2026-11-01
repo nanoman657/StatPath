@@ -23,6 +23,10 @@ certificate key types. See "Limits" for what is missing.
 | RSA-PSS and PKCS#1 v1.5 verification (SHA-256) | `rsa.bend`, `bigint.bend` | done, tested |
 | DER/ASN.1 and X.509 (RFC 5280): chains, validity, names, CA, path length, EKU | `asn1.bend`, `x509.bend` | done for RSA, ECDSA P-256 and P-384, and Ed25519 keys |
 | TLS 1.3 record layer and client handshake (RFC 8446) | `tls.bend`, `handshake.bend`, `client.bend` | done: 3 suites, 3 groups (HelloRetryRequest for secp384r1), 4 certificate key types |
+| HTTP/1.1 GET and POST over TCP to IP-literal `http://` URLs (for CRL and OCSP) | `http.bend` | done, tested |
+| OCSP request and response check (RFC 6960), CRL distribution points and OCSP URIs | `revoc.bend` | done, tested |
+| Revocation fetching in the client (`fetch` argument) | `client.bend`, `crl.bend` | in progress: builds and runs; `e2e/fetch.py` not yet passing |
+| Proofs of the branch-free selects (`LAWS.bend`, `PROOF.bend`) | `LAWS.bend`, `PROOF.bend` | 4 laws, `ALL PROOFS CHECK`; Lean recheck not run |
 
 The client's three suites are `TLS_AES_128_GCM_SHA256`, `TLS_AES_256_GCM_SHA384` and
 `TLS_CHACHA20_POLY1305_SHA256`. Its key shares are x25519, secp256r1 and secp384r1. Its
@@ -233,41 +237,64 @@ native build takes about 35 s. AES-GCM throughput has not been measured.
 
 ## Constant-time review
 
-This is a reading of the code, not a measurement. The question is whether any branch or
-memory access depends on a secret. The secrets are the X25519 and ECDH private scalars,
-the traffic keys and IVs, the AES and ChaCha20 keys, the GCM hash key H, the Poly1305 key
-and the finished keys. Lengths, certificates, signatures, transcripts and record headers
-are public.
+This is a reading of the source, with the proofs listed below. It is not a timing
+measurement. The question is whether any branch or memory access depends on a secret.
+The secrets are the X25519 and ECDH private scalars and their shared secrets, the
+traffic keys and IVs, the AES and ChaCha20 keys, the GCM hash key H and the GCM running
+product, the Poly1305 key and accumulator, and the Finished keys. Lengths, certificates,
+signatures, transcripts and record headers are public.
 
-The answer is no: several secret-dependent branches remain.
+### What was changed
 
-| Where | Secret | Dependence |
+Each secret-dependent branch was replaced by arithmetic on a 0/1 value (`a * (1 - s) + b * s`
+for a select, or a masked `xor`), so that every input takes the same path:
+
+| Where | Before | Now |
 |---|---|---|
-| `p256_body.bend`, `p256.smul.go` (also in `p384.bend`) | the ECDH scalar | a `match` on each bit: the point addition runs only for a 1 bit |
-| `x25519.bend`, `fe.pick` in `ladder.step` | the swap bit (a scalar bit) | a `match` on the swap bit chooses the field elements |
-| `x25519.bend`, `fe.cB3` and `fe.cB2` | field values | a `match` on the high bit of a carry |
-| `bigint.bend`, `B.bi.csub` and the Montgomery code | field values | a conditional subtraction on the borrow |
-| `aes_body.bend`, `aes.sbox.*` | state and key bytes | the S-box is a tree of comparisons on each byte |
-| `aes_body.bend`, `aes.xtime` | state bytes | a `Bool.pick` on the top bit of the byte |
-| `gcm.bend`, `gcm.cond` and `gcm.shr1` | the running product, which depends on H | a `match` on a bit of the product |
-| `poly1305.bend`, `pl.canon.choose` | the accumulator | a `match` on whether the value reaches p |
+| `x25519.bend`, the ladder (`fe.sel`) | a `match` on the swap bit | an arithmetic select of each limb; the swap is applied to both points |
+| `x25519.bend`, canonical reduction (`fe.cfold`) | a `match` on the carry | the fold always runs at fixed length, and the result is selected |
+| `bigint.bend`, `bi.sel` and `bi.csub` | a conditional subtraction on the borrow | both results are computed and the borrow selects one |
+| `poly1305.bend`, `pl.sel` and `pl.canon` | a `match` on whether the value reaches p | the fold always runs for its fixed number of limbs; the reduced value is selected |
+| `gcm.bend`, `gcm.reduce` and `gcm.cond` | a `match` on a bit of the running product | a masked `xor` (`U32.mul(bit, 225)`), and byte-wise arithmetic selects |
+| `aes_body.bend`, `aes.xtime` and `aes.sbox` | a comparison tree per byte; a `Bool.pick` on the top bit | `xtime` is a masked `xor`; the S-box is x^254 by a fixed square-and-multiply chain of GF(2^8) products |
+| `p256_body.bend` (also `p384.bend`), scalar multiplication | a point addition only for a 1 bit | the complete projective addition formulas (Renes, Costello and Batina 2016, algorithm 1, a = -3); each bit always adds, then the sum is selected; the affine conversion inverts Z by a fixed exponent |
 
-Not affected, by reading:
+The selects are exact: each is checked by the unit suites (x25519 7/7, bigint 10/10,
+aead 29/29, AES-GCM 48/48, P-256 51/51, P-384 47/47, ECDSA and X.509 suites), and the
+select laws below.
 
-- The byte comparisons (`ae.eq` for tags, `rsa.eqb` for Finished and signatures). They
-  walk every byte and branch only on length: `Bool.and` evaluates its second argument
-  even when the first is false (checked by timing a long second argument), so a mismatch
-  does not end the walk early.
-- SHA-256, SHA-384 and SHA-512, HMAC, and HKDF: word operations with public lengths. The
-  HMAC key padding branches on the key length only.
-- ChaCha20: word operations (quarter rounds), no branch on the data.
+### What remains
 
-These claims are about the source. Bend compiles to JavaScript and C through its runtime,
-and the timing of allocation and of the runtime's own control flow is outside this code.
-The fixes would be masked selection (no branch) in the scalar multiplications and the
-ladder, a branch-free S-box and GCM multiply, and a constant-time reduction. None is done.
-Until they are, do not use the client with a key that must stay secret from a timing
-observer.
+- **One branch on a secret.** `p256.ecdh` checks whether the private scalar is zero
+  (`p256.nonzero_lt_n`). A scalar is random with its top bit cleared, so the branch is
+  taken only for the zero scalar, a probability of about 2^-255. A zero scalar is also
+  refused by the handshake.
+- **The runtime.** The interpreter's arithmetic on big numbers (JS `BigInt`) and the C
+  code's division are not constant-time. The source is branch-free, but the runtime is
+  not, so a timing measurement of the compiled client would still show the runtime's
+  behaviour. No timing measurement of the constant-time claims has been made.
+- **Allocation and memory.** Lists are walked in order and no table is indexed by a
+  secret, as far as the source shows. The runtime's allocation and garbage collection are
+  outside this code.
+- **Range and format checks** on public inputs (lengths, the peer's point, signatures)
+  branch, as they must: those values are public.
+
+### Proofs (what they establish)
+
+`bend PROOF.bend` checks four laws with Bend's kernel (`ALL PROOFS CHECK`):
+
+- `sel_nat_zero` and `sel_nat_one`: the scalar select `a * (1 - s) + b * s` returns `a`
+  when s = 0 and `b` when s = 1.
+- `bi_sel_zero` and `bi_sel_one`: `bi.sel` on two limb lists of the same shape returns
+  `y` when s = 0 and `x` when s = 1, limb by limb.
+
+The laws are about values. They show that the selects pick the right operand, which is what
+the branch-free code relies on. They say nothing about timing, which Bend's logic does not
+describe. The Lean recheck (`--verdict`) was not run: it needs a Lean toolchain, which this
+environment does not have.
+
+Until the timing of the compiled client is measured, do not rely on it to keep a key
+secret from a timing observer.
 
 ## Limits and cautions
 
@@ -304,8 +331,9 @@ observer.
   messages are read and ignored.
 - **Time and names come from the command line.** The Unix time and the server name
   are arguments, and the connection address is an IP address (no DNS).
-- **Not constant time.** Several secret-dependent branches remain (see the review
-  above). This is not safe for secrets against a timing observer.
+- **Constant time is claimed for the source, not measured.** The secret-dependent
+  branches are removed (see the review above), with one zero-scalar test and the runtime
+  left out. Do not rely on it against a timing observer until the compiled client is measured.
 - **No streaming API for hashing.** `sha256_bytes`, `sha512.hash` and `hmac` take
   the whole message at once.
 - **No audit.** The test vectors and the e2e tests show the arithmetic and the
