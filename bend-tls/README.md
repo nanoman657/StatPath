@@ -51,7 +51,7 @@ bend bigint_tests.bend          -> bigint: 10 passed, 0 failed
 bend rsa_tests.bend             -> rsa: 4 passed, 0 failed
 bend rsa_sig_tests.bend         -> rsa-sig: 24 passed, 0 failed
 bend x509_tests.bend            -> x509: 17 passed, 0 failed
-bend x509_ext_tests.bend        -> x509-ext: 41 passed, 0 failed
+bend x509_ext_tests.bend        -> x509-ext: 45 passed, 0 failed
 bend ec_tests.bend              -> ec: 27 passed, 0 failed
 bend crl_tests.bend             -> crl: 13 passed, 0 failed
 bend fuzz_tests.bend            -> fuzz: 190 passed, 0 failed (a FAIL is a mutated input accepted)
@@ -61,6 +61,7 @@ bash e2e/run.sh                 -> e2e (js): 180 passed, 0 failed
 bash e2e/run.sh native          -> e2e (native): 180 passed, 0 failed
 bash e2e/big.sh                 -> big (js): 2 passed, 0 failed
 bash e2e/crl.sh                 -> e2e crl (js): 15 passed, 0 failed (native: 15)
+python3 -I e2e/rejects.py       -> rejects (js): 7 passed, 0 failed
 ```
 
 The client:
@@ -171,6 +172,12 @@ more than the client reads, is refused with `the stream was cut`.
   seed, and the reduction mod L. The base point's order is checked by the generator.
 - **RSA:** PSS and PKCS#1 v1.5 verification of real signatures, and rejection of
   altered messages and signatures.
+- **Rejection paths:** `e2e/rejects.py` runs the client against a fake server that
+  sends one scripted reply, and the client must refuse it: a HelloRetryRequest that
+  selects a group the first ClientHello already shared (x25519, secp256r1), one that
+  selects a group we do not offer, one with a cipher suite we do not offer, a second
+  HelloRetryRequest, a ServerHello that selects secp384r1 without a retry, and a
+  HelloRetryRequest whose cookie must be echoed in the second ClientHello.
 - **Revocation:** `crl_tests.bend` (13 cases) builds CRLs with `cryptography` and checks
   them along a chain: a listed leaf or intermediate is refused; a CRL past its
   nextUpdate, not yet current, signed by another key, tampered, or for another

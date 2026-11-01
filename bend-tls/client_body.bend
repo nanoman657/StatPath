@@ -331,7 +331,7 @@ def hello.suite_ok(+c: Nat) -> Bool:
 
 # the groups of the first ClientHello's key shares: x25519 (29) and secp256r1 (23)
 def hello.group_ok(+g: Nat) -> Bool:
-  Bool.or(Nat.is_eq(g, 29n), Bool.or(Nat.is_eq(g, 23n), Nat.is_eq(g, 24n)))
+  Bool.or(Nat.is_eq(g, 29n), Nat.is_eq(g, 23n))
 
 # the hash length of the suite (48 for TLS_AES_256_GCM_SHA384, else 32) and the record key length
 # (16 for TLS_AES_128_GCM_SHA256, else 32)
