@@ -38,6 +38,26 @@ A false version of the round-trip law is rejected by the checker (checked when t
 Tested, not proven: the relay, the page's client, and the sockets. The Bend encodings of sample
 frames (`frame_vectors.json`) match the JavaScript encoder byte for byte.
 
+## Page declarations (item 1)
+
+`tcp.bend` declares the TCP operations of a page build, with the signatures of Base's TCP under the
+names `WebTCP.*`. A page program imports it and calls `WebTCP.connect` where a native program calls
+`TCP.connect`; the native declarations are untouched. Each declaration imports a browser effect in
+`effs/`, and none imports C, so a native build of a page program stops with "no .c import".
+
+| Declaration | Status |
+|-------------|--------|
+| `WebTCP.listen`, `accept`, `try_accept` | answer EOPNOTSUPP (95): a page cannot accept connections |
+| `WebTCP.connect`, `send`/`try_send`/`send_bytes`/`try_send_bytes`, `recv`/`try_recv`/`recv_bytes`/`try_recv_bytes` | placeholders answering ENOSYS (38) until item 3 |
+| `WebTCP.close`, `close_listener` | no-ops returning Unit (there is no native socket to close yet) |
+
+    bend tests/decl_listen.bend     # prints: 95 Operation not supported
+    bend tests/decl_connect.bend    # prints: 38
+
+`bend tcp.bend --check-only` reports the declarations as foreign effects. That is the checker's
+verdict for host code outside Base; the module has no laws, so nothing is unsound. Keep such
+declarations out of files that proofs import.
+
 ## The asynchronous scheduler (done as a patch)
 
 `runtime/async-scheduler.patch` changes Bend's JavaScript runtime (bend2/comp.ts, bend2/main.ts) so a
