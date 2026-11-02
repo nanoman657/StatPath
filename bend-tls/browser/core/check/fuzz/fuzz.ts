@@ -28,7 +28,7 @@ const KERNEL = process.env.BENDTT_EVAL ?? resolve(import.meta.dir, "..", ".build
 
 mkdirSync(join(DIR, "failures"), { recursive: true });
 
-const stats = { batches: 0, invalid: 0, compileFailed: 0, defs: 0, calls: 0, values: 0, refusals: 0, mismatches: 0, kernelProbes: 0, kernelMismatches: 0 };
+const stats = { batches: 0, invalid: 0, compileFailed: 0, defs: 0, calls: 0, values: 0, refusals: 0, mismatches: 0, kernelProbes: 0, kernelMismatches: 0, kernelInconclusive: 0 };
 const log = (s: string) => appendFileSync(LOG, s + "\n");
 
 // the arguments: mostly small, some large, some at the limit, and the edges
@@ -142,6 +142,12 @@ function checkKernel(b: number, defs: Def[], stem: string, cases: { def: number;
       want = String(evalDef(defs, c.def, c.args));
     } catch {
       want = "refused";
+    }
+    if (got === "stuck") {
+      // bendtt-eval's natOfM stops after a fixed fuel (1e9 steps); a probe that runs out says nothing about the value
+      stats.kernelInconclusive++;
+      log(`batch ${b}: kernel fuel ran out for f${c.def}(${c.args.join(", ")}), reference ${want} (inconclusive)`);
+      return;
     }
     if (got !== want) {
       stats.kernelMismatches++;
