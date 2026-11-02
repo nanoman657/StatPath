@@ -22,14 +22,20 @@ Not yet proved:
 - The reachability induction and the final theorem (reachable implies `WQ`, so the relay's window check
   never fires for a page SEND).
 
-Fields the frame and queue steps need, beyond the 24 in `Inv` (candidates, checked by the bounded search in
-`inv_checks.lean` / `search_main.lean` to depth 9, and to depth 11 in a separate run; not yet proved):
+Fields the frame and queue steps need, beyond the 24 in `Inv`. Each passes the bounded search (`inv_checks.lean`,
+`search_main.lean`) to depth 9 (23,387 states, no violation). None is in `Inv` or proved yet:
 - `failNone`, `closedNone`: a FAIL or CLOSED frame in the page's queue finds the relay's connection gone.
+- `closedClosing`: a CLOSED frame in the page's queue means its id's page is closing. `closeClosing`: a queued
+  CLOSE means its id's page is closing.
 - `closedOrd`: after a CLOSED frame of an id, the queue has no other frame of that id (except a CLOSED).
-- `closedNoConn`, `closeClosing`: a CLOSE in the relay's queue means the page is closing, and no CONNECT of
-  that id follows a CLOSE (the barrier must also forbid a CONNECT after a CLOSE).
-- `okNoDisc`, `discRel`: an OK frame (page not closing) finds no DISCARD of its id queued; a queued DISCARD
-  finds its id's connection gone, or open, or the page closing.
+- `closedNoConn`: a CLOSED frame in the page's queue means no CONNECT of its id is queued. This needs the
+  barrier to forbid a CONNECT behind a CLOSE of the same id (`fwdB` in `inv_checks.lean` already has it).
+- `openRel`: an open page connection has an open relay connection. `okOpen`: an OK frame (page not closing)
+  finds its page connection not open. `okNoDisc`: such an OK frame finds no DISCARD of its id queued.
+- `discRel`: a queued DISCARD finds its id's relay connection gone, or its page connection open, or the page closing.
+
+Proving these also needs the socket spec (`SockSpec` in `ind_sock.lean`) to say that a FAIL frame leaves the relay
+connection gone and an OK frame comes only from a connection that was not open. It says neither today.
 
 ## Build
 

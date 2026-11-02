@@ -75,6 +75,7 @@ def fwdB : Relay.Ev → Relay.Ev → Bool
   | .connect a, .connect b => a == b
   | .discard a, .send b _ => a == b
   | .discard a, .discard b => a == b
+  | .close a, .connect b => a == b
   | _, _ => false
 def pairOK : List (Relay.Ev × Nat) → Bool
   | [] => true
@@ -239,7 +240,35 @@ def iDiscRel (v : TSys) : Bool := v.c.toRelay.all fun q => match q.1 with
       | none => (v.c.page.slots id).closing)
   | _ => true
 def iInv4 : List (String × (TSys → Bool)) := iInv3 ++ [("FailNone", iFailNone), ("ClosedNone", iClosedNone), ("ClosedOrd", iClosedOrd), ("OkNoDisc", iOkNoDisc), ("DiscRel", iDiscRel)]
-def firstBadI (v : TSys) : Option String := (iInv4.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: a queued CLOSE means its id's page is closing
+def iCloseClosing (v : TSys) : Bool := v.c.toRelay.all fun q => match q.1 with
+  | .close id => (v.c.page.slots id).closing
+  | _ => true
+-- candidate: a CLOSED frame in the page's queue means its id's page is closing
+def iClosedClosing (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .closed id => (v.c.page.slots id).closing
+  | _ => true
+-- candidate: a CLOSED frame in the page's queue means no CONNECT of its id is queued
+def iClosedNoConn (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .closed id => v.c.toRelay.all (fun x => match x.1 with
+      | .connect j => j != id
+      | _ => true)
+  | _ => true
+def iInv5 : List (String × (TSys → Bool)) := iInv4 ++ [("CloseClosing", iCloseClosing), ("ClosedClosing", iClosedClosing), ("ClosedNoConn", iClosedNoConn)]
+-- candidate: an open page connection has a relay connection that is open
+def iOpenRel (v : TSys) : Bool := tIds.all fun id => match (v.c.page.slots id).conn with
+  | some pc => !pc.isOpen || (match (v.c.rs.slot id).conn with
+      | some c => c.isOpen
+      | none => true)
+  | none => true
+-- candidate: an OK frame (page not closing) finds its page connection not open
+def iOkOpen (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .ok id => (v.c.page.slots id).closing || (match (v.c.page.slots id).conn with
+      | some pc => !pc.isOpen
+      | none => true)
+  | _ => true
+def iInv6 : List (String × (TSys → Bool)) := iInv5 ++ [("OpenRel", iOpenRel), ("OkOpen", iOkOpen)]
+def firstBadI (v : TSys) : Option String := (iInv6.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1
