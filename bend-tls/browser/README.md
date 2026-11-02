@@ -43,6 +43,8 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `core/check/Relay.lean` | The relay's connection machine, the page client, the clock and the search, as one Lean program (no `sorry`); its header lists its modes and theorems | `lean --run` by the conformance tests (needs Lean 4.34.0) |
 | `core/check/relay_conformance.test.ts` | The relay against the model on 300 random traces (with the clock and the connect rate), line for line; with `RELAY_EXHAUSTIVE=n`, every trace of up to n steps over the alphabet | `bun test browser/core/check` (skipped without Lean; the exhaustive run is opt-in) |
 | `core/check/client_conformance.test.ts` | The page client against the page model on 300 random traces of calls and frames, every frame and callback in order | `bun test browser/core/check` (skipped without Lean) |
+| `core/check/CompilerCheck.lean` | The translation of the transitions, checked by the kernel: each transition's JavaScript is its Bend definition, for all inputs in range, and what the check means (see "The compiler, checked") | `lean CompilerCheck.lean` (Lean 4.34.0; `compiler_check.test.ts` runs it) |
+| `core/check/compiler_check.ts`, `core/check/compiler_check.test.ts` | Writes the data of CompilerCheck.lean from the two files (the readers are run on them). The test checks the data is current, the kernel accepts the check, and six deliberate changes are rejected | `bun test browser/core/check` (skipped without Lean) |
 | `test/lifecycle.test.ts` | The regression for the relay's bug: a connect that fails after its id was closed and reused must not fail the new connection | `bun test browser/test` |
 | `test/client_lifecycle.test.ts` | The page client's race (a frame of a closed connection in flight), and the CLOSED rules: the id is not reused until CLOSED, and a FAIL in flight does not fail the reuse | `bun test browser/test` |
 | `test/bun_assumptions.test.ts` | The four socket behaviours the model assumes of Bun, checked with real sockets | `bun test browser/test` |
@@ -266,6 +268,46 @@ the relay runs is still produced by Bend's compiler. The checks in "The compiler
 output with two other models of the same arithmetic.
 
 ## The compiler, checked
+
+**The check in Lean** (`core/check/CompilerCheck.lean`, Lean 4.34.0). This is translation validation for the
+transitions: the Bend source and the JavaScript the compiler emits for it are read, and the kernel checks that
+each transition's JavaScript is its Bend definition. There is no `sorry`; `transitions_correct` depends only on
+`propext`, `Classical.choice` and `Quot.sound`. What it proves:
+
+- For each transition f of `tcp_transitions.bend`, and each list of integers of its arity, the JavaScript export
+  f(args) returns the Bend value of f when every argument is an integer from 0 to 2^53 (nat_in accepts it) and every
+  immediate sum the definition computes is at most 2^48 - 1 (nat_chk's limit). Otherwise it throws
+  (`transitions_correct`, `export_correct`, `fn_correct`).
+- Where no immediate limit is hit, the Bend value is the unbounded Nat value, which is what Bend's proofs use
+  (`natE_of_bendE`).
+- The check (`checked`), by the kernel: the JavaScript of each transition, read back into a Bend expression, is the
+  definition's body. The shapes it accepts are the sums (checked by nat_chk), the guarded differences
+  `a < b ? 0 : a - b`, and the minima `a < b ? a : b`; the constants' trees occur in the body; the runtime helpers
+  and the export lines are the expected texts. A transition whose JavaScript has another shape is refused, not
+  proven.
+
+What is trusted, and not proven here: IEEE 754 doubles (+, - and < on integers from 0 to 2^53 are exact, and a sum
+above 2^53 never rounds down below 2^53); the two readers, parseBend and parseJS (they are run to make the data, and
+their output is what the kernel checks); the expected texts of the four runtime helpers; and Lean's kernel.
+
+The check runs as follows. `bun compiler_check.ts` writes the data: the lines of the two files, and the terms the
+readers make from them. `bun test browser/core/check/compiler_check.test.ts` checks that the data is current, that
+the kernel accepts the check (about 11 seconds), and that six deliberate changes are rejected: a subtraction the
+other way round in the JavaScript, a minimum the other way round, a dropped nat_chk, a subtraction swapped in the
+Bend source, an export with the wrong arity, and a changed immediate limit. Each is rejected by the kernel's check of
+`checked`.
+
+Why the kernel does not read the texts: its evaluation of the readers on the whole JavaScript file ran out of memory
+(its memory grows with the text it reads: the readers were first written with continuations and fuel expressions,
+and both were changed for this). So the data holds the parsed terms, the Bend lines, the transitions' lines from the
+first transition on, and the four helpers; the rest of the module is runtime code that the transitions do not use.
+The generator asserts that each helper is defined once and that no transition comes before the first one.
+
+Not covered: the compiler in general; other Bend definitions; and any JavaScript shape not listed above. The readers
+themselves are trusted and tested only through the data being current.
+
+**The Lean model, BendTT's evaluator, and the Bend proofs.** The older checks, below, compare the compiled code with
+two other models of the same arithmetic. They are still run, and they are weaker than the check above.
 
 The proofs are about Bend's definitions, and the JavaScript that runs is the compiler's output. Two checks
 compare that output with independent models of the same arithmetic. Neither proves the compiler. A bug in
