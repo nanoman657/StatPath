@@ -7,7 +7,8 @@ and the search of the two composed. The file is one program; `lean --run Relay.l
   page              the page client: traces of calls and frames on stdin, each answered by the frames sent and
                     the callbacks made, and "end" (the client conformance test)
   search old|fixed N  every interleaving of the page and the relay, up to N steps, over a small alphabet: the
-                    first violation of "the page applies a frame to the connection that sent it", or none
+                    first violation of "the page applies a frame to the connection that sent it", or of
+                    "the relay closes the WebSocket on a frame of the page", or none
 
 The relay model. The machine has one slot per connection id. A slot holds the connection that the id is in use
 for. Each connection has a generation: a CONNECT that the relay accepts starts a connection with the next
@@ -1573,11 +1574,31 @@ structure Sys where
   toPage : List (Relay.Out × Nat)
   genOf : List (Nat × Nat)
   bad : Bool
+  -- the relay closed the WebSocket on a frame of the page: a protocol violation by the page's frames
+  proto : Bool
+  -- each socket (by generation): its id, and its state: 0 created, 1 opened, 2 failed before it opened
+  sockSt : List (Nat × Nat × Nat)
 
 def cap : Nat := Relay.DEFAULT_CAP
 
 def initSys (fixed : Bool) : Sys :=
-  { rs := Relay.init, page := Page.init fixed, toRelay := [], toPage := [], genOf := [], bad := false }
+  { rs := Relay.init, page := Page.init fixed, toRelay := [], toPage := [], genOf := [], bad := false,
+    proto := false, sockSt := [] }
+
+-- the environment's socket events follow the model's assumption (README, the assumptions of the model): a socket
+-- opens once, and its data, end and drain come after its open; an error may come before the open (a connect
+-- error) or after it. A socket exists for every generation the relay has given.
+def sockEntry (v : Sys) (g : Nat) : Option (Nat × Nat) :=
+  (v.sockSt.find? (fun q => q.1 == g)).map (fun q => (q.2.1, q.2.2))
+
+def envAllowed (v : Sys) (id g : Nat) (k : Relay.Sk) : Bool :=
+  match sockEntry v g with
+  | none => false
+  | some (i, st) =>
+    i == id && (match k with
+      | .open_ => st == 0
+      | .error _ => st ≤ 1
+      | _ => st == 1)
 
 -- the relay generation a frame of the relay's step belongs to (the connection before the step)
 def tagOf (rs : Relay.St) (e : Relay.Ev) : Nat :=
@@ -1603,13 +1624,30 @@ def doRelay (v : Sys) : Option Sys :=
     let genOf' := match e with
       | .connect _ => if p > 0 then (p, v.rs.nextGen) :: v.genOf else v.genOf
       | _ => v.genOf
-    some { v with rs := r.1, toRelay := rest, toPage := v.toPage ++ r.2.map (fun o => (o, t)), genOf := genOf' }
+    let closedByPage := r.2.any (fun o => match o with | .wsclose _ => true | _ => false)
+    -- a CONNECT the relay accepts makes a socket, of the generation the relay gave it
+    let sockSt' := match e with
+      | .connect id => if r.1.nextGen > v.rs.nextGen then (v.rs.nextGen, id, 0) :: v.sockSt else v.sockSt
+      | _ => v.sockSt
+    some { v with rs := r.1, toRelay := rest, toPage := v.toPage ++ r.2.map (fun o => (o, t)), genOf := genOf',
+                  proto := v.proto || closedByPage, sockSt := sockSt' }
 
--- a socket of the relay does something: the environment
+-- a socket of the relay does something: the environment (only what the model's socket assumption allows)
 def doEnv (v : Sys) (e : Relay.Ev) : Option Sys :=
-  let t := tagOf v.rs e
-  let r := Relay.step cap v.rs e
-  some { v with rs := r.1, toPage := v.toPage ++ r.2.map (fun o => (o, t)) }
+  match e with
+  | .sock id g k =>
+    if !envAllowed v id g k then none else
+    let t := tagOf v.rs e
+    let r := Relay.step cap v.rs e
+    let st' := match k with
+      | .open_ => v.sockSt.map (fun q => if q.1 == g then (q.1, q.2.1, 1) else q)
+      | .error _ => v.sockSt.map (fun q => if q.1 == g && q.2.2 == 0 then (q.1, q.2.1, 2) else q)
+      | _ => v.sockSt
+    some { v with rs := r.1, toPage := v.toPage ++ r.2.map (fun o => (o, t)), sockSt := st' }
+  | _ =>
+    let t := tagOf v.rs e
+    let r := Relay.step cap v.rs e
+    some { v with rs := r.1, toPage := v.toPage ++ r.2.map (fun o => (o, t)) }
 
 -- the page takes the oldest frame of the relay. A frame that the page applies must belong to the
 -- connection the page has: the generation of the page's connect must be the frame's.
@@ -1648,7 +1686,7 @@ def keyOf (v : Sys) : String :=
   let ids := List.range 2
   s!"{repr v.rs.nextGen}|{repr v.rs.closed}|{ids.map (fun i => repr (v.rs.slot i))}|" ++
   s!"{ids.map (fun i => repr (v.page.slots i))}|{v.page.nextSeq}|{repr v.toRelay}|{repr v.toPage}|" ++
-  s!"{repr v.genOf}|{v.bad}"
+  s!"{repr v.genOf}|{v.bad}|{v.proto}|{repr v.sockSt}"
 
 -- the search: every interleaving up to depth steps, each state once; the first violation, with the steps
 -- that reach it, or none
@@ -1670,7 +1708,7 @@ def search (fixed : Bool) (depth : Nat) : Option (List String) × Nat := Id.run 
           let k := keyOf v'
           if !visited.contains k then
             visited := visited.insert k
-            if v'.bad then
+            if v'.bad || v'.proto then
               if found.isNone then found := some (tr ++ [name])
             else next := next.push (v', tr ++ [name])
     frontier := next

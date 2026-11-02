@@ -448,6 +448,8 @@ test.skipIf(LEAN === null)(
 // The alphabet: the page's calls on id 1, and the events of the sockets of its first two connections (the
 // second reuses the id after a CLOSE). With RELAY_EXHAUSTIVE=n the test runs every trace of up to n steps.
 const EXHAUSTIVE = Number(process.env.RELAY_EXHAUSTIVE ?? 0);
+// the bytes a second the relay and the model give each session: small, the budget binds, and the ticks matter
+const EXHAUSTIVE_BPS = Number(process.env.RELAY_EXHAUSTIVE_BPS ?? 1000000000);
 
 const ALPHABET: Op[] = [
   { kind: "page", line: "connect 1", frame: encodeFrame(OP.CONNECT, 1, connectBody(PORT, ALLOWED)) },
@@ -464,13 +466,15 @@ const ALPHABET: Op[] = [
   { kind: "sock", line: "sock 1 1 error 111", id: 1, gen: 1, ev: "error", arg: 111 },
   { kind: "sock", line: "sock 1 2 error 111", id: 1, gen: 2, ev: "error", arg: 111 },
   { kind: "sock", line: "sock 1 1 drain 1", id: 1, gen: 1, ev: "drain", arg: 1 },
+  { kind: "page", line: "send 1 0", frame: encodeFrame(OP.SEND, 1, new Uint8Array(0)) },
+  { kind: "tick", line: "tick 1000", ms: 1000 },
 ];
 
 // every sequence of up to maxLen letters
 function allTraces(maxLen: number): Trace[] {
   const out: Trace[] = [];
   const walk = (prefix: Op[]) => {
-    out.push({ cap: null, cps: 100000, bps: 1000000000, ops: prefix, stale: 0 });
+    out.push({ cap: null, cps: 100000, bps: EXHAUSTIVE_BPS, ops: prefix, stale: 0 });
     if (prefix.length === maxLen) return;
     for (const letter of ALPHABET) walk([...prefix, letter]);
   };
@@ -479,8 +483,12 @@ function allTraces(maxLen: number): Trace[] {
 }
 
 // the same relay for all the traces: each trace is a session of its own, and its sockets are its own
-async function relayOutputsShared(t: Trace, shared: { sockets: Scripted[]; url: string }): Promise<string[]> {
+async function relayOutputsShared(
+  t: Trace,
+  shared: { sockets: Scripted[]; url: string; clock: { now: number }; tick: () => void },
+): Promise<string[]> {
   shared.sockets.length = 0;
+  shared.clock.now = 0; // each trace's clock starts at 0, as the model's does
   const page = new PageLog(shared.url);
   try {
     await page.open(TEST_TOKEN);
@@ -488,7 +496,10 @@ async function relayOutputsShared(t: Trace, shared: { sockets: Scripted[]; url: 
     for (const op of t.ops) {
       if (page.closed !== null) break;
       if (op.kind === "page") page.ws.send(op.frame);
-      else {
+      else if (op.kind === "tick") {
+        shared.clock.now += op.ms;
+        shared.tick();
+      } else {
         const s = shared.sockets[op.gen - 1];
         if (s) {
           if (op.ev === "open") {
@@ -527,7 +538,12 @@ test.skipIf(LEAN === null || EXHAUSTIVE === 0)(
     const expected = await leanOutputs(modelInput(traces));
     expect(expected.length).toBe(traces.length);
     // one relay for all of them; its connect adds to the sockets of the trace that runs now
-    const shared: { sockets: Scripted[]; url: string } = { sockets: [], url: "" };
+    const shared: { sockets: Scripted[]; url: string; clock: { now: number }; tick: () => void } = {
+      sockets: [],
+      url: "",
+      clock: { now: 0 },
+      tick: () => {},
+    };
     const connect = (o: any) => {
       shared.sockets.push({
         handlers: o.socket,
@@ -550,16 +566,17 @@ test.skipIf(LEAN === null || EXHAUSTIVE === 0)(
       [{ host: ALLOWED, ports: [PORT] }],
       {
         connectsPerSecond: 100000,
-        bytesPerSecond: 1e9,
+        bytesPerSecond: EXHAUSTIVE_BPS,
         maxConnections: 1000,
         maxConnectionsTotal: 100000,
         maxBufferedBytes: 1e9,
         upgradesPerMinute: 1000000,
       },
       {},
-      { log: () => {}, connect, ticker: false },
+      { log: () => {}, connect, ticker: false, now: () => shared.clock.now },
     );
     shared.url = relay.url;
+    shared.tick = relay.tick;
     try {
       for (let i = 0; i < traces.length; i++) {
         const actual = await relayOutputsShared(traces[i], shared);

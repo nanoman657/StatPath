@@ -30,6 +30,8 @@ page's side of the protocol, and the effects that give a page's Bend program its
 | `test/relay_safety.test.ts` | 17 tests: the configuration, the example's placeholder, a token from `token.ts`, the origin, AUTH first and wrong tokens, the authentication deadline, TLS (wss), /healthz, the connect rate, the connection caps, the session and upgrade caps, the byte rate, shutdown, and no token in the log | `bun test browser/test` |
 | `test/support.ts` | The test token and origin, `PageSocket` (a WebSocket with the origin), `rawSocket` (authenticated), and the relay built from a checked configuration | used by the tests |
 | `test/flow.test.ts` | Partial writes (a slow peer gets every byte), a dropped send reports exactly what was taken, the read window, EPIPE after a peer's close, the protocol rules for READ and freed ids, the count limit (EFBIG, on the relay and on the page) | `bun test browser/test` |
+| `test/real_limits.test.ts` | The limits against the real relay and real sockets, with the real clock: the reads stop while the byte budget is empty (a bound on what the page receives, and the time it takes), the connects in real time stay within the burst plus the rate, and every SEND the page client frames is accepted, at the window's and the frame's edges, into a stalled peer | `bun test browser/test` |
+| `test/bun_websocket_assumptions.test.ts` | The WebSocket behaviour the relay relies on, beyond the socket assumptions: each binary message whole and in order, at any size up to a frame; a close code that reaches the peer; a backlog that `getBufferedAmount` reports until it drains | `bun test browser/test` |
 | `test/errno.test.ts` | The page's failure texts are libc's `strerror` for their errnos, as the native effects give | `bun test browser/test` |
 | `test/web_tcp.test.ts` | The page programs run under the Bend runtime, against the relay | `bun test browser/test` (needs the async runtime, below) |
 | `test/preload.js` | Opens the page's relay before a program runs (`globalThis.bend_relay`) | used by the page program tests |
@@ -333,12 +335,17 @@ Lean program, `core/check/Relay.lean` (see its header for its modes). Each part 
 
 **The search** (`lean --run Relay.lean search old|fixed N`) explores every interleaving of the page's calls, the
 relay's processing of the page's frames, the socket events, and the delivery of the relay's frames to the page,
-up to N steps, each state once. The page applies a frame only to the connection that sent it; the search checks
-that as a ghost (each frame carries the relay generation of the connection that sent it). Results: the page of
-the protocol before the fix violates it at 6 steps (the first violation: a connect, a close, a reuse connect, the
-relay's processing, and the old OK arriving at the new connection). The page with CLOSED has no violation within 10
-steps (187,943 states). That is a bounded search over a small alphabet (two ids, two generations, the page's
-calls and the socket events), not a proof for all depths.
+up to N steps, each state once. Two properties are checked. The page applies a frame only to the connection that
+sent it (a ghost: each frame carries the relay generation of the connection that sent it). And the relay never
+closes the WebSocket on a frame of the page (a protocol violation by the page). The socket events follow the
+model's assumption: a socket opens once, its data, end and drain come after its open, and it may fail before its
+open (a connect error) or after, and each socket event names the id of its connection. The first version of the
+search let a socket deliver data before it opened, and let a socket event name another id; both are events the model
+excludes, and with them the fixed page showed a violation of the second property (at 6 and 7 steps). The environment
+now follows the assumption. Results: the page before the fix violates the first property at
+6 steps (`search old 6` prints the trace). The page with CLOSED has no violation of either property within 12
+steps (535,648 states; within 10, 45,954). That is a bounded search over a small alphabet (two ids, three
+generations), not a proof for all depths.
 
 **The page client** (`core/check/client_conformance.test.ts`). The page model in `Relay.lean` (`Page`) gives the
 client's observable behaviour: the frames it sends (CONNECT, SEND in frames of at most 65535 bytes and within the
@@ -365,11 +372,15 @@ reused connection, 137 protocol-violation closes, the count limit, the connect r
 clock steps), the byte budget (traces in which a queue waits behind an empty budget), and every kind of frame. Negative controls: the lifecycle bug put back, and the read-side count check
 removed; both fail it.
 
-**Every trace up to a length** (`RELAY_EXHAUSTIVE=n`): the same check on every trace of up to n steps over a
-14-letter alphabet (the page's calls on id 1, and two sockets of its connections). Length 4 (41,371 traces) agrees.
-Length 5 (579,195 traces) agrees too. That run used the relay of commit 64265e3, before the empty-SEND and ticker-order changes; the alphabet does not reach either of them, and the budget changes do not bind with the default budget that the run uses.
-The exhaustive run found one thing: a socket that reports open twice made the relay send OK twice. Bun does not
-do that, and the model assumes it does not, but the relay now ignores a second open anyway.
+**Every trace up to a length** (`RELAY_EXHAUSTIVE=n`, with `RELAY_EXHAUSTIVE_BPS=b` for the byte rate): the
+same check on every trace of up to n steps over a 16-letter alphabet: the page's calls on id 1 (connect, close,
+send 2 bytes, an empty send, read, discard), the events of the sockets of its first two connections, and a
+one-second tick. Length 4 (69,905 traces) agrees, at the default byte rate and at 1 byte a second, where the budget
+binds. A negative control, the flush's budget gate removed, fails at 1 byte a second, at trace 1406: a connect, a
+socket's open, and two sends. Length 5 was run on the earlier 14-letter alphabet (579,195 traces; on the relay of
+commit 64265e3, before the empty-SEND and ticker-order changes), and is not rerun on the 16-letter alphabet: it
+takes hours. The exhaustive run found one thing earlier: a socket that reports open twice made the relay send OK
+twice. Bun does not do that, and the model assumes it does not, but the relay now ignores a second open anyway.
 
 **The clock and the budgets** (`Clock` in `Relay.lean`). The connect tokens, the byte budget, the ticker's flush,
 and the injected time are modelled, in thousandths (so the relay's floating-point arithmetic agrees where the test's
@@ -397,17 +408,39 @@ real sockets: a partial write keeps none of its remainder, drain comes after a p
 callbacks and resume starts them, and a connection's data comes before its end. They hold on Bun 1.4.4. A change in
 Bun shows there first.
 
-**Not checked by this:**
-- The reads' pausing on an empty budget: the model takes the socket's data as it comes, as the environment's, and
-  does not model the relay's pausing of the socket. (The budget is decremented by the data; the relay's own check is
-  not modelled.)
-- The session limits per address (upgrades per minute) and the total of sessions.
-- Real time. The model has the clock as an input, and its liveness results assume the environment is fair; the
-  rate bound is exact for any clock. Real latency, and how long a fair environment takes, are not in the model.
-- That the relay's JavaScript matches the model for traces not generated (the random and the bounded traces are
-  samples of the trace space; the length-4 result is exhaustive only over its alphabet).
-- That the relay accepts every SEND the page frames. `pump_props` and `pump_reach` give the page its window against the
-  relay's count of what it has taken; that the relay's own check then passes (it fails a SEND past its window) follows
-  from the relay's WRITTEN counts, which the page assumes, and the composed search covers it only to 10 steps.
-- The effects above the client (the program's own code); the search uses the page model, not the client's code.
-- Compiler correctness, and Bun's socket and WebSocket behaviour beyond the four assumptions above.
+**What was not checked, and what checks it now.** The list the model leaves to the environment, each with its
+status and evidence:
+
+- *The reads' pausing on an empty budget* (checked against the real relay and real sockets, not in the model).
+  `test/real_limits.test.ts` reads a 3 MiB source through a page at 512 KiB a second. The page receives no more
+  than the budget's burst plus the rate for the real time that has passed, plus one socket read (the model's chunk
+  bound, 1 MiB; Bun delivers 512 KiB reads here), and it takes at least the time the rate implies. A negative
+  control, the budget gate removed from the reads, fails it (1.6 MB in 18 ms). The model still takes the socket's
+  data as it comes: the relay's pause is what the test exercises, not what the model proves.
+- *Session limits* (upgrades per minute, the total of sessions, connects a second, the connections of the whole
+  relay, bytes a second): tested by `test/relay_safety.test.ts`, which is part of the suite. The model does not
+  include them. (The earlier statement that they were not checked was wrong.)
+- *Real time.* The bounds are checked against the real clock: the connects a page makes in real time are at most
+  the burst plus the rate for the time that has passed (a negative control that doubles the token refill fails: 40
+  connects accepted, against a bound of 25), and the reads are bounded as above. The real latency of a connection,
+  and how long a fair environment takes, are not measured here; the liveness results assume that the environment is
+  fair.
+- *That the relay's JavaScript matches the model for traces not generated.* The random traces (300 a run) are
+  samples. The exhaustive run over the 16-letter alphabet to length 4 agrees, at two byte rates (see above). Length
+  5 is not rerun on that alphabet.
+- *That the relay accepts every SEND the page frames.* `test/real_limits.test.ts` drives the real page client with
+  sends of 1 byte to 8 MiB at the frame and window edges, into a peer that stalls for a second: every byte arrives,
+  and the relay never closes the WebSocket. A negative control, the client's window doubled, makes the relay close
+  it and the test fail. The composed search flags any close of the WebSocket by the relay on a page frame: none to
+  12 steps. The window itself (131,072 bytes) is out of the search's reach, so the window-level claim rests on the
+  test and on an argument that is not mechanized: the page's count of what the relay has taken never exceeds the
+  relay's own count, and the relay's queue is what it has been framed less what it has taken, so the relay's check
+  passes whenever the page's does.
+- *The effects above the client* (the program's own code). One Bend program runs end to end in Chromium against
+  the relay (`test/page.test.ts`), and its output reaches the page. The broader I/O suite is not in this checkout
+  and has not been rerun on the patched runtime; the model does not cover a program's effects.
+- *Compiler correctness, and Bun's WebSocket behaviour beyond the socket assumptions.* Three WebSocket behaviours
+  the relay relies on are now checked (`test/bun_websocket_assumptions.test.ts`): a binary message arrives whole and
+  in order, at any size up to a frame; a close code reaches the peer; a backlog is reported by `getBufferedAmount`
+  until it drains. Compiler correctness is not checked here beyond the existing checks (the Bend kernel recheck, the
+  BendTT evaluator comparison, and the transition checks).
