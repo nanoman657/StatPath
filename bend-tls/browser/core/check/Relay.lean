@@ -2965,6 +2965,103 @@ def pageMode : IO UInt32 := do
   if !cur.isEmpty then ok := ok && (← pageTrace cur)
   return if ok then 0 else 1
 
+-- ================================================================================================
+-- The window, one connection at a time. The relay refuses a SEND that would take its queue past SEND_WINDOW
+-- with a protocol close (sendStep: n > SEND_WINDOW - queued). The page's pump frames a SEND only within the
+-- window beyond what the relay has taken (Page.PInv). Pair states how the two counts of one connection relate:
+-- the relay's accepted total, with the bytes of SEND frames in flight, is no more than what the page framed, and
+-- the page has taken no more than the relay has. The lemmas below show that the relay's check then passes, and that
+-- each operation on the connection keeps Pair. What makes Pair hold for a connection of the composed system (frames
+-- in order; each frame applied to the connection that sent it) is not in this section.
+-- ================================================================================================
+
+namespace Window
+
+structure Pair (pc : Page.PConn) (rc : Relay.Conn) (f : Nat) : Prop where
+  total : rc.written + rc.queued + f ≤ pc.sent
+  taken : pc.written ≤ rc.written
+
+-- the relay's window check passes for a SEND of n, given the page's invariant and Pair (f: in-flight bytes, n ≤ f)
+theorem window_ok (pc : Page.PConn) (rc : Relay.Conn) (f n : Nat) (hI : Page.PInv pc) (hP : Pair pc rc f)
+    (hn : n ≤ f) : rc.queued + n ≤ Relay.SEND_WINDOW := by
+  have hA := hP.total
+  have hB := hP.taken
+  obtain ⟨-, -, hC⟩ := hI
+  unfold Page.SEND_W at hC
+  omega
+
+-- the relay's SEND of n, accepted into an open connection with room in the window and the count limit, takes
+-- the bytes the flush allows (m of them) and no close (closed stays none)
+theorem sendStepB_accept (cap : Nat) (s : Relay.St) (id n m : Nat) (c : Relay.Conn)
+    (hs : (s.slot id).conn = some c) (ho : c.isOpen = true) (hn : n ≠ 0)
+    (hw : c.queued + n ≤ Relay.SEND_WINDOW) (hcap : c.written + c.queued + n ≤ cap) (hp : c.peerClosed = false) :
+    (Relay.sendStepB cap s id n m).1 = Relay.setConn s id (some { c with
+        queued := c.queued + n - min m (c.queued + n), written := c.written + min m (c.queued + n) }) := by
+  unfold Relay.sendStepB
+  rw [hs]
+  have h1 : ¬ (n > Relay.SEND_WINDOW - c.queued) := by omega
+  have h2 : ¬ (c.written + c.queued + n > cap) := by omega
+  simp [ho, hn, h1, h2, hp]
+
+-- accepting a SEND of n (one of the in-flight bytes) keeps Pair, with n fewer in flight
+theorem pair_accept (pc : Page.PConn) (c : Relay.Conn) (f n m : Nat) (hP : Pair pc c f) (hn : n ≤ f) :
+    Pair pc { c with queued := c.queued + n - min m (c.queued + n), written := c.written + min m (c.queued + n) }
+      (f - n) := by
+  have hA := hP.total
+  have hB := hP.taken
+  have hw : min m (c.queued + n) ≤ c.queued + n := Nat.min_le_right _ _
+  generalize min m (c.queued + n) = w at hw ⊢
+  exact ⟨by simp only []; omega, by simp only []; omega⟩
+
+-- the socket takes m bytes of the queue (flushConn): Pair is kept, the total is unchanged
+theorem pair_flush (pc : Page.PConn) (c : Relay.Conn) (f a : Nat) (hP : Pair pc c f) :
+    Pair pc { c with queued := c.queued - min a c.queued, written := c.written + min a c.queued } f := by
+  have hA := hP.total
+  have hB := hP.taken
+  have hw : min a c.queued ≤ c.queued := Nat.min_le_right _ _
+  generalize min a c.queued = w at hw ⊢
+  exact ⟨by simp only []; omega, by simp only []; omega⟩
+
+-- a discard of the queue (discardStep) with no SEND in flight keeps Pair
+theorem pair_discard (pc : Page.PConn) (c : Relay.Conn) (hP : Pair pc c 0) :
+    Pair pc { c with queued := 0 } 0 := by
+  have hA := hP.total
+  have hB := hP.taken
+  exact ⟨by simp only []; omega, hB⟩
+
+-- the page frames a SEND of n (pump): the bytes are sent and in flight
+theorem pair_frame (pc : Page.PConn) (rc : Relay.Conn) (f n : Nat) (hP : Pair pc rc f) :
+    Pair { pc with sent := pc.sent + n } rc (f + n) := by
+  have hA := hP.total
+  have hB := hP.taken
+  exact ⟨by simp only []; omega, hB⟩
+
+-- the relay's WRITTEN count, cnt, arrives: it is no more than the relay's own count now, and no less than the
+-- page's (counts only grow along the frames of one connection)
+theorem pair_written (pc : Page.PConn) (rc : Relay.Conn) (f cnt : Nat) (hP : Pair pc rc f)
+    (hc : cnt ≤ rc.written) (_hm : pc.written ≤ cnt) : Pair { pc with written := cnt } rc f := by
+  have hA := hP.total
+  exact ⟨hA, hc⟩
+
+-- the discard reset of the page (its WRITTEN with flag 1): the page's counts become the relay's, with nothing
+-- queued or in flight
+-- and the page's invariant (Page.PInv) survives the same WRITTEN frame: the counts stay in order and in the window
+theorem pinv_written (pc : Page.PConn) (rc : Relay.Conn) (f cnt : Nat) (hI : Page.PInv pc) (hP : Pair pc rc f)
+    (hc : cnt ≤ rc.written) (hm : pc.written ≤ cnt) : Page.PInv { pc with written := cnt } := by
+  have hA := hP.total
+  obtain ⟨-, hT, hW⟩ := hI
+  unfold Page.PInv
+  unfold Page.SEND_W at hW ⊢
+  exact ⟨by simp only []; omega, hT, by simp only []; omega⟩
+
+theorem pair_discard_reset (pc : Page.PConn) (rc : Relay.Conn) (cnt : Nat) (hP : Pair pc rc 0)
+    (hq : rc.queued = 0) (hw : rc.written = cnt) :
+    Pair { pc with sent := cnt, written := cnt } rc 0 := by
+  have hA := hP.total
+  exact ⟨by simp only []; omega, by simp only []; omega⟩
+
+end Window
+
 def main (args : List String) : IO UInt32 := do
   match args with
   | ["search", mode, d] =>
