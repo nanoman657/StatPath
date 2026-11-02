@@ -1327,10 +1327,12 @@ def doRecv (st : State) (id max : Nat) : State × List Obs :=
 def doDiscard (st : State) (id : Nat) : State × List Obs :=
   match (st.slots id).conn with
   | some c =>
-    if c.isOpen then
+    if !c.isOpen then (st, [Obs.cb s!"discardErr {id} {missing (st.slots id)}"])
+    -- one discard at a time (tcp_relay_client.js discard): a second is refused with EBUSY (16), not sent
+    else if c.discardPending then (st, [Obs.cb s!"discardErr {id} 16"])
+    else
       (setSlot st id { (st.slots id) with conn := some { c with discardPending := true } },
        [Obs.toRelay (Relay.Ev.discard id) 0])
-    else (st, [Obs.cb s!"discardErr {id} {missing (st.slots id)}"])
   | none => (st, [Obs.cb s!"discardErr {id} {missing (st.slots id)}"])
 
 -- ---- the relay's frames ----

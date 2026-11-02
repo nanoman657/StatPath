@@ -173,6 +173,9 @@ export class RelayTcp {
   discard(id, cb) {
     const c = this.conns.get(id);
     if (!c || c.state !== "open") return cb({ error: this.#missing(id) });
+    // one discard at a time: a second DISCARD would overwrite this one's callback, and the relay's reply to the
+    // first would then reset the page's count while a send is still queued at the relay (Relay.lean, Timed)
+    if (c.discard) return cb({ error: new TcpError(16, "a discard is already pending") });
     c.discard = cb;
     this.ws.send(encodeFrame(OP.DISCARD, id));
     return undefined;
