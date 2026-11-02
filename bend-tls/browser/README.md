@@ -351,6 +351,13 @@ count off by one, and the fixed id reuse removed.
 One behaviour is worth stating, because the effects rely on it: a send that is discarded does not call its own
 callback; the discard's callback reports it (the effects wait on the discard for that case).
 
+**The page's send pump, proven** (`pump_props`, `pump_reach`, `pump_done` in `Relay.lean`). For a page whose send
+count is consistent (the relay has taken no more than was framed, which is no more than the data given, and no
+more than the window beyond what the relay has taken), the pump frames only what the window and the data allow,
+in frames of 1 to 65535 bytes, keeps that consistency, and ends a send with its data all framed, or with the window
+full, given the fuel `doSend` gives it: the send does not stall. The one assumption is the relay's: it reports
+(WRITTEN) only bytes it has taken, so the count it reports never exceeds what the page framed.
+
 **The relay against the model.** `core/check/relay_conformance.test.ts` runs the relay itself on 300 random traces
 with scripted sockets; the order of events is the trace's, and a sentinel after each step shows that the relay is
 done with it. Its frames must be the model's, line for line: 16,860 frames, 3,794 socket events of a closed or
@@ -375,6 +382,13 @@ burst plus the byte rate for the time of the last refill (which is no later than
 the rates, the budgets and the ticks, with traces that make the budget bind (a queue waits behind an empty budget), and
 the model agrees. A negative control removes the budget check from the flush: the test fails.
 
+`mirror_run` proves that the clock's queues are the relay's: from the start, for any trace, each connection's chunks
+add up to the bytes the relay has queued for it, and every chunk is positive. So the flush the clock simulates is the
+flush the relay makes, and `byte_run` bounds the relay's own bytes. Two places in the clock were changed for this
+(the executable model's output did not change, and the conformance test still passes): a send takes the clock's
+flush only when the relay's last branch takes it (`sendOk`), and a discard clears the clock's queue only of an open
+connection, as the relay's discard does.
+
 The relay's ticker flushes the connections in id order (the model's order; the order the connections were made in
 would have served too, but then the model would have to track it).
 
@@ -392,6 +406,8 @@ Bun shows there first.
   rate bound is exact for any clock. Real latency, and how long a fair environment takes, are not in the model.
 - That the relay's JavaScript matches the model for traces not generated (the random and the bounded traces are
   samples of the trace space; the length-4 result is exhaustive only over its alphabet).
-- The page's pump and the effects above the client (the program's own code); the search uses the page model, not
-  the client's code.
+- That the relay accepts every SEND the page frames. `pump_props` and `pump_reach` give the page its window against the
+  relay's count of what it has taken; that the relay's own check then passes (it fails a SEND past its window) follows
+  from the relay's WRITTEN counts, which the page assumes, and the composed search covers it only to 10 steps.
+- The effects above the client (the program's own code); the search uses the page model, not the client's code.
 - Compiler correctness, and Bun's socket and WebSocket behaviour beyond the four assumptions above.

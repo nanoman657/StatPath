@@ -35,8 +35,13 @@ ok_only_from_open, step_outs_id (a step names only its own id), freed_run (a fre
 that answers a CLOSE), counters_bounded (the counts stay within the count limit, the queue within the send window,
 the credit within the read window), drain_empties and open_resolves and error_resolves (liveness, under fairness),
 rate_run (THE RATE BOUND: from the start, no more connects are accepted than two seconds' burst plus the rate
-for the time that has passed) and byte_run (THE BYTE BOUND: the bytes written and read are at most the budget's
-burst plus the byte rate for the time that has passed, less the budget's debt).
+for the time that has passed), byte_run (THE BYTE BOUND: the bytes written and read are at most the budget's
+burst plus the byte rate for the time that has passed, less the budget's debt), mirror_run (THE MIRROR: from the
+start, each connection's queue, as the clock holds it in chunks, adds up to the bytes the relay has queued for it,
+so the bounds above are about the relay's own queues), and, for the page's send pump, pump_props (it frames no
+more than the data given, in frames of 1 to MAX_BODY bytes, and stays within the window beyond what the relay has
+taken), pump_reach, and pump_done (a send with the fuel doSend gives it ends with its data framed, or with the
+window full: it does not stall).
 
 The assumptions: a socket opens once and its events come after its open (the events Bun produces); the socket
 delivers data only while the relay has credit and budget (the relay pauses it otherwise: the model does not
@@ -474,6 +479,145 @@ theorem inv_sendStepB (cap : Nat) (s : St) (id n m : Nat) (hI : Inv cap s) :
               obtain ⟨g1, g2, g3, g4, g5, g6⟩ := hc
               have hw : min m (c.queued + n) ≤ c.queued + n := Nat.min_le_right _ _
               refine ⟨g1, ?_, ?_, g4, g5, g6⟩ <;> (try dsimp only) <;> omega
+
+-- the budgeted send changes only the slot of its own id
+theorem sendStepB_slot_ne (cap : Nat) (s : St) (id n m j : Nat) (h : j ≠ id) :
+    (sendStepB cap s id n m).1.slot j = s.slot j := by
+  unfold sendStepB
+  cases hsl : (s.slot id).conn with
+  | none =>
+    dsimp only
+    split
+    · rfl
+    · rfl
+  | some c =>
+    dsimp only
+    repeat' split
+    all_goals first
+      | rfl
+      | exact slot_setConn_ne _ _ _ _ h
+      | rfl
+
+-- the queue of the id a step names: each connection keeps its queued bytes, or it ends, or it is new and empty
+def QOK (s s' : St) (id : Nat) : Prop :=
+  ∀ c', (s'.slot id).conn = some c' →
+    (∃ c, (s.slot id).conn = some c ∧ c'.queued = c.queued) ∨ ((s.slot id).conn = none ∧ c'.queued = 0)
+
+theorem qok_slot_eq (s s' : St) (id : Nat) (h : s'.slot id = s.slot id) : QOK s s' id := by
+  intro c' hc'
+  rw [h] at hc'
+  exact Or.inl ⟨c', hc', rfl⟩
+
+theorem qok_none (s s' : St) (id : Nat) (h : (s'.slot id).conn = none) : QOK s s' id := by
+  intro c' hc'
+  rw [h] at hc'
+  cases hc'
+
+-- a socket event, for the events that do not drain or discard: the queue is kept, or the connection ends
+theorem qok_connect (cap : Nat) (s : St) (id : Nat) : QOK s (step cap s (Ev.connect id)).1 id := by
+  by_cases hcl : s.closed.isSome = true
+  · exact qok_slot_eq _ _ _ (by unfold step; rw [if_pos hcl])
+  · cases hsl : (s.slot id).conn with
+    | some c =>
+      apply qok_slot_eq
+      unfold step
+      rw [if_neg hcl]
+      simp only [connectStep, hsl]
+      rfl
+    | none =>
+      intro c' hc'
+      unfold step at hc'
+      rw [if_neg hcl] at hc'
+      simp only [connectStep, hsl] at hc'
+      simp [St.slot, setSlot] at hc'
+      subst hc'
+      exact Or.inr ⟨hsl, rfl⟩
+
+theorem qok_deny (cap : Nat) (s : St) (id : Nat) : QOK s (step cap s (Ev.deny id)).1 id := by
+  apply qok_slot_eq
+  unfold step
+  by_cases hcl : s.closed.isSome = true
+  · rw [if_pos hcl]
+  · rw [if_neg hcl]
+    simp only [denyStep]
+    repeat' split
+    all_goals first
+      | rfl
+      | simp [protoClose]
+
+theorem qok_close (cap : Nat) (s : St) (id : Nat) : QOK s (step cap s (Ev.close id)).1 id := by
+  by_cases hcl : s.closed.isSome = true
+  · exact qok_slot_eq _ _ _ (by unfold step; rw [if_pos hcl])
+  · cases hsl : (s.slot id).conn with
+    | none =>
+      apply qok_slot_eq
+      unfold step
+      rw [if_neg hcl]
+      simp only [closeStep, hsl]
+    | some c =>
+      apply qok_none
+      unfold step
+      rw [if_neg hcl]
+      simp only [closeStep, hsl]
+      rw [slot_setConn_self]
+
+theorem qok_read (cap : Nat) (s : St) (id k : Nat) : QOK s (step cap s (Ev.read id k)).1 id := by
+  by_cases hcl : s.closed.isSome = true
+  · exact qok_slot_eq _ _ _ (by unfold step; rw [if_pos hcl])
+  · intro c' hc'
+    unfold step at hc'
+    rw [if_neg hcl] at hc'
+    simp only [readStep] at hc'
+    cases hsl : (s.slot id).conn with
+    | none =>
+      simp only [hsl] at hc'
+      split at hc'
+      · change (s.slot id).conn = some c' at hc'
+        rw [hsl] at hc'
+        cases hc'
+      · change (s.slot id).conn = some c' at hc'
+        rw [hsl] at hc'
+        cases hc'
+    | some c =>
+      simp only [hsl] at hc'
+      split at hc'
+      · change (s.slot id).conn = some c' at hc'
+        rw [hsl] at hc'
+        cases hc'
+        exact Or.inl ⟨c', by simp [hsl], rfl⟩
+      · rw [slot_setConn_self] at hc'
+        cases hc'
+        exact Or.inl ⟨c, by simp [hsl], by simp⟩
+
+theorem conn_setConn_self (s : St) (id : Nat) (c : Option Conn) :
+    ((setConn s id c).slot id).conn = c := by
+  simp [slot_setConn_self]
+
+-- a socket event (not a drain): a connection that is still there keeps its queued bytes
+theorem qkeep_sockStep (cap : Nat) (s : St) (id g : Nat) (k : Sk) (hk : ∀ a, k ≠ Sk.drain a) :
+    ∀ c', ((sockStep cap s id g k).1.slot id).conn = some c' →
+      ∃ c, (s.slot id).conn = some c ∧ c'.queued = c.queued := by
+  intro c' hc'
+  unfold sockStep at hc'
+  cases hsl : (s.slot id).conn with
+  | none => simp [hsl] at hc'
+  | some c =>
+    simp only [hsl] at hc'
+    cases k
+    all_goals (try exact False.elim (hk _ rfl))
+    all_goals (try dsimp only at hc')
+    all_goals (repeat' split at hc')
+    all_goals (try dsimp only at hc')
+    all_goals first
+      | (simp [failConn, conn_setConn_self] at hc'; done)
+      | (rw [conn_setConn_self] at hc'; cases hc'; exact ⟨_, rfl, rfl⟩)
+      | (rw [hsl] at hc'; cases hc'; exact ⟨_, rfl, rfl⟩)
+
+theorem qok_sockStep (cap : Nat) (s : St) (id g : Nat) (k : Sk) (hk : ∀ a, k ≠ Sk.drain a) :
+    QOK s (sockStep cap s id g k).1 id := by
+  intro c' hc'
+  obtain ⟨c, hc, hq⟩ := qkeep_sockStep cap s id g k hk c' hc'
+  exact Or.inl ⟨c, hc, hq⟩
 
 theorem inv_discardStep (cap : Nat) (s : St) (id : Nat) (hI : Inv cap s) :
     Inv cap (discardStep s id).1 := by
@@ -1284,6 +1428,137 @@ def renderObs : Obs → List String
   | .cb s => [s]
   | .thrown => ["thrown"]
 
+-- ---- the send pump: its invariants (the send window, frames of at most MAX_BODY, nothing past the data) ----
+
+-- the page's invariant for a send: the relay has taken no more than was framed, the frames are no more than the
+-- data given, and they are no more than the window beyond what the relay has taken
+def PInv (c : PConn) : Prop := c.written ≤ c.sent ∧ c.sent ≤ c.tail ∧ c.sent ≤ c.written + SEND_W
+
+-- the bytes a SEND observation frames (0 for any other)
+def sendBytes : Obs → Nat
+  | .toRelay (.send _ n) _ => n
+  | _ => 0
+
+theorem max_body_pos : 0 < MAX_BODY := by
+  simp [MAX_BODY]
+
+-- the pump keeps the written count and the data, frames what it says, and keeps the invariant
+theorem pump_props (id : Nat) : ∀ (fuel : Nat) (c : PConn), PInv c →
+    (pump id c fuel).1.written = c.written ∧ (pump id c fuel).1.tail = c.tail ∧
+    c.sent ≤ (pump id c fuel).1.sent ∧ PInv (pump id c fuel).1 ∧
+    ((pump id c fuel).2.map sendBytes).sum = (pump id c fuel).1.sent - c.sent ∧
+    ∀ x ∈ (pump id c fuel).2, 0 < sendBytes x ∧ sendBytes x ≤ MAX_BODY := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro c hI
+    exact ⟨rfl, rfl, Nat.le_refl _, hI, by simp [pump], by simp [pump]⟩
+  | succ f ih =>
+    intro c hI
+    obtain ⟨hw, hst, hwin⟩ := hI
+    simp only [pump]
+    by_cases hstop : (c.op.isNone || c.discardPending || !c.isOpen) = true
+    · rw [if_pos hstop]
+      exact ⟨rfl, rfl, Nat.le_refl _, ⟨hw, hst, hwin⟩, by simp, by simp⟩
+    · rw [if_neg hstop]
+      obtain ⟨n, hn⟩ : ∃ n, n = min MAX_BODY (min (SEND_W - (c.sent - c.written)) (c.tail - c.sent)) :=
+        ⟨_, rfl⟩
+      rw [← hn]
+      by_cases hn0 : n = 0
+      · rw [if_pos hn0]
+        exact ⟨rfl, rfl, Nat.le_refl _, ⟨hw, hst, hwin⟩, by simp, by simp⟩
+      · rw [if_neg hn0]
+        have hnM : n ≤ MAX_BODY := by
+          rw [hn]
+          exact Nat.min_le_left _ _
+        have hnW : n ≤ SEND_W - (c.sent - c.written) := by
+          rw [hn]
+          exact Nat.le_trans (Nat.min_le_right _ _) (Nat.min_le_left _ _)
+        have hnT : n ≤ c.tail - c.sent := by
+          rw [hn]
+          exact Nat.le_trans (Nat.min_le_right _ _) (Nat.min_le_right _ _)
+        have hI' : PInv { c with sent := c.sent + n } := by
+          unfold PInv
+          dsimp only
+          omega
+        obtain ⟨hR1, hR2, hR3, hR4, hR5, hR6⟩ := ih { c with sent := c.sent + n } hI'
+        rcases hpc : pump id { c with sent := c.sent + n } f with ⟨c', obs⟩
+        rw [hpc] at hR1 hR2 hR3 hR4 hR5 hR6
+        dsimp only at hR1 hR2 hR3 hR4 hR5 hR6 ⊢
+        refine ⟨hR1, hR2, by omega, hR4, ?_, ?_⟩
+        · simp only [List.map_cons, List.sum_cons, sendBytes]
+          omega
+        · intro x hx
+          rcases List.mem_cons.mp hx with rfl | hx
+          · exact ⟨Nat.pos_of_ne_zero hn0, hnM⟩
+          · exact hR6 x hx
+
+-- a send in progress, pumped: at each point the pump is done (the data is all framed, or the window is full), or
+-- its fuel has run out with at least one byte framed for each unit of fuel
+theorem pump_reach (id : Nat) : ∀ (fuel : Nat) (c : PConn), PInv c →
+    c.op.isSome = true → c.discardPending = false → c.isOpen = true →
+    (pump id c fuel).1.sent = c.tail ∨ (pump id c fuel).1.sent = (pump id c fuel).1.written + SEND_W ∨
+      c.sent + fuel ≤ (pump id c fuel).1.sent := by
+  intro fuel
+  induction fuel with
+  | zero =>
+    intro c _ _ _ _
+    right
+    right
+    simp [pump]
+  | succ f ih =>
+    intro c hI hop hd ho
+    obtain ⟨hw, hst, hwin⟩ := hI
+    have hsome : c.op ≠ none := by
+      intro h
+      simp [h] at hop
+    have hstop : ¬ ((c.op.isNone || c.discardPending || !c.isOpen) = true) := by
+      simp [Option.isNone_iff_eq_none, hsome, hd, ho]
+    simp only [pump]
+    rw [if_neg hstop]
+    obtain ⟨n, hn⟩ : ∃ n, n = min MAX_BODY (min (SEND_W - (c.sent - c.written)) (c.tail - c.sent)) :=
+      ⟨_, rfl⟩
+    rw [← hn]
+    by_cases hn0 : n = 0
+    · rw [if_pos hn0]
+      have hmb := max_body_pos
+      dsimp only
+      rw [hn0] at hn
+      omega
+    · rw [if_neg hn0]
+      have hnM : n ≤ MAX_BODY := by
+        rw [hn]
+        exact Nat.min_le_left _ _
+      have hnW : n ≤ SEND_W - (c.sent - c.written) := by
+        rw [hn]
+        exact Nat.le_trans (Nat.min_le_right _ _) (Nat.min_le_left _ _)
+      have hnT : n ≤ c.tail - c.sent := by
+        rw [hn]
+        exact Nat.le_trans (Nat.min_le_right _ _) (Nat.min_le_right _ _)
+      have hI' : PInv { c with sent := c.sent + n } := by
+        unfold PInv
+        dsimp only
+        omega
+      have hP := pump_props id f { c with sent := c.sent + n } hI'
+      have hR := ih { c with sent := c.sent + n } hI' hop hd ho
+      rcases hpc : pump id { c with sent := c.sent + n } f with ⟨c', obs⟩
+      rw [hpc] at hP hR
+      dsimp only at hP hR ⊢
+      obtain ⟨hP1, _⟩ := hP
+      omega
+
+-- THE NO-STALL PROPERTY: a send started with the fuel doSend gives it (the bytes still to send, plus one) ends with
+-- all its data framed, or with the window full
+theorem pump_done (id : Nat) (c : PConn) (hI : PInv c) (hop : c.op.isSome = true)
+    (hd : c.discardPending = false) (ho : c.isOpen = true) :
+    (pump id c (c.tail - c.sent + 1)).1.sent = c.tail ∨
+      (pump id c (c.tail - c.sent + 1)).1.sent = (pump id c (c.tail - c.sent + 1)).1.written + SEND_W := by
+  have hR := pump_reach id (c.tail - c.sent + 1) c hI hop hd ho
+  have hP := pump_props id (c.tail - c.sent + 1) c hI
+  obtain ⟨_, _, _, hPI, _, _⟩ := hP
+  obtain ⟨_, hT, _⟩ := hPI
+  omega
+
 end Page
 
 namespace Client
@@ -1511,6 +1786,19 @@ def clearGone (k : Clk) (s : Relay.St) (id : Nat) : Clk :=
   | none => { k with chunks := fun i => if i = id then [] else k.chunks i }
   | some _ => k
 
+-- the send the relay takes whole into the socket's queue: exactly the case where sendStepB's last branch runs
+def sendOk (cap : Nat) (s : Relay.St) (id n : Nat) : Bool :=
+  match (s.slot id).conn with
+  | none => false
+  | some c => c.isOpen && decide (n ≠ 0) && decide (n ≤ Relay.SEND_WINDOW - c.queued)
+      && decide (c.written + c.queued + n ≤ cap) && !c.peerClosed
+
+-- a discard empties the queue of an open connection (as discardStep does); of any other it changes nothing
+def discardK (k : Clk) (s : Relay.St) (id : Nat) : Clk :=
+  match (s.slot id).conn with
+  | some c => if c.isOpen then { k with chunks := fun i => if i = id then [] else k.chunks i } else k
+  | none => k
+
 -- one event, with the clock. The connect tokens refuse a CONNECT of a free id while there is less than one token.
 -- A SEND or a DRAIN takes the bytes the budget and the socket allow (flushSim); a DATA takes the budget.
 def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St × List Relay.Out :=
@@ -1528,14 +1816,15 @@ def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St 
         let r := Relay.step cap s e
         ({ k1 with tokens := k1.tokens - 1000, acc := k1.acc + 1 }, r.1, r.2)
   | .send id n =>
-    let m := flushSim ((k.chunks id) ++ [n]) 4294967295 k.bud
-    let r := Relay.sendStepB cap s id n m.1
-    let ok := decide (n ≠ 0) && (s.slot id).conn.isSome && (r.1.slot id).conn.isSome && r.1.closed.isNone
-    if ok then
+    if sendOk cap s id n then
+      let m := flushSim ((k.chunks id) ++ [n]) 4294967295 k.bud
+      let r := Relay.sendStepB cap s id n m.1
       let k' := { k with bud := m.2.2, used := k.used + m.1,
                          chunks := fun i => if i = id then m.2.1 else k.chunks i }
       (clearGone k' r.1 id, r.1, r.2)
-    else (clearGone k r.1 id, r.1, r.2)
+    else
+      let r := Relay.sendStepB cap s id n 0
+      (clearGone k r.1 id, r.1, r.2)
   | .sock id g (.drain a) =>
     match (s.slot id).conn with
     | some c =>
@@ -1558,7 +1847,7 @@ def stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) : Clk × Relay.St 
     (clearGone k' r.1 id, r.1, r.2)
   | .discard id =>
     let r := Relay.step cap s e
-    (clearGone { k with chunks := fun i => if i = id then [] else k.chunks i } r.1 id, r.1, r.2)
+    (clearGone (discardK k s id) r.1 id, r.1, r.2)
   | _ =>
     let r := Relay.step cap s e
     (clearGone k r.1 (Relay.evId e), r.1, r.2)
@@ -1681,6 +1970,14 @@ theorem good_clearGone_eq (k : Clk) (s : Relay.St) (id : Nat) (h : Good k) : Goo
   · exact good_chunks k _ h
   · exact h
 
+theorem good_discardK (k : Clk) (s : Relay.St) (id : Nat) (h : Good k) : Good (discardK k s id) := by
+  unfold discardK
+  split
+  · split
+    · exact good_chunks k _ h
+    · exact h
+  · exact h
+
 theorem good_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (h : Good k) :
     Good (stepK cap k s e).1 := by
   unfold stepK
@@ -1713,7 +2010,7 @@ theorem good_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (h : Good
       · exact good_clearGone_eq _ _ _ h
     | discard id =>
       dsimp only
-      exact good_clearGone_eq _ _ _ (good_chunks k _ h)
+      exact good_clearGone_eq _ _ _ (good_discardK k s id h)
     | read id k' =>
       exact good_clearGone_eq _ _ _ h
     | close id =>
@@ -1789,6 +2086,666 @@ theorem byte_run (cap cps bps : Nat) (items : List Item) :
   unfold Good at h
   obtain ⟨_, _, _, h4⟩ := h
   omega
+
+-- what a flush takes, and what it leaves, add up to what was queued
+theorem flushSim_sum : ∀ (cs : List Nat) (a : Nat) (b : Int),
+    (flushSim cs a b).2.1.sum + (flushSim cs a b).1 = cs.sum := by
+  intro cs
+  induction cs with
+  | nil =>
+    intro a b
+    simp [flushSim]
+  | cons x rest ih =>
+    intro a b
+    unfold flushSim
+    by_cases hb : b ≤ 0
+    · rw [if_pos hb]
+      simp
+    · rw [if_neg hb]
+      by_cases hw : min a x = 0
+      · rw [if_pos hw]
+        simp
+      · rw [if_neg hw]
+        by_cases hlt : min a x < x
+        · rw [if_pos hlt]
+          simp only [List.sum_cons]
+          omega
+        · rw [if_neg hlt]
+          have ih' := ih (a - min a x) (b - 1000 * ((min a x : Nat) : Int))
+          simp only [List.sum_cons]
+          omega
+
+-- the chunks left are positive when the chunks were
+theorem flushSim_pos : ∀ (cs : List Nat) (a : Nat) (b : Int),
+    (∀ x ∈ cs, 0 < x) → ∀ x ∈ (flushSim cs a b).2.1, 0 < x := by
+  intro cs
+  induction cs with
+  | nil =>
+    intro a b _ x hx
+    simp [flushSim] at hx
+  | cons h rest ih =>
+    intro a b hpos x hx
+    have hh : 0 < h := hpos h (by simp)
+    have hrest : ∀ y ∈ rest, 0 < y := fun y hy => hpos y (by simp [hy])
+    unfold flushSim at hx
+    by_cases hb : b ≤ 0
+    · rw [if_pos hb] at hx
+      rcases List.mem_cons.mp hx with h1 | h1
+      · subst h1; exact hh
+      · exact hrest x h1
+    · rw [if_neg hb] at hx
+      by_cases hw : min a h = 0
+      · rw [if_pos hw] at hx
+        rcases List.mem_cons.mp hx with h1 | h1
+        · subst h1; exact hh
+        · exact hrest x h1
+      · rw [if_neg hw] at hx
+        by_cases hlt : min a h < h
+        · rw [if_pos hlt] at hx
+          rcases List.mem_cons.mp hx with h1 | h1
+          · subst h1
+            omega
+          · exact hrest x h1
+        · rw [if_neg hlt] at hx
+          exact ih (a - min a h) (b - 1000 * ((min a h : Nat) : Int)) hrest x hx
+
+-- what a flush takes is at most what is queued
+theorem flushSim_le (cs : List Nat) (a : Nat) (b : Int) : (flushSim cs a b).1 ≤ cs.sum := by
+  have := flushSim_sum cs a b
+  omega
+
+-- ---- the mirror: each connection's queue is the lengths of its chunks ----
+
+-- for one id: no connection, no chunks; a connection, chunks that add up to its queued bytes; every chunk positive
+def MirrorAt (k : Clk) (s : Relay.St) (id : Nat) : Prop :=
+  ((s.slot id).conn = none → k.chunks id = []) ∧
+  (∀ c, (s.slot id).conn = some c → (k.chunks id).sum = c.queued) ∧
+  (∀ x ∈ k.chunks id, 0 < x)
+
+def Mirror (k : Clk) (s : Relay.St) : Prop := ∀ id, MirrorAt k s id
+
+theorem mirrorAt_of_eq (k k' : Clk) (s s' : Relay.St) (id : Nat)
+    (hs : s'.slot id = s.slot id) (hk : k'.chunks id = k.chunks id) (h : MirrorAt k s id) :
+    MirrorAt k' s' id := by
+  unfold MirrorAt at h ⊢
+  rw [hs, hk]
+  exact h
+
+theorem mirror_init (cps bps : Nat) : Mirror (init cps bps) Relay.init := by
+  intro id
+  unfold MirrorAt
+  refine ⟨fun _ => rfl, ?_, ?_⟩
+  · intro c hc
+    simp [Relay.init, Relay.St.slot] at hc
+  · intro x hx
+    simp [init] at hx
+
+-- the ticker's flush of one id: the mirror holds for every id
+theorem flushOne_other (k : Clk) (s : Relay.St) (id j : Nat) (h : j ≠ id) :
+    (flushOne k s id).2.1.slot j = s.slot j ∧ (flushOne k s id).1.chunks j = k.chunks j := by
+  unfold flushOne
+  cases hsl : (s.slot id).conn with
+  | none => exact ⟨rfl, rfl⟩
+  | some c =>
+    dsimp only
+    by_cases ho : c.isOpen = true
+    · rw [if_pos ho]
+      by_cases hm : (flushSim (k.chunks id) 4294967295 k.bud).1 > 0
+      · rw [if_pos hm]
+        dsimp only
+        exact ⟨Relay.flushConn_slot_ne _ _ _ _ _ h, by simp [h]⟩
+      · rw [if_neg hm]
+        exact ⟨rfl, rfl⟩
+    · rw [if_neg ho]
+      exact ⟨rfl, rfl⟩
+
+-- a flush of an open connection's queue, of a positive amount that the queue holds: the connection after it
+theorem flushConn_some (s : Relay.St) (id : Nat) (c : Relay.Conn) (a : Nat) (ho : c.isOpen = true)
+    (ha : 0 < a) (hq : a ≤ c.queued) :
+    (Relay.flushConn s id c a).1.slot id
+      = { (s.slot id) with conn := some { c with queued := c.queued - a, written := c.written + a } } := by
+  have hm : min a c.queued = a := Nat.min_eq_left hq
+  have ha0 : a ≠ 0 := by omega
+  unfold Relay.flushConn
+  simp [ho, hm, ha0, Relay.setConn, Relay.setSlot, Relay.St.slot]
+
+theorem mirror_flushOne (k : Clk) (s : Relay.St) (id : Nat) (h : Mirror k s) :
+    Mirror (flushOne k s id).1 (flushOne k s id).2.1 := by
+  intro j
+  by_cases hj : j = id
+  · subst hj
+    have hm := h j
+    unfold flushOne
+    cases hsl : (s.slot j).conn with
+    | none =>
+      dsimp only
+      unfold MirrorAt
+      exact ⟨fun _ => hm.1 hsl, fun c hc => by simp [hsl] at hc, hm.2.2⟩
+    | some c =>
+      dsimp only
+      by_cases ho : c.isOpen = true
+      · rw [if_pos ho]
+        have hsum := hm.2.1 c hsl
+        by_cases hmt : (flushSim (k.chunks j) 4294967295 k.bud).1 > 0
+        · rw [if_pos hmt]
+          dsimp only
+          have hle : (flushSim (k.chunks j) 4294967295 k.bud).1 ≤ c.queued := by
+            have := flushSim_le (k.chunks j) 4294967295 k.bud
+            rw [hsum] at this
+            exact this
+          have hsl2 := flushConn_some s j c _ ho hmt hle
+          have hsum2 := flushSim_sum (k.chunks j) 4294967295 k.bud
+          rw [hsum] at hsum2
+          have hpos := flushSim_pos (k.chunks j) 4294967295 k.bud hm.2.2
+          unfold MirrorAt
+          refine ⟨?_, ?_, ?_⟩
+          · intro hn
+            simp only [hsl2] at hn
+            simp at hn
+          · intro c2 hc2
+            simp only [hsl2] at hc2
+            simp only [Option.some.injEq] at hc2
+            subst hc2
+            dsimp only
+            simp only [↓reduceIte]
+            omega
+          · intro x hx
+            dsimp only at hx
+            simp only [↓reduceIte] at hx
+            exact hpos x hx
+        · rw [if_neg hmt]
+          exact hm
+      · rw [if_neg ho]
+        exact hm
+  · obtain ⟨hs, hc⟩ := flushOne_other k s id j hj
+    exact mirrorAt_of_eq k (flushOne k s id).1 s (flushOne k s id).2.1 j hs hc (h j)
+
+
+-- ---- the mirror holds through each step: each id's chunks are its queue ----
+
+theorem flushSim_zero : ∀ (cs : List Nat) (a : Nat) (b : Int),
+    (flushSim cs a b).1 = 0 → (flushSim cs a b).2.1 = cs := by
+  intro cs
+  induction cs with
+  | nil =>
+    intro a b _
+    simp [flushSim]
+  | cons x rest ih =>
+    intro a b h
+    unfold flushSim at h ⊢
+    by_cases hb : b ≤ 0
+    · rw [if_pos hb]
+    · by_cases hw : min a x = 0
+      · rw [if_neg hb, if_pos hw]
+      · exfalso
+        by_cases hlt : min a x < x
+        · rw [if_neg hb, if_neg hw, if_pos hlt] at h
+          dsimp only at h
+          omega
+        · rw [if_neg hb, if_neg hw, if_neg hlt] at h
+          dsimp only at h
+          omega
+
+theorem clearGone_chunks_ne (k : Clk) (s : Relay.St) (id j : Nat) (h : j ≠ id) :
+    (clearGone k s id).chunks j = k.chunks j := by
+  unfold clearGone
+  split <;> simp [h]
+
+theorem clearGone_some (k : Clk) (s : Relay.St) (id : Nat) (c : Relay.Conn)
+    (hs : (s.slot id).conn = some c) : clearGone k s id = k := by
+  unfold clearGone
+  simp [hs]
+
+theorem discardK_chunks_ne (k : Clk) (s : Relay.St) (id j : Nat) (h : j ≠ id) :
+    (discardK k s id).chunks j = k.chunks j := by
+  unfold discardK
+  split
+  · split <;> simp [h]
+  · rfl
+
+-- a connection that keeps its queue (or ends, or is new and empty): the clearing step keeps the mirror
+theorem mirrorAt_clearGone (k : Clk) (s s' : Relay.St) (id : Nat) (hM : MirrorAt k s id)
+    (hQ : Relay.QOK s s' id) : MirrorAt (clearGone k s' id) s' id := by
+  cases hs' : (s'.slot id).conn with
+  | none =>
+    have hk : clearGone k s' id = { k with chunks := fun i => if i = id then [] else k.chunks i } := by
+      unfold clearGone
+      simp [hs']
+    rw [hk]
+    unfold MirrorAt
+    refine ⟨fun _ => by simp, fun c hc => ?_, fun x hx => ?_⟩
+    · rw [hs'] at hc
+      cases hc
+    · simp at hx
+  | some c' =>
+    rw [clearGone_some k s' id c' hs']
+    have hq := hQ c' hs'
+    unfold MirrorAt at hM ⊢
+    rcases hq with ⟨c, hc, hqe⟩ | ⟨hnone, hq0⟩
+    · have hsum := hM.2.1 c hc
+      refine ⟨fun h => ?_, fun c2 hc2 => ?_, hM.2.2⟩
+      · rw [hs'] at h
+        cases h
+      · rw [hs'] at hc2
+        cases hc2
+        rw [hsum]
+        exact hqe.symm
+    · have hz := hM.1 hnone
+      refine ⟨fun h => ?_, fun c2 hc2 => ?_, hM.2.2⟩
+      · rw [hs'] at h
+        cases h
+      · rw [hs'] at hc2
+        cases hc2
+        rw [hz]
+        simp [hq0]
+
+-- the mirror of the other ids is unchanged, and the mirror of this id holds: the whole mirror holds
+theorem mirror_of_parts (k k' : Clk) (s s' : Relay.St) (id : Nat) (hM : Mirror k s)
+    (hs : ∀ j, j ≠ id → s'.slot j = s.slot j) (hk : ∀ j, j ≠ id → k'.chunks j = k.chunks j)
+    (hid : MirrorAt k' s' id) : Mirror k' s' := by
+  intro j
+  by_cases hj : j = id
+  · subst hj
+    exact hid
+  · exact mirrorAt_of_eq k k' s s' j (hs j hj) (hk j hj) (hM j)
+
+-- an id with no connection has no chunks; a step that leaves it unconnected keeps that
+theorem mirrorAt_qok_none (k : Clk) (s s' : Relay.St) (id : Nat) (hM : MirrorAt k s id)
+    (hn : (s.slot id).conn = none) (hQ : Relay.QOK s s' id) : MirrorAt k s' id := by
+  have hz := hM.1 hn
+  unfold MirrorAt
+  refine ⟨fun _ => hz, fun c2 hc2 => ?_, hM.2.2⟩
+  rcases hQ c2 hc2 with ⟨c, hc, _⟩ | ⟨_, hq0⟩
+  · rw [hn] at hc
+    cases hc
+  · rw [hz]
+    simp [hq0]
+
+theorem mirror_default (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (hM : Mirror k s)
+    (hQ : Relay.QOK s (Relay.step cap s e).1 (Relay.evId e)) :
+    Mirror (clearGone k (Relay.step cap s e).1 (Relay.evId e)) (Relay.step cap s e).1 := by
+  apply mirror_of_parts k _ s _ (Relay.evId e) hM
+  · intro j hj
+    exact Relay.step_slot_ne cap s e j (Ne.symm hj)
+  · intro j hj
+    exact clearGone_chunks_ne k _ _ j hj
+  · exact mirrorAt_clearGone k s _ (Relay.evId e) (hM (Relay.evId e)) hQ
+
+theorem connect_some_slot (cap : Nat) (s : Relay.St) (id : Nat) (c : Relay.Conn)
+    (hc : ¬ (s.closed.isSome = true)) (hs : (s.slot id).conn = some c) :
+    (Relay.step cap s (Relay.Ev.connect id)).1.slot id = s.slot id := by
+  simp only [Relay.step, Relay.connectStep, hc, hs]
+  try rfl
+
+-- the connection's queue after a send the relay takes whole: the budget decides how much of it goes
+theorem sendStepB_succ (cap : Nat) (s : Relay.St) (id n m : Nat) (c : Relay.Conn)
+    (hs : (s.slot id).conn = some c) (ho : c.isOpen = true) (hn : n ≠ 0)
+    (hw : n ≤ Relay.SEND_WINDOW - c.queued) (hcap : c.written + c.queued + n ≤ cap)
+    (hp : c.peerClosed = false) :
+    (Relay.sendStepB cap s id n m).1.slot id
+      = { (s.slot id) with conn := some { c with queued := c.queued + n - min m (c.queued + n),
+                                                 written := c.written + min m (c.queued + n) } } := by
+  have h1 : ¬ (n > Relay.SEND_WINDOW - c.queued) := by omega
+  have h2 : ¬ (c.written + c.queued + n > cap) := by omega
+  unfold Relay.sendStepB
+  simp [hs, ho, hn, h1, h2, hp, Relay.slot_setConn_self]
+
+-- a send that is not taken whole leaves the connection as it is, or ends it
+theorem sendStepB_notok (cap : Nat) (s : Relay.St) (id n m : Nat) (hn : ¬ (sendOk cap s id n = true)) :
+    Relay.QOK s (Relay.sendStepB cap s id n m).1 id := by
+  unfold Relay.sendStepB
+  cases hsl : (s.slot id).conn with
+  | none =>
+    dsimp only
+    split
+    all_goals exact Relay.qok_slot_eq _ _ _ rfl
+  | some c =>
+    dsimp only
+    repeat' split
+    all_goals first
+      | exact Relay.qok_slot_eq _ _ _ rfl
+      | (exfalso; apply hn; clear hn; simp_all [sendOk]; done)
+      | (apply Relay.qok_none; simp [Relay.failConn, Relay.conn_setConn_self]; done)
+
+theorem sendOk_spec (cap : Nat) (s : Relay.St) (id n : Nat) (h : sendOk cap s id n = true) :
+    ∃ c, (s.slot id).conn = some c ∧ c.isOpen = true ∧ n ≠ 0 ∧ n ≤ Relay.SEND_WINDOW - c.queued
+      ∧ c.written + c.queued + n ≤ cap ∧ c.peerClosed = false := by
+  unfold sendOk at h
+  cases hsl : (s.slot id).conn with
+  | none => simp [hsl] at h
+  | some c =>
+    simp only [sendOk, hsl, Bool.and_eq_true, decide_eq_true_eq] at h
+    obtain ⟨⟨⟨⟨ho, hn⟩, hw⟩, hcap⟩, hp⟩ := h
+    exact ⟨c, rfl, ho, hn, hw, hcap, by simpa using hp⟩
+
+-- the chunks, the bytes and the budget after a send that the relay takes whole
+def sendK (k : Clk) (m : Nat × List Nat × Int) (id : Nat) : Clk :=
+  { k with bud := m.2.2, used := k.used + m.1, chunks := fun i => if i = id then m.2.1 else k.chunks i }
+
+theorem mirror_send_ok (cap : Nat) (k : Clk) (s : Relay.St) (id n : Nat) (hM : Mirror k s)
+    (c : Relay.Conn) (hsl : (s.slot id).conn = some c) (ho : c.isOpen = true) (hn : n ≠ 0)
+    (hw : n ≤ Relay.SEND_WINDOW - c.queued) (hcap : c.written + c.queued + n ≤ cap) (hp : c.peerClosed = false)
+    (m : Nat × List Nat × Int) (hm : flushSim ((k.chunks id) ++ [n]) 4294967295 k.bud = m) :
+    Mirror (clearGone (sendK k m id) (Relay.sendStepB cap s id n m.1).1 id) (Relay.sendStepB cap s id n m.1).1 := by
+  have hsum := (hM id).2.1 c hsl
+  have hpos0 : ∀ x ∈ (k.chunks id) ++ [n], 0 < x := by
+    intro x hx
+    rcases List.mem_append.mp hx with hx | hx
+    · exact (hM id).2.2 x hx
+    · rw [List.mem_singleton.mp hx]
+      exact Nat.pos_of_ne_zero hn
+  have hsum2 : ((k.chunks id) ++ [n]).sum = c.queued + n := by
+    rw [List.sum_append, hsum]
+    simp
+  have hsumM := flushSim_sum ((k.chunks id) ++ [n]) 4294967295 k.bud
+  have hposM := flushSim_pos ((k.chunks id) ++ [n]) 4294967295 k.bud hpos0
+  rw [hm] at hsumM hposM
+  have hle : m.1 ≤ c.queued + n := by omega
+  have hslot := sendStepB_succ cap s id n m.1 c hsl ho hn hw hcap hp
+  rw [Nat.min_eq_left hle] at hslot
+  have hconn : ((Relay.sendStepB cap s id n m.1).1.slot id).conn
+      = some { c with queued := c.queued + n - m.1, written := c.written + m.1 } := by
+    rw [hslot]
+  rw [clearGone_some _ _ _ _ hconn]
+  apply mirror_of_parts k _ s _ id hM
+  · intro j hj
+    exact Relay.sendStepB_slot_ne cap s id n m.1 j hj
+  · intro j hj
+    simp [sendK, hj]
+  · have hk' : (sendK k m id).chunks id = m.2.1 := by
+      simp [sendK]
+    unfold MirrorAt
+    rw [hk']
+    refine ⟨fun h => ?_, fun c2 hc2 => ?_, hposM⟩
+    · rw [hconn] at h
+      cases h
+    · rw [hconn] at hc2
+      cases hc2
+      dsimp only
+      omega
+
+theorem mirror_send_no (cap : Nat) (k : Clk) (s : Relay.St) (id n m : Nat) (hM : Mirror k s)
+    (hno : ¬ (sendOk cap s id n = true)) :
+    Mirror (clearGone k (Relay.sendStepB cap s id n m).1 id) (Relay.sendStepB cap s id n m).1 := by
+  apply mirror_of_parts k _ s _ id hM
+  · intro j hj
+    exact Relay.sendStepB_slot_ne cap s id n m j hj
+  · intro j hj
+    exact clearGone_chunks_ne k _ _ j hj
+  · exact mirrorAt_clearGone k s _ id (hM id) (sendStepB_notok cap s id n m hno)
+
+theorem qok_sock (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (hk : ∀ a, k ≠ Relay.Sk.drain a) :
+    Relay.QOK s (Relay.step cap s (Relay.Ev.sock id g k)).1 id := by
+  by_cases hcl : s.closed.isSome = true
+  · exact Relay.qok_slot_eq _ _ _ (by simp [Relay.step, hcl])
+  · have h1 : (Relay.step cap s (Relay.Ev.sock id g k)).1 = (Relay.sockStep cap s id g k).1 := by
+      simp [Relay.step, hcl]
+    rw [h1]
+    exact Relay.qok_sockStep cap s id g k hk
+
+theorem qok_drain_none (cap : Nat) (s : Relay.St) (id g a : Nat) (hc : ¬ (s.closed.isSome = true))
+    (hsl : (s.slot id).conn = none) :
+    Relay.QOK s (Relay.step cap s (Relay.Ev.sock id g (Relay.Sk.drain a))).1 id :=
+  Relay.qok_slot_eq _ _ _ (by simp [Relay.step, Relay.sockStep, hc, hsl])
+
+theorem qok_drain_noop (cap : Nat) (s : Relay.St) (id g a : Nat) (c : Relay.Conn)
+    (hc : ¬ (s.closed.isSome = true)) (hsl : (s.slot id).conn = some c)
+    (hn : ¬ (c.gen = g ∧ c.isOpen = true)) :
+    Relay.QOK s (Relay.step cap s (Relay.Ev.sock id g (Relay.Sk.drain a))).1 id := by
+  apply Relay.qok_slot_eq
+  by_cases hg : c.gen = g
+  · have ho : c.isOpen = false := by
+      cases hco : c.isOpen
+      · rfl
+      · exact absurd ⟨hg, hco⟩ hn
+    simp [Relay.step, Relay.sockStep, hc, hsl, hg, ho, Relay.flushConn]
+  · simp [Relay.step, Relay.sockStep, hc, hsl, hg]
+
+theorem step_sock_drain_open (cap : Nat) (s : Relay.St) (id g a : Nat) (c : Relay.Conn)
+    (hc : ¬ (s.closed.isSome = true)) (hsl : (s.slot id).conn = some c) (hg : c.gen = g) :
+    (Relay.step cap s (Relay.Ev.sock id g (Relay.Sk.drain a))).1 = (Relay.flushConn s id c a).1 := by
+  simp [Relay.step, Relay.sockStep, hc, hsl, hg]
+
+-- an open connection's queue, flushed by the clock's amount: the connection keeps a queue of the chunks left
+theorem mirrorAt_flushConn (k : Clk) (s : Relay.St) (id a : Nat) (c : Relay.Conn) (hM : MirrorAt k s id)
+    (hsl : (s.slot id).conn = some c) (ho : c.isOpen = true) :
+    (∃ c'', ((Relay.flushConn s id c (flushSim (k.chunks id) a k.bud).1).1.slot id).conn = some c'') ∧
+    MirrorAt { k with chunks := fun i => if i = id then (flushSim (k.chunks id) a k.bud).2.1 else k.chunks i }
+      (Relay.flushConn s id c (flushSim (k.chunks id) a k.bud).1).1 id := by
+  have hsum := hM.2.1 c hsl
+  have hle := flushSim_le (k.chunks id) a k.bud
+  have hsum2 := flushSim_sum (k.chunks id) a k.bud
+  have hpos := flushSim_pos (k.chunks id) a k.bud hM.2.2
+  rw [hsum] at hle hsum2
+  have hk' : ({ k with chunks := fun i => if i = id then (flushSim (k.chunks id) a k.bud).2.1 else k.chunks i }
+      : Clk).chunks id = (flushSim (k.chunks id) a k.bud).2.1 := by
+    simp
+  by_cases hm : (flushSim (k.chunks id) a k.bud).1 = 0
+  · have hz := flushSim_zero (k.chunks id) a k.bud hm
+    have hf : (Relay.flushConn s id c (flushSim (k.chunks id) a k.bud).1).1 = s := by
+      rw [hm]
+      simp [Relay.flushConn, ho]
+    rw [hf]
+    refine ⟨⟨c, hsl⟩, ?_⟩
+    unfold MirrorAt
+    rw [hk', hz]
+    refine ⟨fun h => ?_, fun c2 hc2 => ?_, hM.2.2⟩
+    · rw [hsl] at h
+      cases h
+    · rw [hsl] at hc2
+      cases hc2
+      exact hsum
+  · have hpos' : 0 < (flushSim (k.chunks id) a k.bud).1 := Nat.pos_of_ne_zero hm
+    have hq : (flushSim (k.chunks id) a k.bud).1 ≤ c.queued := hle
+    have hsl2 := flushConn_some s id c _ ho hpos' hq
+    refine ⟨⟨_, by rw [hsl2]⟩, ?_⟩
+    unfold MirrorAt
+    rw [hsl2, hk']
+    refine ⟨fun h => ?_, fun c2 hc2 => ?_, hpos⟩
+    · simp at h
+    · simp at hc2
+      subst hc2
+      dsimp only
+      omega
+
+theorem mirror_data (cap : Nat) (k : Clk) (s : Relay.St) (id g n : Nat) (hM : Mirror k s) (k' : Clk)
+    (hk' : ∀ j, k'.chunks j = k.chunks j) :
+    Mirror (clearGone k' (Relay.step cap s (Relay.Ev.sock id g (Relay.Sk.data n))).1 id)
+      (Relay.step cap s (Relay.Ev.sock id g (Relay.Sk.data n))).1 := by
+  apply mirror_of_parts k _ s _ id hM
+  · intro j hj
+    exact Relay.step_slot_ne cap s _ j (Ne.symm hj)
+  · intro j hj
+    rw [clearGone_chunks_ne _ _ _ _ hj, hk' j]
+  · exact mirrorAt_clearGone k' s _ id (mirrorAt_of_eq k k' s s id rfl (hk' id) (hM id))
+      (qok_sock cap s id g _ (fun a h => by cases h))
+
+theorem mirror_discard (cap : Nat) (k : Clk) (s : Relay.St) (id : Nat) (hM : Mirror k s)
+    (hc : ¬ (s.closed.isSome = true)) :
+    Mirror (clearGone (discardK k s id) (Relay.step cap s (Relay.Ev.discard id)).1 id)
+      (Relay.step cap s (Relay.Ev.discard id)).1 := by
+  apply mirror_of_parts k _ s _ id hM
+  · intro j hj
+    exact Relay.step_slot_ne cap s _ j (Ne.symm hj)
+  · intro j hj
+    rw [clearGone_chunks_ne _ _ _ _ hj]
+    exact discardK_chunks_ne k s id j hj
+  · cases hsl : (s.slot id).conn with
+    | none =>
+      have hdk : discardK k s id = k := by
+        unfold discardK
+        simp [hsl]
+      have hs' : (Relay.step cap s (Relay.Ev.discard id)).1.slot id = s.slot id := by
+        simp only [Relay.step, Relay.discardStep, hc, hsl]
+        repeat' split
+        all_goals rfl
+      rw [hdk]
+      exact mirrorAt_clearGone k s _ id (hM id) (Relay.qok_slot_eq _ _ _ hs')
+    | some c =>
+      by_cases ho : c.isOpen = true
+      · have hdk : discardK k s id = { k with chunks := fun i => if i = id then [] else k.chunks i } := by
+          unfold discardK
+          simp [hsl, ho]
+        have hs' : (Relay.step cap s (Relay.Ev.discard id)).1.slot id
+            = { (s.slot id) with conn := some { c with queued := 0 } } := by
+          simp [Relay.step, Relay.discardStep, hc, hsl, ho, Relay.slot_setConn_self]
+        have hconn : ((Relay.step cap s (Relay.Ev.discard id)).1.slot id).conn
+            = some { c with queued := 0 } := by
+          rw [hs']
+        rw [hdk, clearGone_some _ _ _ _ hconn]
+        unfold MirrorAt
+        refine ⟨fun h => ?_, fun c2 hc2 => ?_, fun x hx => ?_⟩
+        · rw [hconn] at h
+          cases h
+        · rw [hconn] at hc2
+          cases hc2
+          simp
+        · simp at hx
+      · have hdk : discardK k s id = k := by
+          unfold discardK
+          simp [hsl, ho]
+        have hs' : (Relay.step cap s (Relay.Ev.discard id)).1.slot id = s.slot id := by
+          have ho' : c.isOpen = false := by simpa using ho
+          simp [Relay.step, Relay.discardStep, hc, hsl, ho']
+          try rfl
+        rw [hdk]
+        exact mirrorAt_clearGone k s _ id (hM id) (Relay.qok_slot_eq _ _ _ hs')
+
+theorem mirror_stepK (cap : Nat) (k : Clk) (s : Relay.St) (e : Relay.Ev) (hM : Mirror k s) :
+    Mirror (stepK cap k s e).1 (stepK cap k s e).2.1 := by
+  unfold stepK
+  by_cases hc : s.closed.isSome = true
+  · rw [if_pos hc]
+    exact hM
+  · rw [if_neg hc]
+    cases e with
+    | connect id =>
+      dsimp only
+      cases hsl : (s.slot id).conn with
+      | some c =>
+        dsimp only
+        exact mirror_of_parts k k s _ id hM
+          (fun j hj => Relay.step_slot_ne cap s (Relay.Ev.connect id) j (Ne.symm hj))
+          (fun _ _ => rfl)
+          (mirrorAt_of_eq k k s _ id (connect_some_slot cap s id c hc hsl) rfl (hM id))
+      | none =>
+        dsimp only
+        split
+        · exact fun j => mirrorAt_of_eq k _ s s j rfl rfl (hM j)
+        · exact mirror_of_parts k _ s _ id hM
+            (fun j hj => Relay.step_slot_ne cap s (Relay.Ev.connect id) j (Ne.symm hj))
+            (fun _ _ => rfl)
+            (mirrorAt_of_eq k _ _ _ id rfl rfl
+              (mirrorAt_qok_none k s _ id (hM id) hsl (Relay.qok_connect cap s id)))
+    | send id n =>
+      dsimp only
+      split
+      next hok =>
+        obtain ⟨c, hsl, ho, hn, hw, hcap, hp⟩ := sendOk_spec cap s id n hok
+        exact mirror_send_ok cap k s id n hM c hsl ho hn hw hcap hp
+          (flushSim ((k.chunks id) ++ [n]) 4294967295 k.bud) rfl
+      next hno =>
+        exact mirror_send_no cap k s id n 0 hM hno
+    | discard id =>
+      dsimp only
+      exact mirror_discard cap k s id hM hc
+    | read id k' =>
+      dsimp only
+      exact mirror_default cap k s (Relay.Ev.read id k') hM (Relay.qok_read cap s id k')
+    | close id =>
+      dsimp only
+      exact mirror_default cap k s (Relay.Ev.close id) hM (Relay.qok_close cap s id)
+    | deny id =>
+      dsimp only
+      exact mirror_default cap k s (Relay.Ev.deny id) hM (Relay.qok_deny cap s id)
+    | sock id g kk =>
+      cases kk with
+      | open_ =>
+        dsimp only
+        exact mirror_default cap k s (Relay.Ev.sock id g Relay.Sk.open_) hM
+          (qok_sock cap s id g Relay.Sk.open_ (fun a h => by cases h))
+      | eof =>
+        dsimp only
+        exact mirror_default cap k s (Relay.Ev.sock id g Relay.Sk.eof) hM
+          (qok_sock cap s id g Relay.Sk.eof (fun a h => by cases h))
+      | peerclose =>
+        dsimp only
+        exact mirror_default cap k s (Relay.Ev.sock id g Relay.Sk.peerclose) hM
+          (qok_sock cap s id g Relay.Sk.peerclose (fun a h => by cases h))
+      | error x =>
+        dsimp only
+        exact mirror_default cap k s (Relay.Ev.sock id g (Relay.Sk.error x)) hM
+          (qok_sock cap s id g (Relay.Sk.error x) (fun a h => by cases h))
+      | data n =>
+        dsimp only
+        refine mirror_data cap k s id g n hM _ ?_
+        intro j
+        split <;> rfl
+      | drain a =>
+        dsimp only
+        cases hsl : (s.slot id).conn with
+        | none =>
+          dsimp only
+          exact mirror_default cap k s (Relay.Ev.sock id g (Relay.Sk.drain a)) hM
+            (qok_drain_none cap s id g a hc hsl)
+        | some c =>
+          dsimp only
+          by_cases hgo : c.gen = g ∧ c.isOpen = true
+          · obtain ⟨hg, ho⟩ := hgo
+            have hcond : (c.gen = g && c.isOpen) = true := by simp [hg, ho]
+            rw [if_pos hcond]
+            rw [step_sock_drain_open cap s id g (flushSim (k.chunks id) a k.bud).1 c hc hsl hg]
+            obtain ⟨⟨c'', hc''⟩, _⟩ := mirrorAt_flushConn k s id a c (hM id) hsl ho
+            rw [clearGone_some _ _ _ c'' hc'']
+            apply mirror_of_parts k _ s _ id hM
+            · intro j hj
+              exact Relay.flushConn_slot_ne s id c _ j hj
+            · intro j hj
+              simp [hj]
+            · exact mirrorAt_of_eq _ _ _ _ id rfl rfl (mirrorAt_flushConn k s id a c (hM id) hsl ho).2
+          · have hcond : ¬ ((c.gen = g && c.isOpen) = true) := by
+              intro h
+              exact hgo (by simpa using h)
+            rw [if_neg hcond]
+            exact mirror_default cap k s (Relay.Ev.sock id g (Relay.Sk.drain a)) hM
+              (qok_drain_noop cap s id g a c hc hsl hgo)
+
+theorem mirror_flushIds (ids : List Nat) : ∀ (k : Clk) (s : Relay.St), Mirror k s →
+    Mirror (flushIds k s ids).1 (flushIds k s ids).2.1 := by
+  induction ids with
+  | nil =>
+    intro k s h
+    exact h
+  | cons id ids ih =>
+    intro k s h
+    exact ih _ _ (mirror_flushOne k s id h)
+
+theorem mirror_tickK (k : Clk) (s : Relay.St) (ms : Nat) (hM : Mirror k s) :
+    Mirror (tickK k s ms).1 (tickK k s ms).2.1 := by
+  unfold tickK
+  split
+  · exact hM
+  · dsimp only
+    exact mirror_flushIds (List.range 256) _ _ (fun j => mirrorAt_of_eq k _ s s j rfl rfl (hM j))
+
+theorem mirror_runK (cap : Nat) (items : List Item) : ∀ (k : Clk) (s : Relay.St), Mirror k s →
+    Mirror (runK cap k s items).1 (runK cap k s items).2.1 := by
+  induction items with
+  | nil =>
+    intro k s h
+    exact h
+  | cons it its ih =>
+    intro k s h
+    cases it with
+    | ev e =>
+      exact ih _ _ (mirror_stepK cap k s e h)
+    | tick ms =>
+      exact ih _ _ (mirror_tickK k s ms h)
+
+-- THE MIRROR: from the start, for any trace, each connection's chunks add up to its queued bytes
+theorem mirror_run (cps bps cap : Nat) (items : List Item) :
+    Mirror (runK cap (init cps bps) Relay.init items).1 (runK cap (init cps bps) Relay.init items).2.1 :=
+  mirror_runK cap items _ _ (mirror_init cps bps)
 
 end Clock
 
