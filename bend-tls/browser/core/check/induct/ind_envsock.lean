@@ -108,4 +108,81 @@ theorem stepK_sock_nextGen (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Na
       rw [relay_step_sock cap s id g _ hcl]
       exact sockStep_nextGen cap s id g _
 
+
+-- the socket step's OK frame: only from a connection of the id that was not open (and it opens it)
+theorem sockStep_ok_fact (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (o : Relay.Out)
+    (ho : o ∈ (Relay.sockStep cap s id g k).2) (hoe : o = Relay.Out.ok id) :
+    ∃ c0, (s.slot id).conn = some c0 ∧ c0.isOpen = false := by
+  subst hoe
+  unfold Relay.sockStep at ho
+  rcases hc : (s.slot id).conn with _ | c
+  · rw [hc] at ho; simp at ho
+  · rw [hc] at ho
+    dsimp only at ho
+    split at ho
+    · simp at ho
+    · cases k with
+      | open_ =>
+        dsimp only at ho
+        split at ho
+        · simp at ho
+        · rename_i hopen
+          exact ⟨c, rfl, by simpa using hopen⟩
+      | data n =>
+        dsimp only at ho
+        split at ho <;> (try split at ho) <;> (try split at ho) <;> simp_all [Relay.failConn]
+      | eof => simp at ho
+      | peerclose =>
+        dsimp only at ho
+        split at ho
+        · simp_all [Relay.failConn]
+        · simp at ho
+      | error e => simp_all [Relay.failConn]
+      | drain a =>
+        dsimp only at ho
+        unfold Relay.flushConn at ho
+        dsimp only at ho
+        iterate 3 (all_goals (try split at ho))
+        all_goals simp_all
+
+-- the socket step's FAIL frame: its connection of the id is gone afterwards
+theorem sockStep_fail_fact (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (o : Relay.Out) (e : Nat)
+    (ho : o ∈ (Relay.sockStep cap s id g k).2) (hoe : o = Relay.Out.fail id e) :
+    ((Relay.sockStep cap s id g k).1.slot id).conn = none := by
+  subst hoe
+  unfold Relay.sockStep at ho ⊢
+  rcases hc : (s.slot id).conn with _ | c
+  · rw [hc] at ho; simp at ho
+  · rw [hc] at ho
+    dsimp only at ho ⊢
+    split at ho
+    · simp at ho
+    · cases k with
+      | open_ =>
+        dsimp only at ho ⊢
+        split at ho
+        · simp at ho
+        · simp at ho
+      | data n =>
+        dsimp only at ho ⊢
+        iterate 4 (all_goals (try (split at ho)))
+        iterate 4 (all_goals (try split))
+        all_goals simp_all [Relay.failConn, Relay.slot_setConn_self]
+      | eof => simp at ho
+      | peerclose =>
+        dsimp only at ho ⊢
+        split at ho
+        · iterate 4 (all_goals (try split))
+          all_goals simp_all [Relay.failConn, Relay.slot_setConn_self]
+        · simp at ho
+      | error e' =>
+        iterate 4 (all_goals (try split))
+        all_goals simp_all [Relay.failConn, Relay.slot_setConn_self]
+      | drain a =>
+        dsimp only at ho ⊢
+        unfold Relay.flushConn at ho
+        dsimp only at ho
+        iterate 3 (all_goals (try split at ho))
+        all_goals simp_all
+
 end Ind
