@@ -19,7 +19,8 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
       (∀ cnt f, q.1 = Relay.Out.written j cnt f → f = 0))
     (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk)
     (hfailN : ∀ q ∈ new, ∀ id e, q.1 = Relay.Out.fail id e → ConnOf T' id = none)
-    (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false) : Inv T' := by
+    (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false)
+    (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → False) new) : Inv T' := by
   have hmem : ∀ q, q ∈ T'.c.toPage ↔ q ∈ T.c.toPage ∨ q ∈ new := fun q => by
     rw [hTP, List.mem_append]
   have hpg : ∀ j, PageOf T' j = PageOf T j := fun j => by simp only [PageOf, hpage]
@@ -335,5 +336,16 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     · obtain ⟨hcl0, _⟩ := hnew q h1
       rw [hfl] at hcl0
       simp [isClosedOut] at hcl0
+
+  case failOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.failOrd, hnewFO, ?_⟩
+    intro a ha b hb id e hid hob
+    obtain ⟨_, j, c, hj, hcj, _, _, _⟩ := hnew b hb
+    rw [hj] at hob
+    have hji : j = id := by simpa using hob
+    have hcn := h.failNone a ha id e hid
+    rw [hji, hcn] at hcj
+    cases hcj
 
 end Ind

@@ -287,7 +287,17 @@ def closedOrdStrongB : List (Relay.Out × Nat) → Bool
       | _ => true) && closedOrdStrongB rest
 def iClosedOrdStrong (v : TSys) : Bool := closedOrdStrongB v.c.toPage
 def iInv7 : List (String × (TSys → Bool)) := iInv6 ++ [("ClosingNone", iClosingNone), ("ClosedNoClose", iClosedNoClose), ("ClosedOrdStrong", iClosedOrdStrong)]
-def firstBadI (v : TSys) : Option String := (iInv7.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: no frame of an id follows a FAIL frame of that id in the page's queue
+def failOrdB : List (Relay.Out × Nat) → Bool
+  | [] => true
+  | q :: rest => (match q.1 with
+      | .fail id _ => rest.all (fun r => match outIdT r.1 with
+          | some j => j != id
+          | none => true)
+      | _ => true) && failOrdB rest
+def iFailOrd (v : TSys) : Bool := failOrdB v.c.toPage
+def iInv8 : List (String × (TSys → Bool)) := iInv7 ++ [("FailOrd", iFailOrd)]
+def firstBadI (v : TSys) : Option String := (iInv8.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

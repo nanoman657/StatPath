@@ -331,4 +331,20 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
       rw [hqj] at hfl
       cases hfl
 
+  case failOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b hb id e hid _
+      obtain ⟨j, cnt, d, hqj, _⟩ := hnew a ha
+      rw [hqj] at hid
+      cases hid
+    · intro a ha b hb id e hid hob
+      obtain ⟨j, cnt, d, hqj, hd, _, _⟩ := hnew b hb
+      rw [hqj] at hob
+      have hji : j = id := by simpa [outIdT] using hob
+      obtain ⟨c0, hc0, _⟩ := hback j d hd
+      have hcn := h.failNone a ha id e hid
+      rw [hji, hcn] at hc0
+      cases hc0
+
 end Ind
