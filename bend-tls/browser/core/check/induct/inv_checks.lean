@@ -374,7 +374,14 @@ def replyMaxB (v : TSys) : Bool := v.c.toPage.all fun r => match r.1 with
     | _ => true
   | _ => true
 def iInv16 : List (String × (TSys → Bool)) := iInv15 ++ [("WrSent", wrSentB), ("ReplyFrozen", replyFrozenB), ("ReplyMax", replyMaxB)]
-def firstBadI (v : TSys) : Option String := (iInv16.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: at most one CLOSE of an id is queued in the relay's queue
+def closeUniqB (v : TSys) : Bool := v.c.toRelay.all fun x => match x.1 with
+  | .close id => (v.c.toRelay.filter fun y => match y.1 with
+      | .close j => j == id
+      | _ => false).length ≤ 1
+  | _ => true
+def iInv17 : List (String × (TSys → Bool)) := iInv16 ++ [("CloseUniq", closeUniqB)]
+def firstBadI (v : TSys) : Option String := (iInv17.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1
