@@ -23,13 +23,13 @@ Proved, no `sorry`:
 - `inv_init`; the clock steps (`inv_flush`, `inv_tick`); the environment's socket events (`inv_env_gen`,
   `inv_sock`, `inv_env`), using `stepK_sock_fail_fact`, `stepK_sock_ok_fact`, and `stepK_sock_outs_pw` (the
   socket step's frames are ordered so a FAIL is last).
+- The page's OK frame (`inv_tDoPage_ok`, `ind_ok.lean`): the page's connection opens, one READ is queued.
 - The page's calls: `inv_tPageConnect`, `inv_tPageClose`, `inv_tPageDiscard`, `inv_tPageRecv`, `inv_tPageSend`.
 - The page's frames (`ind_frames.lean`): an ignored frame (`inv_tDoPage_ignored`, via `inv_shrink`), CLOSED
   (`inv_tDoPage_closed`), FAIL (`inv_tDoPage_fail`).
 
 Not yet proved:
-- The page's frames OK (the page's connection becomes open; with `okOpen` and `okOrd` this keeps the page's open state
-  consistent), DATA, EOF, WRITTEN (flag 0 and 1). DATA and EOF need a spec of the page's `wake` (a loop over the readers). WRITTEN needs the pump and
+- The page's frames DATA, EOF, WRITTEN (flag 0 and 1). DATA and EOF need a spec of the page's `wake` (a loop over the readers). WRITTEN needs the pump and
   the discard reset.
 - The relay's queue steps (`Client.doRelay`): CONNECT, SEND, DISCARD, READ, CLOSE, and the closed relay.
 - The reachability induction and the final theorem (reachable implies `WQ`, so the relay's window check never
@@ -41,7 +41,8 @@ states). The depth-11 run is not committed.
 ## Build
 
     python3 build_ind.py ind_defs.lean ind_relay.lean ind_flush.lean ind_transport.lean ind_tick.lean \
-      ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean
+      ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean \
+      ind_ok.lean
     lean Ind.lean
 
 The bounded search (a check of candidate invariants over the composed model, not a proof):
