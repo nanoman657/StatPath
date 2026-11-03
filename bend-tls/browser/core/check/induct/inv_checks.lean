@@ -319,7 +319,14 @@ def connPendB (v : TSys) : Bool := v.c.toRelay.all fun x => match x.1 with
   | .connect id => v.c.toPage.all fun q => outIdT q.1 != some id
   | _ => true
 def iInv11 : List (String × (TSys → Bool)) := iInv10 ++ [("ConnPend", connPendB)]
-def firstBadI (v : TSys) : Option String := (iInv11.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: a discard reply of an id is queued only when no DISCARD of that id waits in the relay's queue
+def discOnceB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id _ 1 => v.c.toRelay.all fun x => match x.1 with
+    | .discard j => j != id
+    | _ => true
+  | _ => true
+def iInv12 : List (String × (TSys → Bool)) := iInv11 ++ [("DiscOnce", discOnceB)]
+def firstBadI (v : TSys) : Option String := (iInv12.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1
