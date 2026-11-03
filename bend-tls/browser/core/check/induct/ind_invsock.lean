@@ -94,6 +94,6 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     obtain ⟨o, ho, rfl⟩ := hq
     have hfl' : o = Relay.Out.ok id' := hfl
     exact hOkS o ho id' hfl'
-  · exact List.Pairwise.map _ (fun a b hab => hab) hFO0
+  · exact List.Pairwise.map _ (fun a b hab id' e h1 h2 => (hab id' e h1 h2).elim) hFO0
 
 end Ind

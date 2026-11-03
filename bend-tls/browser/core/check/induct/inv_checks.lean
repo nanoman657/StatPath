@@ -292,12 +292,19 @@ def failOrdB : List (Relay.Out × Nat) → Bool
   | [] => true
   | q :: rest => (match q.1 with
       | .fail id _ => rest.all (fun r => match outIdT r.1 with
-          | some j => j != id
+          | some j => j != id || (match r.1 with | .closed _ => true | _ => false)
           | none => true)
       | _ => true) && failOrdB rest
 def iFailOrd (v : TSys) : Bool := failOrdB v.c.toPage
 def iInv8 : List (String × (TSys → Bool)) := iInv7 ++ [("FailOrd", iFailOrd)]
-def firstBadI (v : TSys) : Option String := (iInv8.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: an OK frame in the page's queue finds its id's relay connection gone, or the same generation, open
+def iOkRel (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .ok id => match (v.c.rs.slot id).conn with
+      | some c => decide (c.gen = q.2) && c.isOpen
+      | none => true
+  | _ => true
+def iInv9 : List (String × (TSys → Bool)) := iInv8 ++ [("OkRel", iOkRel)]
+def firstBadI (v : TSys) : Option String := (iInv9.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

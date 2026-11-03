@@ -94,7 +94,7 @@ structure Inv (T : TSys) : Prop where
   discRel : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .discard id → ConnOf T id = none ∨ (∃ pc, PageOf T id = some pc ∧ pc.isOpen = true) ∨ (PageOf T id = none ∧ (T.c.page.slots id).closing = true)
   closingNone : ∀ id, (T.c.page.slots id).closing = true → (T.c.page.slots id).conn = none
   closedNoClose : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ∀ x ∈ T.c.toRelay, x.1 ≠ .close id
-  failOrd : List.Pairwise (fun p q => ∀ id e, p.1 = .fail id e → outIdT q.1 = some id → False) T.c.toPage
+  failOrd : List.Pairwise (fun p q => ∀ id e, p.1 = .fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) T.c.toPage
 
 theorem inv_init (cps bps : Nat) : Inv (TSys.init true cps bps) := by
   constructor

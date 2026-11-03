@@ -374,7 +374,10 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   have hord := h.failOrd
   rw [hq] at hord
   have hrest := (List.pairwise_cons.mp hord).1
-  have hnoF : ∀ r ∈ rest, outIdT r.1 ≠ some id := fun r hr' hEq => hrest r hr' id e rfl hEq
+  have hnoF : ∀ r ∈ rest, isClosedOut r.1 = false → outIdT r.1 ≠ some id := fun r hr' hcl hEq => by
+    have h3 := hrest r hr' id e rfl hEq
+    rw [h3] at hcl
+    cases hcl
   have hsub : ∀ q ∈ rest, q ∈ T.c.toPage := fun q hq' => by
     rw [hq]
     exact List.mem_cons_of_mem _ hq'
@@ -448,7 +451,7 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' j hnc hoj hpn
     by_cases hj : j = id
     · subst hj
-      exact absurd hoj (hnoF q hq')
+      exact absurd hoj (hnoF q hq' hnc)
     · have hpn' : PageOf T j = none := by
         change (pg'.slots j).conn = none at hpn
         rw [hconn j hj] at hpn
@@ -550,7 +553,7 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' j cnt hq1
     by_cases hj : j = id
     · subst hj
-      exact absurd (show outIdT q.1 = some j by rw [hq1]; rfl) (hnoF q hq')
+      exact absurd (show outIdT q.1 = some j by rw [hq1]; rfl) (hnoF q hq' (by rw [hq1]; rfl))
     · rcases h.rep q (hsub q hq') j cnt hq1 with ⟨pc, hpc, hpd⟩ | ⟨hpn, hcl3⟩
       · refine Or.inl ⟨pc, ?_, hpd⟩
         change (pg'.slots j).conn = some pc
@@ -581,7 +584,9 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' j hfl
     by_cases hj : j = id
     · subst hj
-      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+      have h4 := h.closedClosing q (hsub q hq') j hfl
+      rw [hcl0] at h4
+      cases h4
     · change (pg'.slots j).closing = true
       rw [hcl j]
       exact h.closedClosing q (hsub q hq') j hfl
@@ -607,7 +612,7 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' j hfl hcl3 pc hpc
     by_cases hj : j = id
     · subst hj
-      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq' (by rw [hfl]; rfl))
     · have hcl4 : (T.c.page.slots j).closing = false := by
         change (pg'.slots j).closing = false at hcl3
         rw [hcl j] at hcl3
@@ -620,7 +625,7 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' j hfl hcl3 x hx
     by_cases hj : j = id
     · subst hj
-      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq' (by rw [hfl]; rfl))
     · have hcl4 : (T.c.page.slots j).closing = false := by
         change (pg'.slots j).closing = false at hcl3
         rw [hcl j] at hcl3

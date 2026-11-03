@@ -20,7 +20,7 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk)
     (hfailN : ∀ q ∈ new, ∀ id e, q.1 = Relay.Out.fail id e → ConnOf T' id = none)
     (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false)
-    (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → False) new) : Inv T' := by
+    (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) new) : Inv T' := by
   have hmem : ∀ q, q ∈ T'.c.toPage ↔ q ∈ T.c.toPage ∨ q ∈ new := fun q => by
     rw [hTP, List.mem_append]
   have hpg : ∀ j, PageOf T' j = PageOf T j := fun j => by simp only [PageOf, hpage]
