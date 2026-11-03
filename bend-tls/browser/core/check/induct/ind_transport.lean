@@ -331,6 +331,42 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
       rw [hqj] at hfl
       cases hfl
 
+  case connPend =>
+    intro x hx id hxi q hq
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.connPend x hx id hxi q h0
+    · obtain ⟨j, cnt, d, hqj, hd, _⟩ := hnew q h1
+      intro hq2
+      rw [hqj] at hq2
+      have hji : j = id := by simpa [outIdT] using hq2
+      have hn := hnone id (h.connClean x hx id hxi)
+      rw [hji] at hd
+      unfold ConnOf at hn
+      rw [hd] at hn
+      cases hn
+  case okRel =>
+    intro q hq id hqi
+    rcases (hmem q).mp hq with h0 | h1
+    · rcases h.okRel q h0 id hqi with hn0 | ⟨c, hc, hg, ho⟩
+      · exact Or.inl (hnone id hn0)
+      · obtain ⟨c', hc', hg', ho', _⟩ := hfwd id c hc
+        exact Or.inr ⟨c', hc', hg'.trans hg, ho'.trans ho⟩
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hqi
+      cases hqi
+  case okOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.okOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b _ id hid
+      obtain ⟨j, cnt, d, hqj, _⟩ := hnew a ha
+      rw [hqj] at hid
+      cases hid
+    · intro a _ b hb id _ hbid
+      obtain ⟨j, cnt, d, hqj, _⟩ := hnew b hb
+      rw [hqj] at hbid
+      cases hbid
+
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩

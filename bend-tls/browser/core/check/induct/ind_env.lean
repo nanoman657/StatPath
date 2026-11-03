@@ -20,7 +20,9 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk)
     (hfailN : ∀ q ∈ new, ∀ id e, q.1 = Relay.Out.fail id e → ConnOf T' id = none)
     (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false)
-    (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) new) : Inv T' := by
+    (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) new)
+    (hokO : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T' id = some c ∧ c.gen = q.2 ∧ c.isOpen = true)
+    (hokU : List.Pairwise (fun p q => ∀ id, p.1 = Relay.Out.ok id → q.1 ≠ Relay.Out.ok id) new) : Inv T' := by
   have hmem : ∀ q, q ∈ T'.c.toPage ↔ q ∈ T.c.toPage ∨ q ∈ new := fun q => by
     rw [hTP, List.mem_append]
   have hpg : ∀ j, PageOf T' j = PageOf T j := fun j => by simp only [PageOf, hpage]
@@ -336,6 +338,39 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     · obtain ⟨hcl0, _⟩ := hnew q h1
       rw [hfl] at hcl0
       simp [isClosedOut] at hcl0
+
+  case connPend =>
+    intro x hx id hxi q hq
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.connPend x hx id hxi q h0
+    · obtain ⟨_, j, c, hj, hcj, _⟩ := hnew q h1
+      intro hq2
+      rw [hj] at hq2
+      have hji : j = id := by simpa [outIdT] using hq2
+      rw [hji, h.connClean x hx id hxi] at hcj
+      cases hcj
+  case okRel =>
+    intro q hq id hqi
+    rcases (hmem q).mp hq with h0 | h1
+    · rcases h.okRel q h0 id hqi with hn0 | ⟨c, hc, hg, ho⟩
+      · exact Or.inl (hnone id hn0)
+      · rcases hconn id c hc with hn1 | ⟨c', hc', hg', ho', _⟩
+        · exact Or.inl hn1
+        · exact Or.inr ⟨c', hc', hg'.trans hg, ho' ho⟩
+    · exact Or.inr (hokO q h1 id hqi)
+  case okOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.okOrd, hokU, ?_⟩
+    intro a ha b hb id hai hbi
+    obtain ⟨c, hc, hco⟩ := hokN b hb id hbi
+    rcases h.okRel a ha id hai with hn | ⟨c', hc', _, ho'⟩
+    · rw [hc] at hn
+      cases hn
+    · rw [hc] at hc'
+      have hcc : c = c' := Option.some.inj hc'
+      rw [← hcc, hco] at ho'
+      cases ho'
 
   case failOrd =>
     rw [hTP]

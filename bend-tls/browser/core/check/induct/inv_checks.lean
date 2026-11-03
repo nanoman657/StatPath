@@ -304,7 +304,22 @@ def iOkRel (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
       | none => true
   | _ => true
 def iInv9 : List (String × (TSys → Bool)) := iInv8 ++ [("OkRel", iOkRel)]
-def firstBadI (v : TSys) : Option String := (iInv9.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: no two OK frames of the same id are queued in the page's queue
+def okOrdB : List (Relay.Out × Nat) → Bool
+  | [] => true
+  | q :: rest => (match q.1 with
+      | .ok id => rest.all (fun r => match r.1 with
+          | .ok j => j != id
+          | _ => true)
+      | _ => true) && okOrdB rest
+def iOkOrd (v : TSys) : Bool := okOrdB v.c.toPage
+def iInv10 : List (String × (TSys → Bool)) := iInv9 ++ [("OkOrd", iOkOrd)]
+-- candidate: while a CONNECT of an id waits in the relay's queue, no frame of that id is in the page's queue
+def connPendB (v : TSys) : Bool := v.c.toRelay.all fun x => match x.1 with
+  | .connect id => v.c.toPage.all fun q => outIdT q.1 != some id
+  | _ => true
+def iInv11 : List (String × (TSys → Bool)) := iInv10 ++ [("ConnPend", connPendB)]
+def firstBadI (v : TSys) : Option String := (iInv11.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

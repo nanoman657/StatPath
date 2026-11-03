@@ -312,4 +312,115 @@ theorem stepK_sock_outs_pw (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Na
     rw [if_pos hcl']
     exact List.Pairwise.nil
 
+-- the post-state of a socket step that reports an OK: the connection of the id is open, with the same generation
+theorem sockStep_ok_post (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (o : Relay.Out) (id' : Nat)
+    (ho : o ∈ (Relay.sockStep cap s id g k).2) (hoe : o = Relay.Out.ok id') :
+    id' = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧
+      ((Relay.sockStep cap s id g k).1.slot id).conn = some { c0 with isOpen := true } := by
+  subst hoe
+  rcases hc : (s.slot id).conn with _ | c
+  · have hn : Relay.sockStep cap s id g k = (s, []) := by
+      unfold Relay.sockStep; rw [hc]
+    rw [hn] at ho
+    simp at ho
+  · by_cases hkO : k = Relay.Sk.open_
+    · subst hkO
+      by_cases hg : c.gen = g
+      · by_cases hop : c.isOpen = true
+        · have hn : Relay.sockStep cap s id g Relay.Sk.open_ = (s, []) := by
+            unfold Relay.sockStep; simp [hc, hg, hop]
+          rw [hn] at ho
+          simp at ho
+        · have hopF : c.isOpen = false := by simpa using hop
+          have hn : Relay.sockStep cap s id g Relay.Sk.open_ =
+              (Relay.setConn s id (some { c with isOpen := true }), [Relay.Out.ok id]) := by
+            unfold Relay.sockStep; simp [hc, hg, hopF]
+          rw [hn] at ho ⊢
+          simp at ho
+          refine ⟨ho, c, hc, ?_⟩
+          simp [Relay.setConn, Relay.setSlot, Relay.St.slot]
+      · have hn : Relay.sockStep cap s id g Relay.Sk.open_ = (s, []) := by
+          unfold Relay.sockStep; simp [hc, hg]
+        rw [hn] at ho
+        simp at ho
+    · cases k with
+      | open_ => exact absurd rfl hkO
+      | data n =>
+        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
+        iterate 6 (first | split at ho | skip)
+        all_goals simp_all [Relay.failConn]
+      | eof => unfold Relay.sockStep at ho; rw [hc] at ho; simp at ho
+      | peerclose =>
+        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
+        iterate 6 (first | split at ho | skip)
+        all_goals simp_all [Relay.failConn]
+      | error e => unfold Relay.sockStep at ho; rw [hc] at ho; simp_all [Relay.failConn]
+      | drain a =>
+        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
+        unfold Relay.flushConn at ho; dsimp only at ho
+        iterate 3 (first | split at ho | skip)
+        all_goals simp_all
+
+theorem stepK_sock_ok_post (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk)
+    (o : Relay.Out) (id' : Nat) (ho : o ∈ (Clock.stepK cap k s (.sock id g kk)).2.2)
+    (hoe : o = Relay.Out.ok id') :
+    id' = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧
+      ((Clock.stepK cap k s (.sock id g kk)).2.1.slot id).conn = some { c0 with isOpen := true } := by
+  by_cases hcl : s.closed.isSome = false
+  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2] at ho ⊢
+    exact sockStep_ok_post cap s id g k' o id' ho hoe
+  · have hcl' : s.closed.isSome = true := by
+      cases hb : s.closed.isSome
+      · exact absurd hb hcl
+      · rfl
+    unfold Clock.stepK
+    rw [if_pos hcl'] at ho
+    simp at ho
+
+-- the flush's frames carry no OK, so no two of them are OKs of one id
+theorem flushConn_okpw (s : Relay.St) (id a : Nat) (c : Relay.Conn) :
+    List.Pairwise (fun x y => ∀ id', x = Relay.Out.ok id' → y ≠ Relay.Out.ok id')
+      (Relay.flushConn s id c a).2 := by
+  unfold Relay.flushConn
+  by_cases h1 : c.isOpen = true
+  · by_cases h2 : min a c.queued = 0
+    · simp [h1, h2]
+    · simp [h1, h2]
+  · simp [h1]
+
+-- the socket step's frames: at most one of them is an OK
+theorem sockStep_okpw (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) :
+    List.Pairwise (fun a b => ∀ id', a = Relay.Out.ok id' → b ≠ Relay.Out.ok id')
+      (Relay.sockStep cap s id g k).2 := by
+  unfold Relay.sockStep
+  rcases hc : (s.slot id).conn with _ | c
+  · dsimp only
+    exact List.Pairwise.nil
+  · dsimp only
+    split
+    · exact List.Pairwise.nil
+    · cases k
+      case drain a => exact flushConn_okpw s id a c
+      all_goals
+        dsimp only
+        (iterate 6 (all_goals (first | split | skip)))
+        all_goals (try (cases hco : c.isOpen))
+        all_goals (simp_all [Relay.failConn, List.pairwise_cons])
+
+theorem stepK_sock_okpw (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk) :
+    List.Pairwise (fun a b => ∀ id', a = Relay.Out.ok id' → b ≠ Relay.Out.ok id')
+      (Clock.stepK cap k s (.sock id g kk)).2.2 := by
+  by_cases hcl : s.closed.isSome = false
+  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2]
+    exact sockStep_okpw cap s id g k'
+  · have hcl' : s.closed.isSome = true := by
+      cases hb : s.closed.isSome
+      · exact absurd hb hcl
+      · rfl
+    unfold Clock.stepK
+    rw [if_pos hcl']
+    exact List.Pairwise.nil
+
 end Ind

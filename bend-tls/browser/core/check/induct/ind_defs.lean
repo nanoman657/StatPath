@@ -95,6 +95,49 @@ structure Inv (T : TSys) : Prop where
   closingNone : ∀ id, (T.c.page.slots id).closing = true → (T.c.page.slots id).conn = none
   closedNoClose : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ∀ x ∈ T.c.toRelay, x.1 ≠ .close id
   failOrd : List.Pairwise (fun p q => ∀ id e, p.1 = .fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) T.c.toPage
+  -- while a CONNECT of an id waits in the relay's queue, the page's queue holds no frame of that id
+  connPend : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .connect id → ∀ q ∈ T.c.toPage, outIdT q.1 ≠ some id
+  -- an OK frame finds its id's relay connection gone, or open with the frame's generation
+  okRel : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .ok id →
+    ConnOf T id = none ∨ ∃ c, ConnOf T id = some c ∧ c.gen = q.2 ∧ c.isOpen = true
+  -- no two OK frames of an id are queued
+  okOrd : List.Pairwise (fun p q => ∀ id, p.1 = .ok id → q.1 ≠ .ok id) T.c.toPage
+
+-- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
+-- a frame of a connection that is gone is queued only while the page is closing for it)
+theorem no_frame_of_free (T : TSys) (h : Inv T) (id : Nat) (hn : PageOf T id = none)
+    (hc : (T.c.page.slots id).closing = false) : ∀ q ∈ T.c.toPage, outIdT q.1 ≠ some id := by
+  intro q hq hid
+  obtain ⟨o, t⟩ := q
+  have hcl : (T.c.page.slots id).closing = true := by
+    cases o with
+    | ok j =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.noOrphan (Relay.Out.ok j, t) hq j rfl hid hn
+    | data j n =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.noOrphan (Relay.Out.data j n, t) hq j rfl hid hn
+    | eof j =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.noOrphan (Relay.Out.eof j, t) hq j rfl hid hn
+    | written j cnt f =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.noOrphan (Relay.Out.written j cnt f, t) hq j rfl hid hn
+    | fail j e =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.noOrphan (Relay.Out.fail j e, t) hq j rfl hid hn
+    | closed j =>
+      have hj : j = id := by simpa [outIdT] using hid
+      subst hj
+      exact h.closedClosing (Relay.Out.closed j, t) hq j rfl
+    | wsclose c => simp [outIdT] at hid
+  rw [hc] at hcl
+  cases hcl
 
 theorem inv_init (cps bps : Nat) : Inv (TSys.init true cps bps) := by
   constructor

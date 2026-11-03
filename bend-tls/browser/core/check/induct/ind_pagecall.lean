@@ -53,7 +53,7 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -335,6 +335,26 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
       subst h1
       simp at hxe
   · exact h.failOrd
+  · intro x hx j hxj q hq'
+    try simp only [List.mem_append, List.mem_singleton] at hx
+    rcases hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · subst h1
+      simp at hxj
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
+  · intro x hx j hxj q hq'
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · rw [List.mem_singleton] at h1
+      subst h1
+      have hj : id = j := by simpa using hxj
+      subst hj
+      exact no_frame_of_free T h _ hnone hcl q hq'
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
 
 -- the page's CONNECT call, as the composed step does it: with no free id nothing changes; with one, the
 -- connection is made and its CONNECT frame queued
@@ -408,7 +428,7 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -710,6 +730,15 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
       rw [hc0] at hcc
       cases hcc
   · exact h.failOrd
+  · intro x hx j hxj q hq'
+    try simp only [List.mem_append, List.mem_singleton] at hx
+    rcases hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · subst h1
+      simp at hxj
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
 
 theorem fwd_discard_left (x : Relay.Ev) (id : Nat) (h : FwdEv x (Relay.Ev.discard id)) :
     (∃ a, x = Relay.Ev.connect a ∧ a = id) ∨ (∃ a, x = Relay.Ev.discard a ∧ a = id) := by
@@ -745,7 +774,7 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1077,6 +1106,15 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
       subst h1
       simp at hxe
   · exact h.failOrd
+  · intro x hx j hxj q hq'
+    try simp only [List.mem_append, List.mem_singleton] at hx
+    rcases hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · subst h1
+      simp at hxj
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
 
 -- the page's DISCARD: its four outcomes, as the page's step gives them
 theorem doDiscard_none (st : Page.State) (i : Nat) (hc : (st.slots i).conn = none) :
@@ -1212,7 +1250,7 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1542,6 +1580,15 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
       rw [hk] at hxe
       simp at hxe
   · exact h.failOrd
+  · intro x hx j hxj q hq'
+    try simp only [List.mem_append, List.mem_singleton] at hx
+    rcases hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · subst h1
+      simp at hxj
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
 
 theorem doRecv_take_spec (st : Page.State) (i max : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
     (hgt : c.received > c.taken) :
@@ -1762,7 +1809,7 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -2090,6 +2137,15 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
       rw [hk] at hxe
       simp at hxe
   · exact h.failOrd
+  · intro x hx j hxj q hq'
+    try simp only [List.mem_append, List.mem_singleton] at hx
+    rcases hx with h1 | h1
+    · exact h.connPend x h1 j hxj q hq'
+    · subst h1
+      simp at hxj
+  · intro q hq' id hqi
+    exact h.okRel q hq' id hqi
+  · exact h.okOrd
 
 -- the pumped SEND of n > 0 on an open connection with no SEND in progress and not discarding
 theorem doSend_pump (st : Page.State) (i n : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
