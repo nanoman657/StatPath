@@ -48,8 +48,9 @@ facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uni
   `inv_written_core` (`ind_wcore.lean`) proves the 48 fields over the frame, and `inv_tDoPage_written` is the page's frame.
 - The relay's queue steps, in progress (`ind_relayq.lean`): `inv_relay_keep` proves the invariant for any relay step
   that keeps every connection's data and appends only id-less frames; `inv_tDoRelay_read` instantiates it for READ.
-  Still to do: CLOSE (needs a `closeUniq` field: at most one CLOSE of an id queued; the bounded search supports it to
-  depth 9), DISCARD, SEND, and CONNECT (creates a connection and a genOf entry).
+  `ind_relayclose.lean`: CLOSE (`inv_tDoRelay_close`: a closed relay, a known id's connection removed with one CLOSED, or
+  an unknown id). `ind_relaydisc.lean`: DISCARD (`inv_tDoRelay_discard`: a closed relay, an open connection's reply, or
+  a no-op). Still to do: SEND and CONNECT (creates a connection and a genOf entry).
 - The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,
   the reachability induction, and the final theorem (reachable implies `WQ`, so the relay's window check never fires).
 
@@ -60,7 +61,7 @@ states). The depth-11 run is not committed.
 
     python3 build_ind.py ind_defs.lean ind_relay.lean ind_flush.lean ind_transport.lean ind_tick.lean \
       ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean \
-      ind_ok.lean ind_wake.lean ind_pump.lean ind_written.lean ind_wcore.lean ind_relayq.lean
+      ind_ok.lean ind_wake.lean ind_pump.lean ind_written.lean ind_wcore.lean ind_relayq.lean ind_relayclose.lean ind_relaydisc.lean
     lean Ind.lean
 
 The bounded search (a check of candidate invariants over the composed model, not a proof):
