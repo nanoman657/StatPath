@@ -54,10 +54,12 @@ facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uni
   fails (`inv_relay_send_fail`, the connection is gone); `ind_sendstep.lean`: the helper lemmas for the clock's SEND
   and the wrappers; `ind_sendtdo.lean`: the dispatch `inv_tDoRelay_send` over the relay's cases (closed, no-op,
   protocol close, window, cap, peer closed). `inv_relay_keep` takes `qs` as a decrease (`<=`), so a popped SEND
-  that changes no connection is covered. Still to do: CONNECT (creates a connection and a genOf entry). It needs two
-  facts the invariant does not state yet: a queued CONNECT's sequence number is positive (the page's counter starts
-  at 1, and `tDoRelay` registers a genOf entry only for a positive sequence), and a queued WRITTEN frame's generation
-  is below the relay's `nextGen`.
+  that changes no connection is covered. `ind_connect.lean`: CONNECT (`inv_tDoRelay_connect`): the closed relay, a refused CONNECT (a FAIL 11 of the id, tagged
+  with the next generation; `inv_connect_keep`), and a CONNECT the relay takes for a free id (`inv_connect_create`: the
+  connection of the next generation, and `genOf` gains the sequence's entry). The invariant's `connAux` field gives the
+  two facts this needed: a queued CONNECT has a positive sequence number, and a queued WRITTEN frame's generation is
+  below the relay's `nextGen`. Still to do: the dispatch over all transitions (`Step`), reachability from `TSys.init`,
+  and the final theorem.
 - The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,
   the reachability induction, and the final theorem (reachable implies `WQ`, so the relay's window check never fires).
 
@@ -69,7 +71,8 @@ states). The depth-11 run is not committed.
     python3 build_ind.py ind_defs.lean ind_relay.lean ind_flush.lean ind_transport.lean ind_tick.lean \
       ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean \
       ind_ok.lean ind_wake.lean ind_pump.lean ind_written.lean ind_wcore.lean ind_relayq.lean ind_relayclose.lean ind_relaydisc.lean ind_relaysend.lean \
-      ind_relaysendf.lean ind_sendstep.lean ind_sendtdo.lean
+      ind_relaysendf.lean ind_sendstep.lean ind_sendtdo.lean \
+      ind_connect.lean
     lean Ind.lean
 
 The bounded search (a check of candidate invariants over the composed model, not a proof):
