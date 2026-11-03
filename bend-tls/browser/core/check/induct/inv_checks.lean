@@ -348,7 +348,14 @@ def wrOrdB : List (Relay.Out × Nat) → Bool
           | _ => true)
       | _ => true) && wrOrdB rest
 def iInv14 : List (String × (TSys → Bool)) := iInv13 ++ [("WrMono", wrMonoB), ("WrOrd", fun v => wrOrdB v.c.toPage)]
-def firstBadI (v : TSys) : Option String := (iInv14.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: at most one discard reply of an id is queued (as positions, not only as equal pairs)
+def discPairB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id _ 1 => (v.c.toPage.filter fun r => match r.1 with
+      | .written j _ 1 => j == id
+      | _ => false).length ≤ 1
+  | _ => true
+def iInv15 : List (String × (TSys → Bool)) := iInv14 ++ [("DiscPair", discPairB)]
+def firstBadI (v : TSys) : Option String := (iInv15.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

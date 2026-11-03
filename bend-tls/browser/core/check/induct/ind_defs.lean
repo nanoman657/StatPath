@@ -42,6 +42,37 @@ theorem pairwise_of_forall {α : Type} (R : α → α → Prop) : ∀ (L : List 
     intro b hb
     exact h x (by simp) b (by simp [hb])
 
+-- a discard reply of an id in a page queue: a WRITTEN frame of flag 1 for the id
+def DiscRep (id : Nat) (q : Relay.Out × Nat) : Bool := match q.1 with
+  | .written j _ 1 => j == id
+  | _ => false
+
+theorem discRep_flag0 (id j cnt : Nat) (q : Relay.Out × Nat) (h : q.1 = .written j cnt 0) :
+    DiscRep id q = false := by
+  unfold DiscRep
+  rw [h]
+  rfl
+
+theorem discRep_spec (id : Nat) (q : Relay.Out × Nat) (h : DiscRep id q = true) :
+    ∃ c, q.1 = .written id c 1 := by
+  rcases q with ⟨o, n⟩
+  cases o with
+  | written j c f =>
+    cases f with
+    | zero => simp [DiscRep] at h
+    | succ f =>
+      cases f with
+      | zero =>
+        have hj : j = id := by simpa [DiscRep] using h
+        exact ⟨c, by simp [hj]⟩
+      | succ f => simp [DiscRep] at h
+  | _ => simp [DiscRep] at h
+
+-- a list with no discard reply of an id has none in any sublist
+theorem discUniq_of_sub (L L' : List (Relay.Out × Nat)) (id : Nat) (hs : L'.Sublist L)
+    (h : (L.filter (DiscRep id)).length ≤ 1) : (L'.filter (DiscRep id)).length ≤ 1 :=
+  Nat.le_trans (List.Sublist.length_le (List.Sublist.filter (DiscRep id) hs)) h
+
 structure Inv (T : TSys) : Prop where
   pi : ∀ id pc, PageOf T id = some pc → Page.PInv pc
   link : ∀ id c, ConnOf T id = some c →
@@ -102,10 +133,10 @@ structure Inv (T : TSys) : Prop where
     ConnOf T id = none ∨ ∃ c, ConnOf T id = some c ∧ c.gen = q.2 ∧ c.isOpen = true
   -- no two OK frames of an id are queued
   okOrd : List.Pairwise (fun p q => ∀ id, p.1 = .ok id → q.1 ≠ .ok id) T.c.toPage
-  -- a discard reply of an id is queued only when no DISCARD of that id waits in the relay's queue, and it is the only
-  -- discard reply of its id that is queued (the page's one discard at a time)
+  -- a discard reply of an id is queued only when no DISCARD of that id waits in the relay's queue, and at most one
+  -- discard reply of an id is queued (the page's one discard at a time: the count is of queue positions)
   discOnce : ∀ q ∈ T.c.toPage, ∀ id cnt, q.1 = .written id cnt 1 → ∀ x ∈ T.c.toRelay, x.1 ≠ .discard id
-  discUniq : ∀ q ∈ T.c.toPage, ∀ r ∈ T.c.toPage, ∀ id c1 c2, q.1 = .written id c1 1 → r.1 = .written id c2 1 → q = r
+  discUniq : ∀ id, (T.c.toPage.filter (DiscRep id)).length ≤ 1
   -- a queued WRITTEN of a connection's generation counts at least the page's written count of the connection
   wrMono : ∀ q ∈ T.c.toPage, ∀ id cnt f, q.1 = .written id cnt f → ∀ pc, PageOf T id = some pc →
     (pc.seq, q.2) ∈ T.c.genOf → pc.written ≤ cnt

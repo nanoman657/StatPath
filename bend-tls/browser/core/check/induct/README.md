@@ -35,6 +35,9 @@ at every construction site, including `inv_flush` and `inv_env_gen`. The flush a
 facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uniq`, `flushOne_outs_pre`), `ind_tick.lean`
 (`tickK_spec`, `tick_outs_uniq`) and `ind_envsock.lean` (`sockStep_wr_ge`, `sockStep_one_wr`, `stepK_sock_wr`,
 `stepK_sock_one_wr`).
+- `discUniq` is now a count: at most one discard reply (a WRITTEN of flag 1) per id in the page's queue. The old form
+  (equal pairs) allowed a duplicate reply, which the discard case of `rep` cannot tolerate. The bounded search checks
+  the count form (`discPairB`, `iInv15`) to depth 9 with no violation.
 - The WRITTEN frame (`ind_pump.lean`, `ind_written.lean`): `pump_spec` (the SEND entries the pump queues sum to the increase
   of `sent`, and `PInv` is kept) and `wr_frame_spec` (the frame's connection, its SEND entries and the discard case).
   Still to do: `inv_written_core`, the 45 fields over the frame, and its page-frame wrapper.

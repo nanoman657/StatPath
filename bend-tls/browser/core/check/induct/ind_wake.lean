@@ -591,8 +591,8 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
     · obtain ⟨k, rfl⟩ := hL' x h1
       simp
   · -- discUniq
-    intro q hq' r hr' id c1 c2 h1 h2
-    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+    intro id
+    exact discUniq_of_sub _ _ id hsl (h.discUniq id)
   · -- wrMono
     intro q hq' j cnt f hqj pc hpc hg
     change (P.slots j).conn = some pc at hpc

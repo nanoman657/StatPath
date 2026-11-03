@@ -27,7 +27,7 @@ theorem inv_shrink (c : Client.Sys) (clk : Clock.Clk) (h : Inv ⟨c, clk⟩) (c'
       connPend := fun x hx id hxi q hq => h.connPend x hx id hxi q (hs.subset hq),
       okRel := fun q hq => h.okRel q (hs.subset hq), okOrd := List.Pairwise.sublist hs h.okOrd,
       discOnce := fun q hq id cnt hqj => h.discOnce q (hs.subset hq) id cnt hqj,
-      discUniq := fun q hq r hr id c1 c2 h1 h2 => h.discUniq q (hs.subset hq) r (hs.subset hr) id c1 c2 h1 h2,
+      discUniq := fun id => discUniq_of_sub _ _ id hs (h.discUniq id),
       wrMono := fun q hq id cnt f hqj pc hpc hg => h.wrMono q (hs.subset hq) id cnt f hqj pc hpc hg,
       wrOrd := List.Pairwise.sublist hs h.wrOrd, genFun := h.genFun }
 
@@ -320,8 +320,8 @@ theorem inv_closed_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (r
   · exact List.Pairwise.sublist hsl h.okOrd
   · intro q hq' id cnt hqj
     exact h.discOnce q (hsub q hq') id cnt hqj
-  · intro q hq' r hr' id c1 c2 h1 h2
-    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+  · intro id
+    exact discUniq_of_sub _ _ id hsl (h.discUniq id)
   · intro q hq' id cnt f hqj pc hpc hg
     exact h.wrMono q (hsub q hq') id cnt f hqj pc
       (by show (T.c.page.slots id).conn = some pc; rw [← hconn id]; exact hpc) hg
@@ -687,8 +687,8 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · exact List.Pairwise.sublist hsl h.okOrd
   · intro q hq' j cnt hqj
     exact h.discOnce q (hsub q hq') j cnt hqj
-  · intro q hq' r hr' id c1 c2 h1 h2
-    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+  · intro id
+    exact discUniq_of_sub _ _ id hsl (h.discUniq id)
   · intro q hq' j cnt f hqj pc hpc hg
     by_cases hj : j = id
     · exfalso

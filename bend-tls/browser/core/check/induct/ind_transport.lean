@@ -380,16 +380,15 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
       rw [hq'] at hqj
       cases hqj
   case discUniq =>
-    intro q hq r hr id c1 c2 h1 h2
-    rcases (hmem q).mp hq with h0 | h1'
-    · rcases (hmem r).mp hr with h0' | h1''
-      · exact h.discUniq q h0 r h0' id c1 c2 h1 h2
-      · obtain ⟨j, cnt', d, hr', -⟩ := hnew r h1''
-        rw [hr'] at h2
-        cases h2
-    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1'
-      rw [hq'] at h1
-      cases h1
+    intro id
+    have hn : new.filter (DiscRep id) = [] := by
+      rw [List.filter_eq_nil_iff]
+      intro x hx hxt
+      obtain ⟨j, cnt', d, hx', -⟩ := hnew x hx
+      rw [discRep_flag0 id j cnt' x hx'] at hxt
+      exact absurd hxt (by decide)
+    rw [hTP, List.filter_append, hn, List.append_nil]
+    exact h.discUniq id
   case wrMono =>
     intro q hq id cnt f hqj pc hpc hg
     have hpc' : PageOf T id = some pc := by rw [← hpg id]; exact hpc

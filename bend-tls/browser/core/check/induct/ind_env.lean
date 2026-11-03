@@ -392,12 +392,14 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     · exact h.discOnce q h0 id cnt hqj x hx
     · cases hnewFlag q h1 id cnt 1 hqj
   case discUniq =>
-    intro q hq r hr id c1 c2 h1 h2
-    rcases (hmem q).mp hq with h0 | h1'
-    · rcases (hmem r).mp hr with h0' | h1''
-      · exact h.discUniq q h0 r h0' id c1 c2 h1 h2
-      · cases hnewFlag r h1'' id c2 1 h2
-    · cases hnewFlag q h1' id c1 1 h1
+    intro id
+    have hn : new.filter (DiscRep id) = [] := by
+      rw [List.filter_eq_nil_iff]
+      intro x hx hxt
+      obtain ⟨c, hc⟩ := discRep_spec id x hxt
+      exact absurd (hnewFlag x hx id c 1 hc) (by decide)
+    rw [hTP, List.filter_append, hn, List.append_nil]
+    exact h.discUniq id
   case wrMono =>
     intro q hq id cnt f hqj pc hpc hg
     have hpc' : PageOf T id = some pc := by

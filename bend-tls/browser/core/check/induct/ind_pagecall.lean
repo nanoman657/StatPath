@@ -352,8 +352,8 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
     · rw [List.mem_singleton] at h1
       subst h1
       simp
-  · intro q hq' r hr' id' c1 c2 h1 h2
-    exact h.discUniq q hq' r hr' id' c1 c2 h1 h2
+  · intro id'
+    exact h.discUniq id'
   · intro q hq' j cnt f hqj pI hpI hgI
     change (P.slots j).conn = some pI at hpI
     by_cases hj : j = id
@@ -756,8 +756,8 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
     · rw [List.mem_singleton] at h1
       subst h1
       simp
-  · intro q hq' r hr' id' c1 c2 h1 h2
-    exact h.discUniq q hq' r hr' id' c1 c2 h1 h2
+  · intro id'
+    exact h.discUniq id'
   · intro q hq' j cnt f hqj pI hpI hgI
     change (P.slots j).conn = some pI at hpI
     by_cases hj : j = id
@@ -1159,8 +1159,8 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
       · have h1' : (T.c.page.slots j).conn = none := hn
         rw [← hid, hpc] at h1'
         cases h1'
-  · intro q hq' r hr' id' c1 c2 h1 h2
-    exact h.discUniq q hq' r hr' id' c1 c2 h1 h2
+  · intro id'
+    exact h.discUniq id'
   · intro q hq' j cnt f hqj pI hpI hgI
     change (P.slots j).conn = some pI at hpI
     by_cases hj : j = id
@@ -1655,8 +1655,8 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
     · obtain ⟨k, hk⟩ := hL x h1
       rw [hk]
       simp
-  · intro q hq' r hr' id' c1 c2 h1 h2
-    exact h.discUniq q hq' r hr' id' c1 c2 h1 h2
+  · intro id'
+    exact h.discUniq id'
   · intro q hq' j cnt f hqj pI hpI hgI
     change (P.slots j).conn = some pI at hpI
     by_cases hj : j = id
@@ -2234,8 +2234,8 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
     · obtain ⟨k, hk⟩ := hL x h1
       rw [hk]
       simp
-  · intro q hq' r hr' id' c1 c2 h1 h2
-    exact h.discUniq q hq' r hr' id' c1 c2 h1 h2
+  · intro id'
+    exact h.discUniq id'
   · intro q hq' j cnt f hqj pI hpI hgI
     change (P.slots j).conn = some pI at hpI
     by_cases hj : j = id
