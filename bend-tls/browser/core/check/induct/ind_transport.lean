@@ -233,4 +233,88 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     obtain ⟨g, hg⟩ := h.recvG id pc hp hr
     exact ⟨g, by rw [hG]; exact hg⟩
 
+  case failNone =>
+    intro q hq id e hfl
+    rcases (hmem q).mp hq with h0 | h1
+    · exact hnone id (h.failNone q h0 id e hfl)
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case closedNone =>
+    intro q hq id hfl
+    rcases (hmem q).mp hq with h0 | h1
+    · exact hnone id (h.closedNone q h0 id hfl)
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case closedClosing =>
+    intro q hq id hfl
+    rw [hcl id]
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.closedClosing q h0 id hfl
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case closedOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.closedOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b hb id hid _
+      obtain ⟨j, cnt, d, hqj, _⟩ := hnew a ha
+      rw [hqj] at hid
+      cases hid
+    · intro a ha b hb id hid hob
+      obtain ⟨j, cnt, d, hqj, hd, _, _⟩ := hnew b hb
+      rw [hqj] at hob
+      have hji : j = id := by simpa [outIdT] using hob
+      obtain ⟨c0, hc0, _⟩ := hback j d hd
+      have hcn := h.closedNone a ha id hid
+      rw [hji, hcn] at hc0
+      cases hc0
+  case closeClosing =>
+    intro x hx id hxe
+    rw [hTR] at hx
+    rw [hcl id]
+    exact h.closeClosing x hx id hxe
+  case closedNoConn =>
+    intro q hq id hfl x hx hxe
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.closedNoConn q h0 id hfl x hx hxe
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case openRel =>
+    intro id pc hp hop c hc
+    rw [hpg] at hp
+    obtain ⟨c0, hc0, hg⟩ := hback id c hc
+    obtain ⟨c', hc', _, hio, _⟩ := hfwd id c0 hc0
+    have hcc : c' = c := Option.some.inj (hc'.symm.trans hc)
+    rw [← hcc, hio]
+    exact h.openRel id pc hp hop c0 hc0
+  case okOpen =>
+    intro q hq id hfl hcl2 pc hp
+    rw [hcl id] at hcl2
+    rw [hpg] at hp
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.okOpen q h0 id hfl hcl2 pc hp
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case okNoDisc =>
+    intro q hq id hfl hcl2 x hx
+    rw [hTR] at hx
+    rw [hcl id] at hcl2
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.okNoDisc q h0 id hfl hcl2 x hx
+    · obtain ⟨j, cnt, d, hqj, _⟩ := hnew q h1
+      rw [hqj] at hfl
+      cases hfl
+  case discRel =>
+    intro x hx id hxd
+    rw [hTR] at hx
+    rcases h.discRel x hx id hxd with h0 | ⟨pc, hp, hop⟩ | ⟨hpn, hcl2⟩
+    · exact Or.inl (hnone id h0)
+    · exact Or.inr (Or.inl ⟨pc, by rw [hpg]; exact hp, hop⟩)
+    · exact Or.inr (Or.inr ⟨by rw [hpg]; exact hpn, by rw [hcl id]; exact hcl2⟩)
+
 end Ind

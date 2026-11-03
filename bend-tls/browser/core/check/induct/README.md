@@ -8,10 +8,16 @@ composition, copied from the session's scratch model.
 
 ## Status
 
-Proved, no `sorry`:
+`Inv` has 34 fields: the 24 proved earlier, and the ten ordering fields (`failNone`, `closedNone`,
+`closedClosing`, `closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`).
+`FwdEv` now forbids a CONNECT behind a CLOSE of the same id.
+
+Proved, no `sorry` (76 theorems, `lean Ind.lean` clean):
 - `inv_init`: the initial state satisfies `Inv`.
 - The clock steps: `inv_flush` (flush), `inv_tick` (time passes); the environment's socket events:
-  `inv_env_gen`, `inv_sock`, `inv_env`.
+  `inv_env_gen`, `inv_sock`, `inv_env`. The socket events use the facts `stepK_sock_fail_fact` (a FAIL frame
+  leaves its id with no relay connection) and `stepK_sock_ok_fact` (an OK frame is for a connection that was not
+  open), proved in `ind_envsock.lean` from the socket step's own spec.
 - The page's calls: `inv_tPageConnect`, `inv_tPageClose` (needs `fixed`), `inv_tPageDiscard`,
   `inv_tPageRecv`, `inv_tPageSend` (the send's window argument uses `pump_props`, `pump_shape`).
 
@@ -22,20 +28,8 @@ Not yet proved:
 - The reachability induction and the final theorem (reachable implies `WQ`, so the relay's window check
   never fires for a page SEND).
 
-Fields the frame and queue steps need, beyond the 24 in `Inv`. Each passes the bounded search (`inv_checks.lean`,
-`search_main.lean`) to depth 9 (23,387 states, no violation). None is in `Inv` or proved yet:
-- `failNone`, `closedNone`: a FAIL or CLOSED frame in the page's queue finds the relay's connection gone.
-- `closedClosing`: a CLOSED frame in the page's queue means its id's page is closing. `closeClosing`: a queued
-  CLOSE means its id's page is closing.
-- `closedOrd`: after a CLOSED frame of an id, the queue has no other frame of that id (except a CLOSED).
-- `closedNoConn`: a CLOSED frame in the page's queue means no CONNECT of its id is queued. This needs the
-  barrier to forbid a CONNECT behind a CLOSE of the same id (`fwdB` in `inv_checks.lean` already has it).
-- `openRel`: an open page connection has an open relay connection. `okOpen`: an OK frame (page not closing)
-  finds its page connection not open. `okNoDisc`: such an OK frame finds no DISCARD of its id queued.
-- `discRel`: a queued DISCARD finds its id's relay connection gone, or its page connection open, or the page closing.
-
-Proving these also needs the socket spec (`SockSpec` in `ind_sock.lean`) to say that a FAIL frame leaves the relay
-connection gone and an OK frame comes only from a connection that was not open. It says neither today.
+The candidate fields were checked by the bounded search (`inv_checks.lean`, `search_main.lean`) to depth 9 (23,387
+states, no violation). The depth-11 run is not committed.
 
 ## Build
 

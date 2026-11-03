@@ -23,12 +23,24 @@ def FwdEv : Relay.Ev → Relay.Ev → Prop
   | .connect a, .connect b => a = b
   | .discard a, .send b _ => a = b
   | .discard a, .discard b => a = b
+  | .close a, .connect b => a = b
   | _, _ => False
 
 -- a discard of the page is waiting in the queue, or the reply to one is, for this id
 def DiscWait (T : TSys) (id : Nat) : Prop := ∃ q ∈ T.c.toRelay, q.1 = .discard id
 def ReplyWait (T : TSys) (id : Nat) : Prop := ∃ q ∈ T.c.toPage, ∃ cnt, q.1 = .written id cnt 1
 def ConnWait (T : TSys) (id : Nat) : Prop := ∃ q ∈ T.c.toRelay, q.1 = .connect id
+
+-- a relation holding between every two members of a list holds along the list
+theorem pairwise_of_forall {α : Type} (R : α → α → Prop) : ∀ (L : List α), (∀ a ∈ L, ∀ b ∈ L, R a b) → L.Pairwise R := by
+  intro L
+  induction L with
+  | nil => intro _; exact List.Pairwise.nil
+  | cons x xs ih =>
+    intro h
+    refine List.Pairwise.cons ?_ (ih (fun a ha b hb => h a (by simp [ha]) b (by simp [hb])))
+    intro b hb
+    exact h x (by simp) b (by simp [hb])
 
 structure Inv (T : TSys) : Prop where
   pi : ∀ id pc, PageOf T id = some pc → Page.PInv pc
@@ -69,6 +81,17 @@ structure Inv (T : TSys) : Prop where
     (∃ pc, PageOf T id = some pc ∧ pc.discardPending = true) ∨ (PageOf T id = none ∧ (T.c.page.slots id).closing = true)
   -- a connection that has received data has the generation the relay gave it
   recvG : ∀ id pc, PageOf T id = some pc → 0 < pc.received → ∃ g, (pc.seq, g) ∈ T.c.genOf
+  -- the page's queue and the relay's, in the order they are kept (step 1 of the extension: see induct/README.md)
+  failNone : ∀ q ∈ T.c.toPage, ∀ id e, q.1 = .fail id e → ConnOf T id = none
+  closedNone : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ConnOf T id = none
+  closedClosing : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → (T.c.page.slots id).closing = true
+  closedOrd : List.Pairwise (fun p q => ∀ id, p.1 = .closed id → outIdT q.1 = some id → isClosedOut q.1 = true) T.c.toPage
+  closeClosing : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .close id → (T.c.page.slots id).closing = true
+  closedNoConn : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ∀ x ∈ T.c.toRelay, x.1 ≠ .connect id
+  openRel : ∀ id pc, PageOf T id = some pc → pc.isOpen = true → ∀ c, ConnOf T id = some c → c.isOpen = true
+  okOpen : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .ok id → (T.c.page.slots id).closing = false → ∀ pc, PageOf T id = some pc → pc.isOpen = false
+  okNoDisc : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .ok id → (T.c.page.slots id).closing = false → ∀ x ∈ T.c.toRelay, x.1 ≠ .discard id
+  discRel : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .discard id → ConnOf T id = none ∨ (∃ pc, PageOf T id = some pc ∧ pc.isOpen = true) ∨ (PageOf T id = none ∧ (T.c.page.slots id).closing = true)
 
 theorem inv_init (cps bps : Nat) : Inv (TSys.init true cps bps) := by
   constructor

@@ -17,7 +17,9 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     (hnew : ∀ q ∈ new, isClosedOut q.1 = false ∧ ∃ j c, outIdT q.1 = some j ∧ ConnOf T j = some c ∧ q.2 = c.gen ∧
       (∀ cnt d, q.1 = Relay.Out.written j cnt 0 → ConnOf T' j = some d → cnt ≤ d.written) ∧
       (∀ cnt f, q.1 = Relay.Out.written j cnt f → f = 0))
-    (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk) : Inv T' := by
+    (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk)
+    (hfailN : ∀ q ∈ new, ∀ id e, q.1 = Relay.Out.fail id e → ConnOf T' id = none)
+    (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false) : Inv T' := by
   have hmem : ∀ q, q ∈ T'.c.toPage ↔ q ∈ T.c.toPage ∨ q ∈ new := fun q => by
     rw [hTP, List.mem_append]
   have hpg : ∀ j, PageOf T' j = PageOf T j := fun j => by simp only [PageOf, hpage]
@@ -225,5 +227,99 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     rw [hpg] at hp
     obtain ⟨g, hg⟩ := h.recvG id pc hp hr
     exact ⟨g, by rw [hG]; exact hg⟩
+
+  case failNone =>
+    intro q hq id e hfl
+    rcases (hmem q).mp hq with h0 | h1
+    · exact hnone id (h.failNone q h0 id e hfl)
+    · exact hfailN q h1 id e hfl
+  case closedNone =>
+    intro q hq id hfl
+    rcases (hmem q).mp hq with h0 | h1
+    · exact hnone id (h.closedNone q h0 id hfl)
+    · obtain ⟨hcl0, _⟩ := hnew q h1
+      rw [hfl] at hcl0
+      simp [isClosedOut] at hcl0
+  case closedClosing =>
+    intro q hq id hfl
+    rw [hcl id]
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.closedClosing q h0 id hfl
+    · obtain ⟨hcl0, _⟩ := hnew q h1
+      rw [hfl] at hcl0
+      simp [isClosedOut] at hcl0
+  case closedOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.closedOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b hb id hid _
+      obtain ⟨hcl0, _⟩ := hnew a ha
+      rw [hid] at hcl0
+      simp [isClosedOut] at hcl0
+    · intro a ha b hb id hid hob
+      obtain ⟨_, j, c, hj, hcj, _, _, _⟩ := hnew b hb
+      rw [hj] at hob
+      have hji : j = id := by simpa using hob
+      have hcn := h.closedNone a ha id hid
+      rw [hji, hcn] at hcj
+      cases hcj
+  case closeClosing =>
+    intro x hx id hxe
+    rw [hTR] at hx
+    rw [hcl id]
+    exact h.closeClosing x hx id hxe
+  case closedNoConn =>
+    intro q hq id hfl x hx hxe
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.closedNoConn q h0 id hfl x hx hxe
+    · obtain ⟨hcl0, _⟩ := hnew q h1
+      rw [hfl] at hcl0
+      simp [isClosedOut] at hcl0
+  case openRel =>
+    intro id pc hp hop c hc
+    rw [hpg] at hp
+    obtain ⟨c0, hc0, hg⟩ := hback id c hc
+    rcases hconn id c0 hc0 with hn | ⟨c', hc', _, hio, _⟩
+    · rw [hc] at hn
+      cases hn
+    · have hcc : c' = c := Option.some.inj (hc'.symm.trans hc)
+      rw [← hcc]
+      exact hio (h.openRel id pc hp hop c0 hc0)
+  case okOpen =>
+    intro q hq id hfl hcl2 pc hp
+    rw [hcl id] at hcl2
+    rw [hpg] at hp
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.okOpen q h0 id hfl hcl2 pc hp
+    · obtain ⟨c0, hc0, hfalse⟩ := hokN q h1 id hfl
+      cases hpo' : pc.isOpen with
+      | false => rfl
+      | true =>
+        have hcb := h.openRel id pc hp hpo' c0 hc0
+        rw [hfalse] at hcb
+        cases hcb
+  case okNoDisc =>
+    intro q hq id hfl hcl2 x hx
+    rw [hTR] at hx
+    rw [hcl id] at hcl2
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.okNoDisc q h0 id hfl hcl2 x hx
+    · obtain ⟨c0, hc0, hfalse⟩ := hokN q h1 id hfl
+      intro hxd
+      rcases h.discRel x hx id hxd with h0 | ⟨pc, hp, hop⟩ | ⟨hpn, hcl3⟩
+      · rw [hc0] at h0
+        cases h0
+      · have hcb := h.openRel id pc hp hop c0 hc0
+        rw [hfalse] at hcb
+        cases hcb
+      · rw [hcl3] at hcl2
+        cases hcl2
+  case discRel =>
+    intro x hx id hxd
+    rw [hTR] at hx
+    rcases h.discRel x hx id hxd with h0 | ⟨pc, hp, hop⟩ | ⟨hpn, hcl2⟩
+    · exact Or.inl (hnone id h0)
+    · exact Or.inr (Or.inl ⟨pc, by rw [hpg]; exact hp, hop⟩)
+    · exact Or.inr (Or.inr ⟨by rw [hpg]; exact hpn, by rw [hcl id]; exact hcl2⟩)
 
 end Ind
