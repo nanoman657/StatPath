@@ -312,20 +312,50 @@ theorem stepK_sock_outs_pw (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Na
     rw [if_pos hcl']
     exact List.Pairwise.nil
 
+-- a socket step of a kind other than open never reports an OK
+theorem sockStep_nonopen_noOk (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (hk : k ≠ Relay.Sk.open_)
+    (o : Relay.Out) (id' : Nat) (ho : o ∈ (Relay.sockStep cap s id g k).2) (hoe : o = Relay.Out.ok id') : False := by
+  subst hoe
+  unfold Relay.sockStep at ho
+  rcases hc : (s.slot id).conn with _ | c
+  · rw [hc] at ho; simp at ho
+  · rw [hc] at ho
+    dsimp only at ho
+    split at ho
+    · simp at ho
+    · cases k with
+      | open_ => exact absurd rfl hk
+      | data n =>
+        dsimp only at ho
+        split at ho <;> (try split at ho) <;> (try split at ho) <;> simp_all [Relay.failConn]
+      | eof => simp at ho
+      | peerclose =>
+        dsimp only at ho
+        split at ho
+        · simp_all [Relay.failConn]
+        · simp at ho
+      | error e => simp_all [Relay.failConn]
+      | drain a =>
+        dsimp only at ho
+        unfold Relay.flushConn at ho
+        dsimp only at ho
+        iterate 3 (all_goals (try split at ho))
+        all_goals simp_all
+
 -- the post-state of a socket step that reports an OK: the connection of the id is open, with the same generation
 theorem sockStep_ok_post (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (o : Relay.Out) (id' : Nat)
     (ho : o ∈ (Relay.sockStep cap s id g k).2) (hoe : o = Relay.Out.ok id') :
     id' = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧
       ((Relay.sockStep cap s id g k).1.slot id).conn = some { c0 with isOpen := true } := by
-  subst hoe
-  rcases hc : (s.slot id).conn with _ | c
-  · have hn : Relay.sockStep cap s id g k = (s, []) := by
-      unfold Relay.sockStep; rw [hc]
-    rw [hn] at ho
-    simp at ho
-  · by_cases hkO : k = Relay.Sk.open_
-    · subst hkO
-      by_cases hg : c.gen = g
+  by_cases hk : k = Relay.Sk.open_
+  · subst hk
+    subst hoe
+    rcases hc : (s.slot id).conn with _ | c
+    · have hn : Relay.sockStep cap s id g Relay.Sk.open_ = (s, []) := by
+        unfold Relay.sockStep; rw [hc]
+      rw [hn] at ho
+      simp at ho
+    · by_cases hg : c.gen = g
       · by_cases hop : c.isOpen = true
         · have hn : Relay.sockStep cap s id g Relay.Sk.open_ = (s, []) := by
             unfold Relay.sockStep; simp [hc, hg, hop]
@@ -337,29 +367,13 @@ theorem sockStep_ok_post (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) 
             unfold Relay.sockStep; simp [hc, hg, hopF]
           rw [hn] at ho ⊢
           simp at ho
-          refine ⟨ho, c, hc, ?_⟩
+          refine ⟨ho, c, rfl, ?_⟩
           simp [Relay.setConn, Relay.setSlot, Relay.St.slot]
       · have hn : Relay.sockStep cap s id g Relay.Sk.open_ = (s, []) := by
           unfold Relay.sockStep; simp [hc, hg]
         rw [hn] at ho
         simp at ho
-    · cases k with
-      | open_ => exact absurd rfl hkO
-      | data n =>
-        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
-        iterate 6 (first | split at ho | skip)
-        all_goals simp_all [Relay.failConn]
-      | eof => unfold Relay.sockStep at ho; rw [hc] at ho; simp at ho
-      | peerclose =>
-        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
-        iterate 6 (first | split at ho | skip)
-        all_goals simp_all [Relay.failConn]
-      | error e => unfold Relay.sockStep at ho; rw [hc] at ho; simp_all [Relay.failConn]
-      | drain a =>
-        unfold Relay.sockStep at ho; rw [hc] at ho; dsimp only at ho
-        unfold Relay.flushConn at ho; dsimp only at ho
-        iterate 3 (first | split at ho | skip)
-        all_goals simp_all
+  · exact (sockStep_nonopen_noOk cap s id g k hk o id' ho hoe).elim
 
 theorem stepK_sock_ok_post (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk)
     (o : Relay.Out) (id' : Nat) (ho : o ∈ (Clock.stepK cap k s (.sock id g kk)).2.2)
@@ -367,14 +381,15 @@ theorem stepK_sock_ok_post (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Na
     id' = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧
       ((Clock.stepK cap k s (.sock id g kk)).2.1.slot id).conn = some { c0 with isOpen := true } := by
   by_cases hcl : s.closed.isSome = false
-  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
-    rw [h2] at ho ⊢
+  · obtain ⟨k', h1, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2] at ho
+    rw [h1]
     exact sockStep_ok_post cap s id g k' o id' ho hoe
   · have hcl' : s.closed.isSome = true := by
       cases hb : s.closed.isSome
       · exact absurd hb hcl
       · rfl
-    unfold Clock.stepK
+    unfold Clock.stepK at ho
     rw [if_pos hcl'] at ho
     simp at ho
 

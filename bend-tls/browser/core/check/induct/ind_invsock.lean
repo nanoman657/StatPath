@@ -105,10 +105,9 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     obtain ⟨o, ho, rfl⟩ := hq
     have hfl' : o = Relay.Out.ok id' := hfl
     obtain ⟨hid, c0, hc0, hpost⟩ := hOkPost o ho id' hfl'
-    subst hid
     refine ⟨{ c0 with isOpen := true }, ?_, ?_, rfl⟩
     · show (T'.c.rs.slot id').conn = some { c0 with isOpen := true }
-      rw [hrs]
+      rw [hrs, hid]
       exact hpost
     · show c0.gen = Client.tagOf T.c.rs (Relay.Ev.sock id g kk)
       simp [Client.tagOf, Relay.evId, hc0]

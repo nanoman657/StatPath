@@ -336,15 +336,6 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
       simp at hxe
   · exact h.failOrd
   · intro x hx j hxj q hq'
-    try simp only [List.mem_append, List.mem_singleton] at hx
-    rcases hx with h1 | h1
-    · exact h.connPend x h1 j hxj q hq'
-    · subst h1
-      simp at hxj
-  · intro q hq' id hqi
-    exact h.okRel q hq' id hqi
-  · exact h.okOrd
-  · intro x hx j hxj q hq'
     rcases List.mem_append.mp hx with h1 | h1
     · exact h.connPend x h1 j hxj q hq'
     · rw [List.mem_singleton] at h1
@@ -1584,7 +1575,8 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
     try simp only [List.mem_append, List.mem_singleton] at hx
     rcases hx with h1 | h1
     · exact h.connPend x h1 j hxj q hq'
-    · subst h1
+    · obtain ⟨k, hk⟩ := hL x h1
+      rw [hk] at hxj
       simp at hxj
   · intro q hq' id hqi
     exact h.okRel q hq' id hqi
@@ -2141,7 +2133,8 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
     try simp only [List.mem_append, List.mem_singleton] at hx
     rcases hx with h1 | h1
     · exact h.connPend x h1 j hxj q hq'
-    · subst h1
+    · obtain ⟨k, hk⟩ := hL x h1
+      rw [hk] at hxj
       simp at hxj
   · intro q hq' id hqi
     exact h.okRel q hq' id hqi
