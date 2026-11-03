@@ -465,6 +465,14 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1'
       obtain ⟨-, -, h01⟩ := Relay.Out.written.inj (hq'.symm.trans h1)
       exact absurd h01 (by decide)
+  case closeUniq =>
+    intro id
+    rw [hTR]
+    exact h.closeUniq id
+  case connSeq =>
+    intro s
+    rw [hTR]
+    exact h.connSeq s
   case noDeny =>
     intro x hx
     rw [hTR] at hx

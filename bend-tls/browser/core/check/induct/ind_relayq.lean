@@ -55,7 +55,17 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
       discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_,
-      noDeny := ?_ }
+      noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+  case closeUniq =>
+    intro j
+    show ((c'.toRelay).filter (CloseIs j)).length ≤ 1
+    rw [hTR]
+    exact count_le_sub _ _ _ hrest (h.closeUniq j)
+  case connSeq =>
+    intro s
+    show ((c'.toRelay).filter (ConnSeqIs s)).length ≤ 1
+    rw [hTR]
+    exact count_le_sub _ _ _ hrest (h.connSeq s)
   · -- pi
     intro j pc hpc
     exact h.pi j pc ((hPO j).symm.trans hpc)

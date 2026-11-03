@@ -101,7 +101,15 @@ theorem inv_written_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t cnt flag
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
-      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_ }
+      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+  case closeUniq =>
+    intro id
+    rw [count_app_nil (CloseIs id) _ _ (by intro x hx; obtain ⟨m, -, rfl⟩ := List.mem_map.mp hx; rfl)]
+    exact h.closeUniq id
+  case connSeq =>
+    intro s
+    rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; obtain ⟨m, -, rfl⟩ := List.mem_map.mp hx; rfl)]
+    exact h.connSeq s
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc

@@ -33,7 +33,7 @@ theorem inv_shrink (c : Client.Sys) (clk : Clock.Clk) (h : Inv ⟨c, clk⟩) (c'
       wrSent := fun q hq id cnt f hqj pc hpc hgq => h.wrSent q (hs.subset hq) id cnt f hqj pc hpc hgq,
       replyFrozen := fun q hq id cnt hqj c hc hcg => h.replyFrozen q (hs.subset hq) id cnt hqj c hc hcg,
       replyMax := fun q hq r hr id c1 c2 f h1 h2 hg => h.replyMax q (hs.subset hq) r (hs.subset hr) id c1 c2 f h1 h2 hg,
-      noDeny := h.noDeny }
+      noDeny := h.noDeny, closeUniq := h.closeUniq, connSeq := h.connSeq }
 
 -- Page.frame does nothing to the page for a frame that does not apply (and is not a CLOSED frame)
 theorem frame_none (st : Page.State) (o : Relay.Out) (hn : Page.applies st o = none)
@@ -100,7 +100,9 @@ theorem inv_closed_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (r
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+  case closeUniq => exact h.closeUniq
+  case connSeq => exact h.connSeq
   · intro j pc hpc
     change (pg'.slots j).conn = some pc at hpc
     rw [hconn j] at hpc
@@ -423,7 +425,9 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+  case closeUniq => exact h.closeUniq
+  case connSeq => exact h.connSeq
   · intro j pc hpc
     by_cases hj : j = id
     · subst hj

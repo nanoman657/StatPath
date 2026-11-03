@@ -8,7 +8,7 @@ composition, copied from the session's scratch model.
 
 ## Status
 
-`Inv` has 49 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
+`Inv` has 51 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
 `closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`), `closingNone`,
 `closedNoClose`, `failOrd`, and `genFun` (a sequence number belongs to one generation only). Three more, for the
 WRITTEN frame, make 48: `wrSent` (a queued WRITTEN of a page connection's generation counts at most the page's sent),

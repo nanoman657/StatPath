@@ -433,6 +433,14 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
         obtain ⟨hq0, hq1⟩ := hrf
         omega
     · exact absurd (hnewFlag q h1' id c1 1 h1) (by decide)
+  case closeUniq =>
+    intro id
+    rw [hTR]
+    exact h.closeUniq id
+  case connSeq =>
+    intro s
+    rw [hTR]
+    exact h.connSeq s
   case noDeny =>
     intro x hx
     rw [hTR] at hx

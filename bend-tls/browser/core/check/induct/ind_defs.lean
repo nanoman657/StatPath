@@ -73,6 +73,27 @@ theorem discUniq_of_sub (L L' : List (Relay.Out × Nat)) (id : Nat) (hs : L'.Sub
     (h : (L.filter (DiscRep id)).length ≤ 1) : (L'.filter (DiscRep id)).length ≤ 1 :=
   Nat.le_trans (List.Sublist.length_le (List.Sublist.filter (DiscRep id) hs)) h
 
+-- the CLOSE of an id, and the CONNECT of a sequence number, in a relay queue
+def CloseIs (id : Nat) (x : Relay.Ev × Nat) : Bool := match x.1 with
+  | .close j => j == id
+  | _ => false
+def ConnSeqIs (s : Nat) (x : Relay.Ev × Nat) : Bool := match x.1 with
+  | .connect _ => x.2 == s
+  | _ => false
+
+-- a list's elements with a predicate: appending elements that fail it keeps the count
+theorem count_app_nil {α : Type} (p : α → Bool) (L new : List α) (hN : ∀ x ∈ new, p x = false) :
+    ((L ++ new).filter p).length = (L.filter p).length := by
+  rw [List.filter_append, List.length_append]
+  have : new.filter p = [] := List.filter_eq_nil_iff.mpr (fun x hx => by simp [hN x hx])
+  rw [this]
+  rfl
+
+-- a sublist has no more elements with a predicate
+theorem count_le_sub {α : Type} (p : α → Bool) (L L' : List α) (hs : L'.Sublist L)
+    (h : (L.filter p).length ≤ 1) : (L'.filter p).length ≤ 1 :=
+  Nat.le_trans (List.Sublist.length_le (List.Sublist.filter p hs)) h
+
 structure Inv (T : TSys) : Prop where
   pi : ∀ id pc, PageOf T id = some pc → Page.PInv pc
   link : ∀ id c, ConnOf T id = some c →
@@ -157,6 +178,9 @@ structure Inv (T : TSys) : Prop where
     r.2 = q.2 → c2 ≤ c1
   -- the relay's queue holds only the page's events and the SENDs: no deny and no socket event
   noDeny : ∀ x ∈ T.c.toRelay, (∀ id, x.1 ≠ Relay.Ev.deny id) ∧ (∀ id g k, x.1 ≠ Relay.Ev.sock id g k)
+  -- at most one CLOSE of an id is queued, and at most one CONNECT of a sequence number
+  closeUniq : ∀ id, (T.c.toRelay.filter (CloseIs id)).length ≤ 1
+  connSeq : ∀ s, (T.c.toRelay.filter (ConnSeqIs s)).length ≤ 1
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)

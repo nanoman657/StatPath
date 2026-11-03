@@ -381,7 +381,14 @@ def closeUniqB (v : TSys) : Bool := v.c.toRelay.all fun x => match x.1 with
       | _ => false).length ≤ 1
   | _ => true
 def iInv17 : List (String × (TSys → Bool)) := iInv16 ++ [("CloseUniq", closeUniqB)]
-def firstBadI (v : TSys) : Option String := (iInv17.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: at most one CONNECT of a sequence number is queued
+def connSeqB (v : TSys) : Bool := v.c.toRelay.all fun x => match x.1 with
+  | .connect _ => decide ((v.c.toRelay.filter fun y => match y.1 with
+      | .connect _ => y.2 == x.2
+      | _ => false).length ≤ 1)
+  | _ => true
+def iInv18 : List (String × (TSys → Bool)) := iInv17 ++ [("ConnSeq", connSeqB)]
+def firstBadI (v : TSys) : Option String := (iInv18.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1
