@@ -27,7 +27,9 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
         ((Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (.sock id g kk)).2.1.slot id).conn = some { c0 with isOpen := true } :=
     fun o ho id' hoe => stepK_sock_ok_post Relay.DEFAULT_CAP T.clk T.c.rs id g kk o id' ho hoe
   have hOkPW := stepK_sock_okpw Relay.DEFAULT_CAP T.clk T.c.rs id g kk
-  generalize Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (.sock id g kk) = S at hrs hto hck hspec hmir hgood hFailS hOkS hFO0 hOkPost hOkPW
+  have hWr := stepK_sock_wr Relay.DEFAULT_CAP T.clk T.c.rs id g kk
+  have hUniq := stepK_sock_one_wr Relay.DEFAULT_CAP T.clk T.c.rs id g kk
+  generalize Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (.sock id g kk) = S at hrs hto hck hspec hmir hgood hFailS hOkS hFO0 hOkPost hOkPW hWr hUniq
   obtain ⟨p1, p2, p3, p4, p5, p6⟩ := hspec
   have hid : ∀ j, j ≠ id → (T'.c.rs.slot j) = (T.c.rs.slot j) := fun j hj => by rw [hrs, p1 j hj]
   have hknown : ∀ j, (T'.c.rs.slot j).known = (T.c.rs.slot j).known := by
@@ -35,7 +37,7 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     by_cases hj : j = id
     · subst hj; rw [hrs]; exact p2
     · rw [hid j hj]
-  refine inv_env_gen T T' h hp hr hg hng hknown ?_ ?_ ?_ _ hto ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  refine inv_env_gen T T' h hp hr hg hng hknown ?_ ?_ ?_ _ hto ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · intro j c hc
     by_cases hj : j = id
     · subst hj
@@ -112,5 +114,22 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     · show c0.gen = Client.tagOf T.c.rs (Relay.Ev.sock id g kk)
       simp [Client.tagOf, Relay.evId, hc0]
   · exact List.Pairwise.map _ (fun a b hab id' h1 h2 => hab id' h1 h2) hOkPW
+  · intro q hq j cnt hqj
+    simp only [List.mem_map] at hq
+    obtain ⟨o, ho, rfl⟩ := hq
+    have hqj' : o = Relay.Out.written j cnt 0 := hqj
+    obtain ⟨hjid, c0, hc0, hle⟩ := hWr o ho j cnt 0 hqj'
+    refine ⟨c0, ?_, ?_, hle⟩
+    · show (T.c.rs.slot j).conn = some c0
+      rw [hjid]
+      exact hc0
+    · show c0.gen = Client.tagOf T.c.rs (Relay.Ev.sock id g kk)
+      simp [Client.tagOf, Relay.evId, hc0]
+  · intro a ha b hb j c1 c2 f1 f2 ha1 hb1
+    simp only [List.mem_map] at ha hb
+    obtain ⟨oa, hoa, rfl⟩ := ha
+    obtain ⟨ob, hob, rfl⟩ := hb
+    have hab : oa = ob := hUniq oa hoa ob hob j c1 c2 f1 f2 ha1 hb1
+    rw [hab]
 
 end Ind

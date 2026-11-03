@@ -22,7 +22,20 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     (hokN : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T id = some c ∧ c.isOpen = false)
     (hnewFO : List.Pairwise (fun p q => ∀ id e, p.1 = Relay.Out.fail id e → outIdT q.1 = some id → isClosedOut q.1 = true) new)
     (hokO : ∀ q ∈ new, ∀ id, q.1 = Relay.Out.ok id → ∃ c, ConnOf T' id = some c ∧ c.gen = q.2 ∧ c.isOpen = true)
-    (hokU : List.Pairwise (fun p q => ∀ id, p.1 = Relay.Out.ok id → q.1 ≠ Relay.Out.ok id) new) : Inv T' := by
+    (hokU : List.Pairwise (fun p q => ∀ id, p.1 = Relay.Out.ok id → q.1 ≠ Relay.Out.ok id) new)
+    (hnewLow : ∀ q ∈ new, ∀ j cnt, q.1 = Relay.Out.written j cnt 0 →
+      ∃ c, ConnOf T j = some c ∧ c.gen = q.2 ∧ c.written ≤ cnt)
+    (hnewUniq : ∀ a ∈ new, ∀ b ∈ new, ∀ j c1 c2 f1 f2, a.1 = Relay.Out.written j c1 f1 →
+      b.1 = Relay.Out.written j c2 f2 → a = b) : Inv T' := by
+  -- a WRITTEN frame of a socket event is flag 0 at its own id
+  have hnewFlag : ∀ q ∈ new, ∀ id cnt f, q.1 = Relay.Out.written id cnt f → f = 0 := by
+    intro q hq id cnt f hqf
+    obtain ⟨-, j, c, hoj, -, -, -, hf⟩ := hnew q hq
+    have hjid : j = id := by
+      rw [hqf] at hoj
+      simp [outIdT] at hoj
+      exact hoj.symm
+    exact hf cnt f (by rw [hqf, hjid])
   have hmem : ∀ q, q ∈ T'.c.toPage ↔ q ∈ T.c.toPage ∨ q ∈ new := fun q => by
     rw [hTP, List.mem_append]
   have hpg : ∀ j, PageOf T' j = PageOf T j := fun j => by simp only [PageOf, hpage]
@@ -372,6 +385,47 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
       rw [← hcc, hco] at ho'
       cases ho'
 
+  case discOnce =>
+    intro q hq id cnt hqj x hx
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.discOnce q h0 id cnt hqj x hx
+    · cases hnewFlag q h1 id cnt 1 hqj
+  case discUniq =>
+    intro q hq r hr id c1 c2 h1 h2
+    rcases (hmem q).mp hq with h0 | h1'
+    · rcases (hmem r).mp hr with h0' | h1''
+      · exact h.discUniq q h0 r h0' id c1 c2 h1 h2
+      · cases hnewFlag r h1'' id c2 1 h2
+    · cases hnewFlag q h1' id c1 1 h1
+  case wrMono =>
+    intro q hq id cnt f hqj pc hpc hg
+    have hpc' : PageOf T id = some pc := by
+      have h1 := hpc
+      unfold PageOf at h1 ⊢
+      rw [hpage] at h1
+      exact h1
+    have hg' : (pc.seq, q.2) ∈ T.c.genOf := by rw [hG] at hg; exact hg
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.wrMono q h0 id cnt f hqj pc hpc' hg'
+    · have hf0 : f = 0 := hnewFlag q h1 id cnt f hqj
+      obtain ⟨c', hc', hgc', hlow⟩ := hnewLow q h1 id cnt (by rw [hqj, hf0])
+      have hacc := h.acc id pc c' hpc' hc' (by rw [hgc']; exact hg')
+      exact Nat.le_trans hacc.2 hlow
+  case wrOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.wrOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b hb id c1 f1 c2 f2 ha1 hb1 _
+      have hab := hnewUniq a ha b hb id c1 c2 f1 f2 ha1 hb1
+      rw [hab] at ha1
+      have hc12 := (Relay.Out.written.inj (ha1.symm.trans hb1)).2.1
+      exact Nat.le_of_eq hc12
+    · intro a ha b hb id c1 f1 c2 f2 ha1 hb1 hgab
+      have hf0 : f2 = 0 := hnewFlag b hb id c2 f2 hb1
+      obtain ⟨c, hc, hgc, hlow⟩ := hnewLow b hb id c2 (by rw [hb1, hf0])
+      have hgcg : c.gen = a.2 := hgc.trans hgab.symm
+      have hw := h.written a ha id c1 f1 ha1 c hc hgcg
+      exact Nat.le_trans hw hlow
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, hnewFO, ?_⟩

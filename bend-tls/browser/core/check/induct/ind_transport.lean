@@ -10,6 +10,10 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     (hTP : T'.c.toPage = T.c.toPage ++ new)
     (hnew : ∀ q ∈ new, ∃ j cnt d, q.1 = Relay.Out.written j cnt 0 ∧ (T'.c.rs.slot j).conn = some d ∧
       cnt ≤ d.written ∧ q.2 = d.gen)
+    (hnewLow : ∀ q ∈ new, ∀ j cnt, q.1 = Relay.Out.written j cnt 0 →
+      ∃ c, ConnOf T j = some c ∧ c.gen = q.2 ∧ c.written ≤ cnt)
+    (hnewUniq : ∀ a ∈ new, ∀ b ∈ new, ∀ j c1 c2 f1 f2, a.1 = Relay.Out.written j c1 f1 →
+      b.1 = Relay.Out.written j c2 f2 → a = b)
     (hclk : Clock.Mirror T'.clk T'.c.rs) (hgood : Clock.Good T'.clk) : Inv T' := by
   have hknown : ∀ j, (T'.c.rs.slot j).known = (T.c.rs.slot j).known := fun j => (hF j).1
   have hfwd : ∀ j c, ConnOf T j = some c → ∃ c', ConnOf T' j = some c' ∧ c'.gen = c.gen ∧ c'.isOpen = c.isOpen ∧
@@ -367,6 +371,54 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
       rw [hqj] at hbid
       cases hbid
 
+  case discOnce =>
+    intro q hq id cnt hqj x hx
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.discOnce q h0 id cnt hqj x hx
+    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1
+      rw [hq'] at hqj
+      cases hqj
+  case discUniq =>
+    intro q hq r hr id c1 c2 h1 h2
+    rcases (hmem q).mp hq with h0 | h1'
+    · rcases (hmem r).mp hr with h0' | h1''
+      · exact h.discUniq q h0 r h0' id c1 c2 h1 h2
+      · obtain ⟨j, cnt', d, hr', -⟩ := hnew r h1''
+        rw [hr'] at h2
+        cases h2
+    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1'
+      rw [hq'] at h1
+      cases h1
+  case wrMono =>
+    intro q hq id cnt f hqj pc hpc hg
+    have hpc' : PageOf T id = some pc := by rw [← hpg id]; exact hpc
+    have hg' : (pc.seq, q.2) ∈ T.c.genOf := by rw [hG] at hg; exact hg
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.wrMono q h0 id cnt f hqj pc hpc' hg'
+    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1
+      rw [hq'] at hqj
+      obtain ⟨hjj, hcc, -⟩ := Relay.Out.written.inj hqj
+      obtain ⟨c, hc, hgc, hlow⟩ := hnewLow q h1 j cnt' hq'
+      have hacc := h.acc j pc c (by rw [hjj]; exact hpc') hc (by rw [hgc]; exact hg')
+      exact Nat.le_trans hacc.2 (by rw [← hcc]; exact hlow)
+  case wrOrd =>
+    rw [hTP]
+    refine List.pairwise_append.mpr ⟨h.wrOrd, pairwise_of_forall _ new ?_, ?_⟩
+    · intro a ha b hb id c1 f1 c2 f2 ha1 hb1 _
+      have hab := hnewUniq a ha b hb id c1 c2 f1 f2 ha1 hb1
+      rw [hab] at ha1
+      have hc12 := (Relay.Out.written.inj (ha1.symm.trans hb1)).2.1
+      exact Nat.le_of_eq hc12
+    · intro a ha b hb id c1 f1 c2 f2 ha1 hb1 hgab
+      obtain ⟨j, cnt, d, hb', -⟩ := hnew b hb
+      rw [hb'] at hb1
+      obtain ⟨hjj, hcc, -⟩ := Relay.Out.written.inj hb1
+      obtain ⟨c, hc, hgc, hlow⟩ := hnewLow b hb j cnt hb'
+      have hc' : ConnOf T id = some c := by rw [← hjj]; exact hc
+      have hgcg : c.gen = a.2 := hgc.trans hgab.symm
+      have hw := h.written a ha id c1 f1 ha1 c hc' hgcg
+      exact Nat.le_trans hw (by rw [hcc] at hlow; exact hlow)
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩

@@ -438,4 +438,77 @@ theorem stepK_sock_okpw (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) 
     rw [if_pos hcl']
     exact List.Pairwise.nil
 
+-- the second component of an if is the if of the components
+theorem ite_snd_eq {α β : Type} (p : Prop) [Decidable p] (x y : α × β) :
+    (if p then x else y).2 = if p then x.2 else y.2 := by
+  split <;> rfl
+
+-- a socket step's WRITTEN frames: they name the id, and their count is at least the id's written count before
+theorem sockStep_wr_ge (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (c : Relay.Conn)
+    (hc : (s.slot id).conn = some c) :
+    ∀ o ∈ (Relay.sockStep cap s id g k).2, ∀ j cnt f, o = Relay.Out.written j cnt f → j = id ∧ c.written ≤ cnt := by
+  intro o ho j cnt f hoe
+  subst hoe
+  unfold Relay.sockStep at ho
+  rw [hc] at ho
+  dsimp only at ho
+  cases k <;> dsimp only at ho <;> (try unfold Relay.flushConn at ho) <;> (try dsimp only at ho) <;>
+    (try simp only [apply_ite Prod.snd] at ho) <;>
+    (iterate 6 (all_goals (first | split at ho | skip))) <;> simp_all [Relay.failConn, Relay.flushConn]
+
+-- a socket step emits at most one WRITTEN frame
+theorem sockStep_one_wr (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) :
+    ∀ o1 ∈ (Relay.sockStep cap s id g k).2, ∀ o2 ∈ (Relay.sockStep cap s id g k).2,
+      ∀ j c1 c2 f1 f2, o1 = Relay.Out.written j c1 f1 → o2 = Relay.Out.written j c2 f2 → o1 = o2 := by
+  intro o1 ho1 o2 ho2 j c1 c2 f1 f2 e1 e2
+  unfold Relay.sockStep at ho1 ho2
+  rcases hc : (s.slot id).conn with _ | c
+  · rw [hc] at ho1; simp at ho1
+  · rw [hc] at ho1 ho2
+    dsimp only at ho1 ho2
+    cases k <;> dsimp only at ho1 ho2 <;> (try unfold Relay.flushConn at ho1 ho2) <;> (try dsimp only at ho1 ho2) <;>
+      (try simp only [apply_ite Prod.snd] at ho1 ho2) <;>
+      (iterate 6 (all_goals (first | split at ho1 | skip))) <;>
+      (iterate 6 (all_goals (first | split at ho2 | skip))) <;> simp_all [Relay.failConn, Relay.flushConn]
+
+-- the event's WRITTEN frames, at the step level
+theorem stepK_sock_wr (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk) :
+    ∀ o ∈ (Clock.stepK cap k s (.sock id g kk)).2.2, ∀ j cnt f, o = Relay.Out.written j cnt f →
+      j = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧ c0.written ≤ cnt := by
+  intro o ho j cnt f hoe
+  by_cases hcl : s.closed.isSome = false
+  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2] at ho
+    rcases hc : (s.slot id).conn with _ | c
+    · have hn : Relay.sockStep cap s id g k' = (s, []) := by
+        unfold Relay.sockStep; rw [hc]
+      rw [hn] at ho
+      simp at ho
+    · obtain ⟨hj, hle⟩ := sockStep_wr_ge cap s id g k' c hc o ho j cnt f hoe
+      exact ⟨hj, c, rfl, hle⟩
+  · have hcl' : s.closed.isSome = true := by
+      cases hb : s.closed.isSome
+      · exact absurd hb hcl
+      · rfl
+    unfold Clock.stepK at ho
+    rw [if_pos hcl'] at ho
+    simp at ho
+
+theorem stepK_sock_one_wr (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk) :
+    ∀ o1 ∈ (Clock.stepK cap k s (.sock id g kk)).2.2, ∀ o2 ∈ (Clock.stepK cap k s (.sock id g kk)).2.2,
+      ∀ j c1 c2 f1 f2, o1 = Relay.Out.written j c1 f1 → o2 = Relay.Out.written j c2 f2 → o1 = o2 := by
+  intro o1 ho1 o2 ho2 j c1 c2 f1 f2 e1 e2
+  by_cases hcl : s.closed.isSome = false
+  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2] at ho1 ho2
+    exact sockStep_one_wr cap s id g k' o1 ho1 o2 ho2 j c1 c2 f1 f2 e1 e2
+  · have hcl' : s.closed.isSome = true := by
+      cases hb : s.closed.isSome
+      · exact absurd hb hcl
+      · rfl
+    unfold Clock.stepK at ho1
+    rw [if_pos hcl'] at ho1
+    simp at ho1
+
+
 end Ind

@@ -8,7 +8,7 @@ composition, copied from the session's scratch model.
 
 ## Status
 
-`Inv` has 44 fields (the four WRITTEN fields are not yet proved at flush and env): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
+`Inv` has 44 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
 `closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`), `closingNone`,
 `closedNoClose`, and `failOrd`. `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
 CLOSED frames. (The first statement, with no frame of the id at all, was refuted by the bounded search: a CLOSE after
@@ -30,16 +30,11 @@ Proved, no `sorry`:
 - The page's frames (`ind_frames.lean`): an ignored frame (`inv_tDoPage_ignored`, via `inv_shrink`), CLOSED
   (`inv_tDoPage_closed`), FAIL (`inv_tDoPage_fail`).
 
-Work in progress (this commit does not build; the errors are named here):
-- Four fields were added to `Inv` for the WRITTEN frame: `discOnce` (a discard reply is queued only when no DISCARD of its
-  id waits in the relay's queue), `discUniq` (at most one discard reply of an id is queued), `wrMono` (a queued WRITTEN of
-  a connection counts at least the page's written count), and `wrOrd` (queued WRITTENs of one id and generation are in
-  nondecreasing order). Each candidate passes the bounded search at depth 9. The sites in `ind_frames.lean` (shrink,
-  closed core, fail core), `ind_pagecall.lean` (the five page calls), `ind_ok.lean` and `ind_wake.lean` prove them.
-- `inv_flush` (`ind_transport.lean`) and `inv_env_gen` (`ind_env.lean`) still need the four cases. They need: the counts
-  of the frames a flush or a socket step emits (a frame's count equals its connection's written count after the step, and
-  at least the count before it), and that a socket step emits at most one WRITTEN. The lemmas `flushOne_outs` (equality of
-  the count with the post-step written count) and `flushIds_spec` (the tick's form) are the starting points.
+Done since the last status: the four WRITTEN-related fields (`discOnce`, `discUniq`, `wrMono`, `wrOrd`) are proved
+at every construction site, including `inv_flush` and `inv_env_gen`. The flush and environment steps need the count
+facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uniq`, `flushOne_outs_pre`), `ind_tick.lean`
+(`tickK_spec`, `tick_outs_uniq`) and `ind_envsock.lean` (`sockStep_wr_ge`, `sockStep_one_wr`, `stepK_sock_wr`,
+`stepK_sock_one_wr`).
 - The WRITTEN frame (`frame (.written ..)`: the page's count, the op, the discard reset, and the pump). The pump spec is
   proved in the scratch file (`pump_spec`: the SEND entries it queues sum to the increase of `sent`, and `PInv` is kept).
 - The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,

@@ -62,11 +62,57 @@ theorem flushed_back {s t : Relay.St} (h : Flushed s t) (j : Nat) (c0 : Relay.Co
     cases hc0
     exact ⟨c, rfl, hg.symm⟩
 
+theorem flushConn_outs_ge (s : Relay.St) (id : Nat) (c : Relay.Conn) (a : Nat) :
+    ∀ o ∈ (Relay.flushConn s id c a).2, ∃ cnt, o = Relay.Out.written id cnt 0 ∧ c.written ≤ cnt := by
+  intro o ho
+  unfold Relay.flushConn at ho
+  by_cases h1 : c.isOpen = true
+  · by_cases h2 : min a c.queued = 0
+    · simp [h1, h2] at ho
+    · simp [h1, h2] at ho
+      exact ⟨_, ho, Nat.le_add_right _ _⟩
+  · simp [h1] at ho
+
+-- a flush's frame: its count is at least the written count the connection had before the flush
+theorem flushOne_outs_pre (k : Clock.Clk) (s : Relay.St) (id : Nat) :
+    ∀ o ∈ (Clock.flushOne k s id).2.2, ∃ cnt, o = Relay.Out.written id cnt 0 ∧
+      ∃ c0, (s.slot id).conn = some c0 ∧ c0.written ≤ cnt := by
+  unfold Clock.flushOne
+  cases hc : (s.slot id).conn with
+  | none => simp only [hc]; intro o ho; simp at ho
+  | some c =>
+    simp only [hc]
+    by_cases ho : c.isOpen = true
+    · simp only [ho, if_true]
+      by_cases hm : (Clock.flushSim (k.chunks id) 4294967295 k.bud).1 > 0
+      · simp only [hm, if_true]
+        intro o hmem
+        obtain ⟨cnt, hcnt, hle⟩ := flushConn_outs_ge s id c _ o hmem
+        exact ⟨cnt, hcnt, c, rfl, hle⟩
+      · simp only [hm, if_false]
+        intro o hmem
+        simp at hmem
+    · simp only [ho, if_false]
+      intro o hmem
+      simp at hmem
+
+-- one flush emits at most one frame
+theorem flushOne_outs_len (k : Clock.Clk) (s : Relay.St) (id : Nat) :
+    (Clock.flushOne k s id).2.2.length ≤ 1 := by
+  unfold Clock.flushOne
+  cases hc : (s.slot id).conn with
+  | none => simp
+  | some c =>
+    by_cases ho : c.isOpen = true
+    · by_cases hm : (Clock.flushSim (k.chunks id) 4294967295 k.bud).1 > 0 <;> simp [ho, hm, Relay.flushConn]
+      split <;> simp
+    · simp [ho]
+
 theorem flushIds_spec (ids : List Nat) : ∀ (k : Clock.Clk) (s : Relay.St), Clock.Mirror k s →
     Flushed s (Clock.flushIds k s ids).2.1 ∧
-    ∀ o ∈ (Clock.flushIds k s ids).2.2, ∃ j cnt d, o = Relay.Out.written j cnt 0 ∧
+    ∀ o ∈ (Clock.flushIds k s ids).2.2, ∃ j, j ∈ ids ∧ ∃ cnt d, o = Relay.Out.written j cnt 0 ∧
       ((Clock.flushIds k s ids).2.1.slot j).conn = some d ∧ cnt ≤ d.written ∧
-      ∃ c0, (s.slot j).conn = some c0 ∧ c0.gen = d.gen := by
+      ∃ c0, (s.slot j).conn = some c0 ∧ c0.gen = d.gen ∧ c0.written ≤ cnt := by
   induction ids with
   | nil =>
     intro k s _
@@ -83,11 +129,64 @@ theorem flushIds_spec (ids : List Nat) : ∀ (k : Clock.Clk) (s : Relay.St), Clo
     intro o ho
     rcases List.mem_append.mp ho with h1 | h2
     · obtain ⟨cnt, hcnt, c1, hc1, hw1⟩ := flushOne_outs k s id hM o h1
+      obtain ⟨cnt', hcnt', c0, hc0, hle⟩ := flushOne_outs_pre k s id o h1
+      rw [hcnt] at hcnt'
+      cases hcnt'
       obtain ⟨d, hd, hg, _, hw, _, _⟩ := (hF2 id).2.1 c1 hc1
-      obtain ⟨c0, hc0, hg0⟩ := flushed_back hF1 id c1 hc1
-      exact ⟨id, cnt, d, hcnt, hd, by rw [← hw1]; exact hw, c0, hc0, by rw [hg0, hg]⟩
-    · obtain ⟨j, cnt, d, hj, hd, hcnt, c0, hc0, hg⟩ := hO2 o h2
+      obtain ⟨c', hc', hgc', _, _, _, _⟩ := (hF1 id).2.1 c0 hc0
+      rw [hc1] at hc'
+      have hcc := Option.some.inj hc'
+      have hgq : c1.gen = c0.gen := by rw [hcc]; exact hgc'
+      exact ⟨id, by simp, cnt, d, hcnt, hd, by rw [← hw1]; exact hw, c0, hc0, by rw [hg, hgq], hle⟩
+    · obtain ⟨j, hj, cnt, d, hjo, hd, hcnt, c0, hc0, hg, hle⟩ := hO2 o h2
       obtain ⟨c, hc, hgc⟩ := flushed_back hF1 j c0 hc0
-      exact ⟨j, cnt, d, hj, hd, hcnt, c, hc, hgc.trans hg⟩
+      obtain ⟨c', hc', _, _, hw', _, _⟩ := (hF1 j).2.1 c hc
+      rw [hc0] at hc'
+      cases Option.some.inj hc'
+      exact ⟨j, List.mem_cons_of_mem _ hj, cnt, d, hjo, hd, hcnt, c, hc,
+        by rw [hgc, hg], Nat.le_trans hw' hle⟩
+
+theorem eq_of_mem_len1 {α : Type} : ∀ (l : List α), l.length ≤ 1 → ∀ a ∈ l, ∀ b ∈ l, a = b
+  | [], _, a, ha, _, _ => by simp at ha
+  | [x], _, a, ha, b, hb => by
+    simp at ha hb
+    rw [ha, hb]
+  | x :: y :: t, h, _, _, _, _ => by simp at h
+
+-- the frames of a flush of distinct ids are distinct for each id
+theorem flushIds_outs_uniq : ∀ (ids : List Nat), ids.Nodup → ∀ (k : Clock.Clk) (s : Relay.St), Clock.Mirror k s →
+    ∀ o1 ∈ (Clock.flushIds k s ids).2.2, ∀ o2 ∈ (Clock.flushIds k s ids).2.2, ∀ j c1 c2,
+      o1 = Relay.Out.written j c1 0 → o2 = Relay.Out.written j c2 0 → o1 = o2 := by
+  intro ids
+  induction ids with
+  | nil => intro _ k s _ o1 ho1; simp [Clock.flushIds] at ho1
+  | cons id ids ih =>
+    intro hnd k s hM o1 ho1 o2 ho2 j c1 c2 e1 e2
+    have hnd' := List.nodup_cons.mp hnd
+    have hM1 : Clock.Mirror (Clock.flushOne k s id).1 (Clock.flushOne k s id).2.1 :=
+      Clock.mirror_flushOne k s id hM
+    have hmem := (flushIds_spec ids _ _ hM1).2
+    simp only [Clock.flushIds] at ho1 ho2 ⊢
+    rcases List.mem_append.mp ho1 with h1 | h1 <;> rcases List.mem_append.mp ho2 with h2 | h2
+    · exact eq_of_mem_len1 _ (flushOne_outs_len k s id) o1 h1 o2 h2
+    · exfalso
+      obtain ⟨cnt1, hcnt1, _⟩ := flushOne_outs k s id hM o1 h1
+      rw [e1] at hcnt1
+      have hjid := (Relay.Out.written.inj hcnt1).1
+      obtain ⟨j', hj', cnt, d, hjo, _⟩ := hmem o2 h2
+      rw [e2] at hjo
+      have hj'j := (Relay.Out.written.inj hjo).1
+      have hmemid : id ∈ ids := by rw [← hjid, hj'j]; exact hj'
+      exact (List.nodup_cons.mp hnd).1 hmemid
+    · exfalso
+      obtain ⟨cnt2, hcnt2, _⟩ := flushOne_outs k s id hM o2 h2
+      rw [e2] at hcnt2
+      have hjid := (Relay.Out.written.inj hcnt2).1
+      obtain ⟨j', hj', cnt, d, hjo, _⟩ := hmem o1 h1
+      rw [e1] at hjo
+      have hj'j := (Relay.Out.written.inj hjo).1
+      have hmemid : id ∈ ids := by rw [← hjid, hj'j]; exact hj'
+      exact (List.nodup_cons.mp hnd).1 hmemid
+    · exact ih hnd'.2 _ _ hM1 o1 h1 o2 h2 j c1 c2 e1 e2
 
 end Ind
