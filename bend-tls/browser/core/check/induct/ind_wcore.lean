@@ -101,7 +101,7 @@ theorem inv_written_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t cnt flag
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
-      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
+      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_ }
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc
@@ -668,6 +668,12 @@ theorem inv_written_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t cnt flag
   · -- replyMax
     intro q hq' r hr j c1 c2 f h1 h2 hg
     exact h.replyMax q (hsub q hq') r (hsub r hr) j c1 c2 f h1 h2 hg
+  · -- noDeny
+    intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.noDeny x h1
+    · obtain ⟨m, -, rfl⟩ := List.mem_map.mp h1
+      simp
 
 -- the page takes a WRITTEN frame: the connection's sent and written counts, the discard reset, and the SEND frames
 -- its pump queues (the frame's own state change is inv_written_core)

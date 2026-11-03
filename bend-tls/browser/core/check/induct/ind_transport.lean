@@ -465,6 +465,10 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1'
       obtain ⟨-, -, h01⟩ := Relay.Out.written.inj (hq'.symm.trans h1)
       exact absurd h01 (by decide)
+  case noDeny =>
+    intro x hx
+    rw [hTR] at hx
+    exact h.noDeny x hx
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩

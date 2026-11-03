@@ -62,7 +62,7 @@ theorem inv_ok_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (rest 
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_ }
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc
@@ -495,6 +495,12 @@ theorem inv_ok_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (rest 
   · -- replyMax
     intro q hq r hr id' c1 c2 f h1 h2 hg
     exact h.replyMax q (hsub q hq) r (hsub r hr) id' c1 c2 f h1 h2 hg
+  · intro x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.noDeny x h1
+    · rw [List.mem_singleton] at h1
+      rw [h1]
+      simp
 
 -- the page takes an OK frame: the frame's id has a connection (closed, not closing), and the frame applies
 theorem inv_tDoPage_ok (T T' : TSys) (h : Inv T) (id t : Nat) (rest : List (Relay.Out × Nat))

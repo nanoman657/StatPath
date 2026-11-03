@@ -155,6 +155,8 @@ structure Inv (T : TSys) : Prop where
   -- no queued WRITTEN of an id and generation counts more than a queued discard reply of that id and generation
   replyMax : ∀ q ∈ T.c.toPage, ∀ r ∈ T.c.toPage, ∀ id c1 c2 f, q.1 = .written id c1 1 → r.1 = .written id c2 f →
     r.2 = q.2 → c2 ≤ c1
+  -- the relay's queue holds only the page's events and the SENDs: no deny and no socket event
+  noDeny : ∀ x ∈ T.c.toRelay, (∀ id, x.1 ≠ Relay.Ev.deny id) ∧ (∀ id g k, x.1 ≠ Relay.Ev.sock id g k)
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)
