@@ -268,7 +268,26 @@ def iOkOpen (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
       | none => true)
   | _ => true
 def iInv6 : List (String × (TSys → Bool)) := iInv5 ++ [("OpenRel", iOpenRel), ("OkOpen", iOkOpen)]
-def firstBadI (v : TSys) : Option String := (iInv6.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: a closing id has no page connection
+def iClosingNone (v : TSys) : Bool := tIds.all fun id =>
+  (v.c.page.slots id).closing == false || (v.c.page.slots id).conn.isNone
+-- candidate: a CLOSED frame in the page's queue has no CLOSE of its id in the relay's queue
+def iClosedNoClose (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .closed id => v.c.toRelay.all (fun x => match x.1 with
+      | .close j => j != id
+      | _ => true)
+  | _ => true
+-- candidate (strengthened): no frame of an id follows a CLOSED frame of that id in the page's queue
+def closedOrdStrongB : List (Relay.Out × Nat) → Bool
+  | [] => true
+  | q :: rest => (match q.1 with
+      | .closed id => rest.all (fun r => match outIdT r.1 with
+          | some j => j != id
+          | none => true)
+      | _ => true) && closedOrdStrongB rest
+def iClosedOrdStrong (v : TSys) : Bool := closedOrdStrongB v.c.toPage
+def iInv7 : List (String × (TSys → Bool)) := iInv6 ++ [("ClosingNone", iClosingNone), ("ClosedNoClose", iClosedNoClose), ("ClosedOrdStrong", iClosedOrdStrong)]
+def firstBadI (v : TSys) : Option String := (iInv7.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1
