@@ -58,8 +58,11 @@ facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uni
   with the next generation; `inv_connect_keep`), and a CONNECT the relay takes for a free id (`inv_connect_create`: the
   connection of the next generation, and `genOf` gains the sequence's entry). The invariant's `connAux` field gives the
   two facts this needed: a queued CONNECT has a positive sequence number, and a queued WRITTEN frame's generation is
-  below the relay's `nextGen`. Still to do: the dispatch over all transitions (`Step`), reachability from `TSys.init`,
-  and the final theorem.
+  below the relay's `nextGen`. `ind_fixed.lean`: the page's fixed flag is kept by every page operation (`tPageCall_fixed`, `tDoPage_fixed`,
+  `tDoRelay_page`, `tDoEnv_page`). `ind_step.lean`: `TStep` (the page calls, the relay's head event, the page's frame,
+  a socket event, the time), `inv_step` dispatches each to its invariant lemma, `reach_inv` gives the invariant and the
+  fixed flag in every state reachable from `TSys.init true`, and `window_head` is the window claim: the head SEND of an
+  id is within the window of its connection (the relay's check does not fire).
 - The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,
   the reachability induction, and the final theorem (reachable implies `WQ`, so the relay's window check never fires).
 
@@ -72,7 +75,7 @@ states). The depth-11 run is not committed.
       ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean \
       ind_ok.lean ind_wake.lean ind_pump.lean ind_written.lean ind_wcore.lean ind_relayq.lean ind_relayclose.lean ind_relaydisc.lean ind_relaysend.lean \
       ind_relaysendf.lean ind_sendstep.lean ind_sendtdo.lean \
-      ind_connect.lean
+      ind_connect.lean ind_fixed.lean ind_step.lean
     lean Ind.lean
 
 The bounded search (a check of candidate invariants over the composed model, not a proof):
