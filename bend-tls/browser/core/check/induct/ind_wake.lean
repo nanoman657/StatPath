@@ -163,7 +163,8 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro id
     rw [count_app_nil (CloseIs id) _ _ (by intro x hx; obtain ⟨k, rfl⟩ := hL' x hx; rfl)]
@@ -172,6 +173,15 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
     intro s
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; obtain ⟨k, rfl⟩ := hL' x hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · obtain ⟨k, rfl⟩ := hL' q h1
+        simp at hqj
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q (hsub q hqq) j cnt f hqf
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc

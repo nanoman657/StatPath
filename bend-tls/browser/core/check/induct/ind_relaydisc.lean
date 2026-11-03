@@ -112,7 +112,7 @@ theorem inv_relay_discard_open (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : 
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
       discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_,
-      noDeny := ?_, closeUniq := ?_, connSeq := ?_ }
+      noDeny := ?_, closeUniq := ?_, connSeq := ?_, connAux := ?_ }
   · -- pi
     intro j pc hpc
     exact h.pi j pc ((hPO j).symm.trans hpc)
@@ -573,6 +573,16 @@ theorem inv_relay_discard_open (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : 
     show ((c'.toRelay).filter (ConnSeqIs s)).length ≤ 1
     rw [hTR]
     exact count_le_sub _ _ _ hrest (h.connSeq s)
+  · -- connAux
+    refine ⟨⟨by rw [hpg]; exact h.connAux.1.1, fun q hqr j hqj => h.connAux.1.2 q (hxrest q hqr) j hqj⟩, ?_⟩
+    intro q hqq j cnt f hqf
+    rcases hsubP q hqq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 j cnt f hqf
+    · rw [hng, h1]
+      show Client.tagOf T.c.rs (Relay.Ev.discard id) < T.c.rs.nextGen
+      rw [hgen]
+      exact h.gensLt id cc hcc
 
 -- a DISCARD leaves the other ids' slots, and the relay's nextGen, alone
 theorem discard_slot_other (cap : Nat) (s : Relay.St) (id j : Nat) (hj : j ≠ id) :

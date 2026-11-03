@@ -65,7 +65,7 @@ theorem inv_relay_send_fail (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clo
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
       discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_,
-      noDeny := ?_, closeUniq := ?_, connSeq := ?_ }
+      noDeny := ?_, closeUniq := ?_, connSeq := ?_, connAux := ?_ }
   · -- pi
     intro j pc hpc
     exact h.pi j pc ((hPO j).symm.trans hpc)
@@ -448,5 +448,16 @@ theorem inv_relay_send_fail (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clo
     show ((c'.toRelay).filter (ConnSeqIs s)).length ≤ 1
     rw [hTR]
     exact count_le_sub _ _ _ hrest (h.connSeq s)
+  · -- connAux
+    refine ⟨⟨by rw [hpg]; exact h.connAux.1.1, fun q hqr j hqj => h.connAux.1.2 q (hxrest q hqr) j hqj⟩, ?_⟩
+    intro q hqq j cnt f hqf
+    rcases hsubP q hqq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 j cnt f hqf
+    · rcases hnewMem q h1 with ⟨hqa, hb⟩ | ⟨hqa, -⟩
+      · rw [hng, hb]
+        exact h.gensLt id cc hcc
+      · rw [hqa] at hqf
+        simp at hqf
 
 end Ind

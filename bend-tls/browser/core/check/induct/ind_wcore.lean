@@ -101,7 +101,8 @@ theorem inv_written_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t cnt flag
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
-      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro id
     rw [count_app_nil (CloseIs id) _ _ (by intro x hx; obtain ⟨m, -, rfl⟩ := List.mem_map.mp hx; rfl)]
@@ -110,6 +111,18 @@ theorem inv_written_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t cnt flag
     intro s
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; obtain ⟨m, -, rfl⟩ := List.mem_map.mp hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq id' hqid
+      rcases List.mem_append.mp hqq with hq1 | hq1
+      · exact h.connAux.1.2 q hq1 id' hqid
+      · obtain ⟨n, -, rfl⟩ := List.mem_map.mp hq1
+        simp at hqid
+    · intro q hqq id' cnt f hqf
+      have hq' : q ∈ T.c.toPage := by
+        rw [hq]
+        exact List.mem_cons_of_mem _ hqq
+      exact h.connAux.2 q hq' id' cnt f hqf
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc

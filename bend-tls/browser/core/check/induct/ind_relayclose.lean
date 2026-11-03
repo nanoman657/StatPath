@@ -81,7 +81,7 @@ theorem inv_relay_close (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.C
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
       discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_,
-      noDeny := ?_, closeUniq := ?_, connSeq := ?_ }
+      noDeny := ?_, closeUniq := ?_, connSeq := ?_, connAux := ?_ }
   · -- pi
     intro j pc hpc
     exact h.pi j pc ((hPO j).symm.trans hpc)
@@ -443,6 +443,18 @@ theorem inv_relay_close (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.C
     show ((c'.toRelay).filter (ConnSeqIs s)).length ≤ 1
     rw [hTR]
     exact count_le_sub _ _ _ hrest (h.connSeq s)
+  · -- connAux
+    refine ⟨⟨by rw [hpg]; exact h.connAux.1.1, fun q hqr j hqj => h.connAux.1.2 q (by rw [hq]; exact List.mem_cons_of_mem _ (by rw [hTR] at hqr; exact hqr)) j hqj⟩, ?_⟩
+    intro q hqq j cnt f hqf
+    rw [hTP] at hqq
+    rcases List.mem_append.mp hqq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 j cnt f hqf
+    · rcases hnewC with rfl | ⟨t, rfl⟩
+      · simp at h1
+      · rw [List.mem_singleton] at h1
+        rw [h1] at hqf
+        simp at hqf
 
 -- the CLOSE step: its frames (none, or one CLOSED of the id), its connection of the id (gone), the others (kept)
 theorem closeStep_outs (s : Relay.St) (id : Nat) :

@@ -473,6 +473,17 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     intro s
     rw [hTR]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hpage]; exact h.connAux.1.1, fun q hq id hqid => h.connAux.1.2 q (by rw [hTR] at hq; exact hq) id hqid⟩, ?_⟩
+    intro q hq id cnt f hqf
+    rcases (hmem q).mp hq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 id cnt f hqf
+    · obtain ⟨j, cnt', d, -, hd, -, hgd⟩ := hnew q h1
+      obtain ⟨c0, hc0, hg0⟩ := hback j d hd
+      have hlt := h.gensLt j c0 hc0
+      rw [hng, hgd, ← hg0]
+      exact hlt
   case noDeny =>
     intro x hx
     rw [hTR] at hx

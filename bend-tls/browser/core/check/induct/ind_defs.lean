@@ -181,6 +181,10 @@ structure Inv (T : TSys) : Prop where
   -- at most one CLOSE of an id is queued, and at most one CONNECT of a sequence number
   closeUniq : ∀ id, (T.c.toRelay.filter (CloseIs id)).length ≤ 1
   connSeq : ∀ s, (T.c.toRelay.filter (ConnSeqIs s)).length ≤ 1
+  -- a queued CONNECT has a positive sequence number (the page's sequence numbers start at 1, and the relay registers
+  -- a generation for a positive one only), and a queued WRITTEN frame's generation is below the relay's next one
+  connAux : (0 < T.c.page.nextSeq ∧ ∀ q ∈ T.c.toRelay, ∀ id, q.1 = Relay.Ev.connect id → 0 < q.2) ∧
+    (∀ q ∈ T.c.toPage, ∀ id cnt f, q.1 = Relay.Out.written id cnt f → q.2 < T.c.rs.nextGen)
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)

@@ -55,7 +55,7 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
       closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_,
       discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_,
-      noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq, connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((c'.toRelay).filter (CloseIs j)).length ≤ 1
@@ -66,6 +66,16 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
     show ((c'.toRelay).filter (ConnSeqIs s)).length ≤ 1
     rw [hTR]
     exact count_le_sub _ _ _ hrest (h.connSeq s)
+  case connAux =>
+    refine ⟨⟨by rw [hpg]; exact h.connAux.1.1, fun q hq id hqid => h.connAux.1.2 q (hxrest q hq) id hqid⟩, ?_⟩
+    intro q hq id cnt f hqf
+    rw [hTP] at hq
+    rcases List.mem_append.mp hq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 id cnt f hqf
+    · have h2 := hnew q h1
+      rw [hqf] at h2
+      simp [outIdT] at h2
   · -- pi
     intro j pc hpc
     exact h.pi j pc ((hPO j).symm.trans hpc)

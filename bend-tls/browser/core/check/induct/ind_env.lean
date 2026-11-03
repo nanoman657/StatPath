@@ -441,6 +441,17 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     intro s
     rw [hTR]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hpage]; exact h.connAux.1.1, fun q hq id hqid => h.connAux.1.2 q (by rw [hTR] at hq; exact hq) id hqid⟩, ?_⟩
+    intro q hq id cnt f hqf
+    rw [hTP] at hq
+    rcases List.mem_append.mp hq with h1 | h1
+    · rw [hng]
+      exact h.connAux.2 q h1 id cnt f hqf
+    · obtain ⟨-, j, c, -, hc, hgq, -⟩ := hnew q h1
+      have hlt := h.gensLt j c hc
+      rw [hng, hgq]
+      exact hlt
   case noDeny =>
     intro x hx
     rw [hTR] at hx

@@ -53,7 +53,8 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((T.c.toRelay ++ [(Relay.Ev.connect id, c.seq)]).filter (CloseIs j)).length ≤ 1
@@ -81,6 +82,18 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
         simp [ConnSeqIs, hs]
       rw [h2, List.length_nil, Nat.add_zero]
       exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; omega, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · rw [List.mem_singleton] at h1
+        subst h1
+        show 0 < c.seq
+        rw [hc]
+        exact h.connAux.1.1
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q hqq j cnt f hqf
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -487,7 +500,8 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((T.c.toRelay ++ [(Relay.Ev.close id, 0)]).filter (CloseIs j)).length ≤ 1
@@ -516,6 +530,16 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
     show ((T.c.toRelay ++ [(Relay.Ev.close id, 0)]).filter (ConnSeqIs s)).length ≤ 1
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; rw [List.mem_singleton] at hx; subst hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · rw [List.mem_singleton] at h1
+        rw [h1] at hqj
+        simp at hqj
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q hqq j cnt f hqf
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -897,7 +921,8 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((T.c.toRelay ++ [(Relay.Ev.discard id, 0)]).filter (CloseIs j)).length ≤ 1
@@ -908,6 +933,16 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
     show ((T.c.toRelay ++ [(Relay.Ev.discard id, 0)]).filter (ConnSeqIs s)).length ≤ 1
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; rw [List.mem_singleton] at hx; subst hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · rw [List.mem_singleton] at h1
+        rw [h1] at hqj
+        simp at hqj
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q hqq j cnt f hqf
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1436,7 +1471,8 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((T.c.toRelay ++ L).filter (CloseIs j)).length ≤ 1
@@ -1447,6 +1483,15 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
     show ((T.c.toRelay ++ L).filter (ConnSeqIs s)).length ≤ 1
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; obtain ⟨k, rfl⟩ := hL x hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · obtain ⟨k, rfl⟩ := hL q h1
+        simp at hqj
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q hqq j cnt f hqf
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -2047,7 +2092,8 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_, noDeny := ?_, closeUniq := ?closeUniq, connSeq := ?connSeq,
+      connAux := ?connAux }
   case closeUniq =>
     intro j
     show ((T.c.toRelay ++ L).filter (CloseIs j)).length ≤ 1
@@ -2058,6 +2104,15 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
     show ((T.c.toRelay ++ L).filter (ConnSeqIs s)).length ≤ 1
     rw [count_app_nil (ConnSeqIs s) _ _ (by intro x hx; obtain ⟨k, rfl⟩ := hL x hx; rfl)]
     exact h.connSeq s
+  case connAux =>
+    refine ⟨⟨by rw [hnext]; exact h.connAux.1.1, ?_⟩, ?_⟩
+    · intro q hqq j hqj
+      rcases List.mem_append.mp hqq with h1 | h1
+      · exact h.connAux.1.2 q h1 j hqj
+      · obtain ⟨k, rfl⟩ := hL q h1
+        simp at hqj
+    · intro q hqq j cnt f hqf
+      exact h.connAux.2 q hqq j cnt f hqf
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
