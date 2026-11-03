@@ -18,7 +18,7 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
     (rest : List (Relay.Ev × Nat)) (hq : T.c.toRelay = (e, p) :: rest) (new : List (Relay.Out × Nat))
     (hTR : c'.toRelay = rest) (hpg : c'.page = T.c.page) (hG : c'.genOf = T.c.genOf)
     (hTP : c'.toPage = T.c.toPage ++ new) (hnew : ∀ q ∈ new, outIdT q.1 = none)
-    (hng : c'.rs.nextGen = T.c.rs.nextGen) (hqs : ∀ j, qs j ⟨c', clk'⟩ = qs j T)
+    (hng : c'.rs.nextGen = T.c.rs.nextGen) (hqs : ∀ j, qs j ⟨c', clk'⟩ ≤ qs j T)
     (hconn1 : ∀ j c, ConnOf T j = some c → ∃ c'', ConnOf ⟨c', clk'⟩ j = some c'' ∧ c''.gen = c.gen ∧
       c''.isOpen = c.isOpen ∧ c''.written = c.written ∧ c''.queued = c.queued ∧ c''.peerClosed = c.peerClosed)
     (hconn2 : ∀ j c'', ConnOf ⟨c', clk'⟩ j = some c'' → ∃ c, ConnOf T j = some c ∧ c''.gen = c.gen ∧
@@ -98,14 +98,17 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
       exact h1
     obtain ⟨hA, hB⟩ := h.acc j pc c hpc' hc hgc'
     show c3.written + c3.queued + qs j ⟨c', clk'⟩ ≤ pc.sent ∧ pc.written ≤ c3.written
-    rw [hqs j, hw, hq1]
-    exact ⟨hA, hB⟩
+    have hqj := hqs j
+    rw [hw, hq1]
+    exact ⟨by omega, hB⟩
   · -- wq
     intro j c3 hc3
     obtain ⟨c, hc, -, -, -, hq1, -⟩ := hconn2 j c3 hc3
     show c3.queued + qs j ⟨c', clk'⟩ ≤ Relay.SEND_WINDOW
-    rw [hqs j, hq1]
-    exact h.wq j c hc
+    have hqj := hqs j
+    rw [hq1]
+    have := h.wq j c hc
+    omega
   · -- gen
     intro q hq' j hoj c3 hc3
     rcases hsubP q hq' with h1 | h1
@@ -146,8 +149,9 @@ theorem inv_relay_keep (T : TSys) (h : Inv T) (c' : Client.Sys) (clk' : Clock.Cl
         exact hgq
       obtain ⟨r1, r2, r3⟩ := h.reset q h1 j cnt hqj pc hpc' hdp hgq' c hc (hg.symm.trans hg3)
       show c3.queued = 0 ∧ qs j ⟨c', clk'⟩ = 0 ∧ c3.written = cnt
-      rw [hq1, hw, hqs j]
-      exact ⟨r1, r2, r3⟩
+      rw [hq1, hw]
+      have hqj := hqs j
+      exact ⟨r1, by omega, r3⟩
     · exact absurd (hnew q h1) (by rw [hqj]; simp [outIdT])
   · -- barrier
     show List.Pairwise (fun p q => ¬ FwdEv p.1 q.1) c'.toRelay
@@ -511,7 +515,7 @@ theorem inv_tDoRelay_read (T T' : TSys) (h : Inv T) (id k p : Nat) (rest : List 
   · show (Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (Relay.Ev.read id k)).2.1.nextGen = T.c.rs.nextGen
     rw [stepK_read_rs, read_nextGen]
   · intro j
-    show qsumT j rest = qs j T
+    show qsumT j rest ≤ qs j T
     unfold qs
     rw [hq]
     simp [qsumT]

@@ -685,7 +685,7 @@ theorem inv_tDoRelay_discard (T T' : TSys) (h : Inv T) (id p : Nat) (rest : List
       simp at hq'
     · rfl
     · intro j
-      show qsumT j rest = qs j T
+      show qsumT j rest ≤ qs j T
       unfold qs
       rw [hq]
       simp [qsumT]
@@ -797,7 +797,7 @@ theorem inv_tDoRelay_discard (T T' : TSys) (h : Inv T) (id p : Nat) (rest : List
       · show (Relay.step Relay.DEFAULT_CAP T.c.rs (Relay.Ev.discard id)).1.nextGen = T.c.rs.nextGen
         exact discard_nextGen _ _ _
       · intro j
-        show qsumT j rest = qs j T
+        show qsumT j rest ≤ qs j T
         unfold qs
         rw [hq]
         simp [qsumT]

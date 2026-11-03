@@ -499,7 +499,7 @@ theorem inv_tDoRelay_close (T T' : TSys) (h : Inv T) (id p : Nat) (rest : List (
       simp at hq'
     · rfl
     · intro j
-      show qsumT j rest = qs j T
+      show qsumT j rest ≤ qs j T
       unfold qs
       rw [hq]
       simp [qsumT]
