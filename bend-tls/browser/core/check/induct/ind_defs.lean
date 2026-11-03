@@ -85,13 +85,15 @@ structure Inv (T : TSys) : Prop where
   failNone : ∀ q ∈ T.c.toPage, ∀ id e, q.1 = .fail id e → ConnOf T id = none
   closedNone : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ConnOf T id = none
   closedClosing : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → (T.c.page.slots id).closing = true
-  closedOrd : List.Pairwise (fun p q => ∀ id, p.1 = .closed id → outIdT q.1 = some id → isClosedOut q.1 = true) T.c.toPage
+  closedOrd : List.Pairwise (fun p q => ∀ id, p.1 = .closed id → outIdT q.1 = some id → False) T.c.toPage
   closeClosing : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .close id → (T.c.page.slots id).closing = true
   closedNoConn : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ∀ x ∈ T.c.toRelay, x.1 ≠ .connect id
   openRel : ∀ id pc, PageOf T id = some pc → pc.isOpen = true → ∀ c, ConnOf T id = some c → c.isOpen = true
   okOpen : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .ok id → (T.c.page.slots id).closing = false → ∀ pc, PageOf T id = some pc → pc.isOpen = false
   okNoDisc : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .ok id → (T.c.page.slots id).closing = false → ∀ x ∈ T.c.toRelay, x.1 ≠ .discard id
   discRel : ∀ x ∈ T.c.toRelay, ∀ id, x.1 = .discard id → ConnOf T id = none ∨ (∃ pc, PageOf T id = some pc ∧ pc.isOpen = true) ∨ (PageOf T id = none ∧ (T.c.page.slots id).closing = true)
+  closingNone : ∀ id, (T.c.page.slots id).closing = true → (T.c.page.slots id).conn = none
+  closedNoClose : ∀ q ∈ T.c.toPage, ∀ id, q.1 = .closed id → ∀ x ∈ T.c.toRelay, x.1 ≠ .close id
 
 theorem inv_init (cps bps : Nat) : Inv (TSys.init true cps bps) := by
   constructor

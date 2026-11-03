@@ -322,4 +322,18 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     · exact Or.inr (Or.inl ⟨pc, by rw [hpg]; exact hp, hop⟩)
     · exact Or.inr (Or.inr ⟨by rw [hpg]; exact hpn, by rw [hcl id]; exact hcl2⟩)
 
+  case closingNone =>
+    intro j hcl2
+    rw [hpage]
+    rw [hcl j] at hcl2
+    exact h.closingNone j hcl2
+  case closedNoClose =>
+    intro q hq id hfl x hx hxe
+    rw [hTR] at hx
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.closedNoClose q h0 id hfl x hx hxe
+    · obtain ⟨hcl0, _⟩ := hnew q h1
+      rw [hfl] at hcl0
+      simp [isClosedOut] at hcl0
+
 end Ind

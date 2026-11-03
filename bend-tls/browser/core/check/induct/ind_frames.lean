@@ -22,7 +22,8 @@ theorem inv_shrink (c : Client.Sys) (clk : Clock.Clk) (h : Inv ⟨c, clk⟩) (c'
       closedOrd := List.Pairwise.sublist hs h.closedOrd, closeClosing := h.closeClosing,
       closedNoConn := fun q hq => h.closedNoConn q (hs.subset hq), openRel := h.openRel,
       okOpen := fun q hq => h.okOpen q (hs.subset hq), okNoDisc := fun q hq => h.okNoDisc q (hs.subset hq),
-      discRel := h.discRel }
+      discRel := h.discRel, closingNone := h.closingNone,
+      closedNoClose := fun q hq => h.closedNoClose q (hs.subset hq) }
 
 -- Page.frame does nothing to the page for a frame that does not apply (and is not a CLOSED frame)
 theorem frame_none (st : Page.State) (o : Relay.Out) (hn : Page.applies st o = none)
@@ -45,5 +46,286 @@ theorem inv_tDoPage_ignored (T T' : TSys) (h : Inv T) (o : Relay.Out) (t : Nat) 
     List.append_nil] at hT
   subst hT
   exact inv_shrink T.c T.clk h _ rfl rfl rfl rfl (by simp [hq])
+
+end Ind
+
+namespace Ind
+open Timed
+
+-- the page takes a CLOSED frame of an id: the id's closing flag goes, and the queue loses the frame. Nothing else in
+-- the composed state changes, and the frame's id has no connection, no CONNECT or CLOSE queued, and no other frame
+theorem frame_closed (st : Page.State) (id : Nat) :
+    Page.frame st (Relay.Out.closed id) = (Page.setSlot st id { st.slots id with closing := false }, []) := rfl
+
+theorem inv_closed_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (rest : List (Relay.Out × Nat))
+    (hq : T.c.toPage = (Relay.Out.closed id, t) :: rest) (P : Page.State)
+    (hrs : c'.rs = T.c.rs) (hr : c'.toRelay = T.c.toRelay) (hg : c'.genOf = T.c.genOf) (hs : c'.toPage = rest)
+    (hp : c'.page = P) (hconn : ∀ j, (P.slots j).conn = (T.c.page.slots j).conn)
+    (hcl1 : (P.slots id).closing = false)
+    (hcl2 : ∀ j, j ≠ id → (P.slots j).closing = (T.c.page.slots j).closing)
+    (hnext : P.nextSeq = T.c.page.nextSeq) :
+    Inv ⟨c', T.clk⟩ := by
+  obtain ⟨rs', pg', tr', tp', gg', bd', pr', sk'⟩ := c'
+  dsimp only at hrs hr hg hs hp
+  subst hrs hr hg
+  subst tp'
+  subst hp
+  have hmemq : (Relay.Out.closed id, t) ∈ T.c.toPage := by rw [hq]; simp
+  have hcn : ConnOf T id = none := h.closedNone _ hmemq id rfl
+  have hnoC : ∀ x ∈ T.c.toRelay, x.1 ≠ Relay.Ev.connect id := h.closedNoConn _ hmemq id rfl
+  have hnoCl : ∀ x ∈ T.c.toRelay, x.1 ≠ Relay.Ev.close id := h.closedNoClose _ hmemq id rfl
+  have hord := h.closedOrd
+  rw [hq] at hord
+  have hrest := (List.pairwise_cons.mp hord).1
+  have hnoF : ∀ r ∈ rest, outIdT r.1 ≠ some id := fun r hr' hEq => hrest r hr' id rfl hEq
+  have hsub : ∀ q ∈ rest, q ∈ T.c.toPage := fun q hq' => by
+    rw [hq]
+    exact List.mem_cons_of_mem _ hq'
+  have hsl : rest.Sublist T.c.toPage := by
+    rw [hq]
+    exact List.sublist_cons_self _ _
+  refine
+    { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
+      reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
+      failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
+      closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
+      closedNoClose := ?_ }
+  · intro j pc hpc
+    change (pg'.slots j).conn = some pc at hpc
+    rw [hconn j] at hpc
+    exact h.pi j pc (by unfold PageOf; exact hpc)
+  · intro j cc hcc
+    have hcc' : ConnOf T j = some cc := hcc
+    by_cases hj : j = id
+    · subst hj
+      rw [hcn] at hcc'
+      cases hcc'
+    · rcases h.link j cc hcc' with ⟨pc, hpc, hg'⟩ | ⟨hpn, hcl3⟩
+      · refine Or.inl ⟨pc, ?_, hg'⟩
+        change (pg'.slots j).conn = some pc
+        rw [hconn j]
+        exact hpc
+      · refine Or.inr ⟨?_, ?_⟩
+        · change (pg'.slots j).conn = none
+          rw [hconn j]
+          exact hpn
+        · change (pg'.slots j).closing = true
+          rw [hcl2 j hj]
+          exact hcl3
+  · intro j pc cc hpc hcc hg'
+    have hpc' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hpc
+      rw [hconn j] at hpc
+      exact hpc
+    have hcc' : ConnOf T j = some cc := hcc
+    exact h.acc j pc cc hpc' hcc' hg'
+  · intro j cc hcc
+    exact h.wq j cc hcc
+  · intro q hq' j hoj cc hcc
+    exact h.gen q (hsub q hq') j hoj cc hcc
+  · intro q hq' j hnc hoj pc hpc
+    by_cases hj : j = id
+    · subst hj
+      exact absurd hoj (hnoF q hq')
+    · have hpc' : PageOf T j = some pc := by
+        change (pg'.slots j).conn = some pc at hpc
+        rw [hconn j] at hpc
+        exact hpc
+      show (pg'.slots j).closing = true ∨ (pc.seq, q.2) ∈ T.c.genOf
+      rw [hcl2 j hj]
+      exact h.apply q (hsub q hq') j hnc hoj pc hpc'
+  · intro q hq' j hnc hoj hpn
+    by_cases hj : j = id
+    · subst hj
+      exact absurd hoj (hnoF q hq')
+    · have hpn' : PageOf T j = none := by
+        change (pg'.slots j).conn = none at hpn
+        rw [hconn j] at hpn
+        exact hpn
+      show (pg'.slots j).closing = true
+      rw [hcl2 j hj]
+      exact h.noOrphan q (hsub q hq') j hnc hoj hpn'
+  · intro q hq' j cnt f hq1 cc hcc hg'
+    exact h.written q (hsub q hq') j cnt f hq1 cc hcc hg'
+  · intro q hq' j cnt hq1 pc hpc hdp hg' cc hcc hgg
+    by_cases hj : j = id
+    · subst hj
+      exact absurd (show outIdT q.1 = some j by rw [hq1]; rfl) (hnoF q hq')
+    · have hpc' : PageOf T j = some pc := by
+        change (pg'.slots j).conn = some pc at hpc
+        rw [hconn j] at hpc
+        exact hpc
+      exact h.reset q (hsub q hq') j cnt hq1 pc hpc' hdp hg' cc hcc hgg
+  · exact h.barrier
+  · exact h.connClean
+  · intro j pc hpc hop
+    have hpc' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hpc
+      rw [hconn j] at hpc
+      exact hpc
+    exact h.notOpen j pc hpc' hop
+  · intro q hq' j hqc
+    by_cases hj : j = id
+    · subst hj
+      exact absurd hqc (hnoC q hq')
+    · rcases h.cl q hq' j hqc with ⟨pc, hpc, hs'⟩ | ⟨hpn, hcl3⟩
+      · refine Or.inl ⟨pc, ?_, hs'⟩
+        change (pg'.slots j).conn = some pc
+        rw [hconn j]
+        exact hpc
+      · refine Or.inr ⟨?_, ?_⟩
+        · change (pg'.slots j).conn = none
+          rw [hconn j]
+          exact hpn
+        · change (pg'.slots j).closing = true
+          rw [hcl2 j hj]
+          exact hcl3
+  · intro q hq' j cnt hq1 x hx n
+    exact h.rq q (hsub q hq') j cnt hq1 x hx n
+  · exact h.gensLt
+  · exact h.gp
+  · intro j pc hpc hop
+    have hpc' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hpc
+      rw [hconn j] at hpc
+      exact hpc
+    obtain ⟨g, hg'⟩ := h.openG j pc hpc' hop
+    exact ⟨g, hg'⟩
+  · exact h.mirror
+  · exact h.good
+  · intro p g hm
+    show p < pg'.nextSeq
+    rw [hnext]
+    exact h.seqG p g hm
+  · intro q hq' j hqc
+    show q.2 < pg'.nextSeq
+    rw [hnext]
+    exact h.seqQ q hq' j hqc
+  · intro q hq' j hd pc hp hop
+    have hp' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hp
+      rw [hconn j] at hp
+      exact hp
+    exact h.disc q hq' j hd pc hp' hop
+  · intro q hq' j cnt hq1
+    by_cases hj : j = id
+    · subst hj
+      exact absurd (show outIdT q.1 = some j by rw [hq1]; rfl) (hnoF q hq')
+    · rcases h.rep q (hsub q hq') j cnt hq1 with ⟨pc, hpc, hpd⟩ | ⟨hpn, hcl3⟩
+      · refine Or.inl ⟨pc, ?_, hpd⟩
+        change (pg'.slots j).conn = some pc
+        rw [hconn j]
+        exact hpc
+      · refine Or.inr ⟨?_, ?_⟩
+        · change (pg'.slots j).conn = none
+          rw [hconn j]
+          exact hpn
+        · change (pg'.slots j).closing = true
+          rw [hcl2 j hj]
+          exact hcl3
+  · intro j pc hp hr'
+    have hp' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hp
+      rw [hconn j] at hp
+      exact hp
+    exact h.recvG j pc hp' hr'
+  · intro q hq' j e hfl
+    exact h.failNone q (hsub q hq') j e hfl
+  · intro q hq' j hfl
+    exact h.closedNone q (hsub q hq') j hfl
+  · intro q hq' j hfl
+    by_cases hj : j = id
+    · subst hj
+      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+    · change (pg'.slots j).closing = true
+      rw [hcl2 j hj]
+      exact h.closedClosing q (hsub q hq') j hfl
+  · exact List.Pairwise.sublist hsl h.closedOrd
+  · intro x hx j hxj
+    by_cases hj : j = id
+    · subst hj
+      exact absurd hxj (hnoCl x hx)
+    · change (pg'.slots j).closing = true
+      rw [hcl2 j hj]
+      exact h.closeClosing x hx j hxj
+  · intro q hq' j hfl x hx hxe
+    exact h.closedNoConn q (hsub q hq') j hfl x hx hxe
+  · intro j pc hpc hop cc hcc
+    have hpc' : PageOf T j = some pc := by
+      change (pg'.slots j).conn = some pc at hpc
+      rw [hconn j] at hpc
+      exact hpc
+    exact h.openRel j pc hpc' hop cc hcc
+  · intro q hq' j hfl hcl3 pc hpc
+    by_cases hj : j = id
+    · subst hj
+      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+    · have hcl4 : (T.c.page.slots j).closing = false := by
+        change (pg'.slots j).closing = false at hcl3
+        rw [hcl2 j hj] at hcl3
+        exact hcl3
+      have hpc' : PageOf T j = some pc := by
+        change (pg'.slots j).conn = some pc at hpc
+        rw [hconn j] at hpc
+        exact hpc
+      exact h.okOpen q (hsub q hq') j hfl hcl4 pc hpc'
+  · intro q hq' j hfl hcl3 x hx
+    by_cases hj : j = id
+    · subst hj
+      exact absurd (show outIdT q.1 = some j by rw [hfl]; rfl) (hnoF q hq')
+    · have hcl4 : (T.c.page.slots j).closing = false := by
+        change (pg'.slots j).closing = false at hcl3
+        rw [hcl2 j hj] at hcl3
+        exact hcl3
+      exact h.okNoDisc q (hsub q hq') j hfl hcl4 x hx
+  · intro x hx j hxd
+    by_cases hj : j = id
+    · subst hj
+      exact Or.inl hcn
+    · rcases h.discRel x hx j hxd with h0 | ⟨pc, hp, hop⟩ | ⟨hpn, hcl3⟩
+      · exact Or.inl h0
+      · have hp' : (pg'.slots j).conn = some pc := by
+          rw [hconn j]
+          exact hp
+        exact Or.inr (Or.inl ⟨pc, hp', hop⟩)
+      · refine Or.inr (Or.inr ⟨?_, ?_⟩)
+        · change (pg'.slots j).conn = none
+          rw [hconn j]
+          exact hpn
+        · change (pg'.slots j).closing = true
+          rw [hcl2 j hj]
+          exact hcl3
+  · intro j hcl3
+    by_cases hj : j = id
+    · subst hj
+      rw [hcl1] at hcl3
+      cases hcl3
+    · change (pg'.slots j).conn = none
+      rw [hconn j]
+      exact h.closingNone j (by rw [← hcl2 j hj]; exact hcl3)
+  · intro q hq' j hfl x hx hxe
+    exact h.closedNoClose q (hsub q hq') j hfl x hx hxe
+
+theorem inv_tDoPage_closed (T T' : TSys) (h : Inv T) (id t : Nat) (rest : List (Relay.Out × Nat))
+    (hq : T.c.toPage = (Relay.Out.closed id, t) :: rest) (hT : tDoPage T = some T') : Inv T' := by
+  unfold tDoPage lift Client.doPage at hT
+  simp only [hq, frame_closed, Option.map_some, Option.some.injEq] at hT
+  subst hT
+  refine inv_closed_core T h _ id t rest hq (Page.setSlot T.c.page id { T.c.page.slots id with closing := false }) ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  · simp
+  · simp
+  · simp
+  · simp
+  · simp
+  · intro j
+    by_cases hj : j = id
+    · subst hj
+      simp [Page.setSlot]
+    · simp [Page.setSlot, hj]
+  · simp [Page.setSlot]
+  · intro j hj
+    simp [Page.setSlot, hj]
+  · rfl
 
 end Ind

@@ -53,7 +53,7 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -318,6 +318,22 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
       · rw [List.mem_singleton] at h1
         subst h1
         simp at hxj
+  · intro j hcl2
+    change (P.slots j).closing = true at hcl2
+    rw [hcl' j] at hcl2
+    by_cases hj : j = id
+    · subst hj
+      rw [hcl] at hcl2
+      cases hcl2
+    · change (P.slots j).conn = none
+      rw [hpo j, if_neg hj]
+      exact h.closingNone j hcl2
+  · intro q hq j hfl x hx hxe
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.closedNoClose q hq j hfl x h1 hxe
+    · rw [List.mem_singleton] at h1
+      subst h1
+      simp at hxe
 
 -- the page's CONNECT call, as the composed step does it: with no free id nothing changes; with one, the
 -- connection is made and its CONNECT frame queued
@@ -371,7 +387,7 @@ theorem doClose_spec (st : Page.State) (i : Nat) (c : Page.PConn) (hc : (st.slot
 theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
     (hn : (P.slots id).conn = none) (hcl1 : (P.slots id).closing = true)
     (hother : ∀ j, j ≠ id → P.slots j = T.c.page.slots j)
-    (hnext : P.nextSeq = T.c.page.nextSeq) :
+    (hnext : P.nextSeq = T.c.page.nextSeq) (hold : ∃ c0, (T.c.page.slots id).conn = some c0) :
     Inv ⟨{ T.c with page := P, toRelay := T.c.toRelay ++ [(Relay.Ev.close id, 0)] }, T.clk⟩ := by
   have hpo : ∀ j, (P.slots j).conn = if j = id then none else (T.c.page.slots j).conn := by
     intro j
@@ -391,7 +407,7 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -670,6 +686,28 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
       · rw [List.mem_singleton] at h1
         subst h1
         simp at hxj
+  · intro j hcl2
+    by_cases hj : j = id
+    · subst hj
+      change (P.slots j).conn = none
+      rw [hpo j]
+      simp
+    · change (P.slots j).closing = true at hcl2
+      rw [hcl' j, if_neg hj] at hcl2
+      change (P.slots j).conn = none
+      rw [hpo j, if_neg hj]
+      exact h.closingNone j hcl2
+  · intro q hq j hfl x hx hxe
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.closedNoClose q hq j hfl x h1 hxe
+    · rw [List.mem_singleton] at h1
+      subst h1
+      simp at hxe
+      subst hxe
+      have hcc := h.closingNone _ (h.closedClosing q hq _ hfl)
+      obtain ⟨c0, hc0⟩ := hold
+      rw [hc0] at hcc
+      cases hcc
 
 theorem fwd_discard_left (x : Relay.Ev) (id : Nat) (h : FwdEv x (Relay.Ev.discard id)) :
     (∃ a, x = Relay.Ev.connect a ∧ a = id) ∨ (∃ a, x = Relay.Ev.discard a ∧ a = id) := by
@@ -705,7 +743,7 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1018,6 +1056,24 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
         subst h1
         simp at hxj
         exact absurd hxj.symm hj
+  · intro j hcl2
+    change (P.slots j).closing = true at hcl2
+    rw [hcl' j] at hcl2
+    by_cases hj : j = id
+    · subst hj
+      exfalso
+      have hcc := h.closingNone j hcl2
+      rw [hpc] at hcc
+      cases hcc
+    · change (P.slots j).conn = none
+      rw [hpo j, if_neg hj]
+      exact h.closingNone j hcl2
+  · intro q hq j hfl x hx hxe
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.closedNoClose q hq j hfl x h1 hxe
+    · rw [List.mem_singleton] at h1
+      subst h1
+      simp at hxe
 
 -- the page's DISCARD: its four outcomes, as the page's step gives them
 theorem doDiscard_none (st : Page.State) (i : Nat) (hc : (st.slots i).conn = none) :
@@ -1090,7 +1146,7 @@ theorem inv_tPageClose (T T' : TSys) (h : Inv T) (hfix : T.c.page.fixed = true) 
     obtain ⟨h1, h2, h3, h4, _, h6⟩ := doClose_spec T.c.page i c hc
     subst hT
     have hcl1 : ((Page.doClose T.c.page i).1.slots i).closing = true := by rw [h2, hfix]
-    have key := inv_page_close T h i (Page.doClose T.c.page i).1 h1 hcl1 h3 h4
+    have key := inv_page_close T h i (Page.doClose T.c.page i).1 h1 hcl1 h3 h4 ⟨c, hc⟩
     rw [h6]
     exact key
 
@@ -1153,7 +1209,7 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1463,6 +1519,25 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
     · obtain ⟨k, hk⟩ := hL x h1
       rw [hk] at hxj
       simp at hxj
+  · intro j hcl2
+    change (P.slots j).closing = true at hcl2
+    rw [hcl' j] at hcl2
+    by_cases hj : j = id
+    · subst hj
+      exfalso
+      have hcc := h.closingNone j hcl2
+      have hc0 : (T.c.page.slots j).conn = some c := hpc
+      rw [hc0] at hcc
+      cases hcc
+    · change (P.slots j).conn = none
+      rw [hpo j, if_neg hj]
+      exact h.closingNone j hcl2
+  · intro q hq j hfl x hx hxe
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.closedNoClose q hq j hfl x h1 hxe
+    · obtain ⟨k, hk⟩ := hL x h1
+      rw [hk] at hxe
+      simp at hxe
 
 theorem doRecv_take_spec (st : Page.State) (i max : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
     (hgt : c.received > c.taken) :
@@ -1683,7 +1758,7 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1991,6 +2066,25 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
       · obtain ⟨k, hk⟩ := hL x h1
         rw [hk] at hxj
         simp at hxj
+  · intro j hcl2
+    change (P.slots j).closing = true at hcl2
+    rw [hcl' j] at hcl2
+    by_cases hj : j = id
+    · subst hj
+      exfalso
+      have hcc := h.closingNone j hcl2
+      have hc0 : (T.c.page.slots j).conn = some c := hpc
+      rw [hc0] at hcc
+      cases hcc
+    · change (P.slots j).conn = none
+      rw [hpo j, if_neg hj]
+      exact h.closingNone j hcl2
+  · intro q hq j hfl x hx hxe
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.closedNoClose q hq j hfl x h1 hxe
+    · obtain ⟨k, hk⟩ := hL x h1
+      rw [hk] at hxe
+      simp at hxe
 
 -- the pumped SEND of n > 0 on an open connection with no SEND in progress and not discarding
 theorem doSend_pump (st : Page.State) (i n : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
