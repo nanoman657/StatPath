@@ -163,7 +163,7 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_ }
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc
@@ -584,6 +584,30 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
     exact h.okRel q (hsub q hq') j hqj
   · -- okOrd
     exact List.Pairwise.sublist hsl h.okOrd
+  · -- discOnce
+    intro q hq' id cnt hqj x hx
+    rcases List.mem_append.mp hx with h1 | h1
+    · exact h.discOnce q (hsub q hq') id cnt hqj x h1
+    · obtain ⟨k, rfl⟩ := hL' x h1
+      simp
+  · -- discUniq
+    intro q hq' r hr' id c1 c2 h1 h2
+    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+  · -- wrMono
+    intro q hq' j cnt f hqj pc hpc hg
+    change (P.slots j).conn = some pc at hpc
+    rw [hpo j] at hpc
+    by_cases hj : j = id
+    · rw [if_pos hj] at hpc
+      cases Option.some.inj hpc
+      rw [hj] at hqj
+      rw [hseq] at hg
+      rw [hwr]
+      exact h.wrMono q (hsub q hq') id cnt f hqj c hc hg
+    · rw [if_neg hj] at hpc
+      exact h.wrMono q (hsub q hq') j cnt f hqj pc hpc hg
+  · -- wrOrd
+    exact List.Pairwise.sublist hsl h.wrOrd
 
 -- the page takes a DATA frame: the id's connection gains the bytes, the readers wake, and the wake's READs are
 -- queued

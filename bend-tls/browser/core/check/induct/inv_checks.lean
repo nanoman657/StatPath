@@ -325,8 +325,30 @@ def discOnceB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
     | .discard j => j != id
     | _ => true
   | _ => true
+-- candidate: at most one discard reply of an id is queued
+def discUniqB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id c 1 => v.c.toPage.all fun r => match r.1 with
+    | .written j c2 1 => j != id || decide (r = q)
+    | _ => true
+  | _ => true
 def iInv12 : List (String × (TSys → Bool)) := iInv11 ++ [("DiscOnce", discOnceB)]
-def firstBadI (v : TSys) : Option String := (iInv12.find? (fun c => !c.2 v)).map (·.1)
+def iInv13 : List (String × (TSys → Bool)) := iInv12 ++ [("DiscUniq", discUniqB)]
+-- candidate: a queued WRITTEN of a connection (its generation) has a count at least the page's written count
+def wrMonoB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id cnt _ => match (v.c.page.slots id).conn with
+    | some pc => decide (!(v.c.genOf.any (fun g => g.1 == pc.seq && g.2 == q.2)) || pc.written ≤ cnt)
+    | none => true
+  | _ => true
+-- candidate: queued WRITTENs of one id and generation are in nondecreasing order of count
+def wrOrdB : List (Relay.Out × Nat) → Bool
+  | [] => true
+  | q :: rest => (match q.1 with
+      | .written id c1 _ => rest.all (fun r => match r.1 with
+          | .written j c2 _ => !(j == id && r.2 == q.2) || decide (c1 ≤ c2)
+          | _ => true)
+      | _ => true) && wrOrdB rest
+def iInv14 : List (String × (TSys → Bool)) := iInv13 ++ [("WrMono", wrMonoB), ("WrOrd", fun v => wrOrdB v.c.toPage)]
+def firstBadI (v : TSys) : Option String := (iInv14.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

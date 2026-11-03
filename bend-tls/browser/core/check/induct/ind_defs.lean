@@ -102,6 +102,16 @@ structure Inv (T : TSys) : Prop where
     ConnOf T id = none ∨ ∃ c, ConnOf T id = some c ∧ c.gen = q.2 ∧ c.isOpen = true
   -- no two OK frames of an id are queued
   okOrd : List.Pairwise (fun p q => ∀ id, p.1 = .ok id → q.1 ≠ .ok id) T.c.toPage
+  -- a discard reply of an id is queued only when no DISCARD of that id waits in the relay's queue, and it is the only
+  -- discard reply of its id that is queued (the page's one discard at a time)
+  discOnce : ∀ q ∈ T.c.toPage, ∀ id cnt, q.1 = .written id cnt 1 → ∀ x ∈ T.c.toRelay, x.1 ≠ .discard id
+  discUniq : ∀ q ∈ T.c.toPage, ∀ r ∈ T.c.toPage, ∀ id c1 c2, q.1 = .written id c1 1 → r.1 = .written id c2 1 → q = r
+  -- a queued WRITTEN of a connection's generation counts at least the page's written count of the connection
+  wrMono : ∀ q ∈ T.c.toPage, ∀ id cnt f, q.1 = .written id cnt f → ∀ pc, PageOf T id = some pc →
+    (pc.seq, q.2) ∈ T.c.genOf → pc.written ≤ cnt
+  -- queued WRITTENs of one id and generation are in nondecreasing order of count
+  wrOrd : List.Pairwise (fun p q => ∀ id c1 f1 c2 f2, p.1 = .written id c1 f1 → q.1 = .written id c2 f2 →
+    p.2 = q.2 → c1 ≤ c2) T.c.toPage
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)

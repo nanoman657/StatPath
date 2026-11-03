@@ -25,7 +25,11 @@ theorem inv_shrink (c : Client.Sys) (clk : Clock.Clk) (h : Inv ⟨c, clk⟩) (c'
       discRel := h.discRel, closingNone := h.closingNone,
       closedNoClose := fun q hq => h.closedNoClose q (hs.subset hq), failOrd := List.Pairwise.sublist hs h.failOrd,
       connPend := fun x hx id hxi q hq => h.connPend x hx id hxi q (hs.subset hq),
-      okRel := fun q hq => h.okRel q (hs.subset hq), okOrd := List.Pairwise.sublist hs h.okOrd }
+      okRel := fun q hq => h.okRel q (hs.subset hq), okOrd := List.Pairwise.sublist hs h.okOrd,
+      discOnce := fun q hq id cnt hqj => h.discOnce q (hs.subset hq) id cnt hqj,
+      discUniq := fun q hq r hr id c1 c2 h1 h2 => h.discUniq q (hs.subset hq) r (hs.subset hr) id c1 c2 h1 h2,
+      wrMono := fun q hq id cnt f hqj pc hpc hg => h.wrMono q (hs.subset hq) id cnt f hqj pc hpc hg,
+      wrOrd := List.Pairwise.sublist hs h.wrOrd }
 
 -- Page.frame does nothing to the page for a frame that does not apply (and is not a CLOSED frame)
 theorem frame_none (st : Page.State) (o : Relay.Out) (hn : Page.applies st o = none)
@@ -92,7 +96,7 @@ theorem inv_closed_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (r
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_ }
   · intro j pc hpc
     change (pg'.slots j).conn = some pc at hpc
     rw [hconn j] at hpc
@@ -314,6 +318,14 @@ theorem inv_closed_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (r
   · intro q hq' id hqi
     exact h.okRel q (hsub q hq') id hqi
   · exact List.Pairwise.sublist hsl h.okOrd
+  · intro q hq' id cnt hqj
+    exact h.discOnce q (hsub q hq') id cnt hqj
+  · intro q hq' r hr' id c1 c2 h1 h2
+    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+  · intro q hq' id cnt f hqj pc hpc hg
+    exact h.wrMono q (hsub q hq') id cnt f hqj pc
+      (by show (T.c.page.slots id).conn = some pc; rw [← hconn id]; exact hpc) hg
+  · exact List.Pairwise.sublist hsl h.wrOrd
 
 theorem inv_tDoPage_closed (T T' : TSys) (h : Inv T) (id t : Nat) (rest : List (Relay.Out × Nat))
     (hq : T.c.toPage = (Relay.Out.closed id, t) :: rest) (hT : tDoPage T = some T') : Inv T' := by
@@ -398,7 +410,7 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_ }
   · intro j pc hpc
     by_cases hj : j = id
     · subst hj
@@ -672,6 +684,19 @@ theorem inv_fail_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id e t : Nat) (r
   · intro q hq' id hqi
     exact h.okRel q (hsub q hq') id hqi
   · exact List.Pairwise.sublist hsl h.okOrd
+  · intro q hq' j cnt hqj
+    exact h.discOnce q (hsub q hq') j cnt hqj
+  · intro q hq' r hr' id c1 c2 h1 h2
+    exact h.discUniq q (hsub q hq') r (hsub r hr') id c1 c2 h1 h2
+  · intro q hq' j cnt f hqj pc hpc hg
+    by_cases hj : j = id
+    · exfalso
+      have h3 := hrest q hq' id e rfl (by rw [hqj, hj]; rfl)
+      rw [hqj] at h3
+      simp [isClosedOut] at h3
+    · exact h.wrMono q (hsub q hq') j cnt f hqj pc
+        (by show (T.c.page.slots j).conn = some pc; rw [← hconn j hj]; exact hpc) hg
+  · exact List.Pairwise.sublist hsl h.wrOrd
 
 theorem inv_tDoPage_fail (T T' : TSys) (h : Inv T) (id e t : Nat) (rest : List (Relay.Out × Nat))
     (hq : T.c.toPage = (Relay.Out.fail id e, t) :: rest) (c : Page.PConn)
