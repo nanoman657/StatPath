@@ -355,7 +355,26 @@ def discPairB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
       | _ => false).length ≤ 1
   | _ => true
 def iInv15 : List (String × (TSys → Bool)) := iInv14 ++ [("DiscPair", discPairB)]
-def firstBadI (v : TSys) : Option String := (iInv15.find? (fun c => !c.2 v)).map (·.1)
+-- candidate: a queued WRITTEN of a page connection's generation counts at most the page's sent
+def wrSentB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id cnt _ => match (v.c.page.slots id).conn with
+    | some pc => !decide ((pc.seq, q.2) ∈ v.c.genOf) || decide (cnt ≤ pc.sent)
+    | none => true
+  | _ => true
+-- candidate: while a discard reply is queued, the relay's connection of its generation is frozen at the reply's count
+def replyFrozenB (v : TSys) : Bool := v.c.toPage.all fun q => match q.1 with
+  | .written id cnt 1 => match (v.c.rs.slot id).conn with
+    | some c => !decide (c.gen = q.2) || (c.queued == 0 && decide (c.written = cnt))
+    | none => true
+  | _ => true
+-- candidate: no queued WRITTEN of a generation counts more than a queued discard reply of that generation
+def replyMaxB (v : TSys) : Bool := v.c.toPage.all fun r => match r.1 with
+  | .written id c1 1 => v.c.toPage.all fun q => match q.1 with
+    | .written j c2 _ => j != id || r.2 != q.2 || decide (c2 ≤ c1)
+    | _ => true
+  | _ => true
+def iInv16 : List (String × (TSys → Bool)) := iInv15 ++ [("WrSent", wrSentB), ("ReplyFrozen", replyFrozenB), ("ReplyMax", replyMaxB)]
+def firstBadI (v : TSys) : Option String := (iInv16.find? (fun c => !c.2 v)).map (·.1)
 
 def iSearch (fixed : Bool) (depth : Nat) : Option (String × List String) × Nat := Id.run do
   let init := TSys.init fixed 1 1

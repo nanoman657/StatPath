@@ -8,9 +8,14 @@ composition, copied from the session's scratch model.
 
 ## Status
 
-`Inv` has 45 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
+`Inv` has 48 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
 `closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`), `closingNone`,
-`closedNoClose`, `failOrd`, and `genFun` (a sequence number belongs to one generation only). `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
+`closedNoClose`, `failOrd`, and `genFun` (a sequence number belongs to one generation only). Three more, for the
+WRITTEN frame, make 48: `wrSent` (a queued WRITTEN of a page connection's generation counts at most the page's sent),
+`replyFrozen` (while a discard reply of an id is queued, the relay connection of its generation has nothing queued and
+the reply's written count), and `replyMax` (no queued WRITTEN of an id and generation counts more than a queued discard
+reply of that id and generation). They hold at every site: the flush and env steps use `hfwd`/`hnewUp`
+(`stepK_sock_wr_le`, `sockStep_wr_le`), the frames and page calls keep the page's sent for the id. `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
 CLOSED frames. (The first statement, with no frame of the id at all, was refuted by the bounded search: a CLOSE after
 a socket failure queues a CLOSED behind the FAIL. The corrected statement passes depth 9.) Three more, for the OK frame:
 `connPend` (while a CONNECT of an id waits in the relay's queue, the page's queue holds no frame of that id; the relay

@@ -28,8 +28,9 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     fun o ho id' hoe => stepK_sock_ok_post Relay.DEFAULT_CAP T.clk T.c.rs id g kk o id' ho hoe
   have hOkPW := stepK_sock_okpw Relay.DEFAULT_CAP T.clk T.c.rs id g kk
   have hWr := stepK_sock_wr Relay.DEFAULT_CAP T.clk T.c.rs id g kk
+  have hWrLe := stepK_sock_wr_le Relay.DEFAULT_CAP T.clk T.c.rs id g kk
   have hUniq := stepK_sock_one_wr Relay.DEFAULT_CAP T.clk T.c.rs id g kk
-  generalize Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (.sock id g kk) = S at hrs hto hck hspec hmir hgood hFailS hOkS hFO0 hOkPost hOkPW hWr hUniq
+  generalize Clock.stepK Relay.DEFAULT_CAP T.clk T.c.rs (.sock id g kk) = S at hrs hto hck hspec hmir hgood hFailS hOkS hFO0 hOkPost hOkPW hWr hWrLe hUniq
   obtain ⟨p1, p2, p3, p4, p5, p6⟩ := hspec
   have hid : ∀ j, j ≠ id → (T'.c.rs.slot j) = (T.c.rs.slot j) := fun j hj => by rw [hrs, p1 j hj]
   have hknown : ∀ j, (T'.c.rs.slot j).known = (T.c.rs.slot j).known := by
@@ -37,7 +38,7 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     by_cases hj : j = id
     · subst hj; rw [hrs]; exact p2
     · rw [hid j hj]
-  refine inv_env_gen T T' h hp hr hg hng hknown ?_ ?_ ?_ _ hto ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
+  refine inv_env_gen T T' h hp hr hg hng hknown ?_ ?_ ?_ _ hto ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_ ?_
   · intro j c hc
     by_cases hj : j = id
     · subst hj
@@ -131,5 +132,15 @@ theorem inv_sock (T T' : TSys) (h : Inv T) (id g : Nat) (kk : Relay.Sk)
     obtain ⟨ob, hob, rfl⟩ := hb
     have hab : oa = ob := hUniq oa hoa ob hob j c1 c2 f1 f2 ha1 hb1
     rw [hab]
+  · intro q hq j cnt hqj c hc hgc
+    simp only [List.mem_map] at hq
+    obtain ⟨o, ho, rfl⟩ := hq
+    have hqj' : o = Relay.Out.written j cnt 0 := hqj
+    obtain ⟨hjid, c0, hc0, hle⟩ := hWrLe o ho j cnt 0 hqj'
+    unfold ConnOf at hc
+    rw [hjid] at hc
+    have hcc : c0 = c := Option.some.inj (hc0.symm.trans hc)
+    rw [hcc] at hle
+    exact hle
 
 end Ind

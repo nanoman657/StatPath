@@ -26,7 +26,9 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
     (hnewLow : ∀ q ∈ new, ∀ j cnt, q.1 = Relay.Out.written j cnt 0 →
       ∃ c, ConnOf T j = some c ∧ c.gen = q.2 ∧ c.written ≤ cnt)
     (hnewUniq : ∀ a ∈ new, ∀ b ∈ new, ∀ j c1 c2 f1 f2, a.1 = Relay.Out.written j c1 f1 →
-      b.1 = Relay.Out.written j c2 f2 → a = b) : Inv T' := by
+      b.1 = Relay.Out.written j c2 f2 → a = b)
+    (hnewUp : ∀ q ∈ new, ∀ j cnt, q.1 = Relay.Out.written j cnt 0 → ∀ c, ConnOf T j = some c → q.2 = c.gen →
+      cnt ≤ c.written + c.queued) : Inv T' := by
   -- a WRITTEN frame of a socket event is flag 0 at its own id
   have hnewFlag : ∀ q ∈ new, ∀ id cnt f, q.1 = Relay.Out.written id cnt f → f = 0 := by
     intro q hq id cnt f hqf
@@ -385,6 +387,52 @@ theorem inv_env_gen (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hT
       rw [← hcc, hco] at ho'
       cases ho'
 
+  case wrSent =>
+    intro q hq id cnt f hqj pc hpc hgq
+    have hpc0 : PageOf T id = some pc := by
+      unfold PageOf at hpc ⊢
+      rw [hpage] at hpc
+      exact hpc
+    rw [hG] at hgq
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.wrSent q h0 id cnt f hqj pc hpc0 hgq
+    · obtain ⟨-, j, c, hoj, hcon, hgc, -, -⟩ := hnew q h1
+      have hjid : j = id := by
+        rw [hqj] at hoj
+        simp [outIdT] at hoj
+        exact hoj.symm
+      have hf0 : f = 0 := hnewFlag q h1 id cnt f hqj
+      have hu := hnewUp q h1 id cnt (by rw [hqj, hf0]) c (by rw [← hjid]; exact hcon) (by rw [← hgc]) 
+      obtain ⟨hacc1, -⟩ := h.acc id pc c hpc0 (by rw [← hjid]; exact hcon) (by rw [← hgc]; exact hgq)
+      omega
+  case replyFrozen =>
+    intro q hq id cnt hqj c' hc' hcg'
+    rcases (hmem q).mp hq with h0 | h1
+    · obtain ⟨c0, hc0, hc0g⟩ := hback id c' hc'
+      obtain ⟨h1q, h2q⟩ := h.replyFrozen q h0 id cnt hqj c0 hc0 (hc0g.trans hcg')
+      rcases hconn id c0 hc0 with hn | ⟨c'', hc'', -, -, hwl, hsum, hql⟩
+      · rw [hn] at hc'
+        cases hc'
+      · have hcc : c'' = c' := Option.some.inj (hc''.symm.trans hc')
+        rw [hcc] at hwl hsum hql
+        constructor <;> omega
+    · exact absurd (hnewFlag q h1 id cnt 1 hqj) (by decide)
+  case replyMax =>
+    intro q hq r hr id c1 c2 f h1 h2 hg
+    rcases (hmem q).mp hq with h0 | h1'
+    · rcases (hmem r).mp hr with h0' | h1''
+      · exact h.replyMax q h0 r h0' id c1 c2 f h1 h2 hg
+      · obtain ⟨-, j, c, hoj, hcon, hgc, -, -⟩ := hnew r h1''
+        have hjid : j = id := by
+          rw [h2] at hoj
+          simp [outIdT] at hoj
+          exact hoj.symm
+        have hf0 : f = 0 := hnewFlag r h1'' id c2 f h2
+        have hu := hnewUp r h1'' id c2 (by rw [h2, hf0]) c (by rw [← hjid]; exact hcon) hgc
+        have hrf := h.replyFrozen q h0 id c1 h1 c (by rw [← hjid]; exact hcon) (hgc.symm.trans hg)
+        obtain ⟨hq0, hq1⟩ := hrf
+        omega
+    · exact absurd (hnewFlag q h1' id c1 1 h1) (by decide)
   case discOnce =>
     intro q hq id cnt hqj x hx
     rw [hTR] at hx

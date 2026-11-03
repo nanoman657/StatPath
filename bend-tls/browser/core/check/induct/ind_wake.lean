@@ -163,7 +163,7 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc
@@ -610,6 +610,22 @@ theorem inv_wake_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (o :
     exact List.Pairwise.sublist hsl h.wrOrd
   · -- genFun
     exact h.genFun
+  · -- wrSent
+    intro q hq id' cnt f hqj pc hpc hgq
+    by_cases hid : id' = id
+    · unfold PageOf at hpc
+      rw [hid, hconn2] at hpc
+      have hpe : pc = c2 := (Option.some.inj hpc).symm
+      rw [hpe, hsent]
+      rw [hid] at hqj
+      exact h.wrSent q (hsub q hq) id cnt f hqj c hc (by rw [← hseq, ← hpe]; exact hgq)
+    · exact h.wrSent q (hsub q hq) id' cnt f hqj pc (by unfold PageOf at hpc ⊢; rw [← hconn id' hid]; exact hpc) hgq
+  · -- replyFrozen
+    intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q (hsub q hq) id' cnt hqj c' hc' hcg'
+  · -- replyMax
+    intro q hq r hr id' c1 c2' f h1 h2 hg
+    exact h.replyMax q (hsub q hq) r (hsub r hr) id' c1 c2' f h1 h2 hg
 
 -- the page takes a DATA frame: the id's connection gains the bytes, the readers wake, and the wake's READs are
 -- queued

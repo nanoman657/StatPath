@@ -494,6 +494,43 @@ theorem stepK_sock_wr (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (k
     rw [if_pos hcl'] at ho
     simp at ho
 
+-- a socket step's WRITTEN frames count at most the id's written plus queued before the step (a flush moves queued
+-- bytes into the written count, and no other step changes either)
+theorem sockStep_wr_le (cap : Nat) (s : Relay.St) (id g : Nat) (k : Relay.Sk) (c : Relay.Conn)
+    (hc : (s.slot id).conn = some c) :
+    ∀ o ∈ (Relay.sockStep cap s id g k).2, ∀ j cnt f, o = Relay.Out.written j cnt f → cnt ≤ c.written + c.queued := by
+  intro o ho j cnt f hoe
+  subst hoe
+  unfold Relay.sockStep at ho
+  rw [hc] at ho
+  dsimp only at ho
+  cases k <;> dsimp only at ho <;> (try unfold Relay.flushConn at ho) <;> (try dsimp only at ho) <;>
+    (try simp only [apply_ite Prod.snd] at ho) <;>
+    (iterate 6 (all_goals (first | split at ho | skip))) <;> simp_all [Relay.failConn, Relay.flushConn] <;> omega
+
+theorem stepK_sock_wr_le (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk) :
+    ∀ o ∈ (Clock.stepK cap k s (.sock id g kk)).2.2, ∀ j cnt f, o = Relay.Out.written j cnt f →
+      j = id ∧ ∃ c0, (s.slot id).conn = some c0 ∧ cnt ≤ c0.written + c0.queued := by
+  intro o ho j cnt f hoe
+  by_cases hcl : s.closed.isSome = false
+  · obtain ⟨k', _, h2⟩ := stepK_sock_eq cap k s id g kk hcl
+    rw [h2] at ho
+    rcases hc : (s.slot id).conn with _ | c
+    · have hn : Relay.sockStep cap s id g k' = (s, []) := by
+        unfold Relay.sockStep; rw [hc]
+      rw [hn] at ho
+      simp at ho
+    · have hle := sockStep_wr_le cap s id g k' c hc o ho j cnt f hoe
+      obtain ⟨hj, -⟩ := sockStep_wr_ge cap s id g k' c hc o ho j cnt f hoe
+      exact ⟨hj, c, rfl, hle⟩
+  · have hcl' : s.closed.isSome = true := by
+      cases hb : s.closed.isSome
+      · exact absurd hb hcl
+      · rfl
+    unfold Clock.stepK at ho
+    rw [if_pos hcl'] at ho
+    simp at ho
+
 theorem stepK_sock_one_wr (cap : Nat) (k : Clock.Clk) (s : Relay.St) (id g : Nat) (kk : Relay.Sk) :
     ∀ o1 ∈ (Clock.stepK cap k s (.sock id g kk)).2.2, ∀ o2 ∈ (Clock.stepK cap k s (.sock id g kk)).2.2,
       ∀ j c1 c2 f1 f2, o1 = Relay.Out.written j c1 f1 → o2 = Relay.Out.written j c2 f2 → o1 = o2 := by

@@ -422,6 +422,49 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
     intro p g1 g2 h1 h2
     rw [hG] at h1 h2
     exact h.genFun p g1 g2 h1 h2
+  case wrSent =>
+    intro q hq id cnt f hqj pc hpc hgq
+    rw [hpg] at hpc
+    rw [hG] at hgq
+    rcases (hmem q).mp hq with h0 | h1
+    · exact h.wrSent q h0 id cnt f hqj pc hpc hgq
+    · obtain ⟨j, cnt', d, hq', hd, hle, hgd⟩ := hnew q h1
+      obtain ⟨rfl, rfl, -⟩ := Relay.Out.written.inj (hq'.symm.trans hqj)
+      obtain ⟨c, hc, hcg⟩ := hback j d hd
+      obtain ⟨d', hd', -, -, -, hsum, -⟩ := hfwd j c hc
+      have hdd : d' = d := Option.some.inj (hd'.symm.trans hd)
+      rw [hdd] at hsum
+      obtain ⟨hacc1, -⟩ := h.acc j pc c hpc hc (by rw [hcg, ← hgd]; exact hgq)
+      omega
+  case replyFrozen =>
+    intro q hq id cnt hqj c hc hcg
+    rcases (hmem q).mp hq with h0 | h1
+    · obtain ⟨c0, hc0, hc0g⟩ := hback id c hc
+      obtain ⟨d', hd', -, -, hwl, hsum, hqle⟩ := hfwd id c0 hc0
+      have hdd : d' = c := Option.some.inj (hd'.symm.trans hc)
+      rw [hdd] at hsum hwl hqle
+      obtain ⟨h1q, h2q⟩ := h.replyFrozen q h0 id cnt hqj c0 hc0 (hc0g.trans hcg)
+      constructor <;> omega
+    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1
+      obtain ⟨-, -, h01⟩ := Relay.Out.written.inj (hq'.symm.trans hqj)
+      exact absurd h01 (by decide)
+  case replyMax =>
+    intro q hq r hr id c1 c2 f h1 h2 hg
+    rcases (hmem q).mp hq with h0 | h1'
+    · rcases (hmem r).mp hr with h0' | h1''
+      · exact h.replyMax q h0 r h0' id c1 c2 f h1 h2 hg
+      · obtain ⟨j, cnt', d, hr', hd, hle, hgd⟩ := hnew r h1''
+        obtain ⟨rfl, rfl, -⟩ := Relay.Out.written.inj (hr'.symm.trans h2)
+        obtain ⟨c0, hc0, hc0g⟩ := hback j d hd
+        have hrf := h.replyFrozen q h0 j c1 h1 c0 hc0 (hc0g.trans (hgd.symm.trans hg))
+        obtain ⟨d', hd', -, -, -, hsum, -⟩ := hfwd j c0 hc0
+        have hdd : d' = d := Option.some.inj (hd'.symm.trans hd)
+        rw [hdd] at hsum
+        obtain ⟨hr1, hr2⟩ := hrf
+        omega
+    · obtain ⟨j, cnt', d, hq', -⟩ := hnew q h1'
+      obtain ⟨-, -, h01⟩ := Relay.Out.written.inj (hq'.symm.trans h1)
+      exact absurd h01 (by decide)
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩

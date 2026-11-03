@@ -145,6 +145,16 @@ structure Inv (T : TSys) : Prop where
     p.2 = q.2 → c1 ≤ c2) T.c.toPage
   -- a sequence number belongs to one generation only
   genFun : ∀ p g1 g2, (p, g1) ∈ T.c.genOf → (p, g2) ∈ T.c.genOf → g1 = g2
+  -- a queued WRITTEN of a page connection's generation counts at most the page's sent count
+  wrSent : ∀ q ∈ T.c.toPage, ∀ id cnt f, q.1 = .written id cnt f → ∀ pc, PageOf T id = some pc →
+    (pc.seq, q.2) ∈ T.c.genOf → cnt ≤ pc.sent
+  -- while a discard reply of an id is queued, the relay's connection of the reply's generation is frozen: nothing
+  -- queued, and the written count is the reply's
+  replyFrozen : ∀ q ∈ T.c.toPage, ∀ id cnt, q.1 = .written id cnt 1 → ∀ c, ConnOf T id = some c → c.gen = q.2 →
+    c.queued = 0 ∧ c.written = cnt
+  -- no queued WRITTEN of an id and generation counts more than a queued discard reply of that id and generation
+  replyMax : ∀ q ∈ T.c.toPage, ∀ r ∈ T.c.toPage, ∀ id c1 c2 f, q.1 = .written id c1 1 → r.1 = .written id c2 f →
+    r.2 = q.2 → c2 ≤ c1
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)

@@ -53,7 +53,7 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -366,6 +366,21 @@ theorem inv_page_connect (T : TSys) (h : Inv T) (id : Nat) (c : Page.PConn) (P :
       exact h.wrMono q hq' j cnt f hqj pI hpI hgI
   · exact h.wrOrd
   · exact h.genFun
+  · intro q hq id' cnt f hqj pc hpq hgq
+    by_cases hid : id' = id
+    · have hpc2 : (P.slots id).conn = some pc := by
+        rw [← hid]
+        unfold PageOf at hpq
+        exact hpq
+      have hpe : pc = c := Option.some.inj (hpc2.symm.trans hslotc)
+      rw [hpe] at hgq
+      have hlt := h.seqG c.seq q.2 hgq
+      omega
+    · exact h.wrSent q hq id' cnt f hqj pc (by unfold PageOf at hpq ⊢; rw [hother id' hid] at hpq; exact hpq) hgq
+  · intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q hq id' cnt hqj c' hc' hcg'
+  · intro q hq r hr id' c1 c2 f h1 h2 hg
+    exact h.replyMax q hq r hr id' c1 c2 f h1 h2 hg
 
 -- the page's CONNECT call, as the composed step does it: with no free id nothing changes; with one, the
 -- connection is made and its CONNECT frame queued
@@ -439,7 +454,7 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · intro j pc hpc
     change (P.slots j).conn = some pc at hpc
     rw [hpo j] at hpc
@@ -767,6 +782,19 @@ theorem inv_page_close (T : TSys) (h : Inv T) (id : Nat) (P : Page.State)
       exact h.wrMono q hq' j cnt f hqj pI hpI hgI
   · exact h.wrOrd
   · exact h.genFun
+  · intro q hq id' cnt f hqj pc hpq hgq
+    by_cases hid : id' = id
+    · have hpc2 : (P.slots id).conn = some pc := by
+        rw [← hid]
+        unfold PageOf at hpq
+        exact hpq
+      rw [hn] at hpc2
+      cases hpc2
+    · exact h.wrSent q hq id' cnt f hqj pc (by unfold PageOf at hpq ⊢; rw [hother id' hid] at hpq; exact hpq) hgq
+  · intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q hq id' cnt hqj c' hc' hcg'
+  · intro q hq r hr id' c1 c2 f h1 h2 hg
+    exact h.replyMax q hq r hr id' c1 c2 f h1 h2 hg
 
 theorem fwd_discard_left (x : Relay.Ev) (id : Nat) (h : FwdEv x (Relay.Ev.discard id)) :
     (∃ a, x = Relay.Ev.connect a ∧ a = id) ∨ (∃ a, x = Relay.Ev.discard a ∧ a = id) := by
@@ -802,7 +830,7 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1174,6 +1202,22 @@ theorem inv_page_discard (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (
       exact h.wrMono q hq' j cnt f hqj pI hpI hgI
   · exact h.wrOrd
   · exact h.genFun
+  · intro q hq id' cnt f hqj pc hpq hgq
+    by_cases hid : id' = id
+    · have hpc2 : (P.slots id).conn = some pc := by
+        rw [← hid]
+        unfold PageOf at hpq
+        exact hpq
+      have hpe : pc = c2 := Option.some.inj (hpc2.symm.trans hPc)
+      rw [hpe, hsent]
+      rw [hpe, hseq] at hgq
+      rw [hid] at hqj
+      exact h.wrSent q hq id cnt f hqj c hpc hgq
+    · exact h.wrSent q hq id' cnt f hqj pc (by unfold PageOf at hpq ⊢; rw [hother id' hid] at hpq; exact hpq) hgq
+  · intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q hq id' cnt hqj c' hc' hcg'
+  · intro q hq r hr id' c1 c2 f h1 h2 hg
+    exact h.replyMax q hq r hr id' c1 c2 f h1 h2 hg
 
 -- the page's DISCARD: its four outcomes, as the page's step gives them
 theorem doDiscard_none (st : Page.State) (i : Nat) (hc : (st.slots i).conn = none) :
@@ -1309,7 +1353,7 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -1670,6 +1714,21 @@ theorem inv_page_recv (T : TSys) (h : Inv T) (id : Nat) (c c2 : Page.PConn) (P :
       exact h.wrMono q hq' j cnt f hqj pI hpI hgI
   · exact h.wrOrd
   · exact h.genFun
+  · intro q hq id' cnt f hqj pc hpq hgq
+    by_cases hid : id' = id
+    · have hpc2 : (P.slots id).conn = some pc := by
+        rw [← hid]
+        unfold PageOf at hpq
+        exact hpq
+      have hpe : pc = c2 := Option.some.inj (hpc2.symm.trans hPc)
+      rw [hpe, hsent]
+      rw [hpe, hseq] at hgq
+      exact h.wrSent q hq id' cnt f hqj c (by rw [hid]; exact hpc) hgq
+    · exact h.wrSent q hq id' cnt f hqj pc (by unfold PageOf at hpq ⊢; rw [hother id' hid] at hpq; exact hpq) hgq
+  · intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q hq id' cnt hqj c' hc' hcg'
+  · intro q hq r hr id' c1 c2 f h1 h2 hg
+    exact h.replyMax q hq r hr id' c1 c2 f h1 h2 hg
 
 theorem doRecv_take_spec (st : Page.State) (i max : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
     (hgt : c.received > c.taken) :
@@ -1890,7 +1949,7 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
   refine
     { pi := ?_, link := ?_, acc := ?_, wq := ?_, gen := ?_, apply := ?_, noOrphan := ?_, written := ?_,
       reset := ?_, barrier := ?_, connClean := ?_, notOpen := ?_, cl := ?_, rq := ?_, gensLt := ?_, gp := ?_,
-      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
+      openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_, failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_, closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_, closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_, wrSent := ?_, replyFrozen := ?_, replyMax := ?_ }
   · intro j pc hpc'
     change (P.slots j).conn = some pc at hpc'
     rw [hpo j] at hpc'
@@ -2249,6 +2308,22 @@ theorem inv_page_send (T : TSys) (h : Inv T) (id : Nat) (c c3 : Page.PConn) (P :
       exact h.wrMono q hq' j cnt f hqj pI hpI hgI
   · exact h.wrOrd
   · exact h.genFun
+  · intro q hq id' cnt f hqj pc hpq hgq
+    by_cases hid : id' = id
+    · have hpc2 : (P.slots id).conn = some pc := by
+        rw [← hid]
+        unfold PageOf at hpq
+        exact hpq
+      have hpe : pc = c3 := Option.some.inj (hpc2.symm.trans hPc)
+      rw [hpe, hsum]
+      rw [hpe, hseq] at hgq
+      have hw := h.wrSent q hq id' cnt f hqj c (by rw [hid]; exact hpc) hgq
+      omega
+    · exact h.wrSent q hq id' cnt f hqj pc (by unfold PageOf at hpq ⊢; rw [hother id' hid] at hpq; exact hpq) hgq
+  · intro q hq id' cnt hqj c' hc' hcg'
+    exact h.replyFrozen q hq id' cnt hqj c' hc' hcg'
+  · intro q hq r hr id' c1 c2 f h1 h2 hg
+    exact h.replyMax q hq r hr id' c1 c2 f h1 h2 hg
 
 -- the pumped SEND of n > 0 on an open connection with no SEND in progress and not discarding
 theorem doSend_pump (st : Page.State) (i n : Nat) (c : Page.PConn) (hc : (st.slots i).conn = some c)
