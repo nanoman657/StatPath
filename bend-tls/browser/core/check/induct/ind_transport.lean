@@ -419,6 +419,10 @@ theorem inv_flush (T T' : TSys) (h : Inv T) (hpage : T'.c.page = T.c.page) (hTR 
       have hgcg : c.gen = a.2 := hgc.trans hgab.symm
       have hw := h.written a ha id c1 f1 ha1 c hc' hgcg
       exact Nat.le_trans hw (by rw [hcc] at hlow; exact hlow)
+  case genFun =>
+    intro p g1 g2 h1 h2
+    rw [hG] at h1 h2
+    exact h.genFun p g1 g2 h1 h2
   case failOrd =>
     rw [hTP]
     refine List.pairwise_append.mpr ⟨h.failOrd, pairwise_of_forall _ new ?_, ?_⟩

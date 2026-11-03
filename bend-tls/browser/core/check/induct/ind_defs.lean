@@ -112,6 +112,8 @@ structure Inv (T : TSys) : Prop where
   -- queued WRITTENs of one id and generation are in nondecreasing order of count
   wrOrd : List.Pairwise (fun p q => ∀ id c1 f1 c2 f2, p.1 = .written id c1 f1 → q.1 = .written id c2 f2 →
     p.2 = q.2 → c1 ≤ c2) T.c.toPage
+  -- a sequence number belongs to one generation only
+  genFun : ∀ p g1 g2, (p, g1) ∈ T.c.genOf → (p, g2) ∈ T.c.genOf → g1 = g2
 
 -- an id with no page connection and not closing has no frame queued (a closing id has its CLOSED frame queued, and
 -- a frame of a connection that is gone is queued only while the page is closing for it)

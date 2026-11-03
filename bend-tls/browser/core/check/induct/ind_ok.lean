@@ -62,7 +62,7 @@ theorem inv_ok_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (rest 
       openG := ?_, mirror := ?_, good := ?_, seqG := ?_, seqQ := ?_, disc := ?_, rep := ?_, recvG := ?_,
       failNone := ?_, closedNone := ?_, closedClosing := ?_, closedOrd := ?_, closeClosing := ?_,
       closedNoConn := ?_, openRel := ?_, okOpen := ?_, okNoDisc := ?_, discRel := ?_, closingNone := ?_,
-      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_ }
+      closedNoClose := ?_, failOrd := ?_, connPend := ?_, okRel := ?_, okOrd := ?_, discOnce := ?_, discUniq := ?_, wrMono := ?_, wrOrd := ?_, genFun := ?_ }
   · -- pi
     intro j pc hpc
     change (P.slots j).conn = some pc at hpc
@@ -477,6 +477,8 @@ theorem inv_ok_core (T : TSys) (h : Inv T) (c' : Client.Sys) (id t : Nat) (rest 
       exact h.wrMono q (hsub q hq') j cnt f hqj pc hpc hg
   · -- wrOrd
     exact List.Pairwise.sublist hsl h.wrOrd
+  · -- genFun
+    exact h.genFun
 
 -- the page takes an OK frame: the frame's id has a connection (closed, not closing), and the frame applies
 theorem inv_tDoPage_ok (T T' : TSys) (h : Inv T) (id t : Nat) (rest : List (Relay.Out × Nat))

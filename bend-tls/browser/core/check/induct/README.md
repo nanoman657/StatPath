@@ -8,9 +8,9 @@ composition, copied from the session's scratch model.
 
 ## Status
 
-`Inv` has 44 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
+`Inv` has 45 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
 `closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`), `closingNone`,
-`closedNoClose`, and `failOrd`. `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
+`closedNoClose`, `failOrd`, and `genFun` (a sequence number belongs to one generation only). `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
 CLOSED frames. (The first statement, with no frame of the id at all, was refuted by the bounded search: a CLOSE after
 a socket failure queues a CLOSED behind the FAIL. The corrected statement passes depth 9.) Three more, for the OK frame:
 `connPend` (while a CONNECT of an id waits in the relay's queue, the page's queue holds no frame of that id; the relay
@@ -35,8 +35,9 @@ at every construction site, including `inv_flush` and `inv_env_gen`. The flush a
 facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uniq`, `flushOne_outs_pre`), `ind_tick.lean`
 (`tickK_spec`, `tick_outs_uniq`) and `ind_envsock.lean` (`sockStep_wr_ge`, `sockStep_one_wr`, `stepK_sock_wr`,
 `stepK_sock_one_wr`).
-- The WRITTEN frame (`frame (.written ..)`: the page's count, the op, the discard reset, and the pump). The pump spec is
-  proved in the scratch file (`pump_spec`: the SEND entries it queues sum to the increase of `sent`, and `PInv` is kept).
+- The WRITTEN frame (`ind_pump.lean`, `ind_written.lean`): `pump_spec` (the SEND entries the pump queues sum to the increase
+  of `sent`, and `PInv` is kept) and `wr_frame_spec` (the frame's connection, its SEND entries and the discard case).
+  Still to do: `inv_written_core`, the 45 fields over the frame, and its page-frame wrapper.
 - The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,
   the reachability induction, and the final theorem (reachable implies `WQ`, so the relay's window check never fires).
 
@@ -47,7 +48,7 @@ states). The depth-11 run is not committed.
 
     python3 build_ind.py ind_defs.lean ind_relay.lean ind_flush.lean ind_transport.lean ind_tick.lean \
       ind_env.lean ind_sock.lean ind_envsock.lean ind_invsock.lean ind_envcomp.lean ind_pagecall.lean ind_frames.lean \
-      ind_ok.lean ind_wake.lean
+      ind_ok.lean ind_wake.lean ind_pump.lean ind_written.lean
     lean Ind.lean
 
 The bounded search (a check of candidate invariants over the composed model, not a proof):
