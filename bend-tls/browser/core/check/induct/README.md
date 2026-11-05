@@ -1,73 +1,43 @@
-# Induction over the composed relay model (work in progress)
+# Induction over the composed relay model
 
 Lean 4.34.0 (no Mathlib). The development proves, for the composed page/relay system in the timed (clock)
-model, that the invariant `Inv` (structure in `ind_defs.lean`) holds in every reachable state. The window
-claim (`WQ`: a connection's queued bytes plus the SEND frames in flight stay within `SEND_WINDOW`) follows
-from `Inv`. The model itself is `../Relay.lean` (unchanged here); `timed_section.lean` is the clocked
-composition, copied from the session's scratch model.
+model, that the invariant `Inv` (structure in `ind_defs.lean`, 52 fields) holds in every reachable state, and that
+the window claim holds in every reachable state. The model itself is `../Relay.lean` (unchanged here);
+`timed_section.lean` is the clocked composition, copied from the session's scratch model.
 
 ## Status
 
-`Inv` has 51 fields (the four WRITTEN fields are proved at every site): the 24 proved earlier, the ten ordering fields (`failNone`, `closedNone`, `closedClosing`,
-`closedOrd`, `closeClosing`, `closedNoConn`, `openRel`, `okOpen`, `okNoDisc`, `discRel`), `closingNone`,
-`closedNoClose`, `failOrd`, and `genFun` (a sequence number belongs to one generation only). Three more, for the
-WRITTEN frame, make 48: `wrSent` (a queued WRITTEN of a page connection's generation counts at most the page's sent),
-`replyFrozen` (while a discard reply of an id is queued, the relay connection of its generation has nothing queued and
-the reply's written count), and `replyMax` (no queued WRITTEN of an id and generation counts more than a queued discard
-reply of that id and generation). They hold at every site: the flush and env steps use `hfwd`/`hnewUp`
-(`stepK_sock_wr_le`, `sockStep_wr_le`), the frames and page calls keep the page's sent for the id. `failOrd` says that after a FAIL of an id, the only frames of that id still queued are
-CLOSED frames. (The first statement, with no frame of the id at all, was refuted by the bounded search: a CLOSE after
-a socket failure queues a CLOSED behind the FAIL. The corrected statement passes depth 9.) Three more, for the OK frame:
-`connPend` (while a CONNECT of an id waits in the relay's queue, the page's queue holds no frame of that id; the relay
-consumes its queue in order, and the page issues a CONNECT only when it has no connection and is not closing),
-`okRel` (an OK frame finds its id's relay connection gone, or open with the frame's generation), and `okOrd` (no two
-OK frames of an id are queued). All three hold through every clock step, environment socket event, page call and page
-frame proved so far (`sockStep_ok_post`, `stepK_sock_ok_post`, `sockStep_okpw`, `stepK_sock_okpw`).
+Every statement below is in the monolith build (`python3 build_ind.py ...` then `lean Ind.lean`): exit 0, no
+`sorry`.
 
-Proved, no `sorry`:
-- `inv_init`; the clock steps (`inv_flush`, `inv_tick`); the environment's socket events (`inv_env_gen`,
-  `inv_sock`, `inv_env`), using `stepK_sock_fail_fact`, `stepK_sock_ok_fact`, and `stepK_sock_outs_pw` (the
-  socket step's frames are ordered so a FAIL is last).
-- The page's DATA and EOF frames (`inv_tDoPage_data`, `inv_tDoPage_eof`, `ind_wake.lean`): the wake loop is an induction
-  over the readers (`wake_loop_inv`), and `wake_spec` gives the new connection's fields.
-- The page's OK frame (`inv_tDoPage_ok`, `ind_ok.lean`): the page's connection opens, one READ is queued.
-- The page's calls: `inv_tPageConnect`, `inv_tPageClose`, `inv_tPageDiscard`, `inv_tPageRecv`, `inv_tPageSend`.
-- The page's frames (`ind_frames.lean`): an ignored frame (`inv_tDoPage_ignored`, via `inv_shrink`), CLOSED
-  (`inv_tDoPage_closed`), FAIL (`inv_tDoPage_fail`).
+- `inv_init`: the start (the fixed page client, `TSys.init true cps bps`) satisfies `Inv`.
+- Every transition keeps `Inv` (`inv_step`, `TStep` in `ind_step.lean`): the five page calls
+  (`inv_tPageConnect`, `inv_tPageClose`, `inv_tPageDiscard`, `inv_tPageRecv`, `inv_tPageSend`, `ind_pagecall.lean`);
+  the page's frames (`inv_tDoPage`, through `inv_tDoPage_head`, over the OK, DATA, EOF, WRITTEN, FAIL, CLOSED and
+  ignored frames); the relay's head event (`inv_tDoRelay`, over CONNECT, SEND, DISCARD, READ and CLOSE; a DENY or a
+  socket event is not queued, by `noDeny`); the environment's socket events (`inv_env`); and the clock (`inv_tick`,
+  `inv_flush`).
+- `reach_inv` (`ind_step.lean`): every state reachable from the start, by `TReach`, satisfies `Inv` and keeps the
+  page's fixed flag (`ind_fixed.lean` shows each page operation and each transition keeps the flag).
+- The window claim (`ind_step.lean`): `window_queue`, for every connection, `queued + qs <= SEND_WINDOW` (the
+  connection's queued bytes plus the SEND frames in the relay's queue for its id), and `window_head`, the head SEND of
+  an id is within its connection's window, so the relay's window check does not fire. Both hold in every reachable
+  state.
 
-Done since the last status: the four WRITTEN-related fields (`discOnce`, `discUniq`, `wrMono`, `wrOrd`) are proved
-at every construction site, including `inv_flush` and `inv_env_gen`. The flush and environment steps need the count
-facts, which are proved in `ind_flush.lean` (`flushIds_spec`, `flushIds_outs_uniq`, `flushOne_outs_pre`), `ind_tick.lean`
-(`tickK_spec`, `tick_outs_uniq`) and `ind_envsock.lean` (`sockStep_wr_ge`, `sockStep_one_wr`, `stepK_sock_wr`,
-`stepK_sock_one_wr`).
-- `discUniq` is now a count: at most one discard reply (a WRITTEN of flag 1) per id in the page's queue. The old form
-  (equal pairs) allowed a duplicate reply, which the discard case of `rep` cannot tolerate. The bounded search checks
-  the count form (`discPairB`, `iInv15`) to depth 9 with no violation.
-- The WRITTEN frame (`ind_pump.lean`, `ind_written.lean`): `pump_spec` (the SEND entries the pump queues sum to the increase
-  of `sent`, and `PInv` is kept) and `wr_frame_spec` (the frame's connection, its SEND entries and the discard case).
-  `inv_written_core` (`ind_wcore.lean`) proves the 48 fields over the frame, and `inv_tDoPage_written` is the page's frame.
-- The relay's queue steps, in progress (`ind_relayq.lean`): `inv_relay_keep` proves the invariant for any relay step
-  that keeps every connection's data and appends only id-less frames; `inv_tDoRelay_read` instantiates it for READ.
-  `ind_relayclose.lean`: CLOSE (`inv_tDoRelay_close`: a closed relay, a known id's connection removed with one CLOSED, or
-  an unknown id). `ind_relaydisc.lean`: DISCARD (`inv_tDoRelay_discard`: a closed relay, an open connection's reply, or
-  a no-op). `ind_relaysend.lean`: a successful SEND (`inv_relay_send_ok`); `ind_relaysendf.lean`: a SEND that
-  fails (`inv_relay_send_fail`, the connection is gone); `ind_sendstep.lean`: the helper lemmas for the clock's SEND
-  and the wrappers; `ind_sendtdo.lean`: the dispatch `inv_tDoRelay_send` over the relay's cases (closed, no-op,
-  protocol close, window, cap, peer closed). `inv_relay_keep` takes `qs` as a decrease (`<=`), so a popped SEND
-  that changes no connection is covered. `ind_connect.lean`: CONNECT (`inv_tDoRelay_connect`): the closed relay, a refused CONNECT (a FAIL 11 of the id, tagged
-  with the next generation; `inv_connect_keep`), and a CONNECT the relay takes for a free id (`inv_connect_create`: the
-  connection of the next generation, and `genOf` gains the sequence's entry). The invariant's `connAux` field gives the
-  two facts this needed: a queued CONNECT has a positive sequence number, and a queued WRITTEN frame's generation is
-  below the relay's `nextGen`. `ind_fixed.lean`: the page's fixed flag is kept by every page operation (`tPageCall_fixed`, `tDoPage_fixed`,
-  `tDoRelay_page`, `tDoEnv_page`). `ind_step.lean`: `TStep` (the page calls, the relay's head event, the page's frame,
-  a socket event, the time), `inv_step` dispatches each to its invariant lemma, `reach_inv` gives the invariant and the
-  fixed flag in every state reachable from `TSys.init true`, and `window_head` is the window claim: the head SEND of an
-  id is within the window of its connection (the relay's check does not fire).
-- The relay's queue steps (`Client.doRelay`: CONNECT, SEND, DISCARD, READ, CLOSE), the dispatch over all transitions,
-  the reachability induction, and the final theorem (reachable implies `WQ`, so the relay's window check never fires).
+The relay's queue steps are in `ind_relayq.lean` (the generic keep step, READ), `ind_relayclose.lean` (CLOSE),
+`ind_relaydisc.lean` (DISCARD), `ind_relaysend.lean` and `ind_relaysendf.lean` (SEND, successful and failed),
+`ind_sendstep.lean` and `ind_sendtdo.lean` (the SEND helpers and dispatch), and `ind_connect.lean` (CONNECT, with the
+keep and create steps). `connAux` (`ind_defs.lean`) is the field that CONNECT needed: a queued CONNECT has a positive
+sequence number, and a queued WRITTEN frame's generation is below the relay's next generation.
 
-The candidate fields were checked by the bounded search (`inv_checks.lean`, `search_main.lean`) to depth 9 (23,387
-states). The depth-11 run is not committed.
+Scope, and what is not covered:
+- The theorems are for the fixed page client (`TSys.init true`). The unfixed mode (`TSys.init false`), which
+  `Search.lean` also explores, is not covered.
+- The window claim is the relay's window check only. The cap check (FAIL 27, when the written bytes plus the queued
+  and sent bytes pass the cap) is not part of it, and no theorem states a cap assumption.
+- The bounded search (`Search.lean`, `iInv18`, depth 9) was last run before `connAux` was added; it has not been rerun.
+- The model is the timed composition in `timed_section.lean`; the JavaScript relay is checked against it by the tests
+  (`core/check/relay_conformance.test.ts`), not proven.
 
 ## Build
 

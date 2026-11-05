@@ -464,9 +464,13 @@ status and evidence:
   include them. (The earlier statement that they were not checked was wrong.)
 - *Real time.* The bounds are checked against the real clock: the connects a page makes in real time are at most
   the burst plus the rate for the time that has passed (a negative control that doubles the token refill fails: 40
-  connects accepted, against a bound of 25), and the reads are bounded as above. The real latency of a connection,
-  and how long a fair environment takes, are not measured here; the liveness results assume that the environment is
-  fair.
+  connects accepted, against a bound of 25), and the reads are bounded as above. The real latency of a connection is
+  measured on loopback by `bench/relay_latency.ts` (run with `bun bench/relay_latency.ts`, not part of `bun test`),
+  with the default limits: a connect, paced under the connects-a-second limit, p50 0.45 ms, p95 0.82 ms, p99 2.0 ms;
+  a one-byte round trip through an echo server, p50 0.07 ms, p95 0.19 ms; a 4 MiB echo at 103 and 148 MiB/s, and then
+  at 9 MiB/s once the 16 MiB a second budget (both ways together) is spent. These are one machine's loopback figures,
+  not a network's. How long a fair environment takes is not measured; the liveness results assume that the
+  environment is fair.
 - *That the relay's JavaScript matches the model for traces not generated.* The random traces (300 a run) are
   samples. The exhaustive run over the 16-letter alphabet to length 4 agrees, at two byte rates (see above). Length
   5 is not rerun on that alphabet.
@@ -474,10 +478,11 @@ status and evidence:
   sends of 1 byte to 8 MiB at the frame and window edges, into a peer that stalls for a second: every byte arrives,
   and the relay never closes the WebSocket. A negative control, the client's window doubled, makes the relay close
   it and the test fail. The composed search flags any close of the WebSocket by the relay on a page frame: none to
-  12 steps. The window itself (131,072 bytes) is out of the search's reach, so the window-level claim rests on the
-  test and on an argument that is not mechanized: the page's count of what the relay has taken never exceeds the
-  relay's own count, and the relay's queue is what it has been framed less what it has taken, so the relay's check
-  passes whenever the page's does.
+  12 steps. The window itself (131,072 bytes) is out of the search's reach. For the model, the window-level claim is
+  mechanized: `window_queue` and `window_head` in `core/check/induct/ind_step.lean` (Lean, no `sorry`) prove that in
+  every reachable state of the timed model a connection's queued bytes plus the SEND frames queued for its id stay
+  within the window, so the relay's window check never fires on a head SEND. That the JavaScript relay follows the
+  model is tested (`core/check/relay_conformance.test.ts` and the test above), not proven.
 - *The effects above the client* (the program's own code). One Bend program runs end to end in Chromium against
   the relay (`test/page.test.ts`), and its output reaches the page. The broader I/O suite is not in this checkout
   and has not been rerun on the patched runtime; the model does not cover a program's effects.
