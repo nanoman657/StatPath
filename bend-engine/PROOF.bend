@@ -2,6 +2,7 @@
 import Base
 import ./merge.bend as Merge
 import ./LAWS.bend as Laws
+import ./ORDER.bend as Ord
 
 def Laws.max_comm(a, b):
   match a b:
