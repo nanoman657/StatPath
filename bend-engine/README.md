@@ -7,6 +7,8 @@ the UI and effects are out of scope.
 | File | What it is |
 |------|------------|
 | `merge.bend` | The merge in Bend: lessons, SRS cards and XP as sorted association lists |
+| `LAWS.bend` | The merge laws stated in Bend, the ones with proofs so far |
+| `PROOF.bend` | Their proofs, checked by Bend's kernel (see "Bend kernel proofs") |
 | `merge.mjs` | Generated from `merge.bend` by `gen.sh`; committed |
 | `merge.d.mts` | The types of `merge.mjs` (written by hand; the tests check behaviour) |
 | `gen.sh` | Checks `merge.bend`, then regenerates `merge.mjs` |
@@ -41,6 +43,8 @@ the same one.
 ## Commands
 
     bend bend-engine/merge.bend --check-only     # the check (passes)
+    bend bend-engine/PROOF.bend                   # the Bend proofs (ALL PROOFS CHECK)
+    bend bend-engine/PROOF.bend --verdict         # the same, re-checked by the kernel
     bend-engine/gen.sh                            # regenerate merge.mjs
     npx vitest run tests/merge_bend.test.ts       # differential, laws in code, staleness, these rows
     export PATH=/root/.elan/toolchains/leanprover--lean4---v4.34.0/bin:$PATH
@@ -48,7 +52,7 @@ the same one.
     python3 bend-engine/model_vectors.py          # regenerate model_vectors.txt from Merge.lean
     python3 bend-engine/compiler_check.py         # regenerate compiler_check_report.txt
 
-`bend merge.bend --verdict` is not used: no Bend-level proofs were added.
+Bend's own `--verdict` is used on `PROOF.bend` only; `merge.bend` itself has no proofs.
 
 ## Lean theorems
 
@@ -81,6 +85,31 @@ map sorted. Two sorted maps with the same lookups are equal. The card order flip
 tie is the same card. The rows above use them.
 
 Proved axioms (printed by `lean`): `propext`, `Classical.choice`, `Quot.sound` only. No placeholder proofs.
+
+## Bend kernel proofs
+
+`LAWS.bend` states the laws and `PROOF.bend` proves them with Bend's own kernel, against `merge.bend`
+(imported as `Merge`). `bend PROOF.bend` prints `ALL PROOFS CHECK` when every law has a proof; an open law
+shows as a TODO, and a wrong proof as `SOME PROOFS FAIL`. `--verdict` re-checks the proofs with the kernel.
+
+Proved in Bend:
+
+- `max_comm`, `max_self`: `Nat.max` is commutative and idempotent.
+- `lp_max_comm`, `lp_max_self`: the lesson merge `lp_max` has the same two laws, field by field.
+- `tie_ease`, `tie_absent`: two concrete SRS tie-breaks. On a tie of the other fields, the card with the
+  larger ease wins; an absent `lastReview` loses to `Some{0}`. These are closed equalities, checked by
+  reduction. A negative control (a wrong expected card) makes the gate fail, so the check is not vacuous.
+
+- The string-order swap law: `Cmp.flip` (the reverse of a comparison) is an involution; `Bool.cmp`,
+  `Word.cmp`, `U32.cmp`, `String.order.go` and `String.order` each flip when their two arguments are swapped.
+  This is one half of antisymmetry for the key order. The other half, transitivity and equality from `EQ`,
+  is not proved yet.
+
+Not yet in Bend: the sorted-map laws (`lessons_comm`, `lessons_idem`, `xp_comm`, `xp_idem`, `xsum_comm`,
+`srs_comm`, `srs_idem`, `state_comm`) and the general card-order law `cardMerge_comm`. The Lean model proves
+them (rows above). Proving them in Bend also needs a sortedness predicate, the lookup lemmas, transitivity of
+the key order, and that `EQ` on two strings means they are equal. Base declares the order's antisymmetry as a
+law (`String.cmp`) but does not prove it, so that is not used.
 
 ## What is not mechanized
 
