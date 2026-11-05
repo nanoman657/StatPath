@@ -86,8 +86,11 @@ can differ for cards that tie and differ in another field. `Merge.lean` proves t
 The lessons and XP maps are commutative regardless of order. The SRS map and therefore the whole learning
 state are not. merge.ts claims commutativity for all learning data, so the claim is false for these cards.
 
-**Status: awaiting the owner.** The fix is a product decision and was not chosen here. Merge behaviour is
-unchanged (`src/engine/merge.ts` is not modified). The owner's answer is recorded below when given.
+**Owner's answer: break ties on the whole card.** On a full tie of `lastReview`, `reps` and `due`, keep the
+card whose serialized content is larger, as merge.ts already does for the settings. The owner chose this
+option, the recommended one, when asked. Merge behaviour is still unchanged: `src/engine/merge.ts`,
+`merge.bend`, `merge.mjs` and the two counterexamples are not yet updated to the new rule. That change is a
+separate step; until it lands, the findings above stand for the code as it is.
 
 ## Translation validation: `CompilerCheck.lean`
 
