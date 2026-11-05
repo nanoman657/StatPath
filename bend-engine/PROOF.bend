@@ -3,6 +3,7 @@ import Base
 import ./merge.bend as Merge
 import ./LAWS.bend as Laws
 import ./ORDER.bend as Ord
+import ./KEYS.bend as Key
 
 def Laws.max_comm(a, b):
   match a b:
@@ -74,89 +75,3 @@ def Laws.tie_ease():
 def Laws.tie_absent():
   {==}
 
-# ---- the string order's swap law: the flip laws ----
-
-def Laws.Cmp.flip_flip(c):
-  match c:
-    case LT{}:
-      {==}
-    case EQ{}:
-      {==}
-    case GT{}:
-      {==}
-
-def Laws.Bool.cmp_flip(a, b):
-  match a b:
-    case False{} False{}:
-      {==}
-    case False{} True{}:
-      {==}
-    case True{} False{}:
-      {==}
-    case True{} True{}:
-      {==}
-
-def Laws.Word.cmp.fin_flip(ab, bb, c):
-  match c:
-    case LT{}:
-      {==}
-    case EQ{}:
-      Laws.Bool.cmp_flip(ab, bb)
-    case GT{}:
-      {==}
-
-def Laws.Word.cmp_flip(n, a, b):
-  match n:
-    case 0n:
-      {==}
-    case 1n+(+p):
-      match a b:
-        case WCon{+ab, +at} WCon{+bb, +bt}:
-          Equal.trans(Cmp,
-            Word.cmp.fin(bb, ab, Word.cmp(p, bt, at)),
-            Word.cmp.fin(bb, ab, Laws.Cmp.flip(Word.cmp(p, at, bt))),
-            Laws.Cmp.flip(Word.cmp.fin(ab, bb, Word.cmp(p, at, bt))),
-            Equal.cong(Cmp, Cmp, c => Word.cmp.fin(bb, ab, c), Word.cmp(p, bt, at), Laws.Cmp.flip(Word.cmp(p, at, bt)), Laws.Word.cmp_flip(p, at, bt)),
-            Laws.Word.cmp.fin_flip(ab, bb, Word.cmp(p, at, bt)))
-
-def Laws.U32.cmp_flip(a, b):
-  match a b:
-    case U32{+x} U32{+y}:
-      Laws.Word.cmp_flip(32n, x, y)
-
-def Laws.String.order.go_flip(a, b, c):
-  match a b:
-    case SNil{} SNil{}:
-      {==}
-    case SNil{} SCon{Chr{_}, +t}:
-      match c:
-        case LT{}:
-          {==}
-        case EQ{}:
-          {==}
-        case GT{}:
-          {==}
-    case SCon{Chr{_}, +t} SNil{}:
-      match c:
-        case LT{}:
-          {==}
-        case EQ{}:
-          {==}
-        case GT{}:
-          {==}
-    case SCon{Chr{+x}, +t1} SCon{Chr{+y}, +t2}:
-      match c:
-        case LT{}:
-          {==}
-        case EQ{}:
-          Equal.trans(Cmp,
-            String.order.go(t2, t1, U32.cmp(y, x)),
-            String.order.go(t2, t1, Laws.Cmp.flip(U32.cmp(x, y))),
-            Laws.Cmp.flip(String.order.go(t1, t2, U32.cmp(x, y))),
-            Equal.cong(Cmp, Cmp, c2 => String.order.go(t2, t1, c2), U32.cmp(y, x), Laws.Cmp.flip(U32.cmp(x, y)), Laws.U32.cmp_flip(x, y)),
-            Laws.String.order.go_flip(t1, t2, U32.cmp(x, y)))
-        case GT{}:
-          {==}
-
-def Laws.String.order_flip(a, b):
-  Laws.String.order.go_flip(a, b, EQ{})

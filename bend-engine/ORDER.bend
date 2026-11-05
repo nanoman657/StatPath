@@ -635,3 +635,143 @@ def String.order.eq_w(a, b, h):
     case SCon{Chr{+x}, +t1} SCon{Chr{+y}, +t2}:
       String.order.eq_cases(x, y, t1, t2, U32.cmp(x, y), {==}, h,
         hh => String.order.eq_w(t1, t2, hh))
+
+# ---- the flips: swapping the two arguments flips the order (moved here from LAWS.bend and PROOF.bend) ----
+
+def Cmp.flip(c: Cmp) -> Cmp:
+  match c:
+    case LT{}:
+      GT{}
+    case EQ{}:
+      EQ{}
+    case GT{}:
+      LT{}
+
+# LAW: flipping twice gives back the comparison
+law Cmp.flip_flip:
+  for c: Cmp
+  {Cmp.flip(Cmp.flip(c)) == c : Cmp}
+
+def Cmp.flip_flip(c):
+  match c:
+    case LT{}:
+      {==}
+    case EQ{}:
+      {==}
+    case GT{}:
+      {==}
+
+# LAW: swapping the two Bool arguments flips Bool.cmp
+law Bool.cmp_flip:
+  for a: Bool
+  for b: Bool
+  {Bool.cmp(b, a) == Cmp.flip(Bool.cmp(a, b)) : Cmp}
+
+def Bool.cmp_flip(a, b):
+  match a b:
+    case False{} False{}:
+      {==}
+    case False{} True{}:
+      {==}
+    case True{} False{}:
+      {==}
+    case True{} True{}:
+      {==}
+
+# LAW: the Word comparison step flips
+law Word.cmp.fin_flip:
+  for ab: Bool
+  for bb: Bool
+  for c: Cmp
+  {Word.cmp.fin(bb, ab, Cmp.flip(c)) == Cmp.flip(Word.cmp.fin(ab, bb, c)) : Cmp}
+
+def Word.cmp.fin_flip(ab, bb, c):
+  match c:
+    case LT{}:
+      {==}
+    case EQ{}:
+      Bool.cmp_flip(ab, bb)
+    case GT{}:
+      {==}
+
+# LAW: swapping the two Word arguments flips Word.cmp
+law Word.cmp_flip:
+  for n: Nat
+  for a: Word(n)
+  for b: Word(n)
+  {Word.cmp(n, b, a) == Cmp.flip(Word.cmp(n, a, b)) : Cmp}
+
+def Word.cmp_flip(n, a, b):
+  match n:
+    case 0n:
+      {==}
+    case 1n+(+p):
+      match a b:
+        case WCon{+ab, +at} WCon{+bb, +bt}:
+          Equal.trans(Cmp,
+            Word.cmp.fin(bb, ab, Word.cmp(p, bt, at)),
+            Word.cmp.fin(bb, ab, Cmp.flip(Word.cmp(p, at, bt))),
+            Cmp.flip(Word.cmp.fin(ab, bb, Word.cmp(p, at, bt))),
+            Equal.cong(Cmp, Cmp, c => Word.cmp.fin(bb, ab, c), Word.cmp(p, bt, at), Cmp.flip(Word.cmp(p, at, bt)), Word.cmp_flip(p, at, bt)),
+            Word.cmp.fin_flip(ab, bb, Word.cmp(p, at, bt)))
+
+# LAW: swapping the two U32 arguments flips U32.cmp
+law U32.cmp_flip:
+  for a: U32
+  for b: U32
+  {U32.cmp(b, a) == Cmp.flip(U32.cmp(a, b)) : Cmp}
+
+def U32.cmp_flip(a, b):
+  match a b:
+    case U32{+x} U32{+y}:
+      Word.cmp_flip(32n, x, y)
+
+# LAW: swapping the two strings flips String.order.go, for any starting comparison
+law String.order.go_flip:
+  for a: String
+  for b: String
+  for c: Cmp
+  {String.order.go(b, a, Cmp.flip(c)) == Cmp.flip(String.order.go(a, b, c)) : Cmp}
+
+def String.order.go_flip(a, b, c):
+  match a b:
+    case SNil{} SNil{}:
+      {==}
+    case SNil{} SCon{Chr{_}, +t}:
+      match c:
+        case LT{}:
+          {==}
+        case EQ{}:
+          {==}
+        case GT{}:
+          {==}
+    case SCon{Chr{_}, +t} SNil{}:
+      match c:
+        case LT{}:
+          {==}
+        case EQ{}:
+          {==}
+        case GT{}:
+          {==}
+    case SCon{Chr{+x}, +t1} SCon{Chr{+y}, +t2}:
+      match c:
+        case LT{}:
+          {==}
+        case EQ{}:
+          Equal.trans(Cmp,
+            String.order.go(t2, t1, U32.cmp(y, x)),
+            String.order.go(t2, t1, Cmp.flip(U32.cmp(x, y))),
+            Cmp.flip(String.order.go(t1, t2, U32.cmp(x, y))),
+            Equal.cong(Cmp, Cmp, c2 => String.order.go(t2, t1, c2), U32.cmp(y, x), Cmp.flip(U32.cmp(x, y)), U32.cmp_flip(x, y)),
+            String.order.go_flip(t1, t2, U32.cmp(x, y)))
+        case GT{}:
+          {==}
+
+# LAW: swapping the two strings flips String.order
+law String.order_flip:
+  for a: String
+  for b: String
+  {String.order(b, a) == Cmp.flip(String.order(a, b)) : Cmp}
+
+def String.order_flip(a, b):
+  String.order.go_flip(a, b, EQ{})
