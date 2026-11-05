@@ -419,9 +419,10 @@ same check on every trace of up to n steps over a 16-letter alphabet: the page's
 send 2 bytes, an empty send, read, discard), the events of the sockets of its first two connections, and a
 one-second tick. Length 4 (69,905 traces) agrees, at the default byte rate and at 1 byte a second, where the budget
 binds. A negative control, the flush's budget gate removed, fails at 1 byte a second, at trace 1406: a connect, a
-socket's open, and two sends. Length 5 was run on the earlier 14-letter alphabet (579,195 traces; on the relay of
-commit 64265e3, before the empty-SEND and ticker-order changes), and is not rerun on the 16-letter alphabet: it
-takes hours. The exhaustive run found one thing earlier: a socket that reports open twice made the relay send OK
+socket's open, and two sends. Length 5 over the 16-letter alphabet, the whole run of 1,118,481 traces, passes: four shards
+(`RELAY_EXHAUSTIVE_SHARD=i/4`, 279,621 and 279,620 traces, each about 31 minutes on one core of four). Earlier, length 5
+was run on the 14-letter alphabet (579,195 traces; on the relay of commit 64265e3, before the empty-SEND and
+ticker-order changes). The exhaustive run found one thing earlier: a socket that reports open twice made the relay send OK
 twice. Bun does not do that, and the model assumes it does not, but the relay now ignores a second open anyway.
 
 **The clock and the budgets** (`Clock` in `Relay.lean`). The connect tokens, the byte budget, the ticker's flush,
@@ -472,8 +473,8 @@ status and evidence:
   not a network's. How long a fair environment takes is not measured; the liveness results assume that the
   environment is fair.
 - *That the relay's JavaScript matches the model for traces not generated.* The random traces (300 a run) are
-  samples. The exhaustive run over the 16-letter alphabet to length 4 agrees, at two byte rates (see above). Length
-  5 is not rerun on that alphabet.
+  samples. The exhaustive run over the 16-letter alphabet agrees to length 5 (all 1,118,481 traces, see above), at
+  the default byte rate; length 4 also at two byte rates.
 - *That the relay accepts every SEND the page frames.* `test/real_limits.test.ts` drives the real page client with
   sends of 1 byte to 8 MiB at the frame and window edges, into a peer that stalls for a second: every byte arrives,
   and the relay never closes the WebSocket. A negative control, the client's window doubled, makes the relay close
