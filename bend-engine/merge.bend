@@ -51,8 +51,40 @@ def last_or0(m: Maybe<&2, Nat>) -> Nat:
     case Some{x}:
       x
 
-# the card the TypeScript keeps: the later review, then more reps, then the later due date, else a
-def card_pick(c_last: Cmp, c_reps: Cmp, c_due: Cmp, a: Card, b: Card) -> Card:
+# the number a lastReview sorts by in the whole-card order: an absent one first, then the time plus one
+def last_key(m: Maybe<&2, Nat>) -> Nat:
+  match m:
+    case None{}:
+      0n
+    case Some{x}:
+      Nat.add(x, 1n)
+
+# lexicographic: the first comparison that is not EQ decides
+def cmp_then(c: Cmp, d: Cmp) -> Cmp:
+  match c:
+    case LT{}:
+      LT{}
+    case GT{}:
+      GT{}
+    case EQ{}:
+      d
+
+# the whole card, field by field, in the order of compareCards in merge.ts
+def full_cmp(+a: Card, +b: Card) -> Cmp:
+  match a b:
+    case Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      cmp_then(skey_cmp(i1, i2),
+      cmp_then(skey_cmp(l1, l2),
+      cmp_then(Nat.cmp(v1, v2),
+      cmp_then(Nat.cmp(e1, e2),
+      cmp_then(Nat.cmp(d1, d2),
+      cmp_then(Nat.cmp(s1, s2),
+      cmp_then(Nat.cmp(r1, r2),
+      Nat.cmp(last_key(t1), last_key(t2)))))))))
+
+# the card mergeCard keeps: the later review, then more reps, then the later due date, then the card with
+# the larger content; a full tie keeps a
+def card_pick(c_last: Cmp, c_reps: Cmp, c_due: Cmp, c_full: Cmp, a: Card, b: Card) -> Card:
   match c_last:
     case LT{}:
       b
@@ -71,13 +103,19 @@ def card_pick(c_last: Cmp, c_reps: Cmp, c_due: Cmp, a: Card, b: Card) -> Card:
             case GT{}:
               a
             case EQ{}:
-              a
+              match c_full:
+                case LT{}:
+                  b
+                case GT{}:
+                  a
+                case EQ{}:
+                  a
 
-def card_merge(a: Card, b: Card) -> Card:
+def card_merge(+a: Card, +b: Card) -> Card:
   match a b:
     case Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
       card_pick(Nat.cmp(last_or0(t1), last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2),
-        Card{i1, l1, v1, e1, d1, s1, r1, t1}, Card{i2, l2, v2, e2, d2, s2, r2, t2})
+        full_cmp(a, b), a, b)
 
 # ---- lessons ----
 

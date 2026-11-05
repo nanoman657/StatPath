@@ -201,7 +201,48 @@ function $last_or0(_m_0) {
   }
 }
 
-function $card_pick(_c_last_0, _c_reps_0, _c_due_0, _a_0, _b_0) {
+function $last_key(_m_0) {
+  if (_m_0.$ === "None") {
+    return 0;
+  } else {
+    const _x_0 = _m_0["value"];
+    return nat_chk(_x_0 + 1);
+  }
+}
+
+function $cmp_then(_c_0, _d_0) {
+  if (_c_0.$ === "LT") {
+    return {$: "LT"};
+  } else if (_c_0.$ === "GT") {
+    return {$: "GT"};
+  } else {
+    return _d_0;
+  }
+}
+
+function $full_cmp(_a_0, _b_0) {
+  const _i1_0 = _a_0["id"];
+  const _l1_0 = _a_0["lessonId"];
+  const _v1_0 = _a_0["interval"];
+  const _e1_0 = _a_0["ease"];
+  const _d1_0 = _a_0["due"];
+  const _s1_0 = _a_0["lapses"];
+  const _r1_0 = _a_0["reps"];
+  const _t1_0 = _a_0["last"];
+  const _i2_0 = _b_0["id"];
+  const _l2_0 = _b_0["lessonId"];
+  const _v2_0 = _b_0["interval"];
+  const _e2_0 = _b_0["ease"];
+  const _d2_0 = _b_0["due"];
+  const _s2_0 = _b_0["lapses"];
+  const _r2_0 = _b_0["reps"];
+  const _t2_0 = _b_0["last"];
+  const _x_0 = $$last_key(_t1_0);
+  const _x_1 = $$last_key(_t2_0);
+  return $cmp_then($$skey_cmp(_i1_0, _i2_0), $$cmp_then($$skey_cmp(_l1_0, _l2_0), $$cmp_then(cmp_new(_v1_0, _v2_0), $$cmp_then(cmp_new(_e1_0, _e2_0), $$cmp_then(cmp_new(_d1_0, _d2_0), $$cmp_then(cmp_new(_s1_0, _s2_0), $$cmp_then(cmp_new(_r1_0, _r2_0), cmp_new(_x_0, _x_1))))))));
+}
+
+function $card_pick(_c_last_0, _c_reps_0, _c_due_0, _c_full_0, _a_0, _b_0) {
   if (_c_last_0.$ === "LT") {
     return _b_0;
   } else if (_c_last_0.$ === "GT") {
@@ -217,7 +258,13 @@ function $card_pick(_c_last_0, _c_reps_0, _c_due_0, _a_0, _b_0) {
       } else if (_c_due_0.$ === "GT") {
         return _a_0;
       } else {
-        return _a_0;
+        if (_c_full_0.$ === "LT") {
+          return _b_0;
+        } else if (_c_full_0.$ === "GT") {
+          return _a_0;
+        } else {
+          return _a_0;
+        }
       }
     }
   }
@@ -242,7 +289,7 @@ function $card_merge(_a_0, _b_0) {
   const _t2_0 = _b_0["last"];
   const _x_0 = $$last_or0(_t1_0);
   const _x_1 = $$last_or0(_t2_0);
-  return $card_pick(cmp_new(_x_0, _x_1), cmp_new(_r1_0, _r2_0), cmp_new(_d1_0, _d2_0), {$: "Card", "id": _i1_0, "lessonId": _l1_0, "interval": _v1_0, "ease": _e1_0, "due": _d1_0, "lapses": _s1_0, "reps": _r1_0, "last": _t1_0}, {$: "Card", "id": _i2_0, "lessonId": _l2_0, "interval": _v2_0, "ease": _e2_0, "due": _d2_0, "lapses": _s2_0, "reps": _r2_0, "last": _t2_0});
+  return $card_pick(cmp_new(_x_0, _x_1), cmp_new(_r1_0, _r2_0), cmp_new(_d1_0, _d2_0), $$full_cmp({$: "Card", "id": _i1_0, "lessonId": _l1_0, "interval": _v1_0, "ease": _e1_0, "due": _d1_0, "lapses": _s1_0, "reps": _r1_0, "last": _t1_0}, {$: "Card", "id": _i2_0, "lessonId": _l2_0, "interval": _v2_0, "ease": _e2_0, "due": _d2_0, "lapses": _s2_0, "reps": _r2_0, "last": _t2_0}), {$: "Card", "id": _i1_0, "lessonId": _l1_0, "interval": _v1_0, "ease": _e1_0, "due": _d1_0, "lapses": _s1_0, "reps": _r1_0, "last": _t1_0}, {$: "Card", "id": _i2_0, "lessonId": _l2_0, "interval": _v2_0, "ease": _e2_0, "due": _d2_0, "lapses": _s2_0, "reps": _r2_0, "last": _t2_0});
 }
 
 function $lins_c(_t_0, _c_0, _e_0, _h_0) {
@@ -523,9 +570,12 @@ function $String_cmp_rec(_h1b_0, _h2b_0, _rr_0) {
 }
 
 const $$String_cmp = $String_cmp;
-const $$last_or0 = $last_or0;
-const $$lp_max = $lp_max;
 const $$skey_cmp = $skey_cmp;
+const $$last_key = $last_key;
+const $$cmp_then = $cmp_then;
+const $$last_or0 = $last_or0;
+const $$full_cmp = $full_cmp;
+const $$lp_max = $lp_max;
 const $$lins_c = $lins_c;
 const $$lins = $lins;
 const $$lfold = $lfold;
@@ -545,7 +595,10 @@ const $$Char_cmp = $Char_cmp;export default {
   "skey_cmp": run_lib((a0,a1) => run_loop($skey_cmp(str_in(a0),str_in(a1))), 2),
   "lp_max": run_lib((a0,a1) => run_loop($lp_max(a0,a1)), 2),
   "last_or0": run_lib((a0) => run_loop($last_or0(a0)), 1),
-  "card_pick": run_lib((a0,a1,a2,a3,a4) => run_loop($card_pick(a0,a1,a2,a3,a4)), 5),
+  "last_key": run_lib((a0) => run_loop($last_key(a0)), 1),
+  "cmp_then": run_lib((a0,a1) => run_loop($cmp_then(a0,a1)), 2),
+  "full_cmp": run_lib((a0,a1) => run_loop($full_cmp(a0,a1)), 2),
+  "card_pick": run_lib((a0,a1,a2,a3,a4,a5) => run_loop($card_pick(a0,a1,a2,a3,a4,a5)), 6),
   "card_merge": run_lib((a0,a1) => run_loop($card_merge(a0,a1)), 2),
   "lins_c": run_lib((a0,a1,a2,a3) => run_loop($lins_c(a0,a1,a2,a3)), 4),
   "lins": run_lib((a0,a1) => run_loop($lins(a0,a1)), 2),

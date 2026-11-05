@@ -73,11 +73,29 @@ const mergeLesson = (a: LessonProgress | undefined, b: LessonProgress | undefine
   lastPlayed: maxNum(a?.lastPlayed, b?.lastPlayed),
 });
 
+const cmpNum = (x: number, y: number): number => (x < y ? -1 : x > y ? 1 : 0);
+const cmpText = (x: string, y: string): number => (x < y ? -1 : x > y ? 1 : 0);
+
+/**
+ * The whole card, field by field in a fixed order, so the order does not depend on which copy is merged
+ * first. An absent lastReview sorts before any time. merge.bend implements the same order.
+ */
+const compareCards = (a: SrsCard, b: SrsCard): number =>
+  cmpText(a.id, b.id) ||
+  cmpText(a.lessonId, b.lessonId) ||
+  cmpNum(a.interval, b.interval) ||
+  cmpNum(a.ease, b.ease) ||
+  cmpNum(a.due, b.due) ||
+  cmpNum(a.lapses, b.lapses) ||
+  cmpNum(a.reps, b.reps) ||
+  cmpNum(a.lastReview ?? -1, b.lastReview ?? -1);
+
 /**
  * The scheduling state from whichever device answered this exercise most
  * recently, so a lapse recorded on one device is not undone by an older pass
  * on another. Falls back to repetition count, then due date, for cards saved
- * before review timestamps existed.
+ * before review timestamps existed. A full tie on those keeps the card with the
+ * larger content, so the merge gives the same card in either order.
  */
 const mergeCard = (a: SrsCard | undefined, b: SrsCard | undefined): SrsCard => {
   if (!a) return b!;
@@ -87,7 +105,7 @@ const mergeCard = (a: SrsCard | undefined, b: SrsCard | undefined): SrsCard => {
   if (ta !== tb) return ta > tb ? a : b;
   if (a.reps !== b.reps) return a.reps > b.reps ? a : b;
   if (a.due !== b.due) return a.due > b.due ? a : b;
-  return a;
+  return compareCards(a, b) >= 0 ? a : b;
 };
 
 export const mergeProgress = (a: Progress, b: Progress): Progress => {
