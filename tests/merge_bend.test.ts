@@ -247,3 +247,75 @@ describe("the rows of bend-engine/README.md", () => {
     }
   });
 });
+
+// The Lean model's results on every pair of maps in the bounded domain (bend-engine/model_vectors.py).
+// Each vector line is V|kind|map a|map b|result, the maps as the model prints them: key=fields;key=fields.
+describe("the compiled merges against the Lean model, on every pair of the bounded domain", () => {
+  const VECTORS = join(ROOT, "model_vectors.txt");
+  const pairsOf = (s: string): string[][] => (s === "" ? [] : s.split(";").map((e) => e.split("=")));
+  const lessonList = (s: string): unknown =>
+    list(pairsOf(s).map(([key, f]) => {
+      const [crowns, attempts, best, played] = f.split(",").map(Number);
+      return { $: "LEntry", key, val: { $: "Lp", crowns, attempts, best, played } };
+    }));
+  const cardList = (s: string): unknown =>
+    list(pairsOf(s).map(([key, f]) => {
+      const [id, lessonId, interval, ease, due, lapses, reps, last] = f.split(",");
+      return {
+        $: "CEntry",
+        key,
+        val: {
+          $: "Card", id, lessonId, interval: +interval, ease: +ease, due: +due, lapses: +lapses, reps: +reps,
+          last: last === "-" ? { $: "None" } : { $: "Some", value: +last },
+        },
+      };
+    }));
+  const xpList = (s: string): unknown => list(pairsOf(s).map(([key, v]) => ({ $: "XEntry", key, val: +v })));
+  const showOut = (l: any, f: (v: any) => string): string => {
+    const xs: string[] = [];
+    for (let x = l; x.$ === "Con"; x = x.tail) xs.push(`${x.head.key}=${f(x.head.val)}`);
+    return xs.join(";");
+  };
+  const showLesson = (v: any): string => `${v.crowns},${v.attempts},${v.best},${v.played}`;
+  const showCard = (v: any): string =>
+    `${v.id},${v.lessonId},${v.interval},${v.ease},${v.due},${v.lapses},${v.reps},${v.last.$ === "Some" ? v.last.value : "-"}`;
+
+  it("agree with the model's result on every vector", () => {
+    const rows = readFileSync(VECTORS, "utf8").split("\n").filter((l) => l.startsWith("V|"));
+    expect(rows.length).toBeGreaterThan(1000);
+    const mismatches: string[] = [];
+    for (const row of rows) {
+      const [, kind, a, b, want] = row.split("|");
+      let got: string;
+      if (kind === "L") got = showOut(bend.merge_lessons(lessonList(a), lessonList(b)), showLesson);
+      else if (kind === "C") got = showOut(bend.merge_srs(cardList(a), cardList(b)), showCard);
+      else got = showOut(bend.merge_xp(xpList(a), xpList(b)), String);
+      if (got !== want) mismatches.push(`${row}\n  compiled Bend: ${got}`);
+    }
+    expect(mismatches.slice(0, 3)).toEqual([]);
+  });
+
+  it("model_vectors.txt is the output of model_vectors.py from Merge.lean", () => {
+    const dir = mkdtempSync(join(tmpdir(), "model-vectors-"));
+    try {
+      const out = join(dir, "vectors.txt");
+      execFileSync("python3", [join(ROOT, "model_vectors.py"), "--out", out], { stdio: "pipe", timeout: 600_000 });
+      expect(readFileSync(out, "utf8")).toBe(readFileSync(VECTORS, "utf8"));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 700_000);
+});
+
+describe("the translation-validation report", () => {
+  it("compiler_check_report.txt is the output of compiler_check.py on the compiled merge.mjs", () => {
+    const dir = mkdtempSync(join(tmpdir(), "compiler-check-"));
+    try {
+      const out = join(dir, "report.txt");
+      execFileSync("python3", [join(ROOT, "compiler_check.py"), "--out", out], { stdio: "pipe", timeout: 600_000 });
+      expect(readFileSync(out, "utf8")).toBe(readFileSync(join(ROOT, "compiler_check_report.txt"), "utf8"));
+    } finally {
+      rmSync(dir, { recursive: true, force: true });
+    }
+  }, 700_000);
+});
