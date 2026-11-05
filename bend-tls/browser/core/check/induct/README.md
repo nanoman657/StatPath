@@ -31,8 +31,8 @@ keep and create steps). `connAux` (`ind_defs.lean`) is the field that CONNECT ne
 sequence number, and a queued WRITTEN frame's generation is below the relay's next generation.
 
 Scope, and what is not covered:
-- The theorems are for the fixed page client (`TSys.init true`). The unfixed mode (`TSys.init false`), which
-  `Search.lean` also explores, is not covered.
+- Out of scope: the theorems are for the fixed page client (`TSys.init true`) only. The unfixed mode
+  (`TSys.init false`), which `Search.lean` also explores, is not proven and is not part of the window claim.
 - The window claim is the relay's window check only. The cap check (FAIL 27, when the written bytes plus the queued
   and sent bytes pass the cap) is not part of it, and no theorem states a cap assumption.
 - The bounded search (`Search.lean`, `iInv18`, depth 9) was rerun after `connAux` was added: 23,387 states, no violation.

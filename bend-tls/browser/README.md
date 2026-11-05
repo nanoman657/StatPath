@@ -470,8 +470,15 @@ status and evidence:
   with the default limits: a connect, paced under the connects-a-second limit, p50 0.45 ms, p95 0.82 ms, p99 2.0 ms;
   a one-byte round trip through an echo server, p50 0.07 ms, p95 0.19 ms; a 4 MiB echo at 103 and 148 MiB/s, and then
   at 9 MiB/s once the 16 MiB a second budget (both ways together) is spent. These are one machine's loopback figures,
-  not a network's. How long a fair environment takes is not measured; the liveness results assume that the
-  environment is fair.
+  not a network's. The liveness results assume a fair environment. `bench/relay_contention.ts` measures that
+  assumption on the same loopback relay, with the default limits: sessions of 1, 4 and 16, each doing 60 connects
+  at once, all finish together at about 1,005 ms, and a connect's time to service has p50 0.3 to 1.9 ms and p95
+  about 53 ms (the relay refills its connect buckets on a 50 ms tick, so a refused connect waits up to one tick).
+  One session that requests 100 connects at once is served by its last connect at 3.0 s, against a bucket bound of
+  3.0 s: 40 connects immediately, then 20 a second, so the last of n connects comes by about (n - 40) / 20 seconds.
+  Four sessions echoing 4 MiB each finish together at 92 ms. That is CPU sharing in one process, not a network's
+  contention, because the relay's connect and byte budgets are per session. Liveness under real networks and other
+  tenants is not measured.
 - *That the relay's JavaScript matches the model for traces not generated.* The random traces (300 a run) are
   samples. The exhaustive run over the 16-letter alphabet agrees to length 5 (all 1,118,481 traces, see above), at
   the default byte rate; length 4 also at two byte rates.
@@ -485,8 +492,10 @@ status and evidence:
   within the window, so the relay's window check never fires on a head SEND. That the JavaScript relay follows the
   model is tested (`core/check/relay_conformance.test.ts` and the test above), not proven.
 - *The effects above the client* (the program's own code). One Bend program runs end to end in Chromium against
-  the relay (`test/page.test.ts`), and its output reaches the page. The broader I/O suite is not in this checkout
-  and has not been rerun on the patched runtime; the model does not cover a program's effects.
+  the relay (`test/page.test.ts`), and its output reaches the page. It needs the patched Bend runtime
+  (`BEND_MAIN`; the patch and `apply.sh` are on the `browser-async-scheduler` branch under `patches/bend/`). With that
+  runtime, `bun test browser/test` runs 72 tests across 13 files, all passing, none skipped. The model does not
+  cover a program's effects.
 - *Compiler correctness, and Bun's WebSocket behaviour beyond the socket assumptions.* Three WebSocket behaviours
   the relay relies on are now checked (`test/bun_websocket_assumptions.test.ts`): a binary message arrives whole and
   in order, at any size up to a frame; a close code reaches the peer; a backlog is reported by `getBufferedAmount`
