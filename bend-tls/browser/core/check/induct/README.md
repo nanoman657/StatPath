@@ -35,7 +35,7 @@ Scope, and what is not covered:
   `Search.lean` also explores, is not covered.
 - The window claim is the relay's window check only. The cap check (FAIL 27, when the written bytes plus the queued
   and sent bytes pass the cap) is not part of it, and no theorem states a cap assumption.
-- The bounded search (`Search.lean`, `iInv18`, depth 9) was last run before `connAux` was added; it has not been rerun.
+- The bounded search (`Search.lean`, `iInv18`, depth 9) was rerun after `connAux` was added: 23,387 states, no violation.
 - The model is the timed composition in `timed_section.lean`; the JavaScript relay is checked against it by the tests
   (`core/check/relay_conformance.test.ts`), not proven.
 
