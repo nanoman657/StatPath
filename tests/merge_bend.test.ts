@@ -218,3 +218,32 @@ describe("the generated module", () => {
     }
   }, 150_000);
 });
+
+describe("the rows of bend-engine/README.md", () => {
+  it("every row points to a real theorem, function and test", () => {
+    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+    const lean = readFileSync(join(ROOT, "Merge.lean"), "utf8");
+    const bendSrc = readFileSync(join(ROOT, "merge.bend"), "utf8");
+    const tsSrc = readFileSync(join(ROOT, "..", "src", "engine", "merge.ts"), "utf8");
+    const testSrc = readFileSync(join(__dirname, "merge_bend.test.ts"), "utf8");
+    const table = readme.slice(readme.indexOf("## Lean theorems"), readme.indexOf("## What is not mechanized"));
+    const rows = table.split("\n").filter((l) => l.startsWith("| `"));
+    expect(rows.length).toBeGreaterThan(5);
+    // the identifiers in backticks in a cell, each by its first word: `merge_state` (output `xp`) gives both
+    const ids = (cell: string): string[] => [...cell.matchAll(/`([A-Za-z_][A-Za-z0-9_]*)/g)].map((m) => m[1]);
+    for (const row of rows) {
+      const [leanCell, bendCell, tsCell, testCell] = row.split("|").slice(1, -1).map((c) => c.trim());
+      const theorem = ids(leanCell)[0];
+      expect(lean, `Lean theorem ${theorem}`).toMatch(new RegExp(`theorem\\s+${theorem}\\b`));
+      for (const f of ids(bendCell).filter((x) => x.includes("_") || x === "xsum")) {
+        expect(bendSrc, `Bend function ${f}`).toMatch(new RegExp(`def\\s+${f}\\b`));
+      }
+      for (const f of ids(tsCell)) {
+        expect(tsSrc, `TypeScript ${f}`).toMatch(new RegExp(`\\b${f}\\b`));
+      }
+      for (const t of [...testCell.matchAll(/"([^"]+)"/g)].map((m) => m[1])) {
+        expect(testSrc, `test "${t}"`).toContain(t);
+      }
+    }
+  });
+});
