@@ -448,6 +448,8 @@ test.skipIf(LEAN === null)(
 // The alphabet: the page's calls on id 1, and the events of the sockets of its first two connections (the
 // second reuses the id after a CLOSE). With RELAY_EXHAUSTIVE=n the test runs every trace of up to n steps.
 const EXHAUSTIVE = Number(process.env.RELAY_EXHAUSTIVE ?? 0);
+// RELAY_EXHAUSTIVE_SHARD=i/k runs the traces whose index is i mod k, so k processes can split a long run
+const SHARD = ((process.env.RELAY_EXHAUSTIVE_SHARD ?? "0/1").split("/").map(Number)) as [number, number];
 // the bytes a second the relay and the model give each session: small, the budget binds, and the ticks matter
 const EXHAUSTIVE_BPS = Number(process.env.RELAY_EXHAUSTIVE_BPS ?? 1000000000);
 
@@ -532,9 +534,9 @@ async function relayOutputsShared(
 }
 
 test.skipIf(LEAN === null || EXHAUSTIVE === 0)(
-  `the relay matches the model on every trace of up to ${EXHAUSTIVE || "n"} steps over the alphabet`,
+  `the relay matches the model on every trace of up to ${EXHAUSTIVE || "n"} steps over the alphabet (shard ${SHARD[0]}/${SHARD[1]})`,
   async () => {
-    const traces = allTraces(EXHAUSTIVE);
+    const traces = allTraces(EXHAUSTIVE).filter((_, i) => i % SHARD[1] === SHARD[0]);
     const expected = await leanOutputs(modelInput(traces));
     expect(expected.length).toBe(traces.length);
     // one relay for all of them; its connect adds to the sockets of the trace that runs now
@@ -587,7 +589,7 @@ test.skipIf(LEAN === null || EXHAUSTIVE === 0)(
           );
         }
       }
-      console.log(`relay exhaustive: all ${traces.length} traces of up to ${EXHAUSTIVE} steps over ${ALPHABET.length} letters`);
+      console.log(`relay exhaustive: ${traces.length} traces (shard ${SHARD[0]}/${SHARD[1]}) of up to ${EXHAUSTIVE} steps over ${ALPHABET.length} letters`);
     } finally {
       relay.stop();
     }
