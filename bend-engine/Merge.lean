@@ -7,14 +7,17 @@ Lean 4.34.0, core only. Every step is proved; there are no placeholder proofs.
 
 What is proved here, for sorted (canonical) inputs:
 
-* lessons and XP per day: `merge a b = merge b a`, and `merge a a = a`; the XP total is
-  commutative too;
-* SRS cards: `merge a a = a`; `merge a b = merge b a` is false, by two counterexamples; so the
-  merged learning state is not commutative either (the lessons and XP parts are).
+* lessons, XP per day and SRS cards: `merge a b = merge b a`, and `merge a a = a`;
+* the XP total is commutative whenever the XP maps are;
+* the learning state is commutative as a whole.
+
+The SRS tie-break is the whole-card order that the owner chose: on a full tie of review time, reps and
+due date, the card with the larger content is kept, compared field by field. The model has the same
+order as merge.ts (`compareCards`) and merge.bend (`full_cmp`).
 
 The Bend code is a transcription of the definitions below. The correspondence is checked by
 `tests/merge_bend.test.ts`, which compares the compiled Bend merge with `mergeProgress` on random
-states. It is not proved here. The key order is assumed to be the order of `String.cmp`, which the
+states; it is not proved here. The key order is assumed to be the order of `String.cmp`, which the
 same test file checks against JavaScript's string order.
 -/
 
@@ -120,8 +123,31 @@ def lastOr0 : Option Nat → Nat
   | none => 0
   | some x => x
 
-/-- The card that `mergeCard` keeps, given the three comparisons. A full tie keeps `a`. -/
-def cardPick (cLast cReps cDue : Cmp) (a b : Card) : Card :=
+/-- The review time in the whole-card order: an absent one first, then the time plus one. -/
+def lastKey : Option Nat → Nat
+  | none => 0
+  | some x => x + 1
+
+/-- The first comparison that is not `eq` decides; `eq` falls through to the next. -/
+def cmpThen : Cmp → Cmp → Cmp
+  | .lt, _ => .lt
+  | .gt, _ => .gt
+  | .eq, d => d
+
+/-- The whole card, field by field, in the order of `compareCards` in merge.ts. -/
+def fullCmp (a b : Card) : Cmp :=
+  cmpThen (skeyCmp a.id b.id)
+    (cmpThen (skeyCmp a.lessonId b.lessonId)
+      (cmpThen (natCmp a.interval b.interval)
+        (cmpThen (natCmp a.ease b.ease)
+          (cmpThen (natCmp a.due b.due)
+            (cmpThen (natCmp a.lapses b.lapses)
+              (cmpThen (natCmp a.reps b.reps)
+                (natCmp (lastKey a.last) (lastKey b.last))))))))
+
+/-- The card `mergeCard` keeps, given the four comparisons: the later review, then more reps, then the
+later due date, then the card with the larger content. A full tie keeps `a`. -/
+def cardPick (cLast cReps cDue cFull : Cmp) (a b : Card) : Card :=
   match cLast with
   | .lt => b
   | .gt => a
@@ -133,12 +159,21 @@ def cardPick (cLast cReps cDue : Cmp) (a b : Card) : Card :=
       match cDue with
       | .lt => b
       | .gt => a
-      | .eq => a
+      | .eq =>
+        match cFull with
+        | .lt => b
+        | .gt => a
+        | .eq => a
 
-/-- `mergeCard(a, b)`: the later review, then more reps, then the later due date, else `a`. -/
+/-- `mergeCard(a, b)`. -/
 def cardMerge (a b : Card) : Card :=
-  cardPick (natCmp (lastOr0 a.last) (lastOr0 b.last)) (natCmp a.reps b.reps)
-    (natCmp a.due b.due) a b
+  cardPick (natCmp (lastOr0 a.last) (lastOr0 b.last)) (natCmp a.reps b.reps) (natCmp a.due b.due)
+    (fullCmp a b) a b
+
+/-- The order that `cardMerge` uses, as one comparison: `cardMerge a b` is `b` exactly when this is `lt`. -/
+def cardCmp (a b : Card) : Cmp :=
+  cmpThen (natCmp (lastOr0 a.last) (lastOr0 b.last))
+    (cmpThen (natCmp a.reps b.reps) (cmpThen (natCmp a.due b.due) (fullCmp a b)))
 
 /-- The learning data of one copy: lessons, SRS cards and XP per day. -/
 structure State where
@@ -550,8 +585,143 @@ theorem lpMax_self (a : Lesson) : lpMax a a = a := by
 theorem natCmp_self (x : Nat) : natCmp x x = .eq := by
   simp [natCmp]
 
+/-! ### The card order: a swap lemma, and ties are equal cards -/
+
+def swapCmp : Cmp → Cmp
+  | .lt => .gt
+  | .eq => .eq
+  | .gt => .lt
+
+theorem cardPick_eq (c1 c2 c3 c4 : Cmp) (a b : Card) :
+    cardPick c1 c2 c3 c4 a b = if cmpThen c1 (cmpThen c2 (cmpThen c3 c4)) = .lt then b else a := by
+  cases c1 <;> cases c2 <;> cases c3 <;> cases c4 <;> rfl
+
+theorem cardMerge_eq (a b : Card) :
+    cardMerge a b = if cardCmp a b = .lt then b else a :=
+  cardPick_eq _ _ _ _ a b
+
+theorem natCmp_lt {a b : Nat} (h : a < b) : natCmp a b = .lt := by
+  unfold natCmp
+  rw [if_pos h]
+
+theorem natCmp_gt {a b : Nat} (h : b < a) : natCmp a b = .gt := by
+  unfold natCmp
+  rw [if_neg (by omega), if_neg (by omega)]
+
+theorem natCmp_eq {a b : Nat} (h : a = b) : natCmp a b = .eq := by
+  subst h
+  unfold natCmp
+  rw [if_neg (Nat.lt_irrefl a), if_pos rfl]
+
+theorem natCmp_swap (a b : Nat) : natCmp b a = swapCmp (natCmp a b) := by
+  rcases Nat.lt_trichotomy a b with h | h | h
+  · rw [natCmp_lt h, natCmp_gt h]
+    rfl
+  · subst h
+    rw [natCmp_eq rfl]
+    rfl
+  · rw [natCmp_gt h, natCmp_lt h]
+    rfl
+
+theorem skeyCmp_swap (a b : String) : skeyCmp b a = swapCmp (skeyCmp a b) := by
+  rcases key_tri a b with h | h | h
+  · rw [skeyCmp_gt h, skeyCmp_lt h]
+    rfl
+  · subst h
+    rw [skeyCmp_eq rfl]
+    rfl
+  · rw [skeyCmp_lt h, skeyCmp_gt h]
+    rfl
+
+theorem cmpThen_swap (c d : Cmp) : cmpThen (swapCmp c) (swapCmp d) = swapCmp (cmpThen c d) := by
+  cases c <;> cases d <;> rfl
+
+theorem fullCmp_swap (a b : Card) : fullCmp b a = swapCmp (fullCmp a b) := by
+  unfold fullCmp
+  rw [skeyCmp_swap a.id b.id, skeyCmp_swap a.lessonId b.lessonId, natCmp_swap a.interval b.interval,
+    natCmp_swap a.ease b.ease, natCmp_swap a.due b.due, natCmp_swap a.lapses b.lapses,
+    natCmp_swap a.reps b.reps, natCmp_swap (lastKey a.last) (lastKey b.last)]
+  simp only [cmpThen_swap]
+
+theorem cardCmp_swap (a b : Card) : cardCmp b a = swapCmp (cardCmp a b) := by
+  unfold cardCmp
+  rw [natCmp_swap (lastOr0 a.last) (lastOr0 b.last), natCmp_swap a.reps b.reps,
+    natCmp_swap a.due b.due, fullCmp_swap a b]
+  simp only [cmpThen_swap]
+
+theorem cmpThen_eq {c d : Cmp} (h : cmpThen c d = .eq) : c = .eq ∧ d = .eq := by
+  cases c <;> cases d <;> simp_all [cmpThen]
+
+theorem skeyCmp_eq_iff {a b : String} (h : skeyCmp a b = .eq) : a = b := by
+  unfold skeyCmp at h
+  by_cases h1 : a < b
+  · rw [if_pos h1] at h
+    cases h
+  · by_cases h2 : a = b
+    · exact h2
+    · rw [if_neg h1, if_neg h2] at h
+      cases h
+
+theorem natCmp_eq_iff {a b : Nat} (h : natCmp a b = .eq) : a = b := by
+  unfold natCmp at h
+  by_cases h1 : a < b
+  · rw [if_pos h1] at h
+    cases h
+  · by_cases h2 : a = b
+    · exact h2
+    · rw [if_neg h1, if_neg h2] at h
+      cases h
+
+theorem lastKey_eq_iff {x y : Option Nat} (h : lastKey x = lastKey y) : x = y := by
+  cases x <;> cases y <;> simp [lastKey] at h ⊢ <;> omega
+
+theorem fullCmp_eq {a b : Card} (h : fullCmp a b = .eq) : a = b := by
+  unfold fullCmp at h
+  obtain ⟨e1, h2⟩ := cmpThen_eq h
+  obtain ⟨e2, h3⟩ := cmpThen_eq h2
+  obtain ⟨e3, h4⟩ := cmpThen_eq h3
+  obtain ⟨e4, h5⟩ := cmpThen_eq h4
+  obtain ⟨e5, h6⟩ := cmpThen_eq h5
+  obtain ⟨e6, h7⟩ := cmpThen_eq h6
+  obtain ⟨e7, h8⟩ := cmpThen_eq h7
+  have hi := skeyCmp_eq_iff e1
+  have hl := skeyCmp_eq_iff e2
+  have hv := natCmp_eq_iff e3
+  have he := natCmp_eq_iff e4
+  have hd := natCmp_eq_iff e5
+  have hs := natCmp_eq_iff e6
+  have hr := natCmp_eq_iff e7
+  have ht := lastKey_eq_iff (natCmp_eq_iff h8)
+  cases a
+  cases b
+  simp only at hi hl hv he hd hs hr ht
+  subst hi hl hv he hd hs hr ht
+  rfl
+
+theorem cardCmp_eq {a b : Card} (h : cardCmp a b = .eq) : a = b := by
+  unfold cardCmp at h
+  obtain ⟨_, h2⟩ := cmpThen_eq h
+  obtain ⟨_, h3⟩ := cmpThen_eq h2
+  obtain ⟨_, h4⟩ := cmpThen_eq h3
+  exact fullCmp_eq h4
+
 theorem cardMerge_self (c : Card) : cardMerge c c = c := by
-  simp [cardMerge, cardPick, natCmp_self]
+  rw [cardMerge_eq]
+  split <;> rfl
+
+/-- `cardMerge` is commutative: the order flips with the arguments, and a tie is one card. -/
+theorem cardMerge_comm (a b : Card) : cardMerge a b = cardMerge b a := by
+  rw [cardMerge_eq, cardMerge_eq, cardCmp_swap a b]
+  have key : cardCmp a b = .lt ∨ cardCmp a b = .eq ∨ cardCmp a b = .gt := by
+    cases cardCmp a b <;> simp
+  rcases key with h | h | h
+  · rw [h]
+    simp [swapCmp]
+  · have hab : a = b := cardCmp_eq h
+    subst hab
+    simp
+  · rw [h]
+    simp [swapCmp]
 
 /-- Lessons: the merge is commutative, and idempotent. -/
 theorem lessons_comm (a b : List (Entry Lesson)) (ha : Sorted a) (hb : Sorted b) :
@@ -578,62 +748,33 @@ theorem xsum_comm (a b : List (Entry Nat)) (ha : Sorted a) (hb : Sorted b) :
 theorem srs_idem (a : List (Entry Card)) (ha : Sorted a) : mergeMap cardMerge a a = a :=
   mergeMap_idem cardMerge cardMerge_self a ha
 
-/-! ## The SRS merge is not commutative: two counterexamples -/
+/-! ## The SRS merge: the whole-card tie-break, and its commutativity -/
 
-/-- Two cards with the same review time, reps and due date, differing in ease. -/
+/-- Two cards that tie on review time, reps and due date, differing in ease: the larger ease is kept. -/
 def cA : Card := ⟨"c1", "l1", 1, 200, 5, 0, 1, some 7⟩
 def cB : Card := ⟨"c1", "l1", 1, 250, 5, 0, 1, some 7⟩
 
-/-- A card with no review time against one whose review time is 0. -/
+/-- A card with no review time against one whose review time is 0: the absent one sorts first. -/
 def cC : Card := ⟨"c1", "l1", 1, 200, 5, 0, 1, none⟩
 def cD : Card := ⟨"c1", "l1", 1, 200, 5, 0, 1, some 0⟩
 
-theorem cardMerge_cA_cB : cardMerge cA cB = cA := by decide
+theorem cardMerge_cA_cB : cardMerge cA cB = cB := by decide
 theorem cardMerge_cB_cA : cardMerge cB cA = cB := by decide
-theorem cardMerge_cC_cD : cardMerge cC cD = cC := by decide
+theorem cardMerge_cC_cD : cardMerge cC cD = cD := by decide
 theorem cardMerge_cD_cC : cardMerge cD cC = cD := by decide
 
-theorem cA_ne_cB : cA ≠ cB := by decide
-theorem cC_ne_cD : cC ≠ cD := by decide
+/-- The SRS merge is commutative on sorted maps. -/
+theorem srs_comm (a b : List (Entry Card)) (ha : Sorted a) (hb : Sorted b) :
+    mergeMap cardMerge a b = mergeMap cardMerge b a :=
+  mergeMap_comm cardMerge cardMerge_comm a b ha hb
 
-def eA : List (Entry Card) := [⟨"c1", cA⟩]
-def eB : List (Entry Card) := [⟨"c1", cB⟩]
-def eC : List (Entry Card) := [⟨"c1", cC⟩]
-def eD : List (Entry Card) := [⟨"c1", cD⟩]
-
-theorem mergeMap_eA_eB : mergeMap cardMerge eA eB = [⟨"c1", cA⟩] := by decide
-theorem mergeMap_eB_eA : mergeMap cardMerge eB eA = [⟨"c1", cB⟩] := by decide
-theorem mergeMap_eC_eD : mergeMap cardMerge eC eD = [⟨"c1", cC⟩] := by decide
-theorem mergeMap_eD_eC : mergeMap cardMerge eD eC = [⟨"c1", cD⟩] := by decide
-
-/-- SRS merge is not commutative (review ties, cards differ in ease). -/
-theorem srs_comm_false_ease :
-    ¬ ∀ a b : List (Entry Card), Sorted a → Sorted b →
-      mergeMap cardMerge a b = mergeMap cardMerge b a := by
-  intro h
-  have h2 : mergeMap cardMerge eA eB = mergeMap cardMerge eB eA :=
-    h eA eB (sorted_singleton _) (sorted_singleton _)
-  rw [mergeMap_eA_eB, mergeMap_eB_eA] at h2
-  exact (by decide : ¬ ([⟨"c1", cA⟩] : List (Entry Card)) = [⟨"c1", cB⟩]) h2
-
-/-- SRS merge is not commutative (an absent review time against a review time of 0). -/
-theorem srs_comm_false_none :
-    ¬ ∀ a b : List (Entry Card), Sorted a → Sorted b →
-      mergeMap cardMerge a b = mergeMap cardMerge b a := by
-  intro h
-  have h2 : mergeMap cardMerge eC eD = mergeMap cardMerge eD eC :=
-    h eC eD (sorted_singleton _) (sorted_singleton _)
-  rw [mergeMap_eC_eD, mergeMap_eD_eC] at h2
-  exact (by decide : ¬ ([⟨"c1", cC⟩] : List (Entry Card)) = [⟨"c1", cD⟩]) h2
-
-/-- The learning state is not commutative, because its SRS part is not. -/
-theorem state_comm_false :
-    ¬ ∀ a b : State, mergeState a b = mergeState b a := by
-  intro h
-  have h2 : mergeMap cardMerge eA eB = mergeMap cardMerge eB eA :=
-    congrArg State.srs (h ⟨[], eA, []⟩ ⟨[], eB, []⟩)
-  rw [mergeMap_eA_eB, mergeMap_eB_eA] at h2
-  exact (by decide : ¬ ([⟨"c1", cA⟩] : List (Entry Card)) = [⟨"c1", cB⟩]) h2
+/-- The learning state is commutative as a whole, on sorted maps. -/
+theorem state_comm (a b : State) (hla : Sorted a.lessons) (hlb : Sorted b.lessons)
+    (hsa : Sorted a.srs) (hsb : Sorted b.srs) (hxa : Sorted a.xp) (hxb : Sorted b.xp) :
+    mergeState a b = mergeState b a := by
+  unfold mergeState
+  rw [lessons_comm a.lessons b.lessons hla hlb, srs_comm a.srs b.srs hsa hsb,
+    xp_comm a.xp b.xp hxa hxb]
 
 /-- The lessons and XP parts of the learning state are commutative. -/
 theorem state_lessons_xp_comm (a b : State) (ha : Sorted a.lessons) (hb : Sorted b.lessons)
@@ -650,6 +791,6 @@ end BendMerge
 #print axioms BendMerge.xp_idem
 #print axioms BendMerge.xsum_comm
 #print axioms BendMerge.srs_idem
-#print axioms BendMerge.srs_comm_false_ease
-#print axioms BendMerge.srs_comm_false_none
-#print axioms BendMerge.state_comm_false
+#print axioms BendMerge.cardMerge_comm
+#print axioms BendMerge.srs_comm
+#print axioms BendMerge.state_comm
