@@ -135,6 +135,36 @@ describe("the Bend learning-data merge against mergeProgress", () => {
     }
   });
 
+  it("the compiled lesson and XP merges are commutative on random pairs; the SRS merge is not, and the trials show it", () => {
+    // Lean: lessons_comm, xp_comm, xsum_comm and state_lessons_xp_comm. The SRS part is the finding below.
+    const r = rng(20260506);
+    let srsDiffers = 0;
+    for (let trial = 0; trial < 10_000; trial++) {
+      const a = toBend(randomProgress(r));
+      const b = toBend(randomProgress(r));
+      const ab = bend.merge_state(a, b) as any;
+      const ba = bend.merge_state(b, a) as any;
+      expect(JSON.stringify(sortedJson(fromBendOut(ab).lessons)), `lessons, trial ${trial}`).toBe(JSON.stringify(sortedJson(fromBendOut(ba).lessons)));
+      expect(fromBendOut(ab).xp, `xp, trial ${trial}`).toBe(fromBendOut(ba).xp);
+      expect(JSON.stringify(sortedJson(fromBendOut(ab).xpByDay)), `xpByDay, trial ${trial}`).toBe(JSON.stringify(sortedJson(fromBendOut(ba).xpByDay)));
+      if (JSON.stringify(sortedJson(fromBendOut(ab).srs)) !== JSON.stringify(sortedJson(fromBendOut(ba).srs))) srsDiffers++;
+    }
+    expect(srsDiffers).toBeGreaterThan(0);
+  });
+
+  it("the compiled merges are idempotent: merging a copy with itself gives the copy", () => {
+    // Lean: lessons_idem, xp_idem and srs_idem.
+    const r = rng(20260507);
+    for (let trial = 0; trial < 2_000; trial++) {
+      const p = randomProgress(r);
+      const got = fromBendOut(bend.merge_state(toBend(p), toBend(p)));
+      expect(sortedJson(got.lessons), `lessons, trial ${trial}`).toEqual(sortedJson(p.lessons));
+      expect(sortedJson(got.srs), `srs, trial ${trial}`).toEqual(sortedJson(p.srs));
+      expect(sortedJson(got.xpByDay), `xpByDay, trial ${trial}`).toEqual(sortedJson(p.xpByDay));
+      expect(got.xp, `xp, trial ${trial}`).toBe(Object.values(p.xpByDay).reduce((t, v) => t + v, 0));
+    }
+  });
+
   it("records the finding: mergeProgress gives different SRS cards for (a, b) and (b, a) on a tie", () => {
     // Two cards with the same lastReview, reps and due, differing only in ease: mergeCard keeps the first.
     const card = (ease: number): SrsCard => ({ id: "c1", lessonId: "l1", interval: 1, ease, due: 5, lapses: 0, reps: 1, lastReview: 7 });
@@ -142,6 +172,15 @@ describe("the Bend learning-data merge against mergeProgress", () => {
     const b: Progress = { ...defaultProgress(), srs: { c1: card(250) } };
     expect(mergeProgress(a, b).srs.c1.ease).toBe(200);
     expect(mergeProgress(b, a).srs.c1.ease).toBe(250);
+  });
+
+  it("records the finding: an absent lastReview against a lastReview of 0 on a tie", () => {
+    // mergeCard counts an absent lastReview as 0, so the tie keeps the first card, which differs in its field.
+    const base = { id: "c1", lessonId: "l1", interval: 1, ease: 200, due: 5, lapses: 0, reps: 1 };
+    const a: Progress = { ...defaultProgress(), srs: { c1: { ...base } as SrsCard } };
+    const b: Progress = { ...defaultProgress(), srs: { c1: { ...base, lastReview: 0 } as SrsCard } };
+    expect(mergeProgress(a, b).srs.c1.lastReview).toBeUndefined();
+    expect(mergeProgress(b, a).srs.c1.lastReview).toBe(0);
   });
 });
 
