@@ -442,3 +442,56 @@ def sorted_lins(+ke: String, +ve: Merge.Lesson, s: List<&2, Merge.LEntry>, ws: S
         case Merge.LEntry{+kh, +vh}:
           (w, ws2) = ws
           sorted_lins_c(t, Merge.skey_cmp(ke, kh), ke, ve, kh, vh, {==}, w, ws2)
+
+# ---- the lookup of an insertion, lessons: the lemmas by how the new key ke compares with the head kh ----
+# c2 is the comparison of ke with k, c3 that of kh with k; the witnesses tie them to the keys.
+
+# pick_l with its comparison replaced by an equal one
+def pk_l(x: Cmp, y: Cmp, +v: Merge.Lesson, +r: Maybe<&2, Merge.Lesson>, e: {x == y : Cmp}) -> {S.pick_l(x, v, r) == S.pick_l(y, v, r) : Maybe<&2, Merge.Lesson>}:
+  Equal.cong(Cmp, Maybe<&2, Merge.Lesson>, (z => S.pick_l(z, v, r)), x, y, e)
+
+# a new entry into an empty rest: its lookup is its insertion
+def sing_l(c2: Cmp, +ve: Merge.Lesson) -> {S.pick_l(c2, ve, None{}) == S.ins_look_l(c2, None{}, ve) : Maybe<&2, Merge.Lesson>}:
+  match c2:
+    case LT{}:
+      {==}
+    case EQ{}:
+      {==}
+    case GT{}:
+      {==}
+
+# ke before kh: the lookup is the rest, except at ke itself, where the rest has no key k
+def lk_lt(+c2: Cmp, +c3: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +k: String, +t: List<&2, Merge.LEntry>, w: S.KAllL(t, kh), +ea: {Merge.skey_cmp(ke, k) == c2 : Cmp}, +hb: {Merge.skey_cmp(kh, k) == c3 : Cmp}, +hc: {Merge.skey_cmp(ke, kh) == LT{} : Cmp}) -> {S.pick_l(c2, ve, S.pick_l(c3, vh, S.lookup_l(t, k))) == S.ins_look_l(c2, S.pick_l(c3, vh, S.lookup_l(t, k)), ve) : Maybe<&2, Merge.Lesson>}:
+  match c2:
+    case LT{}:
+      {==}
+    case EQ{}:
+      e1 = Equal.trans(Cmp, Merge.skey_cmp(k, kh), Merge.skey_cmp(ke, kh), LT{}, key_subst_l(k, ke, kh, eq_flip(ke, k, ea)), hc)
+      n1 = lookup_none_l(t, k, kall_trans_l(t, k, kh, e1, w))
+      r3 = Equal.trans(Cmp, c3, Merge.skey_cmp(kh, k), GT{}, Equal.sym(Cmp, Merge.skey_cmp(kh, k), c3, hb), lt_b_gt(ke, kh, k, ea, hc))
+      rX = Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(c3, vh, S.lookup_l(t, k)), S.pick_l(GT{}, vh, S.lookup_l(t, k)), None{}, pk_l(c3, GT{}, vh, S.lookup_l(t, k), r3), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(GT{}, vh, S.lookup_l(t, k)), S.lookup_l(t, k), None{}, {==}, n1))
+      Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, ve, S.pick_l(c3, vh, S.lookup_l(t, k))), S.comb_opt_l(None{}, Some{ve}), S.comb_opt_l(S.pick_l(c3, vh, S.lookup_l(t, k)), Some{ve}), {==}, Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, (z => S.comb_opt_l(z, Some{ve})), None{}, S.pick_l(c3, vh, S.lookup_l(t, k)), Equal.sym(Maybe<&2, Merge.Lesson>, S.pick_l(c3, vh, S.lookup_l(t, k)), None{}, rX)))
+    case GT{}:
+      {==}
+
+# ke equal to kh: the entry is combined, and the rest is not consulted, so the lookup is the combined entry
+def lk_eq(+c2: Cmp, +c3: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +k: String, +t: List<&2, Merge.LEntry>, +rel: {c3 == c2 : Cmp}) -> {S.pick_l(c3, Merge.lp_max(vh, ve), S.lookup_l(t, k)) == S.ins_look_l(c2, S.pick_l(c3, vh, S.lookup_l(t, k)), ve) : Maybe<&2, Merge.Lesson>}:
+  match c2:
+    case LT{}:
+      Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(c3, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(LT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(c3, vh, S.lookup_l(t, k)), pk_l(c3, LT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k), rel), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(LT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(LT{}, vh, S.lookup_l(t, k)), S.pick_l(c3, vh, S.lookup_l(t, k)), {==}, Equal.sym(Maybe<&2, Merge.Lesson>, S.pick_l(c3, vh, S.lookup_l(t, k)), S.pick_l(LT{}, vh, S.lookup_l(t, k)), pk_l(c3, LT{}, vh, S.lookup_l(t, k), rel))))
+    case EQ{}:
+      Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(c3, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(EQ{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.comb_opt_l(S.pick_l(c3, vh, S.lookup_l(t, k)), Some{ve}), pk_l(c3, EQ{}, Merge.lp_max(vh, ve), S.lookup_l(t, k), rel), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.comb_opt_l(S.pick_l(EQ{}, vh, S.lookup_l(t, k)), Some{ve}), S.comb_opt_l(S.pick_l(c3, vh, S.lookup_l(t, k)), Some{ve}), {==}, Equal.sym(Maybe<&2, Merge.Lesson>, S.comb_opt_l(S.pick_l(c3, vh, S.lookup_l(t, k)), Some{ve}), S.comb_opt_l(S.pick_l(EQ{}, vh, S.lookup_l(t, k)), Some{ve}), Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, (z => S.comb_opt_l(z, Some{ve})), S.pick_l(c3, vh, S.lookup_l(t, k)), S.pick_l(EQ{}, vh, S.lookup_l(t, k)), pk_l(c3, EQ{}, vh, S.lookup_l(t, k), rel)))))
+    case GT{}:
+      Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(c3, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(GT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(c3, vh, S.lookup_l(t, k)), pk_l(c3, GT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k), rel), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(GT{}, Merge.lp_max(vh, ve), S.lookup_l(t, k)), S.pick_l(GT{}, vh, S.lookup_l(t, k)), S.pick_l(c3, vh, S.lookup_l(t, k)), {==}, Equal.sym(Maybe<&2, Merge.Lesson>, S.pick_l(c3, vh, S.lookup_l(t, k)), S.pick_l(GT{}, vh, S.lookup_l(t, k)), pk_l(c3, GT{}, vh, S.lookup_l(t, k), rel))))
+
+# kh before ke: the rest gets the insertion, and kh's comparison with k decides which entry shows
+def lk_gt(+c2: Cmp, +c3: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +k: String, +s: List<&2, Merge.LEntry>, +ea: {Merge.skey_cmp(ke, k) == c2 : Cmp}, +hb: {Merge.skey_cmp(kh, k) == c3 : Cmp}, +hc: {Merge.skey_cmp(ke, kh) == GT{} : Cmp}) -> {S.pick_l(c3, vh, S.ins_look_l(c2, S.lookup_l(s, k), ve)) == S.ins_look_l(c2, S.pick_l(c3, vh, S.lookup_l(s, k)), ve) : Maybe<&2, Merge.Lesson>}:
+  match c3:
+    case LT{}:
+      {==}
+    case EQ{}:
+      rel2 = Equal.trans(Cmp, c2, Merge.skey_cmp(ke, k), GT{}, Equal.sym(Cmp, Merge.skey_cmp(ke, k), c2, ea), Equal.trans(Cmp, Merge.skey_cmp(ke, k), Merge.skey_cmp(ke, kh), GT{}, Equal.sym(Cmp, Merge.skey_cmp(ke, kh), Merge.skey_cmp(ke, k), key_subst_r(kh, k, ke, hb)), hc))
+      rg = Equal.cong(Cmp, Maybe<&2, Merge.Lesson>, (z => S.ins_look_l(z, Some{vh}, ve)), c2, GT{}, rel2)
+      Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, vh, S.ins_look_l(c2, S.lookup_l(s, k), ve)), S.ins_look_l(c2, Some{vh}, ve), S.ins_look_l(c2, S.pick_l(EQ{}, vh, S.lookup_l(s, k)), ve), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, vh, S.ins_look_l(c2, S.lookup_l(s, k), ve)), S.ins_look_l(GT{}, Some{vh}, ve), S.ins_look_l(c2, Some{vh}, ve), {==}, Equal.sym(Maybe<&2, Merge.Lesson>, S.ins_look_l(c2, Some{vh}, ve), S.ins_look_l(GT{}, Some{vh}, ve), rg)), {==})
+    case GT{}:
+      {==}
