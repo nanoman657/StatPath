@@ -541,3 +541,146 @@ def lins_look(+ke: String, +ve: Merge.Lesson, +k: String, s: List<&2, Merge.LEnt
         case Merge.LEntry{+kh, +vh}:
           (w, ws2) = ws
           lins_c_look(t, Merge.skey_cmp(ke, kh), ke, ve, kh, vh, k, {==}, w, ws2)
+
+# ---- the lessons merge: the Maybe values, the lookups of the lists, the fold, and the pointwise laws ----
+
+# None is not Some: a disequality between two Maybe values
+def is_none_t(m: Maybe<&2, Merge.Lesson>) -> Type:
+  match m:
+    case None{}:
+      Unit
+    case Some{+x}:
+      Empty
+
+def none_ne_some(+v: Merge.Lesson, p: {None{} == Some{v} : Maybe<&2, Merge.Lesson>}) -> Empty:
+  %p : is_none_t(_)
+  Unit{}
+
+# combining with None on the right keeps the value
+def comb_none_r(+x: Maybe<&2, Merge.Lesson>) -> {S.comb_opt_l(x, None{}) == x : Maybe<&2, Merge.Lesson>}:
+  match x:
+    case Some{+v}:
+      {==}
+    case None{}:
+      {==}
+
+# combining with None on the left keeps the value
+def comb_none_l(+x: Maybe<&2, Merge.Lesson>) -> {S.comb_opt_l(None{}, x) == x : Maybe<&2, Merge.Lesson>}:
+  match x:
+    case Some{+v}:
+      {==}
+    case None{}:
+      {==}
+
+# the combination of two values is commutative, as lp_max is
+def comb_comm(+m: Maybe<&2, Merge.Lesson>, +n: Maybe<&2, Merge.Lesson>) -> {S.comb_opt_l(m, n) == S.comb_opt_l(n, m) : Maybe<&2, Merge.Lesson>}:
+  match m n:
+    case Some{+v} Some{+w}:
+      Equal.cong(Merge.Lesson, Maybe<&2, Merge.Lesson>, x => Some{x}, Merge.lp_max(v, w), Merge.lp_max(w, v), Laws.lp_max_comm(v, w))
+    case Some{+v} None{}:
+      {==}
+    case None{} Some{+w}:
+      {==}
+    case None{} None{}:
+      {==}
+
+# the combination of a value with itself is that value
+def comb_idem(+m: Maybe<&2, Merge.Lesson>) -> {S.comb_opt_l(m, m) == m : Maybe<&2, Merge.Lesson>}:
+  match m:
+    case Some{+v}:
+      Equal.cong(Merge.Lesson, Maybe<&2, Merge.Lesson>, x => Some{x}, Merge.lp_max(v, v), v, Laws.lp_max_self(v))
+    case None{}:
+      {==}
+
+# the lookup at a key that compares EQ with the head key: the head's value
+def lk_head(+kb: String, +vb: Merge.Lesson, +t: List<&2, Merge.LEntry>, +k: String, e: {Merge.skey_cmp(kb, k) == EQ{} : Cmp}) -> {S.lookup_l(Merge.LEntry{kb, vb} <> t, k) == Some{vb} : Maybe<&2, Merge.Lesson>}:
+  Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{kb, vb} <> t, k), S.pick_l(Merge.skey_cmp(kb, k), vb, S.lookup_l(t, k)), Some{vb}, {==},
+    Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(Merge.skey_cmp(kb, k), vb, S.lookup_l(t, k)), S.pick_l(EQ{}, vb, S.lookup_l(t, k)), Some{vb},
+      pk_l(Merge.skey_cmp(kb, k), EQ{}, vb, S.lookup_l(t, k), e), {==}))
+
+# the lookup at a key before the head key: the head is skipped
+def lk_skip(+kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +k: String, wk: Ord.IsLT(Merge.skey_cmp(kh, k))) -> {S.lookup_l(Merge.LEntry{kh, vh} <> t, k) == S.lookup_l(t, k) : Maybe<&2, Merge.Lesson>}:
+  Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{kh, vh} <> t, k), S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(t, k)), S.lookup_l(t, k), {==},
+    Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(t, k)), S.pick_l(LT{}, vh, S.lookup_l(t, k)), S.lookup_l(t, k),
+      pk_l(Merge.skey_cmp(kh, k), LT{}, vh, S.lookup_l(t, k), Ord.IsLT.of(Merge.skey_cmp(kh, k), wk)), {==}))
+
+# one step of the fold's lookup: the head key kh is folded into acc; c compares kh with k
+def lf_step(c: Cmp, +kh: String, +vh: Merge.Lesson, +k: String, +t: List<&2, Merge.LEntry>, +mv: Maybe<&2, Merge.Lesson>, +pv: Maybe<&2, Merge.Lesson>, +fv: Maybe<&2, Merge.Lesson>, +ec: {Merge.skey_cmp(kh, k) == c : Cmp}, wt: S.KAllL(t, kh), l2: {pv == S.ins_look_l(c, mv, vh) : Maybe<&2, Merge.Lesson>}, ih: {fv == S.comb_opt_l(pv, S.lookup_l(t, k)) : Maybe<&2, Merge.Lesson>}) -> {fv == S.comb_opt_l(mv, S.pick_l(c, vh, S.lookup_l(t, k))) : Maybe<&2, Merge.Lesson>}:
+  match c:
+    case LT{}:
+      p1 = Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(z, S.lookup_l(t, k)), pv, mv, Equal.trans(Maybe<&2, Merge.Lesson>, pv, S.ins_look_l(LT{}, mv, vh), mv, l2, {==}))
+      Equal.trans(Maybe<&2, Merge.Lesson>, fv, S.comb_opt_l(pv, S.lookup_l(t, k)), S.comb_opt_l(mv, S.pick_l(LT{}, vh, S.lookup_l(t, k))), ih, p1)
+    case EQ{}:
+      hn = lookup_none_l(t, k, kall_eq(t, k, kh, eq_flip(kh, k, ec), wt))
+      p1 = Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(pv, z), S.lookup_l(t, k), None{}, hn)
+      p2 = Equal.trans(Maybe<&2, Merge.Lesson>, S.comb_opt_l(pv, S.lookup_l(t, k)), S.comb_opt_l(pv, None{}), pv, p1, comb_none_r(pv))
+      p3 = Equal.trans(Maybe<&2, Merge.Lesson>, fv, S.comb_opt_l(pv, S.lookup_l(t, k)), pv, ih, p2)
+      Equal.trans(Maybe<&2, Merge.Lesson>, fv, pv, S.comb_opt_l(mv, S.pick_l(EQ{}, vh, S.lookup_l(t, k))), p3, l2)
+    case GT{}:
+      p1 = Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(z, S.lookup_l(t, k)), pv, mv, Equal.trans(Maybe<&2, Merge.Lesson>, pv, S.ins_look_l(GT{}, mv, vh), mv, l2, {==}))
+      Equal.trans(Maybe<&2, Merge.Lesson>, fv, S.comb_opt_l(pv, S.lookup_l(t, k)), S.comb_opt_l(mv, S.pick_l(GT{}, vh, S.lookup_l(t, k))), ih, p1)
+
+# a sorted list folded into a sorted list stays sorted
+def sorted_lfold(+xs: List<&2, Merge.LEntry>, +acc: List<&2, Merge.LEntry>, wacc: S.SortedL(acc)) -> S.SortedL(Merge.lfold(xs, acc)):
+  match xs:
+    case Nil{}:
+      wacc
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          sorted_lfold(t, Merge.lins(Merge.LEntry{kh, vh}, acc), sorted_lins(kh, vh, acc, wacc))
+
+# the two copies of a SortedL witness for a cons, from the copies of its parts
+def sd_cons(+kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, dk: (S.KAllL(t, kh) & S.KAllL(t, kh)), dt: (S.SortedL(t) & S.SortedL(t))) -> (S.SortedL(Merge.LEntry{kh, vh} <> t) & S.SortedL(Merge.LEntry{kh, vh} <> t)):
+  (wk1, wk2) = dk
+  (wt1, wt2) = dt
+  ((wk1, wt1), (wk2, wt2))
+
+# a witness of SortedL can be copied, as a witness of KAllL can
+def sortedL_dup(s: List<&2, Merge.LEntry>, w: S.SortedL(s)) -> (S.SortedL(s) & S.SortedL(s)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (wk, wt) = w
+          sd_cons(kh, vh, t, kall_dup(t, kh, wk), sortedL_dup(t, wt))
+
+# the lookup of a fold: folding a sorted list into a sorted list looks up as the combination of the two.
+# The witnesses of acc come in pairs, so each recursive call is given a fresh pair (no matching on a computed value).
+def lfold_look(+xs: List<&2, Merge.LEntry>, +acc: List<&2, Merge.LEntry>, +k: String, sx: S.SortedL(xs), pa: (S.SortedL(acc) & S.SortedL(acc))) -> {S.lookup_l(Merge.lfold(xs, acc), k) == S.comb_opt_l(S.lookup_l(acc, k), S.lookup_l(xs, k)) : Maybe<&2, Merge.Lesson>}:
+  match xs:
+    case Nil{}:
+      Equal.sym(Maybe<&2, Merge.Lesson>, S.comb_opt_l(S.lookup_l(acc, k), None{}), S.lookup_l(acc, k), comb_none_r(S.lookup_l(acc, k)))
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (wkt, wt) = sx
+          (sa1, sa2) = pa
+          lf_step(Merge.skey_cmp(kh, k), kh, vh, k, t, S.lookup_l(acc, k), S.lookup_l(Merge.lins(Merge.LEntry{kh, vh}, acc), k), S.lookup_l(Merge.lfold(t, Merge.lins(Merge.LEntry{kh, vh}, acc)), k), {==}, wkt, lins_look(kh, vh, k, acc, sa1), lfold_look(t, Merge.lins(Merge.LEntry{kh, vh}, acc), k, wt, sortedL_dup(Merge.lins(Merge.LEntry{kh, vh}, acc), sorted_lins(kh, vh, acc, sa2))))
+
+# the pointwise lemma for the merge, with the copies of the witnesses given
+def pt_comm_h(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, +k: String, pa: (S.SortedL(a) & S.SortedL(a)), pb: (S.SortedL(b) & S.SortedL(b))) -> {S.lookup_l(Merge.lfold(b, Merge.lfold(a, Nil{})), k) == S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k) : Maybe<&2, Merge.Lesson>}:
+  (sa1, sa2) = pa
+  (sb1, sb2) = pb
+  lfa = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(a, Nil{}), k), S.comb_opt_l(S.lookup_l(Nil{}, k), S.lookup_l(a, k)), S.lookup_l(a, k), lfold_look(a, Nil{}, k, sa1, (Unit{}, Unit{})), comb_none_l(S.lookup_l(a, k)))
+  lfb = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(b, Nil{}), k), S.comb_opt_l(S.lookup_l(Nil{}, k), S.lookup_l(b, k)), S.lookup_l(b, k), lfold_look(b, Nil{}, k, sb1, (Unit{}, Unit{})), comb_none_l(S.lookup_l(b, k)))
+  lab = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(b, Merge.lfold(a, Nil{})), k), S.comb_opt_l(S.lookup_l(Merge.lfold(a, Nil{}), k), S.lookup_l(b, k)), S.comb_opt_l(S.lookup_l(a, k), S.lookup_l(b, k)), lfold_look(b, Merge.lfold(a, Nil{}), k, sb2, sortedL_dup(Merge.lfold(a, Nil{}), sorted_lfold(a, Nil{}, Unit{}))), Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(z, S.lookup_l(b, k)), S.lookup_l(Merge.lfold(a, Nil{}), k), S.lookup_l(a, k), lfa))
+  lba = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k), S.comb_opt_l(S.lookup_l(Merge.lfold(b, Nil{}), k), S.lookup_l(a, k)), S.comb_opt_l(S.lookup_l(b, k), S.lookup_l(a, k)), lfold_look(a, Merge.lfold(b, Nil{}), k, sa2, sortedL_dup(Merge.lfold(b, Nil{}), sorted_lfold(b, Nil{}, Unit{}))), Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(z, S.lookup_l(a, k)), S.lookup_l(Merge.lfold(b, Nil{}), k), S.lookup_l(b, k), lfb))
+  Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(b, Merge.lfold(a, Nil{})), k), S.comb_opt_l(S.lookup_l(a, k), S.lookup_l(b, k)), S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k), lab, Equal.trans(Maybe<&2, Merge.Lesson>, S.comb_opt_l(S.lookup_l(a, k), S.lookup_l(b, k)), S.comb_opt_l(S.lookup_l(b, k), S.lookup_l(a, k)), S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k), comb_comm(S.lookup_l(a, k), S.lookup_l(b, k)), Equal.sym(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k), S.comb_opt_l(S.lookup_l(b, k), S.lookup_l(a, k)), lba)))
+
+# the pointwise lemma for the merge, from the witnesses of a and b
+def pt_comm(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, +k: String, sa: S.SortedL(a), sb: S.SortedL(b)) -> {S.lookup_l(Merge.lfold(b, Merge.lfold(a, Nil{})), k) == S.lookup_l(Merge.lfold(a, Merge.lfold(b, Nil{})), k) : Maybe<&2, Merge.Lesson>}:
+  pt_comm_h(a, b, k, sortedL_dup(a, sa), sortedL_dup(b, sb))
+
+# the pointwise lemma for the self-merge, with the copies of the witness given
+def pt_idem_h(+a: List<&2, Merge.LEntry>, +k: String, pa: (S.SortedL(a) & S.SortedL(a))) -> {S.lookup_l(Merge.lfold(a, Merge.lfold(a, Nil{})), k) == S.lookup_l(a, k) : Maybe<&2, Merge.Lesson>}:
+  (sa1, sa2) = pa
+  lfa = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(a, Nil{}), k), S.comb_opt_l(S.lookup_l(Nil{}, k), S.lookup_l(a, k)), S.lookup_l(a, k), lfold_look(a, Nil{}, k, sa1, (Unit{}, Unit{})), comb_none_l(S.lookup_l(a, k)))
+  lap = Equal.trans(Maybe<&2, Merge.Lesson>, S.comb_opt_l(S.lookup_l(Merge.lfold(a, Nil{}), k), S.lookup_l(a, k)), S.comb_opt_l(S.lookup_l(a, k), S.lookup_l(a, k)), S.lookup_l(a, k), Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, z => S.comb_opt_l(z, S.lookup_l(a, k)), S.lookup_l(Merge.lfold(a, Nil{}), k), S.lookup_l(a, k), lfa), comb_idem(S.lookup_l(a, k)))
+  Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.lfold(a, Merge.lfold(a, Nil{})), k), S.comb_opt_l(S.lookup_l(Merge.lfold(a, Nil{}), k), S.lookup_l(a, k)), S.lookup_l(a, k), lfold_look(a, Merge.lfold(a, Nil{}), k, sa2, sortedL_dup(Merge.lfold(a, Nil{}), sorted_lfold(a, Nil{}, Unit{}))), lap)
+
+# the pointwise lemma for the self-merge, from the witness of a
+def pt_idem(+a: List<&2, Merge.LEntry>, +k: String, sa: S.SortedL(a)) -> {S.lookup_l(Merge.lfold(a, Merge.lfold(a, Nil{})), k) == S.lookup_l(a, k) : Maybe<&2, Merge.Lesson>}:
+  pt_idem_h(a, k, sortedL_dup(a, sa))
