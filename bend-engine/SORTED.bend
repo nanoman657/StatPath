@@ -92,3 +92,25 @@ def SortedX(s: List<&2, Merge.XEntry>) -> Type:
       match h:
         case Merge.XEntry{+kh, +vh}:
           KAllX(t, kh) & SortedX(t)
+
+# ---- SRS cards (CEntry, combined by card_merge): the same shape, keyed by the card's key ----
+
+# KAllC(s, k): every key of s comes after k. Unit for an empty list.
+def KAllC(s: List<&2, Merge.CEntry>, +k: String) -> Type:
+  match s:
+    case Nil{}:
+      Unit
+    case h <> t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          Ord.IsLT(Merge.skey_cmp(k, kh)) & KAllC(t, k)
+
+# SortedC(s): s is strictly increasing by key
+def SortedC(s: List<&2, Merge.CEntry>) -> Type:
+  match s:
+    case Nil{}:
+      Unit
+    case h <> t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          KAllC(t, kh) & SortedC(t)

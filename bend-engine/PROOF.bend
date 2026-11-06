@@ -1960,7 +1960,7 @@ def cm_csel(+A: Merge.Card, +B: Merge.Card) -> {Merge.card_merge(A, B) == csel(c
     case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
       cp_csel(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2), Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})
 
-def card_merge_self(+A: Merge.Card) -> {Merge.card_merge(A, A) == A : Merge.Card}:
+def Laws.card_merge_self(A):
   Equal.trans(Merge.Card, Merge.card_merge(A, A), csel(cc1(A, A), A, A), A, cm_csel(A, A), csel_same(cc1(A, A), A))
 
 # ---- cc1_eq_card: a card-order EQ means the two cards are equal (split the chain down to cc4, then full_eq_card) ----
@@ -2051,3 +2051,435 @@ def cassoc(p: Cmp, q: Cmp, +a: Merge.Card, +b: Merge.Card, +c: Merge.Card, +hp: 
 
 def Laws.card_merge_assoc(a, b, c):
   Equal.trans(Merge.Card, Merge.card_merge(a, Merge.card_merge(b, c)), Merge.card_merge(a, csel(cc1(b, c), b, c)), Merge.card_merge(Merge.card_merge(a, b), c), Equal.cong(Merge.Card, Merge.Card, x => Merge.card_merge(a, x), Merge.card_merge(b, c), csel(cc1(b, c), b, c), cm_csel(b, c)), Equal.trans(Merge.Card, Merge.card_merge(a, csel(cc1(b, c), b, c)), Merge.card_merge(csel(cc1(a, b), a, b), c), Merge.card_merge(Merge.card_merge(a, b), c), cassoc(cc1(a, b), cc1(b, c), a, b, c, {==}, {==}), Equal.sym(Merge.Card, Merge.card_merge(Merge.card_merge(a, b), c), Merge.card_merge(csel(cc1(a, b), a, b), c), Equal.cong(Merge.Card, Merge.Card, x => Merge.card_merge(x, c), Merge.card_merge(a, b), csel(cc1(a, b), a, b), cm_csel(a, b)))))
+# ---- SRS cards: the SRS chains over CEntry, with card_merge as the combine ----
+# the copy of a witness for the list whose head is LEntry{kh, vh}: the head's IsLT is shared through e
+def sr_kall_dup_cons(+k: String, +kh: String, +vh: Merge.Card, t: List<&2, Merge.CEntry>, +e: {Merge.skey_cmp(k, kh) == LT{} : Cmp}, p: (S.KAllC(t, k) & S.KAllC(t, k))) -> (S.KAllC(Merge.CEntry{kh, vh} <> t, k) & S.KAllC(Merge.CEntry{kh, vh} <> t, k)):
+  (ta, tb) = p
+  ((Ord.IsLT.to(Merge.skey_cmp(k, kh), e), ta), (Ord.IsLT.to(Merge.skey_cmp(k, kh), e), tb))
+
+def sr_kall_dup(s: List<&2, Merge.CEntry>, +k: String, w: S.KAllC(s, k)) -> (S.KAllC(s, k) & S.KAllC(s, k)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          (wi, wt) = w
+          e = Ord.IsLT.of(Merge.skey_cmp(k, kh), wi)
+          sr_kall_dup_cons(k, kh, vh, t, e, sr_kall_dup(t, k, wt))
+
+# the two copies of a SortedL witness for a cons, from the copies of its parts
+def sr_sd_cons(+kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, dk: (S.KAllC(t, kh) & S.KAllC(t, kh)), dt: (S.SortedC(t) & S.SortedC(t))) -> (S.SortedC(Merge.CEntry{kh, vh} <> t) & S.SortedC(Merge.CEntry{kh, vh} <> t)):
+  (wk1, wk2) = dk
+  (wt1, wt2) = dt
+  ((wk1, wt1), (wk2, wt2))
+
+# a witness of SortedL can be copied, as a witness of KAllL can
+def sr_sortedL_dup(s: List<&2, Merge.CEntry>, w: S.SortedC(s)) -> (S.SortedC(s) & S.SortedC(s)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          (wk, wt) = w
+          sr_sd_cons(kh, vh, t, sr_kall_dup(t, kh, wk), sr_sortedL_dup(t, wt))
+
+def sr_lc_lt(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card) -> {Merge.cins_c(X, LT{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}) == Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> X) : List<&2, Merge.CEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.CEntry{+k2, +v2}:
+          {==}
+
+# lins_c with EQ: the new entry merges into the head, which keeps its key
+def sr_lc_eq(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card) -> {Merge.cins_c(X, EQ{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}) == Merge.CEntry{kh, Merge.card_merge(vh, va)} <> X : List<&2, Merge.CEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.CEntry{+k2, +v2}:
+          {==}
+
+# lins_c with GT: the head stays in front, and the new entry goes into the rest
+def sr_lc_gt(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card) -> {Merge.cins_c(X, GT{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}) == Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, X) : List<&2, Merge.CEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.CEntry{+k2, +v2}:
+          {==}
+
+# insertion of (ka, va) before the head (kh, vh) <> X, when the new key is LT the head's key
+def sr_ins_lt(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card, ec: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> X) == Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> X) : List<&2, Merge.CEntry>}:
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins_c(X, Merge.skey_cmp(ka, kh), Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.cins_c(X, LT{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> X), Equal.cong(Cmp, List<&2, Merge.CEntry>, (z => Merge.cins_c(X, z, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh})), Merge.skey_cmp(ka, kh), LT{}, ec), sr_lc_lt(X, ka, va, kh, vh))
+
+# insertion of (ka, va) into (kh, vh) <> X, when the keys are EQ: the head is combined
+def sr_ins_eq(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card, ec: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> X) == Merge.CEntry{kh, Merge.card_merge(vh, va)} <> X : List<&2, Merge.CEntry>}:
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins_c(X, Merge.skey_cmp(ka, kh), Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.cins_c(X, EQ{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> X, Equal.cong(Cmp, List<&2, Merge.CEntry>, (z => Merge.cins_c(X, z, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh})), Merge.skey_cmp(ka, kh), EQ{}, ec), sr_lc_eq(X, ka, va, kh, vh))
+
+# insertion of (ka, va) into (kh, vh) <> X, when the new key is GT the head's key: the head stays in front
+def sr_ins_gt(+X: List<&2, Merge.CEntry>, +ka: String, +va: Merge.Card, +kh: String, +vh: Merge.Card, ec: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> X) == Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, X) : List<&2, Merge.CEntry>}:
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins_c(X, Merge.skey_cmp(ka, kh), Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.cins_c(X, GT{}, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh}), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, X), Equal.cong(Cmp, List<&2, Merge.CEntry>, (z => Merge.cins_c(X, z, Merge.CEntry{ka, va}, Merge.CEntry{kh, vh})), Merge.skey_cmp(ka, kh), GT{}, ec), sr_lc_gt(X, ka, va, kh, vh))
+
+# ---- L2: inserting two SRS in either order gives the same list, for every list s ----
+
+# card_merge is associative and commutative in the order that matters here
+def sr_lpac(+x: Merge.Card, +y: Merge.Card, +z: Merge.Card) -> {Merge.card_merge(Merge.card_merge(x, y), z) == Merge.card_merge(Merge.card_merge(x, z), y) : Merge.Card}:
+  Equal.trans(Merge.Card, Merge.card_merge(Merge.card_merge(x, y), z), Merge.card_merge(x, Merge.card_merge(y, z)), Merge.card_merge(Merge.card_merge(x, z), y),
+    Equal.sym(Merge.Card, Merge.card_merge(x, Merge.card_merge(y, z)), Merge.card_merge(Merge.card_merge(x, y), z), Laws.card_merge_assoc(x, y, z)),
+    Equal.trans(Merge.Card, Merge.card_merge(x, Merge.card_merge(y, z)), Merge.card_merge(x, Merge.card_merge(z, y)), Merge.card_merge(Merge.card_merge(x, z), y),
+      Equal.cong(Merge.Card, Merge.Card, (w => Merge.card_merge(x, w)), Merge.card_merge(y, z), Merge.card_merge(z, y), Laws.card_merge_comm(y, z)),
+      Laws.card_merge_assoc(x, z, y)))
+
+# two entries with EQ keys, in either order, give the same entry before the rest X
+def sr_lp_eq_swap(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, e: {Merge.skey_cmp(ka, kb) == EQ{} : Cmp}, +X: List<&2, Merge.CEntry>) -> {Merge.CEntry{kb, Merge.card_merge(vb, va)} <> X == Merge.CEntry{ka, Merge.card_merge(va, vb)} <> X : List<&2, Merge.CEntry>}:
+  kq = Equal.sym(String, ka, kb, Laws.skey_eq_of(ka, kb, Ord.IsEQ.to(Merge.skey_cmp(ka, kb), e)))
+  s1 = Equal.cong(String, Merge.CEntry, (k => Merge.CEntry{k, Merge.card_merge(vb, va)}), kb, ka, kq)
+  s2 = Equal.cong(Merge.Card, Merge.CEntry, (v => Merge.CEntry{ka, v}), Merge.card_merge(vb, va), Merge.card_merge(va, vb), Laws.card_merge_comm(vb, va))
+  s3 = Equal.trans(Merge.CEntry, Merge.CEntry{kb, Merge.card_merge(vb, va)}, Merge.CEntry{ka, Merge.card_merge(vb, va)}, Merge.CEntry{ka, Merge.card_merge(va, vb)}, s1, s2)
+  Equal.cong(Merge.CEntry, List<&2, Merge.CEntry>, (p => p <> X), Merge.CEntry{kb, Merge.card_merge(vb, va)}, Merge.CEntry{ka, Merge.card_merge(va, vb)}, s3)
+
+# congruence for the two places a list appears in lins
+def sr_cong_lins(+ka: String, +va: Merge.Card, +x: List<&2, Merge.CEntry>, +y: List<&2, Merge.CEntry>, e: {x == y : List<&2, Merge.CEntry>}) -> {Merge.cins(Merge.CEntry{ka, va}, x) == Merge.cins(Merge.CEntry{ka, va}, y) : List<&2, Merge.CEntry>}:
+  Equal.cong(List<&2, Merge.CEntry>, List<&2, Merge.CEntry>, (z => Merge.cins(Merge.CEntry{ka, va}, z)), x, y, e)
+
+def sr_cong_cons(+kh: String, +vh: Merge.Card, +x: List<&2, Merge.CEntry>, +y: List<&2, Merge.CEntry>, e: {x == y : List<&2, Merge.CEntry>}) -> {Merge.CEntry{kh, vh} <> x == Merge.CEntry{kh, vh} <> y : List<&2, Merge.CEntry>}:
+  Equal.cong(List<&2, Merge.CEntry>, List<&2, Merge.CEntry>, (z => Merge.CEntry{kh, vh} <> z), x, y, e)
+
+# ---- the empty list: [A, B] against [B, A] ----
+
+def sr_lins2_nil_c(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +c: Cmp, +ec: {Merge.skey_cmp(ka, kb) == c : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Nil{})) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})) : List<&2, Merge.CEntry>}:
+  match c:
+    case LT{}:
+      s1 = sr_ins_lt(Nil{}, ka, va, kb, vb, ec)
+      r1 = sr_ins_gt(Nil{}, kb, vb, ka, va, rev_lt(ka, kb, ec))
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Nil{})), Merge.CEntry{ka, va} <> (Merge.CEntry{kb, vb} <> Nil{}), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})), s1, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Nil{}), r1))
+    case EQ{}:
+      s1 = sr_ins_eq(Nil{}, ka, va, kb, vb, ec)
+      r1 = sr_ins_eq(Nil{}, kb, vb, ka, va, eq_flip(ka, kb, ec))
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Nil{})), Merge.CEntry{kb, Merge.card_merge(vb, va)} <> Nil{}, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})),
+        s1,
+        Equal.trans(List<&2, Merge.CEntry>, Merge.CEntry{kb, Merge.card_merge(vb, va)} <> Nil{}, Merge.CEntry{ka, Merge.card_merge(va, vb)} <> Nil{}, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})),
+          sr_lp_eq_swap(ka, va, kb, vb, ec, Nil{}),
+          Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})), Merge.CEntry{ka, Merge.card_merge(va, vb)} <> Nil{}, r1)))
+    case GT{}:
+      s1 = sr_ins_gt(Nil{}, ka, va, kb, vb, ec)
+      r1 = sr_ins_lt(Nil{}, kb, vb, ka, va, rev_gt(ka, kb, ec))
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Nil{})), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> Nil{}), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})),
+        Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Nil{})), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Nil{}), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> Nil{}), s1, Equal.cong(List<&2, Merge.CEntry>, List<&2, Merge.CEntry>, (z => Merge.CEntry{kb, vb} <> z), Merge.cins(Merge.CEntry{ka, va}, Nil{}), Merge.CEntry{ka, va} <> Nil{}, {==})),
+        Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Nil{})), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> Nil{}), r1))
+
+# ---- the cons case: the branch lemmas, one per pair of comparisons of ka and kb with the head kh ----
+
+# GT, GT: both new entries go past the head, so the head stays in front and the induction hypothesis applies to the rest
+def sr_l2_GG(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}, ih: {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)) : List<&2, Merge.CEntry>}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_gt(t, kb, vb, kh, vh, eB)
+  s2 = sr_ins_gt(Merge.cins(Merge.CEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = sr_ins_gt(t, ka, va, kh, vh, eA)
+  r2 = sr_ins_gt(Merge.cins(Merge.CEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)), sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t), s1), s2)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)), sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t), r1), r2)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L1,
+    Equal.trans(List<&2, Merge.CEntry>, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)),
+      sr_cong_cons(kh, vh, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)), ih),
+      Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)), R1)))
+
+# GT, EQ: the new a merges into the head, which the new b has just passed
+def sr_l2_GE(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_gt(t, kb, vb, kh, vh, eB)
+  s2 = sr_ins_eq(Merge.cins(Merge.CEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = sr_ins_eq(t, ka, va, kh, vh, eA)
+  r2 = sr_ins_gt(t, kb, vb, kh, Merge.card_merge(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> Merge.cins(Merge.CEntry{kb, vb}, t), sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t), s1), s2)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> Merge.cins(Merge.CEntry{kb, vb}, t), sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t, r1), r2)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> Merge.cins(Merge.CEntry{kb, vb}, t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> Merge.cins(Merge.CEntry{kb, vb}, t), R1))
+
+# ---- the cons case, continued: the remaining branches ----
+
+# EQ, GT: the new b merges into the head; the new a is past the head
+def sr_l2_EG(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t, s1)
+  s3 = sr_ins_gt(t, ka, va, kh, Merge.card_merge(vh, vb), eA)
+  r1 = sr_ins_gt(t, ka, va, kh, vh, eA)
+  r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t), r1)
+  r3 = sr_ins_eq(Merge.cins(Merge.CEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> Merge.cins(Merge.CEntry{ka, va}, t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> Merge.cins(Merge.CEntry{ka, va}, t), r2, r3)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> Merge.cins(Merge.CEntry{ka, va}, t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> Merge.cins(Merge.CEntry{ka, va}, t), R1))
+
+# EQ, EQ: both new entries merge into the head; the two combined values agree by sr_lpac
+def sr_l2_EE(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t, s1)
+  s3 = sr_ins_eq(t, ka, va, kh, Merge.card_merge(vh, vb), eA)
+  m = Equal.cong(Merge.Card, List<&2, Merge.CEntry>, (v => Merge.CEntry{kh, v} <> t), Merge.card_merge(Merge.card_merge(vh, vb), va), Merge.card_merge(Merge.card_merge(vh, va), vb), sr_lpac(vh, vb, va))
+  r1 = sr_ins_eq(t, ka, va, kh, vh, eA)
+  r3 = sr_ins_eq(t, kb, vb, kh, Merge.card_merge(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, vb), va)} <> t, s2, s3)
+  L2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, vb), va)} <> t, Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, va), vb)} <> t, L1, m)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, va), vb)} <> t, Equal.cong(List<&2, Merge.CEntry>, List<&2, Merge.CEntry>, (z => Merge.cins(Merge.CEntry{kb, vb}, z)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t, r1), r3)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, va), vb)} <> t, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kh, Merge.card_merge(Merge.card_merge(vh, va), vb)} <> t, R1))
+
+# EQ, LT: the new a is before the head; the new b merges into the head
+def sr_l2_EL(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t, s1)
+  s3 = sr_ins_lt(t, ka, va, kh, Merge.card_merge(vh, vb), eA)
+  r1 = sr_ins_lt(t, ka, va, kh, vh, eA)
+  r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), r1)
+  r3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, kb, vb, ka, va, w_el(ka, kh, kb, eA, eB))
+  r4 = sr_cong_cons(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t, sr_ins_eq(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), r2, r3)
+  R2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), R1, r4)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, Merge.card_merge(vh, vb)} <> t), R2))
+
+# ---- the cons case, continued: the GT-LT, GT-EQ... branches for the new b past the head and the new a before it ----
+
+# GT, LT: the new a is before the head, so it goes to the front; the new b is past the head and stays behind it
+def sr_l2_GL(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_gt(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t), s1)
+  s3 = sr_ins_lt(Merge.cins(Merge.CEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = sr_ins_lt(t, ka, va, kh, vh, eA)
+  r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), r1)
+  r3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, kb, vb, ka, va, w_gl(ka, kh, kb, eA, eB))
+  r4 = sr_cong_cons(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t), sr_ins_gt(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), L1, Equal.sym(List<&2, Merge.CEntry>, Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kb, vb}, t)), r4))
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), R1))
+
+# LT, GT: the new b is before the head, so it goes to the front; the new a is past the head and stays behind it
+def sr_l2_LG(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_lt(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), s1)
+  s3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, ka, va, kb, vb, w_lg(ka, kh, kb, eA, eB))
+  s4 = sr_cong_cons(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t), sr_ins_gt(t, ka, va, kh, vh, eA))
+  r1 = sr_ins_gt(t, ka, va, kh, vh, eA)
+  r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t), r1)
+  r3 = sr_ins_lt(Merge.cins(Merge.CEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), r2, r3)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{ka, va}, t)), R1))
+
+# LT, EQ: the new b is before the head; the new a merges into the head
+def sr_l2_LE(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  s1 = sr_ins_lt(t, kb, vb, kh, vh, eB)
+  s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), s1)
+  s3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, ka, va, kb, vb, w_le(ka, kh, kb, eA, eB))
+  s4 = sr_cong_cons(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t, sr_ins_eq(t, ka, va, kh, vh, eA))
+  r1 = sr_ins_eq(t, ka, va, kh, vh, eA)
+  r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t, r1)
+  r3 = sr_ins_lt(t, kb, vb, kh, Merge.card_merge(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, Merge.card_merge(vh, va)} <> t), R1))
+
+# LT, LT: both new entries are before the head; the order of ka and kb decides the front, and the EQ case joins by sr_lp_eq_swap
+def sr_l2_LL(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}, +c3: Cmp, +ec3: {Merge.skey_cmp(ka, kb) == c3 : Cmp}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  match c3:
+    case LT{}:
+      s1 = sr_ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), s1)
+      s3 = sr_ins_lt(Merge.CEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = sr_ins_lt(t, ka, va, kh, vh, eA)
+      r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), r1)
+      r3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, kb, vb, ka, va, rev_lt(ka, kb, ec3))
+      r4 = sr_cong_cons(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), sr_ins_lt(t, kb, vb, kh, vh, eB))
+      L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), r2, r3)
+      R2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), R1, r4)
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, va} <> (Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), R2))
+    case EQ{}:
+      s1 = sr_ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), s1)
+      s3 = sr_ins_eq(Merge.CEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = sr_ins_lt(t, ka, va, kh, vh, eA)
+      r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), r1)
+      r3 = sr_ins_eq(Merge.CEntry{kh, vh} <> t, kb, vb, ka, va, eq_flip(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, Merge.card_merge(vb, va)} <> (Merge.CEntry{kh, vh} <> t), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, Merge.card_merge(va, vb)} <> (Merge.CEntry{kh, vh} <> t), r2, r3)
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, Merge.card_merge(va, vb)} <> (Merge.CEntry{kh, vh} <> t), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, Merge.card_merge(vb, va)} <> (Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, Merge.card_merge(va, vb)} <> (Merge.CEntry{kh, vh} <> t), L1, sr_lp_eq_swap(ka, va, kb, vb, ec3, Merge.CEntry{kh, vh} <> t)), Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{ka, Merge.card_merge(va, vb)} <> (Merge.CEntry{kh, vh} <> t), R1))
+    case GT{}:
+      s1 = sr_ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = sr_cong_lins(ka, va, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t), s1)
+      s3 = sr_ins_gt(Merge.CEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      s4 = sr_cong_cons(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), sr_ins_lt(t, ka, va, kh, vh, eA))
+      r1 = sr_ins_lt(t, ka, va, kh, vh, eA)
+      r2 = sr_cong_lins(kb, vb, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t), r1)
+      r3 = sr_ins_lt(Merge.CEntry{kh, vh} <> t, kb, vb, ka, va, rev_gt(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kb, vb} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), s2, s3)
+      L2 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), L1, s4)
+      R1 = Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), r2, r3)
+      Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)), Merge.CEntry{kb, vb} <> (Merge.CEntry{ka, va} <> (Merge.CEntry{kh, vh} <> t)), R1))
+
+# ---- the cons case dispatch: cb = skey(kb, kh) and ca = skey(ka, kh) choose the branch lemma ----
+
+def sr_lins2_cons(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +cb: Cmp, +ca: Cmp, +eB: {Merge.skey_cmp(kb, kh) == cb : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == ca : Cmp}, +ih: {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, t)) : List<&2, Merge.CEntry>}) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, Merge.CEntry{kh, vh} <> t)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, Merge.CEntry{kh, vh} <> t)) : List<&2, Merge.CEntry>}:
+  match cb:
+    case LT{}:
+      match ca:
+        case LT{}:
+          sr_l2_LL(ka, va, kb, vb, kh, vh, t, eB, eA, Merge.skey_cmp(ka, kb), {==})
+        case EQ{}:
+          sr_l2_LE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          sr_l2_LG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case EQ{}:
+      match ca:
+        case LT{}:
+          sr_l2_EL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          sr_l2_EE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          sr_l2_EG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case GT{}:
+      match ca:
+        case LT{}:
+          sr_l2_GL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          sr_l2_GE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          sr_l2_GG(ka, va, kb, vb, kh, vh, t, eB, eA, ih)
+
+# ---- two lesson insertions commute on any list (no sortedness needed) ----
+
+def sr_lins2(+ka: String, +va: Merge.Card, +kb: String, +vb: Merge.Card, +s: List<&2, Merge.CEntry>) -> {Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kb, vb}, s)) == Merge.cins(Merge.CEntry{kb, vb}, Merge.cins(Merge.CEntry{ka, va}, s)) : List<&2, Merge.CEntry>}:
+  match s:
+    case Nil{}:
+      sr_lins2_nil_c(ka, va, kb, vb, Merge.skey_cmp(ka, kb), {==})
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          sr_lins2_cons(ka, va, kb, vb, kh, vh, t, Merge.skey_cmp(kb, kh), Merge.skey_cmp(ka, kh), {==}, {==}, sr_lins2(ka, va, kb, vb, t))
+
+# ---- the fold: a fold over b, with the same accumulator changed, is congruent ----
+
+def sr_cong_lfold(+b: List<&2, Merge.CEntry>, +x: List<&2, Merge.CEntry>, +y: List<&2, Merge.CEntry>, e: {x == y : List<&2, Merge.CEntry>}) -> {Merge.cfold(b, x) == Merge.cfold(b, y) : List<&2, Merge.CEntry>}:
+  Equal.cong(List<&2, Merge.CEntry>, List<&2, Merge.CEntry>, (z => Merge.cfold(b, z)), x, y, e)
+
+# inserting A into the accumulator before folding b equals inserting it after: the fold passes it along
+def sr_lf_lins(+ka: String, +va: Merge.Card, +b: List<&2, Merge.CEntry>, +acc: List<&2, Merge.CEntry>) -> {Merge.cfold(b, Merge.cins(Merge.CEntry{ka, va}, acc)) == Merge.cins(Merge.CEntry{ka, va}, Merge.cfold(b, acc)) : List<&2, Merge.CEntry>}:
+  match b:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(Merge.CEntry{kh, vh} <> t, Merge.cins(Merge.CEntry{ka, va}, acc)), Merge.cfold(t, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kh, vh}, acc))), Merge.cins(Merge.CEntry{ka, va}, Merge.cfold(Merge.CEntry{kh, vh} <> t, acc)),
+            sr_cong_lfold(t, Merge.cins(Merge.CEntry{kh, vh}, Merge.cins(Merge.CEntry{ka, va}, acc)), Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kh, vh}, acc)), Equal.sym(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{ka, va}, Merge.cins(Merge.CEntry{kh, vh}, acc)), Merge.cins(Merge.CEntry{kh, vh}, Merge.cins(Merge.CEntry{ka, va}, acc)), sr_lins2(ka, va, kh, vh, acc))),
+            sr_lf_lins(ka, va, t, Merge.cins(Merge.CEntry{kh, vh}, acc)))
+
+# the fold of b over a's entries and the fold of a over b's entries agree: the insertions of one list commute past the other
+def sr_lf_comm(+a: List<&2, Merge.CEntry>, +b: List<&2, Merge.CEntry>, +acc: List<&2, Merge.CEntry>) -> {Merge.cfold(b, Merge.cfold(a, acc)) == Merge.cfold(a, Merge.cfold(b, acc)) : List<&2, Merge.CEntry>}:
+  match a:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(b, Merge.cfold(Merge.CEntry{kh, vh} <> t, acc)), Merge.cfold(t, Merge.cfold(b, Merge.cins(Merge.CEntry{kh, vh}, acc))), Merge.cfold(Merge.CEntry{kh, vh} <> t, Merge.cfold(b, acc)),
+            sr_lf_comm(t, b, Merge.cins(Merge.CEntry{kh, vh}, acc)),
+            sr_cong_lfold(t, Merge.cfold(b, Merge.cins(Merge.CEntry{kh, vh}, acc)), Merge.cins(Merge.CEntry{kh, vh}, Merge.cfold(b, acc)), sr_lf_lins(kh, vh, b, acc)))
+
+# LAW: srs_comm: the card merge is commutative on any two lists (see LAWS.bend)
+def Laws.srs_comm(a, b):
+  sr_lf_comm(a, b, Nil{})
+
+# ---- SRS: idempotence (a sorted map folded into itself gives the map back) ----
+
+# inserting an entry whose key is already at the front, with its own value, changes nothing
+def sr_lins_self(+kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>) -> {Merge.cins(Merge.CEntry{kh, vh}, Merge.CEntry{kh, vh} <> t) == Merge.CEntry{kh, vh} <> t : List<&2, Merge.CEntry>}:
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cins(Merge.CEntry{kh, vh}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, Merge.card_merge(vh, vh)} <> t, Merge.CEntry{kh, vh} <> t,
+    sr_ins_eq(t, kh, vh, kh, vh, skey_self(kh)),
+    Equal.cong(Merge.Card, List<&2, Merge.CEntry>, (u => Merge.CEntry{kh, u} <> t), Merge.card_merge(vh, vh), vh, Laws.card_merge_self(vh)))
+
+# folding t into an accumulator whose front key is below every key of t: the front entry stays in front
+def sr_lf_gt(+kh: String, +vh: Merge.Card, +t: List<&2, Merge.CEntry>, +s: List<&2, Merge.CEntry>, w: S.KAllC(t, kh)) -> {Merge.cfold(t, Merge.CEntry{kh, vh} <> s) == Merge.CEntry{kh, vh} <> Merge.cfold(t, s) : List<&2, Merge.CEntry>}:
+  match t:
+    case Nil{}:
+      {==}
+    case +h <> +t2:
+      match h:
+        case Merge.CEntry{+kt, +vt}:
+          (wi, wt) = w
+          Equal.trans(List<&2, Merge.CEntry>,
+            Merge.cfold(t2, Merge.cins(Merge.CEntry{kt, vt}, Merge.CEntry{kh, vh} <> s)),
+            Merge.cfold(t2, Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kt, vt}, s)),
+            Merge.CEntry{kh, vh} <> Merge.cfold(t2, Merge.cins(Merge.CEntry{kt, vt}, s)),
+            sr_cong_lfold(t2, Merge.cins(Merge.CEntry{kt, vt}, Merge.CEntry{kh, vh} <> s), Merge.CEntry{kh, vh} <> Merge.cins(Merge.CEntry{kt, vt}, s), sr_ins_gt(s, kt, vt, kh, vh, islt_skey_gt(kh, kt, wi))),
+            sr_lf_gt(kh, vh, t2, Merge.cins(Merge.CEntry{kt, vt}, s), wt))
+
+# a sorted map folded into itself stays itself
+def sr_lf_self(+s: List<&2, Merge.CEntry>, ws: S.SortedC(s)) -> {Merge.cfold(s, s) == s : List<&2, Merge.CEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(Merge.CEntry{kh, vh} <> t, Merge.CEntry{kh, vh} <> t), Merge.cfold(t, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> t,
+            sr_cong_lfold(t, Merge.cins(Merge.CEntry{kh, vh}, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> t, sr_lins_self(kh, vh, t)),
+            Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(t, Merge.CEntry{kh, vh} <> t), Merge.CEntry{kh, vh} <> Merge.cfold(t, t), Merge.CEntry{kh, vh} <> t,
+              sr_lf_gt(kh, vh, t, t, wk),
+              sr_cong_cons(kh, vh, Merge.cfold(t, t), t, sr_lf_self(t, wt))))
+
+# a sorted map folded into the empty list gives the map back
+def sr_lf_nil(+s: List<&2, Merge.CEntry>, ws: S.SortedC(s)) -> {Merge.cfold(s, Nil{}) == s : List<&2, Merge.CEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.CEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(Merge.CEntry{kh, vh} <> t, Nil{}), Merge.CEntry{kh, vh} <> Merge.cfold(t, Nil{}), Merge.CEntry{kh, vh} <> t,
+            sr_lf_gt(kh, vh, t, Nil{}, wk),
+            sr_cong_cons(kh, vh, Merge.cfold(t, Nil{}), t, sr_lf_nil(t, wt)))
+
+# a sorted card map merged with itself is itself: the fold over a of (a folded into the empty list) gives a.
+# The two copies of the witness arrive as a parameter, since a match cannot scrutinize a computed pair.
+def sr_idem_pair(+a: List<&2, Merge.CEntry>, dd: (S.SortedC(a) & S.SortedC(a))) -> {Merge.merge_srs(a, a) == a : List<&2, Merge.CEntry>}:
+  (s1, s2) = dd
+  Equal.trans(List<&2, Merge.CEntry>, Merge.cfold(a, Merge.cfold(a, Nil{})), Merge.cfold(a, a), a,
+    sr_cong_lfold(a, Merge.cfold(a, Nil{}), a, sr_lf_nil(a, s1)),
+    sr_lf_self(a, s2))
+
+def sr_idem_lessons(+a: List<&2, Merge.CEntry>, sa: S.SortedC(a)) -> {Merge.merge_srs(a, a) == a : List<&2, Merge.CEntry>}:
+  sr_idem_pair(a, sr_sortedL_dup(a, sa))
+
+# LAW: srs_idem: merging a sorted card map with itself gives the map back (see LAWS.bend)
+def Laws.srs_idem(a, sa):
+  sr_idem_lessons(a, sa)
+
+# ---- state: the whole-state merge is commutative; each output field is commutative by its own law ----
+
+# two outputs are equal when each field is: the lessons, SRS cards, XP days and total XP, one field at a time
+def out_eq4(L1: List<&2, Merge.LEntry>, L2: List<&2, Merge.LEntry>, S1: List<&2, Merge.CEntry>, S2: List<&2, Merge.CEntry>, X1: List<&2, Merge.XEntry>, X2: List<&2, Merge.XEntry>, T1: Nat, T2: Nat, hl: {L1 == L2 : List<&2, Merge.LEntry>}, hs: {S1 == S2 : List<&2, Merge.CEntry>}, hx: {X1 == X2 : List<&2, Merge.XEntry>}, ht: {T1 == T2 : Nat}) -> {Merge.Out{L1, S1, X1, T1} == Merge.Out{L2, S2, X2, T2} : Merge.Out}:
+  Equal.trans(Merge.Out, Merge.Out{L1, S1, X1, T1}, Merge.Out{L2, S1, X1, T1}, Merge.Out{L2, S2, X2, T2},
+    Equal.cong(List<&2, Merge.LEntry>, Merge.Out, (u => Merge.Out{u, S1, X1, T1}), L1, L2, hl),
+    Equal.trans(Merge.Out, Merge.Out{L2, S1, X1, T1}, Merge.Out{L2, S2, X1, T1}, Merge.Out{L2, S2, X2, T2},
+      Equal.cong(List<&2, Merge.CEntry>, Merge.Out, (u => Merge.Out{L2, u, X1, T1}), S1, S2, hs),
+      Equal.trans(Merge.Out, Merge.Out{L2, S2, X1, T1}, Merge.Out{L2, S2, X2, T1}, Merge.Out{L2, S2, X2, T2},
+        Equal.cong(List<&2, Merge.XEntry>, Merge.Out, (u => Merge.Out{L2, S2, u, T1}), X1, X2, hx),
+        Equal.cong(Nat, Merge.Out, (u => Merge.Out{L2, S2, X2, u}), T1, T2, ht))))
+
+# LAW: state_comm: the whole-state merge is commutative: the lessons, SRS cards, XP days and total XP all agree either way
+def Laws.state_comm(a, b):
+  match a b:
+    case Merge.St{la, ca, xa} Merge.St{lb, cb, xb}:
+      out_eq4(Merge.merge_lessons(la, lb), Merge.merge_lessons(lb, la),
+        Merge.merge_srs(ca, cb), Merge.merge_srs(cb, ca),
+        Merge.merge_xp(xa, xb), Merge.merge_xp(xb, xa),
+        Merge.xsum(Merge.merge_xp(xa, xb)), Merge.xsum(Merge.merge_xp(xb, xa)),
+        Laws.lessons_comm(la, lb), Laws.srs_comm(ca, cb), Laws.xp_comm(xa, xb), Laws.xsum_comm(xa, xb))

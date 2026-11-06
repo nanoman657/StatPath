@@ -7,10 +7,11 @@ the UI and effects are out of scope.
 | File | What it is |
 |------|------------|
 | `merge.bend` | The merge in Bend: lessons, SRS cards and XP as sorted association lists |
-| `LAWS.bend` | The merge laws stated in Bend: the lesson, SRS and card-order laws (the sorted-map laws are not stated yet) |
+| `LAWS.bend` | The merge laws stated in Bend: the lesson, XP, SRS, card-order and state laws |
 | `PROOF.bend` | Their proofs, checked by Bend's kernel (see "Bend kernel proofs") |
 | `ORDER.bend` | The order facts the proofs use: flip, transitivity and "EQ means equal" for the word, U32, string and Nat orders |
 | `KEYS.bend` | The key order of the merge in Bend (`skey_cmp`), with its `Key.skey_eq_order` fact |
+| `SORTED.bend` | Sortedness of the three maps: `SortedL`, `SortedX` and `SortedC` say that the keys strictly increase |
 | `merge.mjs` | Generated from `merge.bend` by `gen.sh`; committed |
 | `merge.d.mts` | The types of `merge.mjs` (written by hand; the tests check behaviour) |
 | `gen.sh` | Checks `merge.bend`, then regenerates `merge.mjs` |
@@ -28,7 +29,9 @@ the UI and effects are out of scope.
   cards take `mergeCard(a, b)`.
 - Numbers are `Nat`. An absent `lastReview` is `None`; the comparisons read it as 0, as merge.ts does with
   `?? 0`, and the output keeps it absent.
-- The laws are stated for sorted inputs. The merge does not claim anything for unsorted input.
+- The Lean laws take sorted inputs (the `Sorted` hypotheses in `Merge.lean`). The Bend commutativity laws
+  (lessons, XP, SRS and the whole state) take any two lists. The Bend idempotence laws take a sortedness
+  witness from `SORTED.bend`, so they say nothing about unsorted input.
 
 ### The SRS tie-break
 
@@ -96,8 +99,8 @@ shows as a TODO, and a wrong proof as `SOME PROOFS FAIL`. `--verdict` re-checks 
 
 Proved in Bend:
 
-- `max_comm`, `max_self`: `Nat.max` is commutative and idempotent.
-- `lp_max_comm`, `lp_max_self`: the lesson merge `lp_max` has the same two laws, field by field.
+- `max_comm`, `max_self`, `max_assoc`: `Nat.max` is commutative, idempotent and associative.
+- `lp_max_comm`, `lp_max_self`, `lp_max_assoc`: the lesson merge `lp_max` has the same three laws, field by field.
 - `tie_ease`, `tie_absent`: two concrete SRS tie-breaks. On a tie of the other fields, the card with the
   larger ease wins; an absent `lastReview` loses to `Some{0}`. These are closed equalities, checked by
   reduction. A negative control (a wrong expected card) makes the gate fail, so the check is not vacuous.
@@ -110,14 +113,19 @@ Proved in Bend:
   (`cmp_then` flips), `full_cmp_flip` (the whole-card order flips), `last_key_eq` (lastReview values whose keys
   compare `EQ` are equal), `full_eq_card` (a whole-card `EQ` means the cards are equal), `card_pick_flip`
   (`card_pick` with flipped comparisons and swapped cards picks the same card), `card_merge_comm`, the
-  general `cardMerge_comm` row above: `card_merge` is commutative, and `card_merge_assoc`: `card_merge` is
-  associative. The associativity law has no row in the table above; it is proved in Bend only.
+  general `cardMerge_comm` row above: `card_merge` is commutative. `card_merge_assoc` and `card_merge_self`:
+  `card_merge` is associative and idempotent. These two have no row in the table above.
+- `skey_lt_trans`: the key order is transitive: `a < b` and `b < c` give `a < c`.
+- `lessons_comm`, `xp_comm`, `srs_comm`: merging two lists gives the same list in either order, for any two
+  lists. The insertion-order lemmas hold for every list, so these need no sortedness.
+- `xsum_comm`: the total XP is a function of the merged XP map, so it follows from `xp_comm`.
+- `state_comm`: the whole-state merge is commutative: the lessons, SRS cards, XP days and total XP each agree
+  either way.
+- `lessons_idem`, `xp_idem`, `srs_idem`: merging a sorted map with itself gives the map back. These take the
+  sortedness witnesses `SortedL`, `SortedX` and `SortedC` from `SORTED.bend`.
 
-Not yet in Bend: the sorted-map laws (`lessons_comm`, `lessons_idem`, `xp_comm`, `xp_idem`, `xsum_comm`,
-`srs_comm`, `srs_idem`, `state_comm`). The Lean model proves them (rows above). Proving them in Bend also needs
-a sortedness predicate and the lookup lemmas for sorted association lists; the string-order facts they rest on
-are in `ORDER.bend` and `KEYS.bend`. Base declares the order's antisymmetry as a law (`String.cmp`) but does not
-prove it, so that is not used.
+The Lean model's `eq_of_sorted_lookup` (two sorted maps with the same lookups are equal) is not stated in Bend.
+Base declares the order's antisymmetry as a law (`String.cmp`) but does not prove it, and no Bend proof uses it.
 
 ## What is not mechanized
 

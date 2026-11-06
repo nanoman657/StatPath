@@ -1,5 +1,4 @@
-# The merge laws that have Bend kernel proofs so far. Each law is proven by a def of the same name in PROOF.bend.
-# Not stated yet: the XP, SRS and state laws. See README.md.
+# The merge laws, each with a Bend kernel proof of the same name in PROOF.bend. See README.md.
 
 import Base
 import ./merge.bend as Merge
@@ -126,6 +125,11 @@ law card_merge_assoc:
   for +c: Merge.Card
   {Merge.card_merge(a, Merge.card_merge(b, c)) == Merge.card_merge(Merge.card_merge(a, b), c) : Merge.Card}
 
+# LAW: the card merge of a card with itself is that card
+law card_merge_self:
+  for +a: Merge.Card
+  {Merge.card_merge(a, a) == a : Merge.Card}
+
 # ---- the sorted-map laws: the key order is transitive, and the sorted-map operations keep it ----
 
 # LAW: the key order is transitive: a < b and b < c give a < c
@@ -167,3 +171,21 @@ law xsum_comm:
   for +a: List<&2, Merge.XEntry>
   for +b: List<&2, Merge.XEntry>
   {Merge.xsum(Merge.merge_xp(a, b)) == Merge.xsum(Merge.merge_xp(b, a)) : Nat}
+
+# LAW: the SRS merge is commutative on any two lists: each card takes the card merge of the two
+law srs_comm:
+  for +a: List<&2, Merge.CEntry>
+  for +b: List<&2, Merge.CEntry>
+  {Merge.merge_srs(a, b) == Merge.merge_srs(b, a) : List<&2, Merge.CEntry>}
+
+# LAW: the SRS merge is idempotent on a sorted map: merging a map with itself gives the map back
+law srs_idem:
+  for +a: List<&2, Merge.CEntry>
+  for sa: S.SortedC(a)
+  {Merge.merge_srs(a, a) == a : List<&2, Merge.CEntry>}
+
+# LAW: the whole-state merge is commutative: the lessons, SRS cards, XP days and total XP all agree either way
+law state_comm:
+  for +a: Merge.State
+  for +b: Merge.State
+  {Merge.merge_state(a, b) == Merge.merge_state(b, a) : Merge.Out}
