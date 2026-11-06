@@ -495,3 +495,49 @@ def lk_gt(+c2: Cmp, +c3: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: 
       Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, vh, S.ins_look_l(c2, S.lookup_l(s, k), ve)), S.ins_look_l(c2, Some{vh}, ve), S.ins_look_l(c2, S.pick_l(EQ{}, vh, S.lookup_l(s, k)), ve), Equal.trans(Maybe<&2, Merge.Lesson>, S.pick_l(EQ{}, vh, S.ins_look_l(c2, S.lookup_l(s, k), ve)), S.ins_look_l(GT{}, Some{vh}, ve), S.ins_look_l(c2, Some{vh}, ve), {==}, Equal.sym(Maybe<&2, Merge.Lesson>, S.ins_look_l(c2, Some{vh}, ve), S.ins_look_l(GT{}, Some{vh}, ve), rg)), {==})
     case GT{}:
       {==}
+
+# ---- the lookup of lins_c: inserting ke into the list kh <> t, where c compares ke with kh ----
+
+# ke at any position: the lookup after the insertion is the insertion of ke into the lookup of the list
+def lins_c_look(t: List<&2, Merge.LEntry>, c: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +k: String, ec: {Merge.skey_cmp(ke, kh) == c : Cmp}, w: S.KAllL(t, kh), ws: S.SortedL(t)) -> {S.lookup_l(Merge.lins_c(t, c, Merge.LEntry{ke, ve}, Merge.LEntry{kh, vh}), k) == S.ins_look_l(Merge.skey_cmp(ke, k), S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(t, k)), ve) : Maybe<&2, Merge.Lesson>}:
+  match t:
+    case Nil{}:
+      match c:
+        case LT{}:
+          lk_lt(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, Nil{}, w, {==}, {==}, ec)
+        case EQ{}:
+          lk_eq(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, Nil{}, b_eq_a(ke, kh, k, ec))
+        case GT{}:
+          Equal.trans(Maybe<&2, Merge.Lesson>,
+            S.pick_l(Merge.skey_cmp(kh, k), vh, S.pick_l(Merge.skey_cmp(ke, k), ve, None{})),
+            S.pick_l(Merge.skey_cmp(kh, k), vh, S.ins_look_l(Merge.skey_cmp(ke, k), None{}, ve)),
+            S.ins_look_l(Merge.skey_cmp(ke, k), S.pick_l(Merge.skey_cmp(kh, k), vh, None{}), ve),
+            Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, (z => S.pick_l(Merge.skey_cmp(kh, k), vh, z)), S.pick_l(Merge.skey_cmp(ke, k), ve, None{}), S.ins_look_l(Merge.skey_cmp(ke, k), None{}, ve), sing_l(Merge.skey_cmp(ke, k), ve)),
+            lk_gt(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, Nil{}, {==}, {==}, ec))
+    case +h2 <> +t2:
+      match h2:
+        case Merge.LEntry{+k2, +v2}:
+          match c:
+            case LT{}:
+              lk_lt(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, h2 <> t2, w, {==}, {==}, ec)
+            case EQ{}:
+              lk_eq(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, h2 <> t2, b_eq_a(ke, kh, k, ec))
+            case GT{}:
+              (w2, ws2) = ws
+              Equal.trans(Maybe<&2, Merge.Lesson>,
+                S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(Merge.lins_c(t2, Merge.skey_cmp(ke, k2), Merge.LEntry{ke, ve}, Merge.LEntry{k2, v2}), k)),
+                S.pick_l(Merge.skey_cmp(kh, k), vh, S.ins_look_l(Merge.skey_cmp(ke, k), S.lookup_l(h2 <> t2, k), ve)),
+                S.ins_look_l(Merge.skey_cmp(ke, k), S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(h2 <> t2, k)), ve),
+                Equal.cong(Maybe<&2, Merge.Lesson>, Maybe<&2, Merge.Lesson>, (z => S.pick_l(Merge.skey_cmp(kh, k), vh, z)), S.lookup_l(Merge.lins_c(t2, Merge.skey_cmp(ke, k2), Merge.LEntry{ke, ve}, Merge.LEntry{k2, v2}), k), S.ins_look_l(Merge.skey_cmp(ke, k), S.lookup_l(h2 <> t2, k), ve), lins_c_look(t2, Merge.skey_cmp(ke, k2), ke, ve, k2, v2, k, {==}, w2, ws2)),
+                lk_gt(Merge.skey_cmp(ke, k), Merge.skey_cmp(kh, k), ke, ve, kh, vh, k, h2 <> t2, {==}, {==}, ec))
+
+# the lookup of a sorted-list insertion: lins puts ke into its place, and the lookup sees the insertion
+def lins_look(+ke: String, +ve: Merge.Lesson, +k: String, s: List<&2, Merge.LEntry>, ws: S.SortedL(s)) -> {S.lookup_l(Merge.lins(Merge.LEntry{ke, ve}, s), k) == S.ins_look_l(Merge.skey_cmp(ke, k), S.lookup_l(s, k), ve) : Maybe<&2, Merge.Lesson>}:
+  match s:
+    case Nil{}:
+      sing_l(Merge.skey_cmp(ke, k), ve)
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (w, ws2) = ws
+          lins_c_look(t, Merge.skey_cmp(ke, kh), ke, ve, kh, vh, k, {==}, w, ws2)
