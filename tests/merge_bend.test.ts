@@ -219,6 +219,16 @@ describe("the generated module", () => {
   }, 150_000);
 });
 
+// The Bend proofs (PROOF.bend, which imports LAWS.bend, SORTMAP.bend and the order files). Bend's own kernel
+// prints ALL PROOFS CHECK only when every law has a checked proof; an open law or a wrong proof fails the run.
+describe("the Bend proofs of the laws", () => {
+  it("PROOF.bend checks every law: bend PROOF.bend --verdict prints ALL PROOFS CHECK", () => {
+    if (!bendInstalled) throw new Error("bend is not on PATH: install it to check the Bend proofs");
+    const out = execFileSync("bend", [join(ROOT, "PROOF.bend"), "--verdict"], { encoding: "utf8", timeout: 300_000 });
+    expect(out).toContain("ALL PROOFS CHECK");
+  }, 330_000);
+});
+
 describe("the rows of bend-engine/README.md", () => {
   it("every row points to a real theorem, function and test", () => {
     const readme = readFileSync(join(ROOT, "README.md"), "utf8");

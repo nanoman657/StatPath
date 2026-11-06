@@ -4,6 +4,7 @@ import ./merge.bend as Merge
 import ./LAWS.bend as Laws
 import ./ORDER.bend as Ord
 import ./SORTED.bend as S
+import ./SORTMAP.bend as SM
 import ./KEYS.bend as Key
 
 def Laws.max_comm(a, b):
@@ -2483,3 +2484,121 @@ def Laws.state_comm(a, b):
         Merge.merge_xp(xa, xb), Merge.merge_xp(xb, xa),
         Merge.xsum(Merge.merge_xp(xa, xb)), Merge.xsum(Merge.merge_xp(xb, xa)),
         Laws.lessons_comm(la, lb), Laws.srs_comm(ca, cb), Laws.xp_comm(xa, xb), Laws.xsum_comm(xa, xb))
+
+# ---- the sorted-map laws of SORTMAP.bend ----
+
+# the insertion lookup and the fold lookup are the lessons lemmas above (the fold needs a pair of acc witnesses)
+def SM.lookup_ins(ke, ve, k, s, ws):
+  lins_look(ke, ve, k, s, ws)
+
+def sm_fold_look(+xs: List<&2, Merge.LEntry>, +acc: List<&2, Merge.LEntry>, +k: String, sx: S.SortedL(xs), sa: S.SortedL(acc)) -> {S.lookup_l(Merge.lfold(xs, acc), k) == S.comb_opt_l(S.lookup_l(acc, k), S.lookup_l(xs, k)) : Maybe<&2, Merge.Lesson>}:
+  lfold_look(xs, acc, k, sx, sortedL_dup(acc, sa))
+
+def SM.lookup_fold(xs, acc, k, sx, sa):
+  sm_fold_look(xs, acc, k, sx, sa)
+
+# ---- SM.eq_of_sorted_lookup: two sorted lessons maps with the same entries are equal ----
+
+# Some is not None
+def sm_some_none(+v: Merge.Lesson, p: {Some{v} == None{} : Maybe<&2, Merge.Lesson>}) -> Empty:
+  none_ne_some(v, Equal.sym(Maybe<&2, Merge.Lesson>, Some{v}, None{}, p))
+
+# a lookup in the empty map is None, so Some there is absurd
+def sm_nil_absurd(+kb: String, +vb: Merge.Lesson, e: {S.lookup_l(Nil{}, kb) == Some{vb} : Maybe<&2, Merge.Lesson>}) -> Empty:
+  none_ne_some(vb, Equal.trans(Maybe<&2, Merge.Lesson>, None{}, S.lookup_l(Nil{}, kb), Some{vb}, {==}, e))
+
+def sm_unsome(m: Maybe<&2, Merge.Lesson>) -> Merge.Lesson:
+  match m:
+    case Some{+x}:
+      x
+    case None{}:
+      Merge.Lp{0n, 0n, 0n, 0n}
+
+def sm_some_inj(+x: Merge.Lesson, +y: Merge.Lesson, p: {Some{x} == Some{y} : Maybe<&2, Merge.Lesson>}) -> {x == y : Merge.Lesson}:
+  Equal.cong(Maybe<&2, Merge.Lesson>, Merge.Lesson, sm_unsome, Some{x}, Some{y}, p)
+
+# dropping the head entry kb: an entry of s is still in t, since kb comes before every key of s
+def sm_drop(+s: List<&2, Merge.LEntry>, +kb: String, +vb: Merge.Lesson, +t: List<&2, Merge.LEntry>, w: S.KAllL(s, kb), ag: SM.Agree(s, Merge.LEntry{kb, vb} <> t)) -> SM.Agree(s, t):
+  match s:
+    case Nil{}:
+      Unit{}
+    case +h <> +s2:
+      match h:
+        case Merge.LEntry{+ke, +ve}:
+          (w1, w2) = w
+          (e1, r1) = ag
+          e2 = lk_skip(kb, vb, t, ke, w1)
+          (Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(t, ke), S.lookup_l(Merge.LEntry{kb, vb} <> t, ke), Some{ve}, Equal.sym(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{kb, vb} <> t, ke), S.lookup_l(t, ke), e2), e1), sm_drop(s2, kb, vb, t, w2, r1))
+
+# two copies of an entry, with equal keys and values and equal tails, are equal
+def sm_cons_key(+ka: String, +kb: String, +va: Merge.Lesson, +vb: Merge.Lesson, +ta: List<&2, Merge.LEntry>, +tb: List<&2, Merge.LEntry>, pk: {ka == kb : String}, pv: {va == vb : Merge.Lesson}, pt: {ta == tb : List<&2, Merge.LEntry>}) -> {Merge.LEntry{ka, va} <> ta == Merge.LEntry{kb, vb} <> tb : List<&2, Merge.LEntry>}:
+  Equal.trans(List<&2, Merge.LEntry>, Merge.LEntry{ka, va} <> ta, Merge.LEntry{kb, va} <> ta, Merge.LEntry{kb, vb} <> tb,
+    Equal.cong(String, List<&2, Merge.LEntry>, (k => Merge.LEntry{k, va} <> ta), ka, kb, pk),
+    Equal.trans(List<&2, Merge.LEntry>, Merge.LEntry{kb, va} <> ta, Merge.LEntry{kb, vb} <> ta, Merge.LEntry{kb, vb} <> tb,
+      Equal.cong(Merge.Lesson, List<&2, Merge.LEntry>, (v => Merge.LEntry{kb, v} <> ta), va, vb, pv),
+      Equal.cong(List<&2, Merge.LEntry>, List<&2, Merge.LEntry>, (t => Merge.LEntry{kb, vb} <> t), ta, tb, pt)))
+
+# the comparison of two maps' heads (EQ{} when a side is empty): sm_eq matches on it as a parameter
+def cmp_pair(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>) -> Cmp:
+  match a:
+    case Nil{}:
+      EQ{}
+    case +h1 <> +t1:
+      match h1:
+        case Merge.LEntry{+ka, +va}:
+          match b:
+            case Nil{}:
+              EQ{}
+            case +h2 <> +t2:
+              match h2:
+                case Merge.LEntry{+kb, +vb}:
+                  Merge.skey_cmp(ka, kb)
+
+# two sorted maps where each entry of one is in the other with the same value are equal (induction on the lists).
+# c is the comparison of the two heads (cmp_pair a b); the head cases split on c, a parameter, so no call is destructured
+def sm_eq(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, sa: S.SortedL(a), sb: S.SortedL(b), ha: SM.Agree(a, b), hb: SM.Agree(b, a), +c: Cmp, +ec: {cmp_pair(a, b) == c : Cmp}) -> {a == b : List<&2, Merge.LEntry>}:
+  match a:
+    case Nil{}:
+      match b:
+        case Nil{}:
+          {==}
+        case +h2 <> +t2:
+          match h2:
+            case Merge.LEntry{+kb, +vb}:
+              (e, r) = hb
+              Empty.absurd({Nil{} == Merge.LEntry{kb, vb} <> t2 : List<&2, Merge.LEntry>}, sm_nil_absurd(kb, vb, e))
+    case +h1 <> +t1:
+      match h1:
+        case Merge.LEntry{+ka, +va}:
+          match b:
+            case Nil{}:
+              (e, r) = ha
+              Empty.absurd({Merge.LEntry{ka, va} <> t1 == Nil{} : List<&2, Merge.LEntry>}, sm_nil_absurd(ka, va, e))
+            case +h2 <> +t2:
+              match h2:
+                case Merge.LEntry{+kb, +vb}:
+                  (wa, sta) = sa
+                  (wb, stb) = sb
+                  (ea, ra) = ha
+                  (eb, rb) = hb
+                  match c:
+                    case LT{}:
+                      nb = lookup_none_l(Merge.LEntry{kb, vb} <> t2, ka, (Ord.IsLT.to(Merge.skey_cmp(ka, kb), ec), kall_trans_l(t2, ka, kb, ec, wb)))
+                      Empty.absurd({Merge.LEntry{ka, va} <> t1 == Merge.LEntry{kb, vb} <> t2 : List<&2, Merge.LEntry>}, sm_some_none(va, Equal.trans(Maybe<&2, Merge.Lesson>, Some{va}, S.lookup_l(Merge.LEntry{kb, vb} <> t2, ka), None{}, Equal.sym(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{kb, vb} <> t2, ka), Some{va}, ea), nb)))
+                    case GT{}:
+                      na = lookup_none_l(Merge.LEntry{ka, va} <> t1, kb, (Ord.IsLT.to(Merge.skey_cmp(kb, ka), rev_gt(ka, kb, ec)), kall_trans_l(t1, kb, ka, rev_gt(ka, kb, ec), wa)))
+                      Empty.absurd({Merge.LEntry{ka, va} <> t1 == Merge.LEntry{kb, vb} <> t2 : List<&2, Merge.LEntry>}, sm_some_none(vb, Equal.trans(Maybe<&2, Merge.Lesson>, Some{vb}, S.lookup_l(Merge.LEntry{ka, va} <> t1, kb), None{}, Equal.sym(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{ka, va} <> t1, kb), Some{vb}, eb), na)))
+                    case EQ{}:
+                      hk = Laws.skey_eq_of(ka, kb, Ord.IsEQ.to(Merge.skey_cmp(ka, kb), ec))
+                      hv = sm_some_inj(va, vb, Equal.trans(Maybe<&2, Merge.Lesson>, Some{va}, S.lookup_l(Merge.LEntry{kb, vb} <> t2, ka), Some{vb}, Equal.sym(Maybe<&2, Merge.Lesson>, S.lookup_l(Merge.LEntry{kb, vb} <> t2, ka), Some{va}, ea), lk_head(kb, vb, t2, ka, eq_flip(ka, kb, ec))))
+                      wa2 = kall_eq(t1, kb, ka, eq_flip(ka, kb, ec), wa)
+                      wb2 = kall_eq(t2, ka, kb, ec, wb)
+                      sm_cons_key(ka, kb, va, vb, t1, t2, hk, hv, sm_eq(t1, t2, sta, stb, sm_drop(t1, kb, vb, t2, wa2, ra), sm_drop(t2, ka, va, t1, wb2, rb), cmp_pair(t1, t2), {==}))
+
+# the law: two sorted maps with the same entry agreement are equal
+def sm_eq_law(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, sa: S.SortedL(a), sb: S.SortedL(b), hl: SM.SameLook(a, b)) -> {a == b : List<&2, Merge.LEntry>}:
+  (ha, hb) = hl
+  sm_eq(a, b, sa, sb, ha, hb, cmp_pair(a, b), {==})
+
+def SM.eq_of_sorted_lookup(a, b, sa, sb, hl):
+  sm_eq_law(a, b, sa, sb, hl)
