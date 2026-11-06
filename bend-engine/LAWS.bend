@@ -1,9 +1,10 @@
 # The merge laws that have Bend kernel proofs so far. Each law is proven by a def of the same name in PROOF.bend.
-# Not stated yet: the sorted-map laws (lessons, SRS, XP, state). See README.md.
+# Not stated yet: the XP, SRS and state laws. See README.md.
 
 import Base
 import ./merge.bend as Merge
 import ./ORDER.bend as Ord
+import ./SORTED.bend as S
 
 # LAW: Nat.max is commutative
 law max_comm:
@@ -135,3 +136,9 @@ law lessons_comm:
   for +a: List<&2, Merge.LEntry>
   for +b: List<&2, Merge.LEntry>
   {Merge.merge_lessons(a, b) == Merge.merge_lessons(b, a) : List<&2, Merge.LEntry>}
+
+# LAW: the lesson merge is idempotent on a sorted map: merging a map with itself gives the map back
+law lessons_idem:
+  for +a: List<&2, Merge.LEntry>
+  for sa: S.SortedL(a)
+  {Merge.merge_lessons(a, a) == a : List<&2, Merge.LEntry>}

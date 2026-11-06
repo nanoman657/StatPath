@@ -1063,3 +1063,79 @@ def lf_comm(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, +acc: List<&
 # LAW: lessons_comm: the lesson merge is commutative on any two lists (see LAWS.bend)
 def Laws.lessons_comm(a, b):
   lf_comm(a, b, Nil{})
+
+# ---- lessons: idempotence (a sorted map folded into itself gives the map back) ----
+
+# a string compared with itself is EQ
+def skey_self(+k: String) -> {Merge.skey_cmp(k, k) == EQ{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(k, k), String.order(k, k), EQ{}, Key.Key.skey_eq_order(k, k), Key.Key.order_self(k))
+
+# inserting an entry whose key is already at the front, with its own value, changes nothing
+def lins_self(+kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>) -> {Merge.lins(Merge.LEntry{kh, vh}, Merge.LEntry{kh, vh} <> t) == Merge.LEntry{kh, vh} <> t : List<&2, Merge.LEntry>}:
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kh, vh}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vh)} <> t, Merge.LEntry{kh, vh} <> t,
+    ins_eq(t, kh, vh, kh, vh, skey_self(kh)),
+    Equal.cong(Merge.Lesson, List<&2, Merge.LEntry>, (u => Merge.LEntry{kh, u} <> t), Merge.lp_max(vh, vh), vh, Laws.lp_max_self(vh)))
+
+# the key order flipped: if kh < kt then kt > kh
+def islt_skey_gt(+kh: String, +kt: String, w: Ord.IsLT(Merge.skey_cmp(kh, kt))) -> {Merge.skey_cmp(kt, kh) == GT{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(kt, kh), Ord.Cmp.flip(Merge.skey_cmp(kh, kt)), GT{}, Laws.skey_cmp_flip(kh, kt),
+    Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(kh, kt)), Ord.Cmp.flip(LT{}), GT{}, Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(kh, kt), LT{}, Ord.IsLT.of(Merge.skey_cmp(kh, kt), w)), {==}))
+
+# folding t into an accumulator whose front key is below every key of t: the front entry stays in front
+def lf_gt(+kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +s: List<&2, Merge.LEntry>, w: S.KAllL(t, kh)) -> {Merge.lfold(t, Merge.LEntry{kh, vh} <> s) == Merge.LEntry{kh, vh} <> Merge.lfold(t, s) : List<&2, Merge.LEntry>}:
+  match t:
+    case Nil{}:
+      {==}
+    case +h <> +t2:
+      match h:
+        case Merge.LEntry{+kt, +vt}:
+          (wi, wt) = w
+          Equal.trans(List<&2, Merge.LEntry>,
+            Merge.lfold(t2, Merge.lins(Merge.LEntry{kt, vt}, Merge.LEntry{kh, vh} <> s)),
+            Merge.lfold(t2, Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kt, vt}, s)),
+            Merge.LEntry{kh, vh} <> Merge.lfold(t2, Merge.lins(Merge.LEntry{kt, vt}, s)),
+            cong_lfold(t2, Merge.lins(Merge.LEntry{kt, vt}, Merge.LEntry{kh, vh} <> s), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kt, vt}, s), ins_gt(s, kt, vt, kh, vh, islt_skey_gt(kh, kt, wi))),
+            lf_gt(kh, vh, t2, Merge.lins(Merge.LEntry{kt, vt}, s), wt))
+
+# a sorted map folded into itself stays itself
+def lf_self(+s: List<&2, Merge.LEntry>, ws: S.SortedL(s)) -> {Merge.lfold(s, s) == s : List<&2, Merge.LEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(Merge.LEntry{kh, vh} <> t, Merge.LEntry{kh, vh} <> t), Merge.lfold(t, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> t,
+            cong_lfold(t, Merge.lins(Merge.LEntry{kh, vh}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> t, lins_self(kh, vh, t)),
+            Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(t, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lfold(t, t), Merge.LEntry{kh, vh} <> t,
+              lf_gt(kh, vh, t, t, wk),
+              cong_cons(kh, vh, Merge.lfold(t, t), t, lf_self(t, wt))))
+
+# a sorted map folded into the empty list gives the map back
+def lf_nil(+s: List<&2, Merge.LEntry>, ws: S.SortedL(s)) -> {Merge.lfold(s, Nil{}) == s : List<&2, Merge.LEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(Merge.LEntry{kh, vh} <> t, Nil{}), Merge.LEntry{kh, vh} <> Merge.lfold(t, Nil{}), Merge.LEntry{kh, vh} <> t,
+            lf_gt(kh, vh, t, Nil{}, wk),
+            cong_cons(kh, vh, Merge.lfold(t, Nil{}), t, lf_nil(t, wt)))
+
+# a sorted lesson map merged with itself is itself: the fold over a of (a folded into the empty list) gives a.
+# The two copies of the witness arrive as a parameter, since a match cannot scrutinize a computed pair.
+def idem_pair(+a: List<&2, Merge.LEntry>, dd: (S.SortedL(a) & S.SortedL(a))) -> {Merge.merge_lessons(a, a) == a : List<&2, Merge.LEntry>}:
+  (s1, s2) = dd
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(a, Merge.lfold(a, Nil{})), Merge.lfold(a, a), a,
+    cong_lfold(a, Merge.lfold(a, Nil{}), a, lf_nil(a, s1)),
+    lf_self(a, s2))
+
+def idem_lessons(+a: List<&2, Merge.LEntry>, sa: S.SortedL(a)) -> {Merge.merge_lessons(a, a) == a : List<&2, Merge.LEntry>}:
+  idem_pair(a, sortedL_dup(a, sa))
+
+# LAW: lessons_idem: merging a sorted lesson map with itself gives the map back (see LAWS.bend)
+def Laws.lessons_idem(a, sa):
+  idem_lessons(a, sa)
