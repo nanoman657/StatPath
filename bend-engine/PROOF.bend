@@ -301,3 +301,51 @@ def lookup_none_l(s: List<&2, Merge.LEntry>, +k: String, w: S.KAllL(s, k)) -> {S
           e6 = lookup_none_l(t, k, w2)
           g1 = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(h <> t, k), S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(t, k)), S.lookup_l(t, k), {==}, e5)
           Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(h <> t, k), S.lookup_l(t, k), None{}, g1, e6)
+
+# ---- key facts: an EQ key comparison lets one key stand for the other ----
+
+def key_subst_l(+x: String, +y: String, +z: String, e: {Merge.skey_cmp(x, y) == EQ{} : Cmp}) -> {Merge.skey_cmp(x, z) == Merge.skey_cmp(y, z) : Cmp}:
+  Equal.cong(String, Cmp, (s => Merge.skey_cmp(s, z)), x, y, Laws.skey_eq_of(x, y, Ord.IsEQ.to(Merge.skey_cmp(x, y), e)))
+
+def key_subst_r(+x: String, +y: String, +z: String, e: {Merge.skey_cmp(x, y) == EQ{} : Cmp}) -> {Merge.skey_cmp(z, x) == Merge.skey_cmp(z, y) : Cmp}:
+  Equal.cong(String, Cmp, (s => Merge.skey_cmp(z, s)), x, y, Laws.skey_eq_of(x, y, Ord.IsEQ.to(Merge.skey_cmp(x, y), e)))
+
+def eq_flip(+x: String, +y: String, e: {Merge.skey_cmp(x, y) == EQ{} : Cmp}) -> {Merge.skey_cmp(y, x) == EQ{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(y, x), Ord.Cmp.flip(Merge.skey_cmp(x, y)), EQ{},
+    Laws.skey_cmp_flip(x, y),
+    Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(x, y)), Ord.Cmp.flip(EQ{}), EQ{},
+      Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(x, y), EQ{}, e),
+      {==}))
+
+# if ke and k compare EQ, then kh compares with k as it compares with ke, flipped
+def b_of_eq(+ke: String, +kh: String, +k: String, ea: {Merge.skey_cmp(ke, k) == EQ{} : Cmp}) -> {Merge.skey_cmp(kh, k) == Ord.Cmp.flip(Merge.skey_cmp(ke, kh)) : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(kh, k), Merge.skey_cmp(kh, ke), Ord.Cmp.flip(Merge.skey_cmp(ke, kh)),
+    Equal.sym(Cmp, Merge.skey_cmp(kh, ke), Merge.skey_cmp(kh, k), key_subst_r(ke, k, kh, ea)),
+    Laws.skey_cmp_flip(ke, kh))
+
+# if ke and kh compare EQ, then kh compares with k as ke does
+def b_eq_a(+ke: String, +kh: String, +k: String, hc: {Merge.skey_cmp(ke, kh) == EQ{} : Cmp}) -> {Merge.skey_cmp(kh, k) == Merge.skey_cmp(ke, k) : Cmp}:
+  key_subst_l(kh, ke, k, eq_flip(ke, kh, hc))
+
+def lt_b_gt(+ke: String, +kh: String, +k: String, ea: {Merge.skey_cmp(ke, k) == EQ{} : Cmp}, hc: {Merge.skey_cmp(ke, kh) == LT{} : Cmp}) -> {Merge.skey_cmp(kh, k) == GT{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(kh, k), Ord.Cmp.flip(Merge.skey_cmp(ke, kh)), GT{}, b_of_eq(ke, kh, k, ea),
+    Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(ke, kh)), Ord.Cmp.flip(LT{}), GT{},
+      Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(ke, kh), LT{}, hc),
+      {==}))
+
+def gt_b_lt(+ke: String, +kh: String, +k: String, ea: {Merge.skey_cmp(ke, k) == EQ{} : Cmp}, hc: {Merge.skey_cmp(ke, kh) == GT{} : Cmp}) -> {Merge.skey_cmp(kh, k) == LT{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(kh, k), Ord.Cmp.flip(Merge.skey_cmp(ke, kh)), LT{}, b_of_eq(ke, kh, k, ea),
+    Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(ke, kh)), Ord.Cmp.flip(GT{}), LT{},
+      Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(ke, kh), GT{}, hc),
+      {==}))
+
+# every key of s is after x when it is after y and x compares EQ with y
+def kall_eq(s: List<&2, Merge.LEntry>, +x: String, +y: String, +e: {Merge.skey_cmp(x, y) == EQ{} : Cmp}, w: S.KAllL(s, y)) -> S.KAllL(s, x):
+  match s:
+    case Nil{}:
+      Unit{}
+    case h <> t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (w1, w2) = w
+          (Ord.Cmp.trLT(Merge.skey_cmp(x, kh), Merge.skey_cmp(y, kh), key_subst_l(x, y, kh, e), w1), kall_eq(t, x, y, e, w2))
