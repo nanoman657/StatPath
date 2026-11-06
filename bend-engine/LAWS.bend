@@ -128,3 +128,10 @@ law skey_lt_trans:
   for h1: {Merge.skey_cmp(a, b) == LT{} : Cmp}
   for h2: {Merge.skey_cmp(b, c) == LT{} : Cmp}
   {Merge.skey_cmp(a, c) == LT{} : Cmp}
+
+# LAW: the lesson merge is commutative on any two lists. Lean's lessons_comm assumes both maps are sorted; this
+# statement drops that hypothesis, because the proof (lf_comm) does not use it.
+law lessons_comm:
+  for +a: List<&2, Merge.LEntry>
+  for +b: List<&2, Merge.LEntry>
+  {Merge.merge_lessons(a, b) == Merge.merge_lessons(b, a) : List<&2, Merge.LEntry>}

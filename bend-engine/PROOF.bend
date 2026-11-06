@@ -990,3 +990,76 @@ def l2_LL(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: S
       L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), L1, s4)
       R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), r2, r3)
       Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), R1))
+
+# ---- the cons case dispatch: cb = skey(kb, kh) and ca = skey(ka, kh) choose the branch lemma ----
+
+def lins2_cons(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +cb: Cmp, +ca: Cmp, +eB: {Merge.skey_cmp(kb, kh) == cb : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == ca : Cmp}, +ih: {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, t)) : List<&2, Merge.LEntry>}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  match cb:
+    case LT{}:
+      match ca:
+        case LT{}:
+          l2_LL(ka, va, kb, vb, kh, vh, t, eB, eA, Merge.skey_cmp(ka, kb), {==})
+        case EQ{}:
+          l2_LE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          l2_LG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case EQ{}:
+      match ca:
+        case LT{}:
+          l2_EL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          l2_EE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          l2_EG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case GT{}:
+      match ca:
+        case LT{}:
+          l2_GL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          l2_GE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          l2_GG(ka, va, kb, vb, kh, vh, t, eB, eA, ih)
+
+# ---- two lesson insertions commute on any list (no sortedness needed) ----
+
+def lins2(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +s: List<&2, Merge.LEntry>) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, s)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, s)) : List<&2, Merge.LEntry>}:
+  match s:
+    case Nil{}:
+      lins2_nil_c(ka, va, kb, vb, Merge.skey_cmp(ka, kb), {==})
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          lins2_cons(ka, va, kb, vb, kh, vh, t, Merge.skey_cmp(kb, kh), Merge.skey_cmp(ka, kh), {==}, {==}, lins2(ka, va, kb, vb, t))
+
+# ---- the fold: a fold over b, with the same accumulator changed, is congruent ----
+
+def cong_lfold(+b: List<&2, Merge.LEntry>, +x: List<&2, Merge.LEntry>, +y: List<&2, Merge.LEntry>, e: {x == y : List<&2, Merge.LEntry>}) -> {Merge.lfold(b, x) == Merge.lfold(b, y) : List<&2, Merge.LEntry>}:
+  Equal.cong(List<&2, Merge.LEntry>, List<&2, Merge.LEntry>, (z => Merge.lfold(b, z)), x, y, e)
+
+# inserting A into the accumulator before folding b equals inserting it after: the fold passes it along
+def lf_lins(+ka: String, +va: Merge.Lesson, +b: List<&2, Merge.LEntry>, +acc: List<&2, Merge.LEntry>) -> {Merge.lfold(b, Merge.lins(Merge.LEntry{ka, va}, acc)) == Merge.lins(Merge.LEntry{ka, va}, Merge.lfold(b, acc)) : List<&2, Merge.LEntry>}:
+  match b:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(Merge.LEntry{kh, vh} <> t, Merge.lins(Merge.LEntry{ka, va}, acc)), Merge.lfold(t, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kh, vh}, acc))), Merge.lins(Merge.LEntry{ka, va}, Merge.lfold(Merge.LEntry{kh, vh} <> t, acc)),
+            cong_lfold(t, Merge.lins(Merge.LEntry{kh, vh}, Merge.lins(Merge.LEntry{ka, va}, acc)), Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kh, vh}, acc)), Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kh, vh}, acc)), Merge.lins(Merge.LEntry{kh, vh}, Merge.lins(Merge.LEntry{ka, va}, acc)), lins2(ka, va, kh, vh, acc))),
+            lf_lins(ka, va, t, Merge.lins(Merge.LEntry{kh, vh}, acc)))
+
+# the fold of b over a's entries and the fold of a over b's entries agree: the insertions of one list commute past the other
+def lf_comm(+a: List<&2, Merge.LEntry>, +b: List<&2, Merge.LEntry>, +acc: List<&2, Merge.LEntry>) -> {Merge.lfold(b, Merge.lfold(a, acc)) == Merge.lfold(a, Merge.lfold(b, acc)) : List<&2, Merge.LEntry>}:
+  match a:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.LEntry>, Merge.lfold(b, Merge.lfold(Merge.LEntry{kh, vh} <> t, acc)), Merge.lfold(t, Merge.lfold(b, Merge.lins(Merge.LEntry{kh, vh}, acc))), Merge.lfold(Merge.LEntry{kh, vh} <> t, Merge.lfold(b, acc)),
+            lf_comm(t, b, Merge.lins(Merge.LEntry{kh, vh}, acc)),
+            cong_lfold(t, Merge.lfold(b, Merge.lins(Merge.LEntry{kh, vh}, acc)), Merge.lins(Merge.LEntry{kh, vh}, Merge.lfold(b, acc)), lf_lins(kh, vh, b, acc)))
+
+# LAW: lessons_comm: the lesson merge is commutative on any two lists (see LAWS.bend)
+def Laws.lessons_comm(a, b):
+  lf_comm(a, b, Nil{})
