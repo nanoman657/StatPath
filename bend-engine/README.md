@@ -109,8 +109,9 @@ Proved in Bend:
   `skey_eq_of` (an `EQ` key comparison means the strings are equal), `cmp_then_flip` and `cmp_then_swap`
   (`cmp_then` flips), `full_cmp_flip` (the whole-card order flips), `last_key_eq` (lastReview values whose keys
   compare `EQ` are equal), `full_eq_card` (a whole-card `EQ` means the cards are equal), `card_pick_flip`
-  (`card_pick` with flipped comparisons and swapped cards picks the same card) and `card_merge_comm`, the
-  general `cardMerge_comm` row above: `card_merge` is commutative.
+  (`card_pick` with flipped comparisons and swapped cards picks the same card), `card_merge_comm`, the
+  general `cardMerge_comm` row above: `card_merge` is commutative, and `card_merge_assoc`: `card_merge` is
+  associative. The associativity law has no row in the table above; it is proved in Bend only.
 
 Not yet in Bend: the sorted-map laws (`lessons_comm`, `lessons_idem`, `xp_comm`, `xp_idem`, `xsum_comm`,
 `srs_comm`, `srs_idem`, `state_comm`). The Lean model proves them (rows above). Proving them in Bend also needs

@@ -119,6 +119,13 @@ law card_merge_comm:
   for +b: Merge.Card
   {Merge.card_merge(a, b) == Merge.card_merge(b, a) : Merge.Card}
 
+# LAW: cardMerge_assoc: the card merge is associative
+law card_merge_assoc:
+  for +a: Merge.Card
+  for +b: Merge.Card
+  for +c: Merge.Card
+  {Merge.card_merge(a, Merge.card_merge(b, c)) == Merge.card_merge(Merge.card_merge(a, b), c) : Merge.Card}
+
 # ---- the sorted-map laws: the key order is transitive, and the sorted-map operations keep it ----
 
 # LAW: the key order is transitive: a < b and b < c give a < c
