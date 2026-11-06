@@ -1855,3 +1855,110 @@ def ltc1(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc1(a, b))
         u1 => u2 => ltc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
         h1, h2)
 
+def ccf11(+A: Merge.Card, +B: Merge.Card) -> {cc11(B, A) == Ord.Cmp.flip(cc11(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Ord.Nat.cmp_flip(Merge.last_key(t1), Merge.last_key(t2))
+
+def ccf10(+A: Merge.Card, +B: Merge.Card) -> {cc10(B, A) == Ord.Cmp.flip(cc10(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(r1, r2), Nat.cmp(r2, r1), cc11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc11(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(r1, r2), ccf11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf9(+A: Merge.Card, +B: Merge.Card) -> {cc9(B, A) == Ord.Cmp.flip(cc9(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(s1, s2), Nat.cmp(s2, s1), cc10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc10(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(s1, s2), ccf10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf8(+A: Merge.Card, +B: Merge.Card) -> {cc8(B, A) == Ord.Cmp.flip(cc8(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(d1, d2), Nat.cmp(d2, d1), cc9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc9(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(d1, d2), ccf9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf7(+A: Merge.Card, +B: Merge.Card) -> {cc7(B, A) == Ord.Cmp.flip(cc7(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(e1, e2), Nat.cmp(e2, e1), cc8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc8(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(e1, e2), ccf8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf6(+A: Merge.Card, +B: Merge.Card) -> {cc6(B, A) == Ord.Cmp.flip(cc6(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(v1, v2), Nat.cmp(v2, v1), cc7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc7(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(v1, v2), ccf7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf5(+A: Merge.Card, +B: Merge.Card) -> {cc5(B, A) == Ord.Cmp.flip(cc5(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Merge.skey_cmp(l1, l2), Merge.skey_cmp(l2, l1), cc6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc6(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Laws.skey_cmp_flip(l1, l2), ccf6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf4(+A: Merge.Card, +B: Merge.Card) -> {cc4(B, A) == Ord.Cmp.flip(cc4(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Merge.skey_cmp(i1, i2), Merge.skey_cmp(i2, i1), cc5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc5(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Laws.skey_cmp_flip(i1, i2), ccf5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf3(+A: Merge.Card, +B: Merge.Card) -> {cc3(B, A) == Ord.Cmp.flip(cc3(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(d1, d2), Nat.cmp(d2, d1), cc4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc4(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(d1, d2), ccf4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf2(+A: Merge.Card, +B: Merge.Card) -> {cc2(B, A) == Ord.Cmp.flip(cc2(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(r1, r2), Nat.cmp(r2, r1), cc3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc3(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(r1, r2), ccf3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ccf1(+A: Merge.Card, +B: Merge.Card) -> {cc1(B, A) == Ord.Cmp.flip(cc1(A, B)) : Cmp}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t1)), cc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc2(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Nat.cmp_flip(Merge.last_or0(t1), Merge.last_or0(t2)), ccf2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def csel(c: Cmp, +A: Merge.Card, +B: Merge.Card) -> Merge.Card:
+  match c:
+    case LT{}:
+      B
+    case EQ{}:
+      A
+    case GT{}:
+      A
+
+def csel_same(+c: Cmp, +A: Merge.Card) -> {csel(c, A, A) == A : Merge.Card}:
+  match c:
+    case LT{}:
+      {==}
+    case EQ{}:
+      {==}
+    case GT{}:
+      {==}
+
+def cp_csel(+x: Cmp, +r: Cmp, +d: Cmp, +f: Cmp, +A: Merge.Card, +B: Merge.Card) -> {Merge.card_pick(x, r, d, f, A, B) == csel(Merge.cmp_then(x, Merge.cmp_then(r, Merge.cmp_then(d, f))), A, B) : Merge.Card}:
+  match x:
+    case LT{}:
+      {==}
+    case GT{}:
+      {==}
+    case EQ{}:
+      match r:
+        case LT{}:
+          {==}
+        case GT{}:
+          {==}
+        case EQ{}:
+          match d:
+            case LT{}:
+              {==}
+            case GT{}:
+              {==}
+            case EQ{}:
+              match f:
+                case LT{}:
+                  {==}
+                case GT{}:
+                  {==}
+                case EQ{}:
+                  {==}
+
+def cm_csel(+A: Merge.Card, +B: Merge.Card) -> {Merge.card_merge(A, B) == csel(cc1(A, B), A, B) : Merge.Card}:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      cp_csel(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2), Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})
+
+def card_merge_self(+A: Merge.Card) -> {Merge.card_merge(A, A) == A : Merge.Card}:
+  Equal.trans(Merge.Card, Merge.card_merge(A, A), csel(cc1(A, A), A, A), A, cm_csel(A, A), csel_same(cc1(A, A), A))
