@@ -27,6 +27,20 @@ law lp_max_self:
   for +a: Merge.Lesson
   {Merge.lp_max(a, a) == a : Merge.Lesson}
 
+# LAW: Nat.max is associative
+law max_assoc:
+  for +a: Nat
+  for +b: Nat
+  for +c: Nat
+  {Nat.max(a, Nat.max(b, c)) == Nat.max(Nat.max(a, b), c) : Nat}
+
+# LAW: the lesson merge is associative
+law lp_max_assoc:
+  for +a: Merge.Lesson
+  for +b: Merge.Lesson
+  for +c: Merge.Lesson
+  {Merge.lp_max(a, Merge.lp_max(b, c)) == Merge.lp_max(Merge.lp_max(a, b), c) : Merge.Lesson}
+
 # LAW: two cards tie on review time, reps and due date and differ in ease: the larger ease is kept, whatever the order
 law tie_ease:
   {Merge.card_merge(Merge.Card{"c1", "l1", 1n, 200n, 5n, 0n, 1n, Some{7n}}, Merge.Card{"c1", "l1", 1n, 250n, 5n, 0n, 1n, Some{7n}}) == Merge.Card{"c1", "l1", 1n, 250n, 5n, 0n, 1n, Some{7n}} : Merge.Card}

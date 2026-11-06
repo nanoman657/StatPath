@@ -70,6 +70,48 @@ def Laws.lp_max_self(a):
             Merge.Lp{c, n, b, p},
             t3, t4)))
 
+def Laws.max_assoc(a, b, c):
+  match a b c:
+    case 0n 0n 0n:
+      {==}
+    case 0n 0n 1n+cp:
+      {==}
+    case 0n 1n+bp 0n:
+      {==}
+    case 0n 1n+bp 1n+cp:
+      {==}
+    case 1n+ap 0n 0n:
+      {==}
+    case 1n+ap 0n 1n+cp:
+      {==}
+    case 1n+ap 1n+bp 0n:
+      {==}
+    case 1n+ap 1n+bp 1n+cp:
+      Equal.cong(Nat, Nat, p => 1n+p, Nat.max(ap, Nat.max(bp, cp)), Nat.max(Nat.max(ap, bp), cp), Laws.max_assoc(ap, bp, cp))
+
+def Laws.lp_max_assoc(a, b, c):
+  match a b c:
+    case Merge.Lp{c1, n1, b1, p1} Merge.Lp{c2, n2, b2, p2} Merge.Lp{c3, n3, b3, p3}:
+      s1 = Equal.cong(Nat, Merge.Lesson, x => Merge.Lp{x, Nat.max(n1, Nat.max(n2, n3)), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))}, Nat.max(c1, Nat.max(c2, c3)), Nat.max(Nat.max(c1, c2), c3), Laws.max_assoc(c1, c2, c3))
+      s2 = Equal.cong(Nat, Merge.Lesson, y => Merge.Lp{Nat.max(Nat.max(c1, c2), c3), y, Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))}, Nat.max(n1, Nat.max(n2, n3)), Nat.max(Nat.max(n1, n2), n3), Laws.max_assoc(n1, n2, n3))
+      s3 = Equal.cong(Nat, Merge.Lesson, z => Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), z, Nat.max(p1, Nat.max(p2, p3))}, Nat.max(b1, Nat.max(b2, b3)), Nat.max(Nat.max(b1, b2), b3), Laws.max_assoc(b1, b2, b3))
+      s4 = Equal.cong(Nat, Merge.Lesson, w => Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(Nat.max(b1, b2), b3), w}, Nat.max(p1, Nat.max(p2, p3)), Nat.max(Nat.max(p1, p2), p3), Laws.max_assoc(p1, p2, p3))
+      Equal.trans(Merge.Lesson,
+        Merge.Lp{Nat.max(c1, Nat.max(c2, c3)), Nat.max(n1, Nat.max(n2, n3)), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))},
+        Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(n1, Nat.max(n2, n3)), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))},
+        Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(Nat.max(b1, b2), b3), Nat.max(Nat.max(p1, p2), p3)},
+        s1,
+        Equal.trans(Merge.Lesson,
+          Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(n1, Nat.max(n2, n3)), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))},
+          Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))},
+          Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(Nat.max(b1, b2), b3), Nat.max(Nat.max(p1, p2), p3)},
+          s2,
+          Equal.trans(Merge.Lesson,
+            Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(b1, Nat.max(b2, b3)), Nat.max(p1, Nat.max(p2, p3))},
+            Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(Nat.max(b1, b2), b3), Nat.max(p1, Nat.max(p2, p3))},
+            Merge.Lp{Nat.max(Nat.max(c1, c2), c3), Nat.max(Nat.max(n1, n2), n3), Nat.max(Nat.max(b1, b2), b3), Nat.max(Nat.max(p1, p2), p3)},
+            s3, s4)))
+
 def Laws.tie_ease():
   {==}
 
