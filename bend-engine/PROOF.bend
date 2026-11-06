@@ -1558,3 +1558,128 @@ def xsum_comm_h(+a: List<&2, Merge.XEntry>, +b: List<&2, Merge.XEntry>) -> {Merg
 
 def Laws.xsum_comm(a, b):
   xsum_comm_h(a, b)
+
+
+# ---- the card order: level facts for Nat and String, and the lexicographic step ----
+
+# LT is transitive on Nat (the same case split as Word.lt_trans)
+def nat_lt_w(+a: Nat, +b: Nat, +c: Nat, h1: Ord.IsLT(Nat.cmp(a, b)), h2: Ord.IsLT(Nat.cmp(b, c))) -> Ord.IsLT(Nat.cmp(a, c)):
+  match a b:
+    case 0n 0n:
+      Empty.absurd(Ord.IsLT(Nat.cmp(0n, c)), h1)
+    case 0n 1n+bp:
+      match c:
+        case 0n:
+          Empty.absurd(Ord.IsLT(Nat.cmp(0n, 0n)), h2)
+        case 1n+cp:
+          Unit{}
+    case 1n+ap 0n:
+      Empty.absurd(Ord.IsLT(Nat.cmp(1n+ap, c)), h1)
+    case 1n+ap 1n+bp:
+      match c:
+        case 0n:
+          Empty.absurd(Ord.IsLT(Nat.cmp(1n+ap, 0n)), h2)
+        case 1n+cp:
+          nat_lt_w(ap, bp, cp, h1, h2)
+
+# every number compares EQ with itself
+def nat_self(+a: Nat) -> {Nat.cmp(a, a) == EQ{} : Cmp}:
+  match a:
+    case 0n:
+      {==}
+    case 1n+p:
+      nat_self(p)
+
+# the level facts on Nat: LT then EQ, EQ then LT, and EQ then EQ
+def nat_le_w(+a: Nat, +b: Nat, +c: Nat, h1: Ord.IsLT(Nat.cmp(a, b)), h2: Ord.IsEQ(Nat.cmp(b, c))) -> Ord.IsLT(Nat.cmp(a, c)):
+  Ord.Cmp.trLT(Nat.cmp(a, c), Nat.cmp(a, b),
+    Equal.sym(Cmp, Nat.cmp(a, b), Nat.cmp(a, c),
+      Equal.cong(Nat, Cmp, w => Nat.cmp(a, w), b, c, Ord.Nat.eq_of_cmp_eq(b, c, h2))),
+    h1)
+
+def nat_el_w(+a: Nat, +b: Nat, +c: Nat, h1: Ord.IsEQ(Nat.cmp(a, b)), h2: Ord.IsLT(Nat.cmp(b, c))) -> Ord.IsLT(Nat.cmp(a, c)):
+  Ord.Cmp.trLT(Nat.cmp(a, c), Nat.cmp(b, c),
+    Equal.cong(Nat, Cmp, w => Nat.cmp(w, c), a, b, Ord.Nat.eq_of_cmp_eq(a, b, h1)),
+    h2)
+
+def nat_ee_w(+a: Nat, +b: Nat, +c: Nat, h1: Ord.IsEQ(Nat.cmp(a, b)), h2: Ord.IsEQ(Nat.cmp(b, c))) -> Ord.IsEQ(Nat.cmp(a, c)):
+  Ord.IsEQ.to(Nat.cmp(a, c),
+    Equal.trans(Cmp, Nat.cmp(a, c), Nat.cmp(a, a), EQ{},
+      Equal.cong(Nat, Cmp, w => Nat.cmp(a, w), c, a,
+        Equal.sym(Nat, a, c,
+          Equal.trans(Nat, a, b, c, Ord.Nat.eq_of_cmp_eq(a, b, h1), Ord.Nat.eq_of_cmp_eq(b, c, h2)))),
+      nat_self(a)))
+
+# the level facts on String, through the skey order
+def str_ll(+a: String, +b: String, +c: String, h1: Ord.IsLT(Merge.skey_cmp(a, b)), h2: Ord.IsLT(Merge.skey_cmp(b, c))) -> Ord.IsLT(Merge.skey_cmp(a, c)):
+  Ord.IsLT.to(Merge.skey_cmp(a, c),
+    Laws.skey_lt_trans(a, b, c, Ord.IsLT.of(Merge.skey_cmp(a, b), h1), Ord.IsLT.of(Merge.skey_cmp(b, c), h2)))
+
+def str_le(+a: String, +b: String, +c: String, h1: Ord.IsLT(Merge.skey_cmp(a, b)), h2: Ord.IsEQ(Merge.skey_cmp(b, c))) -> Ord.IsLT(Merge.skey_cmp(a, c)):
+  Ord.Cmp.trLT(Merge.skey_cmp(a, c), Merge.skey_cmp(a, b),
+    Equal.sym(Cmp, Merge.skey_cmp(a, b), Merge.skey_cmp(a, c),
+      Equal.cong(String, Cmp, w => Merge.skey_cmp(a, w), b, c, Laws.skey_eq_of(b, c, h2))),
+    h1)
+
+def str_el(+a: String, +b: String, +c: String, h1: Ord.IsEQ(Merge.skey_cmp(a, b)), h2: Ord.IsLT(Merge.skey_cmp(b, c))) -> Ord.IsLT(Merge.skey_cmp(a, c)):
+  Ord.Cmp.trLT(Merge.skey_cmp(a, c), Merge.skey_cmp(b, c),
+    Equal.cong(String, Cmp, w => Merge.skey_cmp(w, c), a, b, Laws.skey_eq_of(a, b, h1)),
+    h2)
+
+def str_ee(+a: String, +b: String, +c: String, h1: Ord.IsEQ(Merge.skey_cmp(a, b)), h2: Ord.IsEQ(Merge.skey_cmp(b, c))) -> Ord.IsEQ(Merge.skey_cmp(a, c)):
+  Ord.IsEQ.to(Merge.skey_cmp(a, c),
+    Equal.trans(Cmp, Merge.skey_cmp(a, c), Merge.skey_cmp(a, a), EQ{},
+      Equal.cong(String, Cmp, w => Merge.skey_cmp(a, w), c, a,
+        Equal.sym(String, a, c,
+          Equal.trans(String, a, b, c, Laws.skey_eq_of(a, b, h1), Laws.skey_eq_of(b, c, h2)))),
+      Equal.trans(Cmp, Merge.skey_cmp(a, a), String.order(a, a), EQ{},
+        Key.Key.skey_eq_order(a, a), Key.Key.order_self(a))))
+
+# a comparison that is LT passes the chain through unchanged
+def fin_lt(+r: Cmp, +Tr: Cmp, h: Ord.IsLT(r)) -> Ord.IsLT(Merge.cmp_then(r, Tr)):
+  match r:
+    case LT{}:
+      Unit{}
+    case EQ{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(EQ{}, Tr)), h)
+    case GT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(GT{}, Tr)), h)
+
+# an EQ comparison passes the decision to the rest of the chain
+def fin_eq(+r: Cmp, +Tr: Cmp, he: Ord.IsEQ(r), ht: Ord.IsLT(Tr)) -> Ord.IsLT(Merge.cmp_then(r, Tr)):
+  match r:
+    case LT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(LT{}, Tr)), he)
+    case EQ{}:
+      ht
+    case GT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(GT{}, Tr)), he)
+
+# one level of a lexicographic chain: the level's own facts (LL, LE, EL, EE) and the tail (ih) decide
+def lex_step(+p: Cmp, +q: Cmp, +r: Cmp, +Tp: Cmp, +Tq: Cmp, +Tr: Cmp,
+    LL: Ord.IsLT(p) -> Ord.IsLT(q) -> Ord.IsLT(r),
+    LE: Ord.IsLT(p) -> Ord.IsEQ(q) -> Ord.IsLT(r),
+    EL: Ord.IsEQ(p) -> Ord.IsLT(q) -> Ord.IsLT(r),
+    EE: Ord.IsEQ(p) -> Ord.IsEQ(q) -> Ord.IsEQ(r),
+    ih: Ord.IsLT(Tp) -> Ord.IsLT(Tq) -> Ord.IsLT(Tr),
+    hp: Ord.IsLT(Merge.cmp_then(p, Tp)),
+    hq: Ord.IsLT(Merge.cmp_then(q, Tq))) -> Ord.IsLT(Merge.cmp_then(r, Tr)):
+  match p q:
+    case LT{} LT{}:
+      fin_lt(r, Tr, LL(Unit{}, Unit{}))
+    case LT{} EQ{}:
+      fin_lt(r, Tr, LE(Unit{}, Unit{}))
+    case LT{} GT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hq)
+    case EQ{} LT{}:
+      fin_lt(r, Tr, EL(Unit{}, Unit{}))
+    case EQ{} EQ{}:
+      fin_eq(r, Tr, EE(Unit{}, Unit{}), ih(hp, hq))
+    case EQ{} GT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hq)
+    case GT{} LT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hp)
+    case GT{} EQ{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hp)
+    case GT{} GT{}:
+      Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hp)
