@@ -349,3 +349,96 @@ def kall_eq(s: List<&2, Merge.LEntry>, +x: String, +y: String, +e: {Merge.skey_c
         case Merge.LEntry{+kh, +vh}:
           (w1, w2) = w
           (Ord.Cmp.trLT(Merge.skey_cmp(x, kh), Merge.skey_cmp(y, kh), key_subst_l(x, y, kh, e), w1), kall_eq(t, x, y, e, w2))
+
+# ---- lins_c keeps every key after x (the new key ke must be after x too) ----
+
+def kall_lins_c(t: List<&2, Merge.LEntry>, c: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +x: String, wh: Ord.IsLT(Merge.skey_cmp(x, kh)), wt: S.KAllL(t, x), hk: Ord.IsLT(Merge.skey_cmp(x, ke))) -> S.KAllL(Merge.lins_c(t, c, Merge.LEntry{ke, ve}, Merge.LEntry{kh, vh}), x):
+  match t:
+    case Nil{}:
+      match c:
+        case LT{}:
+          (hk, (wh, Unit{}))
+        case EQ{}:
+          (wh, Unit{})
+        case GT{}:
+          (wh, (hk, Unit{}))
+    case h2 <> t2:
+      match h2:
+        case Merge.LEntry{+k2, +v2}:
+          match c:
+            case LT{}:
+              (hk, (wh, wt))
+            case EQ{}:
+              (wh, wt)
+            case GT{}:
+              (wk2, wt2) = wt
+              (wh, kall_lins_c(t2, Merge.skey_cmp(ke, k2), ke, ve, k2, v2, x, wk2, wt2, hk))
+
+# ---- a KAllL witness can be copied: each IsLT witness becomes an equation, which can be shared ----
+
+# the copy of a witness for the list whose head is LEntry{kh, vh}: the head's IsLT is shared through e
+def kall_dup_cons(+k: String, +kh: String, +vh: Merge.Lesson, t: List<&2, Merge.LEntry>, +e: {Merge.skey_cmp(k, kh) == LT{} : Cmp}, p: (S.KAllL(t, k) & S.KAllL(t, k))) -> (S.KAllL(Merge.LEntry{kh, vh} <> t, k) & S.KAllL(Merge.LEntry{kh, vh} <> t, k)):
+  (ta, tb) = p
+  ((Ord.IsLT.to(Merge.skey_cmp(k, kh), e), ta), (Ord.IsLT.to(Merge.skey_cmp(k, kh), e), tb))
+
+def kall_dup(s: List<&2, Merge.LEntry>, +k: String, w: S.KAllL(s, k)) -> (S.KAllL(s, k) & S.KAllL(s, k)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (wi, wt) = w
+          e = Ord.IsLT.of(Merge.skey_cmp(k, kh), wi)
+          kall_dup_cons(k, kh, vh, t, e, kall_dup(t, k, wt))
+
+# an EQ-free reversal: if x compares GT with y, then y compares LT with x
+def rev_gt(+x: String, +y: String, e: {Merge.skey_cmp(x, y) == GT{} : Cmp}) -> {Merge.skey_cmp(y, x) == LT{} : Cmp}:
+  Equal.trans(Cmp, Merge.skey_cmp(y, x), Ord.Cmp.flip(Merge.skey_cmp(x, y)), LT{},
+    Laws.skey_cmp_flip(x, y),
+    Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(x, y)), Ord.Cmp.flip(GT{}), LT{},
+      Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(x, y), GT{}, e),
+      {==}))
+
+# the LT case of sorted_lins_c: the new entry ke goes before the head kh; p holds two copies of KAllL(t, kh)
+def sorted_lt_cons(t: List<&2, Merge.LEntry>, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +ec: {Merge.skey_cmp(ke, kh) == LT{} : Cmp}, p: (S.KAllL(t, kh) & S.KAllL(t, kh)), ws: S.SortedL(t)) -> S.SortedL(Merge.LEntry{ke, ve} <> (Merge.LEntry{kh, vh} <> t)):
+  (wa, wb) = p
+  ((Ord.IsLT.to(Merge.skey_cmp(ke, kh), ec), kall_trans_l(t, ke, kh, ec, wa)), (wb, ws))
+
+# ---- lins_c keeps the list sorted, when the new key ke compares c with the head key kh ----
+
+def sorted_lins_c(t: List<&2, Merge.LEntry>, c: Cmp, +ke: String, +ve: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +ec: {Merge.skey_cmp(ke, kh) == c : Cmp}, w: S.KAllL(t, kh), ws: S.SortedL(t)) -> S.SortedL(Merge.lins_c(t, c, Merge.LEntry{ke, ve}, Merge.LEntry{kh, vh})):
+  match t:
+    case Nil{}:
+      match c:
+        case LT{}:
+          ((Ord.IsLT.to(Merge.skey_cmp(ke, kh), ec), Unit{}), (Unit{}, Unit{}))
+        case EQ{}:
+          (Unit{}, Unit{})
+        case GT{}:
+          ((Ord.IsLT.to(Merge.skey_cmp(kh, ke), rev_gt(ke, kh, ec)), Unit{}), (Unit{}, Unit{}))
+    case +h2 <> +t2:
+      match h2:
+        case Merge.LEntry{+k2, +v2}:
+          match c:
+            case LT{}:
+              sorted_lt_cons(h2 <> t2, ke, ve, kh, vh, ec, kall_dup(h2 <> t2, kh, w), ws)
+            case EQ{}:
+              (w, ws)
+            case GT{}:
+              (wkh2, wkh_t2) = w
+              (w2, ws2) = ws
+              (kall_lins_c(t2, Merge.skey_cmp(ke, k2), ke, ve, k2, v2, kh, wkh2, wkh_t2, Ord.IsLT.to(Merge.skey_cmp(kh, ke), rev_gt(ke, kh, ec))),
+               sorted_lins_c(t2, Merge.skey_cmp(ke, k2), ke, ve, k2, v2, {==}, w2, ws2))
+
+# ---- lins keeps a sorted list sorted ----
+
+def sorted_lins(+ke: String, +ve: Merge.Lesson, s: List<&2, Merge.LEntry>, ws: S.SortedL(s)) -> S.SortedL(Merge.lins(Merge.LEntry{ke, ve}, s)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case h <> t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (w, ws2) = ws
+          sorted_lins_c(t, Merge.skey_cmp(ke, kh), ke, ve, kh, vh, {==}, w, ws2)
