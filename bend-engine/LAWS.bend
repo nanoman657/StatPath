@@ -103,3 +103,14 @@ law card_merge_comm:
   for +a: Merge.Card
   for +b: Merge.Card
   {Merge.card_merge(a, b) == Merge.card_merge(b, a) : Merge.Card}
+
+# ---- the sorted-map laws: the key order is transitive, and the sorted-map operations keep it ----
+
+# LAW: the key order is transitive: a < b and b < c give a < c
+law skey_lt_trans:
+  for +a: String
+  for +b: String
+  for +c: String
+  for h1: {Merge.skey_cmp(a, b) == LT{} : Cmp}
+  for h2: {Merge.skey_cmp(b, c) == LT{} : Cmp}
+  {Merge.skey_cmp(a, c) == LT{} : Cmp}
