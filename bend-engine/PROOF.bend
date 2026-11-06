@@ -867,3 +867,126 @@ def l2_GE(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: S
   L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t)), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> Merge.lins(Merge.LEntry{kb, vb}, t), cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t), s1), s2)
   R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> Merge.lins(Merge.LEntry{kb, vb}, t), cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t, r1), r2)
   Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> Merge.lins(Merge.LEntry{kb, vb}, t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> Merge.lins(Merge.LEntry{kb, vb}, t), R1))
+
+# ---- the cons case, continued: the remaining branches ----
+
+# EQ, GT: the new b merges into the head; the new a is past the head
+def l2_EG(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t, s1)
+  s3 = ins_gt(t, ka, va, kh, Merge.lp_max(vh, vb), eA)
+  r1 = ins_gt(t, ka, va, kh, vh, eA)
+  r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t), r1)
+  r3 = ins_eq(Merge.lins(Merge.LEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> Merge.lins(Merge.LEntry{ka, va}, t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> Merge.lins(Merge.LEntry{ka, va}, t), r2, r3)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> Merge.lins(Merge.LEntry{ka, va}, t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> Merge.lins(Merge.LEntry{ka, va}, t), R1))
+
+# EQ, EQ: both new entries merge into the head; the two combined values agree by lpac
+def l2_EE(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t, s1)
+  s3 = ins_eq(t, ka, va, kh, Merge.lp_max(vh, vb), eA)
+  m = Equal.cong(Merge.Lesson, List<&2, Merge.LEntry>, (v => Merge.LEntry{kh, v} <> t), Merge.lp_max(Merge.lp_max(vh, vb), va), Merge.lp_max(Merge.lp_max(vh, va), vb), lpac(vh, vb, va))
+  r1 = ins_eq(t, ka, va, kh, vh, eA)
+  r3 = ins_eq(t, kb, vb, kh, Merge.lp_max(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, vb), va)} <> t, s2, s3)
+  L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, vb), va)} <> t, Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, va), vb)} <> t, L1, m)
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, va), vb)} <> t, Equal.cong(List<&2, Merge.LEntry>, List<&2, Merge.LEntry>, (z => Merge.lins(Merge.LEntry{kb, vb}, z)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t, r1), r3)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, va), vb)} <> t, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kh, Merge.lp_max(Merge.lp_max(vh, va), vb)} <> t, R1))
+
+# EQ, LT: the new a is before the head; the new b merges into the head
+def l2_EL(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t, s1)
+  s3 = ins_lt(t, ka, va, kh, Merge.lp_max(vh, vb), eA)
+  r1 = ins_lt(t, ka, va, kh, vh, eA)
+  r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), r1)
+  r3 = ins_gt(Merge.LEntry{kh, vh} <> t, kb, vb, ka, va, w_el(ka, kh, kb, eA, eB))
+  r4 = cong_cons(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t, ins_eq(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), r2, r3)
+  R2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), R1, r4)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, Merge.lp_max(vh, vb)} <> t), R2))
+
+# ---- the cons case, continued: the GT-LT, GT-EQ... branches for the new b past the head and the new a before it ----
+
+# GT, LT: the new a is before the head, so it goes to the front; the new b is past the head and stays behind it
+def l2_GL(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_gt(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t), s1)
+  s3 = ins_lt(Merge.lins(Merge.LEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = ins_lt(t, ka, va, kh, vh, eA)
+  r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), r1)
+  r3 = ins_gt(Merge.LEntry{kh, vh} <> t, kb, vb, ka, va, w_gl(ka, kh, kb, eA, eB))
+  r4 = cong_cons(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t), ins_gt(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t)), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), L1, Equal.sym(List<&2, Merge.LEntry>, Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{kb, vb}, t)), r4))
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), R1))
+
+# LT, GT: the new b is before the head, so it goes to the front; the new a is past the head and stays behind it
+def l2_LG(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_lt(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), s1)
+  s3 = ins_gt(Merge.LEntry{kh, vh} <> t, ka, va, kb, vb, w_lg(ka, kh, kb, eA, eB))
+  s4 = cong_cons(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t), ins_gt(t, ka, va, kh, vh, eA))
+  r1 = ins_gt(t, ka, va, kh, vh, eA)
+  r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t), r1)
+  r3 = ins_lt(Merge.lins(Merge.LEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), r2, r3)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> Merge.lins(Merge.LEntry{ka, va}, t)), R1))
+
+# LT, EQ: the new b is before the head; the new a merges into the head
+def l2_LE(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  s1 = ins_lt(t, kb, vb, kh, vh, eB)
+  s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), s1)
+  s3 = ins_gt(Merge.LEntry{kh, vh} <> t, ka, va, kb, vb, w_le(ka, kh, kb, eA, eB))
+  s4 = cong_cons(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t, ins_eq(t, ka, va, kh, vh, eA))
+  r1 = ins_eq(t, ka, va, kh, vh, eA)
+  r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t, r1)
+  r3 = ins_lt(t, kb, vb, kh, Merge.lp_max(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, Merge.lp_max(vh, va)} <> t), R1))
+
+# LT, LT: both new entries are before the head; the order of ka and kb decides the front, and the EQ case joins by lp_eq_swap
+def l2_LL(+ka: String, +va: Merge.Lesson, +kb: String, +vb: Merge.Lesson, +kh: String, +vh: Merge.Lesson, +t: List<&2, Merge.LEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}, +c3: Cmp, +ec3: {Merge.skey_cmp(ka, kb) == c3 : Cmp}) -> {Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)) == Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)) : List<&2, Merge.LEntry>}:
+  match c3:
+    case LT{}:
+      s1 = ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), s1)
+      s3 = ins_lt(Merge.LEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = ins_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), r1)
+      r3 = ins_gt(Merge.LEntry{kh, vh} <> t, kb, vb, ka, va, rev_lt(ka, kb, ec3))
+      r4 = cong_cons(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), ins_lt(t, kb, vb, kh, vh, eB))
+      L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), r2, r3)
+      R2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), R1, r4)
+      Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, va} <> (Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), R2))
+    case EQ{}:
+      s1 = ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), s1)
+      s3 = ins_eq(Merge.LEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = ins_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), r1)
+      r3 = ins_eq(Merge.LEntry{kh, vh} <> t, kb, vb, ka, va, eq_flip(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, Merge.lp_max(vb, va)} <> (Merge.LEntry{kh, vh} <> t), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, Merge.lp_max(va, vb)} <> (Merge.LEntry{kh, vh} <> t), r2, r3)
+      Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, Merge.lp_max(va, vb)} <> (Merge.LEntry{kh, vh} <> t), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, Merge.lp_max(vb, va)} <> (Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, Merge.lp_max(va, vb)} <> (Merge.LEntry{kh, vh} <> t), L1, lp_eq_swap(ka, va, kb, vb, ec3, Merge.LEntry{kh, vh} <> t)), Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{ka, Merge.lp_max(va, vb)} <> (Merge.LEntry{kh, vh} <> t), R1))
+    case GT{}:
+      s1 = ins_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_lins(ka, va, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t), s1)
+      s3 = ins_gt(Merge.LEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      s4 = cong_cons(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), ins_lt(t, ka, va, kh, vh, eA))
+      r1 = ins_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_lins(kb, vb, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t), r1)
+      r3 = ins_lt(Merge.LEntry{kh, vh} <> t, kb, vb, ka, va, rev_gt(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kb, vb} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), s2, s3)
+      L2 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), L1, s4)
+      R1 = Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), r2, r3)
+      Equal.trans(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{ka, va}, Merge.lins(Merge.LEntry{kb, vb}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.LEntry>, Merge.lins(Merge.LEntry{kb, vb}, Merge.lins(Merge.LEntry{ka, va}, Merge.LEntry{kh, vh} <> t)), Merge.LEntry{kb, vb} <> (Merge.LEntry{ka, va} <> (Merge.LEntry{kh, vh} <> t)), R1))
