@@ -3,6 +3,7 @@ import Base
 import ./merge.bend as Merge
 import ./LAWS.bend as Laws
 import ./ORDER.bend as Ord
+import ./SORTED.bend as S
 import ./KEYS.bend as Key
 
 def Laws.max_comm(a, b):
@@ -267,3 +268,36 @@ def Laws.skey_lt_trans(a, b, c, h1, h2):
   w_bc = Equal.trans(Cmp, String.order(b, c), Merge.skey_cmp(b, c), LT{}, e_bc, h2)
   r = Ord.String.order.lt_trans(a, b, c, Ord.IsLT.to(String.order(a, b), w_ab), Ord.IsLT.to(String.order(b, c), w_bc))
   Equal.trans(Cmp, Merge.skey_cmp(a, c), String.order(a, c), LT{}, Key.Key.skey_eq_order(a, c), r)
+
+# ---- the sorted-map laws, lessons: the layer's lemmas (no function hypotheses; keys are fixed) ----
+
+# a witness that every key of s is after k also holds for any smaller key kx
+def kall_trans_l(s: List<&2, Merge.LEntry>, +kx: String, +ky: String, +exy: {Merge.skey_cmp(kx, ky) == LT{} : Cmp}, w: S.KAllL(s, ky)) -> S.KAllL(s, kx):
+  match s:
+    case Nil{}:
+      Unit{}
+    case h <> t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (w1, w2) = w
+          eyh = Ord.IsLT.of(Merge.skey_cmp(ky, kh), w1)
+          exh = Laws.skey_lt_trans(kx, ky, kh, exy, eyh)
+          (Ord.IsLT.to(Merge.skey_cmp(kx, kh), exh), kall_trans_l(t, kx, ky, exy, w2))
+
+# every key of s is after k, so k is not in s
+def lookup_none_l(s: List<&2, Merge.LEntry>, +k: String, w: S.KAllL(s, k)) -> {S.lookup_l(s, k) == None{} : Maybe<&2, Merge.Lesson>}:
+  match s:
+    case Nil{}:
+      {==}
+    case h <> t:
+      match h:
+        case Merge.LEntry{+kh, +vh}:
+          (w1, w2) = w
+          e1 = Ord.IsLT.of(Merge.skey_cmp(k, kh), w1)
+          e2 = Equal.cong(Cmp, Cmp, Ord.Cmp.flip, Merge.skey_cmp(k, kh), LT{}, e1)
+          e3 = Equal.trans(Cmp, Ord.Cmp.flip(Merge.skey_cmp(k, kh)), Ord.Cmp.flip(LT{}), GT{}, e2, {==})
+          e4 = Equal.trans(Cmp, Merge.skey_cmp(kh, k), Ord.Cmp.flip(Merge.skey_cmp(k, kh)), GT{}, Laws.skey_cmp_flip(k, kh), e3)
+          e5 = Equal.cong(Cmp, Maybe<&2, Merge.Lesson>, (c => S.pick_l(c, vh, S.lookup_l(t, k))), Merge.skey_cmp(kh, k), GT{}, e4)
+          e6 = lookup_none_l(t, k, w2)
+          g1 = Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(h <> t, k), S.pick_l(Merge.skey_cmp(kh, k), vh, S.lookup_l(t, k)), S.lookup_l(t, k), {==}, e5)
+          Equal.trans(Maybe<&2, Merge.Lesson>, S.lookup_l(h <> t, k), S.lookup_l(t, k), None{}, g1, e6)
