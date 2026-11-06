@@ -7,8 +7,10 @@ the UI and effects are out of scope.
 | File | What it is |
 |------|------------|
 | `merge.bend` | The merge in Bend: lessons, SRS cards and XP as sorted association lists |
-| `LAWS.bend` | The merge laws stated in Bend, the ones with proofs so far |
+| `LAWS.bend` | The merge laws stated in Bend: the lesson, SRS and card-order laws (the sorted-map laws are not stated yet) |
 | `PROOF.bend` | Their proofs, checked by Bend's kernel (see "Bend kernel proofs") |
+| `ORDER.bend` | The order facts the proofs use: flip, transitivity and "EQ means equal" for the word, U32, string and Nat orders |
+| `KEYS.bend` | The key order of the merge in Bend (`skey_cmp`), with its `Key.skey_eq_order` fact |
 | `merge.mjs` | Generated from `merge.bend` by `gen.sh`; committed |
 | `merge.d.mts` | The types of `merge.mjs` (written by hand; the tests check behaviour) |
 | `gen.sh` | Checks `merge.bend`, then regenerates `merge.mjs` |
@@ -102,14 +104,19 @@ Proved in Bend:
 
 - The string-order swap law: `Cmp.flip` (the reverse of a comparison) is an involution; `Bool.cmp`,
   `Word.cmp`, `U32.cmp`, `String.order.go` and `String.order` each flip when their two arguments are swapped.
-  This is one half of antisymmetry for the key order. The other half, transitivity and equality from `EQ`,
-  is not proved yet.
+  This is one half of antisymmetry for the key order.
+- The card order, as in `LAWS.bend`: `skey_cmp_flip` (the key order flips when its strings are swapped),
+  `skey_eq_of` (an `EQ` key comparison means the strings are equal), `cmp_then_flip` and `cmp_then_swap`
+  (`cmp_then` flips), `full_cmp_flip` (the whole-card order flips), `last_key_eq` (lastReview values whose keys
+  compare `EQ` are equal), `full_eq_card` (a whole-card `EQ` means the cards are equal), `card_pick_flip`
+  (`card_pick` with flipped comparisons and swapped cards picks the same card) and `card_merge_comm`, the
+  general `cardMerge_comm` row above: `card_merge` is commutative.
 
 Not yet in Bend: the sorted-map laws (`lessons_comm`, `lessons_idem`, `xp_comm`, `xp_idem`, `xsum_comm`,
-`srs_comm`, `srs_idem`, `state_comm`) and the general card-order law `cardMerge_comm`. The Lean model proves
-them (rows above). Proving them in Bend also needs a sortedness predicate, the lookup lemmas, transitivity of
-the key order, and that `EQ` on two strings means they are equal. Base declares the order's antisymmetry as a
-law (`String.cmp`) but does not prove it, so that is not used.
+`srs_comm`, `srs_idem`, `state_comm`). The Lean model proves them (rows above). Proving them in Bend also needs
+a sortedness predicate and the lookup lemmas for sorted association lists; the string-order facts they rest on
+are in `ORDER.bend` and `KEYS.bend`. Base declares the order's antisymmetry as a law (`String.cmp`) but does not
+prove it, so that is not used.
 
 ## What is not mechanized
 

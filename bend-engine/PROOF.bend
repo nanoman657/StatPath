@@ -75,3 +75,187 @@ def Laws.tie_ease():
 def Laws.tie_absent():
   {==}
 
+
+# ---- the witnesses of cmp_then: an EQ result is an EQ of its first argument and of its second ----
+
+def cmp_then_l(c: Cmp, d: Cmp, h: Ord.IsEQ(Merge.cmp_then(c, d))) -> Ord.IsEQ(c):
+  match c:
+    case LT{}:
+      Empty.absurd(Ord.IsEQ(LT{}), h)
+    case EQ{}:
+      Unit{}
+    case GT{}:
+      Empty.absurd(Ord.IsEQ(GT{}), h)
+
+def cmp_then_r(c: Cmp, d: Cmp, h: Ord.IsEQ(Merge.cmp_then(c, d))) -> Ord.IsEQ(d):
+  match c:
+    case LT{}:
+      Empty.absurd(Ord.IsEQ(d), h)
+    case EQ{}:
+      h
+    case GT{}:
+      Empty.absurd(Ord.IsEQ(d), h)
+
+def Laws.skey_cmp_flip(a, b):
+  Equal.trans(Cmp,
+    Merge.skey_cmp(b, a),
+    String.order(b, a),
+    Ord.Cmp.flip(Merge.skey_cmp(a, b)),
+    Key.Key.skey_eq_order(b, a),
+    Equal.trans(Cmp,
+      String.order(b, a),
+      Ord.Cmp.flip(String.order(a, b)),
+      Ord.Cmp.flip(Merge.skey_cmp(a, b)),
+      Ord.String.order_flip(a, b),
+      Equal.cong(Cmp, Cmp, c => Ord.Cmp.flip(c), String.order(a, b), Merge.skey_cmp(a, b),
+        Equal.sym(Cmp, Merge.skey_cmp(a, b), String.order(a, b), Key.Key.skey_eq_order(a, b)))))
+
+def Laws.skey_eq_of(a, b, h):
+  Ord.String.order.eq_w(a, b,
+    Ord.Cmp.trEQ(String.order(a, b), Merge.skey_cmp(a, b),
+      Equal.sym(Cmp, Merge.skey_cmp(a, b), String.order(a, b), Key.Key.skey_eq_order(a, b)), h))
+
+def Laws.cmp_then_flip(c, d):
+  match c:
+    case LT{}:
+      {==}
+    case EQ{}:
+      {==}
+    case GT{}:
+      {==}
+
+def Laws.cmp_then_swap(c, c2, d, d2, ec, ed):
+  Equal.trans(Cmp,
+    Merge.cmp_then(c2, d2),
+    Merge.cmp_then(Ord.Cmp.flip(c), d2),
+    Ord.Cmp.flip(Merge.cmp_then(c, d)),
+    Equal.cong(Cmp, Cmp, w => Merge.cmp_then(w, d2), c2, Ord.Cmp.flip(c), ec),
+    Equal.trans(Cmp,
+      Merge.cmp_then(Ord.Cmp.flip(c), d2),
+      Merge.cmp_then(Ord.Cmp.flip(c), Ord.Cmp.flip(d)),
+      Ord.Cmp.flip(Merge.cmp_then(c, d)),
+      Equal.cong(Cmp, Cmp, w => Merge.cmp_then(Ord.Cmp.flip(c), w), d2, Ord.Cmp.flip(d), ed),
+      Laws.cmp_then_flip(c, d)))
+
+def Laws.full_cmp_flip(A, B):
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Laws.cmp_then_swap(Merge.skey_cmp(i1, i2), Merge.skey_cmp(i2, i1), Merge.cmp_then(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))), Merge.cmp_then(Merge.skey_cmp(l2, l1), Merge.cmp_then(Nat.cmp(v2, v1), Merge.cmp_then(Nat.cmp(e2, e1), Merge.cmp_then(Nat.cmp(d2, d1), Merge.cmp_then(Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1)))))))), Laws.skey_cmp_flip(i1, i2), Laws.cmp_then_swap(Merge.skey_cmp(l1, l2), Merge.skey_cmp(l2, l1), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))), Merge.cmp_then(Nat.cmp(v2, v1), Merge.cmp_then(Nat.cmp(e2, e1), Merge.cmp_then(Nat.cmp(d2, d1), Merge.cmp_then(Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1))))))), Laws.skey_cmp_flip(l1, l2), Laws.cmp_then_swap(Nat.cmp(v1, v2), Nat.cmp(v2, v1), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))), Merge.cmp_then(Nat.cmp(e2, e1), Merge.cmp_then(Nat.cmp(d2, d1), Merge.cmp_then(Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1)))))), Ord.Nat.cmp_flip(v1, v2), Laws.cmp_then_swap(Nat.cmp(e1, e2), Nat.cmp(e2, e1), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))), Merge.cmp_then(Nat.cmp(d2, d1), Merge.cmp_then(Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1))))), Ord.Nat.cmp_flip(e1, e2), Laws.cmp_then_swap(Nat.cmp(d1, d2), Nat.cmp(d2, d1), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))), Merge.cmp_then(Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1)))), Ord.Nat.cmp_flip(d1, d2), Laws.cmp_then_swap(Nat.cmp(s1, s2), Nat.cmp(s2, s1), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))), Merge.cmp_then(Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1))), Ord.Nat.cmp_flip(s1, s2), Laws.cmp_then_swap(Nat.cmp(r1, r2), Nat.cmp(r2, r1), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)), Nat.cmp(Merge.last_key(t2), Merge.last_key(t1)), Ord.Nat.cmp_flip(r1, r2), Ord.Nat.cmp_flip(Merge.last_key(t1), Merge.last_key(t2)))))))))
+
+
+def Laws.last_key_eq(t1, t2, h):
+  match t1 t2:
+    case None{} None{}:
+      {==}
+    case None{} Some{+x}:
+      Empty.absurd({None{} == Some{x} : Maybe<&2, Nat>}, Ord.IsEQ.neq_lt(Nat.cmp(0n, Nat.add(x, 1n)), Ord.Nat.cmp_zero_add1(x), h))
+    case Some{+x} None{}:
+      Empty.absurd({Some{x} == None{} : Maybe<&2, Nat>}, Ord.IsEQ.neq_gt(Nat.cmp(Nat.add(x, 1n), 0n), Ord.Nat.cmp_add1_zero(x), h))
+    case Some{+x} Some{+y}:
+      Equal.cong(Nat, Maybe<&2, Nat>, w => Some{w}, x, y,
+        Ord.Nat.eq_of_cmp_eq(x, y,
+          Ord.Cmp.trEQ(Nat.cmp(x, y), Nat.cmp(Nat.add(x, 1n), Nat.add(y, 1n)),
+            Equal.sym(Cmp, Nat.cmp(Nat.add(x, 1n), Nat.add(y, 1n)), Nat.cmp(x, y), Ord.Nat.add1_cmp(x, y)), h)))
+
+def cmp_split(c: Cmp, d: Cmp, h: Ord.IsEQ(Merge.cmp_then(c, d))) -> (Ord.IsEQ(c) & Ord.IsEQ(d)):
+  match c:
+    case LT{}:
+      Empty.absurd((Ord.IsEQ(LT{}) & Ord.IsEQ(d)), h)
+    case EQ{}:
+      (Unit{}, h)
+    case GT{}:
+      Empty.absurd((Ord.IsEQ(GT{}) & Ord.IsEQ(d)), h)
+
+def G6(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Nat.cmp(r1, r2)) & Ord.IsEQ(Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))) -> {Merge.Card{i2, l2, v2, e2, d2, s2, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (wr, wt):
+      Equal.trans(Merge.Card, Merge.Card{i2, l2, v2, e2, d2, s2, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(Nat, Merge.Card, w => Merge.Card{i2, l2, v2, e2, d2, s2, w, t1}, r1, r2, Ord.Nat.eq_of_cmp_eq(r1, r2, wr)), Equal.cong(Maybe<&2, Nat>, Merge.Card, w => Merge.Card{i2, l2, v2, e2, d2, s2, r2, w}, t1, t2, Laws.last_key_eq(t1, t2, wt)))
+
+def F6(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))) -> {Merge.Card{i2, l2, v2, e2, d2, s2, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G6(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)), h))
+
+def G5(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Nat.cmp(s1, s2)) & Ord.IsEQ(Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))) -> {Merge.Card{i2, l2, v2, e2, d2, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (ws, g):
+      Equal.trans(Merge.Card, Merge.Card{i2, l2, v2, e2, d2, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(Nat, Merge.Card, w => Merge.Card{i2, l2, v2, e2, d2, w, r1, t1}, s1, s2, Ord.Nat.eq_of_cmp_eq(s1, s2, ws)), F6(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F5(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))) -> {Merge.Card{i2, l2, v2, e2, d2, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G5(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))), h))
+
+def G4(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Nat.cmp(d1, d2)) & Ord.IsEQ(Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))) -> {Merge.Card{i2, l2, v2, e2, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (wd, g):
+      Equal.trans(Merge.Card, Merge.Card{i2, l2, v2, e2, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(Nat, Merge.Card, w => Merge.Card{i2, l2, v2, e2, w, s1, r1, t1}, d1, d2, Ord.Nat.eq_of_cmp_eq(d1, d2, wd)), F5(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F4(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))) -> {Merge.Card{i2, l2, v2, e2, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G4(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))), h))
+
+def G3(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Nat.cmp(e1, e2)) & Ord.IsEQ(Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))) -> {Merge.Card{i2, l2, v2, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (we, g):
+      Equal.trans(Merge.Card, Merge.Card{i2, l2, v2, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(Nat, Merge.Card, w => Merge.Card{i2, l2, v2, w, d1, s1, r1, t1}, e1, e2, Ord.Nat.eq_of_cmp_eq(e1, e2, we)), F4(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F3(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))) -> {Merge.Card{i2, l2, v2, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G3(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))), h))
+
+def G2(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Nat.cmp(v1, v2)) & Ord.IsEQ(Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))))) -> {Merge.Card{i2, l2, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (wv, g):
+      Equal.trans(Merge.Card, Merge.Card{i2, l2, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(Nat, Merge.Card, w => Merge.Card{i2, l2, w, e1, d1, s1, r1, t1}, v1, v2, Ord.Nat.eq_of_cmp_eq(v1, v2, wv)), F3(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F2(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))))) -> {Merge.Card{i2, l2, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G2(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))), h))
+
+def G1(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Merge.skey_cmp(l1, l2)) & Ord.IsEQ(Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))))) -> {Merge.Card{i2, l1, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (wl, g):
+      Equal.trans(Merge.Card, Merge.Card{i2, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(String, Merge.Card, w => Merge.Card{i2, w, v1, e1, d1, s1, r1, t1}, l1, l2, Laws.skey_eq_of(l1, l2, wl)), F2(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F1(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))))) -> {Merge.Card{i2, l1, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G1(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))), h))
+
+def G0(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, p: (Ord.IsEQ(Merge.skey_cmp(i1, i2)) & Ord.IsEQ(Merge.cmp_then(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))))))) -> {Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  match p:
+    case (wi, g):
+      Equal.trans(Merge.Card, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Equal.cong(String, Merge.Card, w => Merge.Card{w, l1, v1, e1, d1, s1, r1, t1}, i1, i2, Laws.skey_eq_of(i1, i2, wi)), F1(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, g))
+
+def F0(+i1: String, +l1: String, +v1: Nat, +e1: Nat, +d1: Nat, +s1: Nat, +r1: Nat, +t1: Maybe<&2, Nat>, +i2: String, +l2: String, +v2: Nat, +e2: Nat, +d2: Nat, +s2: Nat, +r2: Nat, +t2: Maybe<&2, Nat>, h: Ord.IsEQ(Merge.cmp_then(Merge.skey_cmp(i1, i2), Merge.cmp_then(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))))))))))) -> {Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1} == Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2} : Merge.Card}:
+  G0(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, cmp_split(Merge.skey_cmp(i1, i2), Merge.cmp_then(Merge.skey_cmp(l1, l2), Merge.cmp_then(Nat.cmp(v1, v2), Merge.cmp_then(Nat.cmp(e1, e2), Merge.cmp_then(Nat.cmp(d1, d2), Merge.cmp_then(Nat.cmp(s1, s2), Merge.cmp_then(Nat.cmp(r1, r2), Nat.cmp(Merge.last_key(t1), Merge.last_key(t2)))))))), h))
+
+def Laws.full_eq_card(A, B, h):
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      F0(i1, l1, v1, e1, d1, s1, r1, t1, i2, l2, v2, e2, d2, s2, r2, t2, h)
+
+
+def Laws.card_pick_flip(x, r, d, f, A, B, tie):
+  match x:
+    case LT{}:
+      {==}
+    case GT{}:
+      {==}
+    case EQ{}:
+      match r:
+        case LT{}:
+          {==}
+        case GT{}:
+          {==}
+        case EQ{}:
+          match d:
+            case LT{}:
+              {==}
+            case GT{}:
+              {==}
+            case EQ{}:
+              match f:
+                case LT{}:
+                  {==}
+                case GT{}:
+                  {==}
+                case EQ{}:
+                  Equal.sym(Merge.Card, A, B, tie(Unit{}))
+
+def Laws.card_merge_comm(a, b):
+  match a b:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Equal.sym(Merge.Card, Merge.card_pick(Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t1)), Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2), Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Equal.trans(Merge.Card, Merge.card_pick(Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t1)), Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), Ord.Cmp.flip(Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2), Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Equal.trans(Merge.Card, Merge.card_pick(Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t1)), Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), Ord.Cmp.flip(Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Equal.cong(Cmp, Merge.Card, w => Merge.card_pick(w, Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t1)), Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Nat.cmp_flip(Merge.last_or0(t1), Merge.last_or0(t2))), Equal.trans(Merge.Card, Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Nat.cmp(r2, r1), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), Ord.Cmp.flip(Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Equal.cong(Cmp, Merge.Card, w => Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), w, Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Nat.cmp(r2, r1), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Nat.cmp_flip(r1, r2)), Equal.trans(Merge.Card, Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Nat.cmp(d2, d1), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), Ord.Cmp.flip(Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Equal.cong(Cmp, Merge.Card, w => Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), w, Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Nat.cmp(d2, d1), Ord.Cmp.flip(Nat.cmp(d1, d2)), Ord.Nat.cmp_flip(d1, d2)), Equal.cong(Cmp, Merge.Card, w => Merge.card_pick(Ord.Cmp.flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2))), Ord.Cmp.flip(Nat.cmp(r1, r2)), Ord.Cmp.flip(Nat.cmp(d1, d2)), w, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Merge.full_cmp(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}), Ord.Cmp.flip(Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2})), Laws.full_cmp_flip(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))))), Laws.card_pick_flip(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(r1, r2), Nat.cmp(d1, d2), Merge.full_cmp(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, h => Laws.full_eq_card(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, h))))

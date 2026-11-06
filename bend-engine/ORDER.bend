@@ -775,3 +775,81 @@ law String.order_flip:
 
 def String.order_flip(a, b):
   String.order.go_flip(a, b, EQ{})
+
+# ---- Nat facts: the order of numbers, and the successor ----
+
+# LAW: swapping the two Nat arguments flips Nat.cmp
+law Nat.cmp_flip:
+  for a: Nat
+  for b: Nat
+  {Nat.cmp(b, a) == Cmp.flip(Nat.cmp(a, b)) : Cmp}
+
+def Nat.cmp_flip(a, b):
+  match a b:
+    case 0n 0n:
+      {==}
+    case 0n 1n+bp:
+      {==}
+    case 1n+ap 0n:
+      {==}
+    case 1n+ap 1n+bp:
+      Nat.cmp_flip(ap, bp)
+
+# LAW: an EQ comparison of two numbers means they are equal
+law Nat.eq_of_cmp_eq:
+  for a: Nat
+  for b: Nat
+  for h: IsEQ(Nat.cmp(a, b))
+  {a == b : Nat}
+
+def Nat.eq_of_cmp_eq(a, b, h):
+  match a b:
+    case 0n 0n:
+      {==}
+    case 0n 1n+bp:
+      Empty.absurd({0n == 1n+bp : Nat}, h)
+    case 1n+ap 0n:
+      Empty.absurd({1n+ap == 0n : Nat}, h)
+    case 1n+ap 1n+bp:
+      Equal.cong(Nat, Nat, p => 1n+p, ap, bp, Nat.eq_of_cmp_eq(ap, bp, h))
+
+# LAW: zero is below the successor of any number
+law Nat.cmp_zero_add1:
+  for x: Nat
+  {Nat.cmp(0n, Nat.add(x, 1n)) == LT{} : Cmp}
+
+def Nat.cmp_zero_add1(x):
+  match x:
+    case 0n:
+      {==}
+    case 1n+p:
+      {==}
+
+# LAW: the successor of any number is above zero
+law Nat.cmp_add1_zero:
+  for x: Nat
+  {Nat.cmp(Nat.add(x, 1n), 0n) == GT{} : Cmp}
+
+def Nat.cmp_add1_zero(x):
+  match x:
+    case 0n:
+      {==}
+    case 1n+p:
+      {==}
+
+# LAW: adding one to both numbers keeps their comparison
+law Nat.add1_cmp:
+  for x: Nat
+  for y: Nat
+  {Nat.cmp(Nat.add(x, 1n), Nat.add(y, 1n)) == Nat.cmp(x, y) : Cmp}
+
+def Nat.add1_cmp(x, y):
+  match x y:
+    case 0n 0n:
+      {==}
+    case 0n 1n+q:
+      Nat.cmp_zero_add1(q)
+    case 1n+p 0n:
+      Nat.cmp_add1_zero(p)
+    case 1n+p 1n+q:
+      Nat.add1_cmp(p, q)
