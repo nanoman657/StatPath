@@ -70,3 +70,25 @@ def ins_look_l(c: Cmp, m: Maybe<&2, Merge.Lesson>, +w: Merge.Lesson) -> Maybe<&2
       comb_opt_l(m, Some{w})
     case GT{}:
       m
+
+# ---- XP per day (XEntry): the same shape, keyed by day ----
+
+# KAllX(s, k): every key of s comes after k. Unit for an empty list.
+def KAllX(s: List<&2, Merge.XEntry>, +k: String) -> Type:
+  match s:
+    case Nil{}:
+      Unit
+    case h <> t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          Ord.IsLT(Merge.skey_cmp(k, kh)) & KAllX(t, k)
+
+# SortedX(s): s is strictly increasing by key
+def SortedX(s: List<&2, Merge.XEntry>) -> Type:
+  match s:
+    case Nil{}:
+      Unit
+    case h <> t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          KAllX(t, kh) & SortedX(t)

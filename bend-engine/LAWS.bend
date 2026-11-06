@@ -142,3 +142,21 @@ law lessons_idem:
   for +a: List<&2, Merge.LEntry>
   for sa: S.SortedL(a)
   {Merge.merge_lessons(a, a) == a : List<&2, Merge.LEntry>}
+
+# LAW: the XP merge is commutative on any two lists: each day takes the larger value
+law xp_comm:
+  for +a: List<&2, Merge.XEntry>
+  for +b: List<&2, Merge.XEntry>
+  {Merge.merge_xp(a, b) == Merge.merge_xp(b, a) : List<&2, Merge.XEntry>}
+
+# LAW: the XP merge is idempotent on a sorted map: merging a map with itself gives the map back
+law xp_idem:
+  for +a: List<&2, Merge.XEntry>
+  for sa: S.SortedX(a)
+  {Merge.merge_xp(a, a) == a : List<&2, Merge.XEntry>}
+
+# LAW: the total XP is the same whichever order the two XP maps are merged in
+law xsum_comm:
+  for +a: List<&2, Merge.XEntry>
+  for +b: List<&2, Merge.XEntry>
+  {Merge.xsum(Merge.merge_xp(a, b)) == Merge.xsum(Merge.merge_xp(b, a)) : Nat}

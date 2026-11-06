@@ -1139,3 +1139,422 @@ def idem_lessons(+a: List<&2, Merge.LEntry>, sa: S.SortedL(a)) -> {Merge.merge_l
 # LAW: lessons_idem: merging a sorted lesson map with itself gives the map back (see LAWS.bend)
 def Laws.lessons_idem(a, sa):
   idem_lessons(a, sa)
+# ---- XP per day: the lessons chains over XEntry, with Nat.max as the combining operation ----
+# the copy of a witness for the list whose head is XEntry{kh, vh}: the head's IsLT is shared through e
+def kallx_dup_cons(+k: String, +kh: String, +vh: Nat, t: List<&2, Merge.XEntry>, +e: {Merge.skey_cmp(k, kh) == LT{} : Cmp}, p: (S.KAllX(t, k) & S.KAllX(t, k))) -> (S.KAllX(Merge.XEntry{kh, vh} <> t, k) & S.KAllX(Merge.XEntry{kh, vh} <> t, k)):
+  (ta, tb) = p
+  ((Ord.IsLT.to(Merge.skey_cmp(k, kh), e), ta), (Ord.IsLT.to(Merge.skey_cmp(k, kh), e), tb))
+
+def kallx_dup(s: List<&2, Merge.XEntry>, +k: String, w: S.KAllX(s, k)) -> (S.KAllX(s, k) & S.KAllX(s, k)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          (wi, wt) = w
+          e = Ord.IsLT.of(Merge.skey_cmp(k, kh), wi)
+          kallx_dup_cons(k, kh, vh, t, e, kallx_dup(t, k, wt))
+
+# the two copies of a SortedX witness for a cons, from the copies of its parts
+def sdx_cons(+kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, dk: (S.KAllX(t, kh) & S.KAllX(t, kh)), dt: (S.SortedX(t) & S.SortedX(t))) -> (S.SortedX(Merge.XEntry{kh, vh} <> t) & S.SortedX(Merge.XEntry{kh, vh} <> t)):
+  (wk1, wk2) = dk
+  (wt1, wt2) = dt
+  ((wk1, wt1), (wk2, wt2))
+
+# a witness of SortedX can be copied, as a witness of KAllX can
+def sortedx_dup(s: List<&2, Merge.XEntry>, w: S.SortedX(s)) -> (S.SortedX(s) & S.SortedX(s)):
+  match s:
+    case Nil{}:
+      (Unit{}, Unit{})
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          (wk, wt) = w
+          sdx_cons(kh, vh, t, kallx_dup(t, kh, wk), sortedx_dup(t, wt))
+
+def xc_lt(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat) -> {Merge.xins_c(X, LT{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}) == Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> X) : List<&2, Merge.XEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.XEntry{+k2, +v2}:
+          {==}
+
+# lins_c with EQ: the new entry merges into the head, which keeps its key
+def xc_eq(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat) -> {Merge.xins_c(X, EQ{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}) == Merge.XEntry{kh, Nat.max(vh, va)} <> X : List<&2, Merge.XEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.XEntry{+k2, +v2}:
+          {==}
+
+# lins_c with GT: the head stays in front, and the new entry goes into the rest
+def xc_gt(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat) -> {Merge.xins_c(X, GT{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}) == Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, X) : List<&2, Merge.XEntry>}:
+  match X:
+    case Nil{}:
+      {==}
+    case +h2 <> +t2:
+      match h2:
+        case Merge.XEntry{+k2, +v2}:
+          {==}
+
+# insertion of (ka, va) before the head (kh, vh) <> X, when the new key is LT the head's key
+def xi_lt(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat, ec: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> X) == Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> X) : List<&2, Merge.XEntry>}:
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins_c(X, Merge.skey_cmp(ka, kh), Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.xins_c(X, LT{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> X), Equal.cong(Cmp, List<&2, Merge.XEntry>, (z => Merge.xins_c(X, z, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh})), Merge.skey_cmp(ka, kh), LT{}, ec), xc_lt(X, ka, va, kh, vh))
+
+# insertion of (ka, va) into (kh, vh) <> X, when the keys are EQ: the head is combined
+def xi_eq(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat, ec: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> X) == Merge.XEntry{kh, Nat.max(vh, va)} <> X : List<&2, Merge.XEntry>}:
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins_c(X, Merge.skey_cmp(ka, kh), Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.xins_c(X, EQ{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.XEntry{kh, Nat.max(vh, va)} <> X, Equal.cong(Cmp, List<&2, Merge.XEntry>, (z => Merge.xins_c(X, z, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh})), Merge.skey_cmp(ka, kh), EQ{}, ec), xc_eq(X, ka, va, kh, vh))
+
+# insertion of (ka, va) into (kh, vh) <> X, when the new key is GT the head's key: the head stays in front
+def xi_gt(+X: List<&2, Merge.XEntry>, +ka: String, +va: Nat, +kh: String, +vh: Nat, ec: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> X) == Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, X) : List<&2, Merge.XEntry>}:
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins_c(X, Merge.skey_cmp(ka, kh), Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.xins_c(X, GT{}, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh}), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, X), Equal.cong(Cmp, List<&2, Merge.XEntry>, (z => Merge.xins_c(X, z, Merge.XEntry{ka, va}, Merge.XEntry{kh, vh})), Merge.skey_cmp(ka, kh), GT{}, ec), xc_gt(X, ka, va, kh, vh))
+
+# ---- L2: inserting two lessons in either order gives the same list, for every list s ----
+
+# lp_max is associative and commutative in the order that matters here
+def xpac(+x: Nat, +y: Nat, +z: Nat) -> {Nat.max(Nat.max(x, y), z) == Nat.max(Nat.max(x, z), y) : Nat}:
+  Equal.trans(Nat, Nat.max(Nat.max(x, y), z), Nat.max(x, Nat.max(y, z)), Nat.max(Nat.max(x, z), y),
+    Equal.sym(Nat, Nat.max(x, Nat.max(y, z)), Nat.max(Nat.max(x, y), z), Laws.max_assoc(x, y, z)),
+    Equal.trans(Nat, Nat.max(x, Nat.max(y, z)), Nat.max(x, Nat.max(z, y)), Nat.max(Nat.max(x, z), y),
+      Equal.cong(Nat, Nat, (w => Nat.max(x, w)), Nat.max(y, z), Nat.max(z, y), Laws.max_comm(y, z)),
+      Laws.max_assoc(x, z, y)))
+
+# two entries with EQ keys, in either order, give the same entry before the rest X
+def xp_eq_swap(+ka: String, +va: Nat, +kb: String, +vb: Nat, e: {Merge.skey_cmp(ka, kb) == EQ{} : Cmp}, +X: List<&2, Merge.XEntry>) -> {Merge.XEntry{kb, Nat.max(vb, va)} <> X == Merge.XEntry{ka, Nat.max(va, vb)} <> X : List<&2, Merge.XEntry>}:
+  kq = Equal.sym(String, ka, kb, Laws.skey_eq_of(ka, kb, Ord.IsEQ.to(Merge.skey_cmp(ka, kb), e)))
+  s1 = Equal.cong(String, Merge.XEntry, (k => Merge.XEntry{k, Nat.max(vb, va)}), kb, ka, kq)
+  s2 = Equal.cong(Nat, Merge.XEntry, (v => Merge.XEntry{ka, v}), Nat.max(vb, va), Nat.max(va, vb), Laws.max_comm(vb, va))
+  s3 = Equal.trans(Merge.XEntry, Merge.XEntry{kb, Nat.max(vb, va)}, Merge.XEntry{ka, Nat.max(vb, va)}, Merge.XEntry{ka, Nat.max(va, vb)}, s1, s2)
+  Equal.cong(Merge.XEntry, List<&2, Merge.XEntry>, (p => p <> X), Merge.XEntry{kb, Nat.max(vb, va)}, Merge.XEntry{ka, Nat.max(va, vb)}, s3)
+
+# congruence for the two places a list appears in lins
+def cong_xins(+ka: String, +va: Nat, +x: List<&2, Merge.XEntry>, +y: List<&2, Merge.XEntry>, e: {x == y : List<&2, Merge.XEntry>}) -> {Merge.xins(Merge.XEntry{ka, va}, x) == Merge.xins(Merge.XEntry{ka, va}, y) : List<&2, Merge.XEntry>}:
+  Equal.cong(List<&2, Merge.XEntry>, List<&2, Merge.XEntry>, (z => Merge.xins(Merge.XEntry{ka, va}, z)), x, y, e)
+
+def cong_xcons(+kh: String, +vh: Nat, +x: List<&2, Merge.XEntry>, +y: List<&2, Merge.XEntry>, e: {x == y : List<&2, Merge.XEntry>}) -> {Merge.XEntry{kh, vh} <> x == Merge.XEntry{kh, vh} <> y : List<&2, Merge.XEntry>}:
+  Equal.cong(List<&2, Merge.XEntry>, List<&2, Merge.XEntry>, (z => Merge.XEntry{kh, vh} <> z), x, y, e)
+
+# ---- the empty list: [A, B] against [B, A] ----
+
+def xins2_nil_c(+ka: String, +va: Nat, +kb: String, +vb: Nat, +c: Cmp, +ec: {Merge.skey_cmp(ka, kb) == c : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Nil{})) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})) : List<&2, Merge.XEntry>}:
+  match c:
+    case LT{}:
+      s1 = xi_lt(Nil{}, ka, va, kb, vb, ec)
+      r1 = xi_gt(Nil{}, kb, vb, ka, va, rev_lt(ka, kb, ec))
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Nil{})), Merge.XEntry{ka, va} <> (Merge.XEntry{kb, vb} <> Nil{}), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})), s1, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Nil{}), r1))
+    case EQ{}:
+      s1 = xi_eq(Nil{}, ka, va, kb, vb, ec)
+      r1 = xi_eq(Nil{}, kb, vb, ka, va, eq_flip(ka, kb, ec))
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Nil{})), Merge.XEntry{kb, Nat.max(vb, va)} <> Nil{}, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})),
+        s1,
+        Equal.trans(List<&2, Merge.XEntry>, Merge.XEntry{kb, Nat.max(vb, va)} <> Nil{}, Merge.XEntry{ka, Nat.max(va, vb)} <> Nil{}, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})),
+          xp_eq_swap(ka, va, kb, vb, ec, Nil{}),
+          Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})), Merge.XEntry{ka, Nat.max(va, vb)} <> Nil{}, r1)))
+    case GT{}:
+      s1 = xi_gt(Nil{}, ka, va, kb, vb, ec)
+      r1 = xi_lt(Nil{}, kb, vb, ka, va, rev_gt(ka, kb, ec))
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Nil{})), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> Nil{}), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})),
+        Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Nil{})), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Nil{}), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> Nil{}), s1, Equal.cong(List<&2, Merge.XEntry>, List<&2, Merge.XEntry>, (z => Merge.XEntry{kb, vb} <> z), Merge.xins(Merge.XEntry{ka, va}, Nil{}), Merge.XEntry{ka, va} <> Nil{}, {==})),
+        Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Nil{})), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> Nil{}), r1))
+
+# ---- the cons case: the branch lemmas, one per pair of comparisons of ka and kb with the head kh ----
+
+# GT, GT: both new entries go past the head, so the head stays in front and the induction hypothesis applies to the rest
+def x2_GG(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}, ih: {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)) : List<&2, Merge.XEntry>}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_gt(t, kb, vb, kh, vh, eB)
+  s2 = xi_gt(Merge.xins(Merge.XEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = xi_gt(t, ka, va, kh, vh, eA)
+  r2 = xi_gt(Merge.xins(Merge.XEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)), cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t), s1), s2)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)), cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t), r1), r2)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L1,
+    Equal.trans(List<&2, Merge.XEntry>, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)),
+      cong_xcons(kh, vh, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)), ih),
+      Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)), R1)))
+
+# GT, EQ: the new a merges into the head, which the new b has just passed
+def x2_GE(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_gt(t, kb, vb, kh, vh, eB)
+  s2 = xi_eq(Merge.xins(Merge.XEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = xi_eq(t, ka, va, kh, vh, eA)
+  r2 = xi_gt(t, kb, vb, kh, Nat.max(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.XEntry{kh, Nat.max(vh, va)} <> Merge.xins(Merge.XEntry{kb, vb}, t), cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t), s1), s2)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, Nat.max(vh, va)} <> t), Merge.XEntry{kh, Nat.max(vh, va)} <> Merge.xins(Merge.XEntry{kb, vb}, t), cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, va)} <> t, r1), r2)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(vh, va)} <> Merge.xins(Merge.XEntry{kb, vb}, t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(vh, va)} <> Merge.xins(Merge.XEntry{kb, vb}, t), R1))
+
+# ---- the cons case, continued: the remaining branches ----
+
+# EQ, GT: the new b merges into the head; the new a is past the head
+def x2_EG(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, vb)} <> t, s1)
+  s3 = xi_gt(t, ka, va, kh, Nat.max(vh, vb), eA)
+  r1 = xi_gt(t, ka, va, kh, vh, eA)
+  r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t), r1)
+  r3 = xi_eq(Merge.xins(Merge.XEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, Nat.max(vh, vb)} <> t), Merge.XEntry{kh, Nat.max(vh, vb)} <> Merge.xins(Merge.XEntry{ka, va}, t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), Merge.XEntry{kh, Nat.max(vh, vb)} <> Merge.xins(Merge.XEntry{ka, va}, t), r2, r3)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(vh, vb)} <> Merge.xins(Merge.XEntry{ka, va}, t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(vh, vb)} <> Merge.xins(Merge.XEntry{ka, va}, t), R1))
+
+# EQ, EQ: both new entries merge into the head; the two combined values agree by xpac
+def x2_EE(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, vb)} <> t, s1)
+  s3 = xi_eq(t, ka, va, kh, Nat.max(vh, vb), eA)
+  m = Equal.cong(Nat, List<&2, Merge.XEntry>, (v => Merge.XEntry{kh, v} <> t), Nat.max(Nat.max(vh, vb), va), Nat.max(Nat.max(vh, va), vb), xpac(vh, vb, va))
+  r1 = xi_eq(t, ka, va, kh, vh, eA)
+  r3 = xi_eq(t, kb, vb, kh, Nat.max(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, Nat.max(vh, vb)} <> t), Merge.XEntry{kh, Nat.max(Nat.max(vh, vb), va)} <> t, s2, s3)
+  L2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(Nat.max(vh, vb), va)} <> t, Merge.XEntry{kh, Nat.max(Nat.max(vh, va), vb)} <> t, L1, m)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, Nat.max(vh, va)} <> t), Merge.XEntry{kh, Nat.max(Nat.max(vh, va), vb)} <> t, Equal.cong(List<&2, Merge.XEntry>, List<&2, Merge.XEntry>, (z => Merge.xins(Merge.XEntry{kb, vb}, z)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, va)} <> t, r1), r3)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(Nat.max(vh, va), vb)} <> t, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kh, Nat.max(Nat.max(vh, va), vb)} <> t, R1))
+
+# EQ, LT: the new a is before the head; the new b merges into the head
+def x2_EL(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == EQ{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_eq(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, vb)} <> t, s1)
+  s3 = xi_lt(t, ka, va, kh, Nat.max(vh, vb), eA)
+  r1 = xi_lt(t, ka, va, kh, vh, eA)
+  r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), r1)
+  r3 = xi_gt(Merge.XEntry{kh, vh} <> t, kb, vb, ka, va, w_el(ka, kh, kb, eA, eB))
+  r4 = cong_xcons(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, vb)} <> t, xi_eq(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, Nat.max(vh, vb)} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, Nat.max(vh, vb)} <> t), s2, s3)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), r2, r3)
+  R2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, Nat.max(vh, vb)} <> t), R1, r4)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, Nat.max(vh, vb)} <> t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, Nat.max(vh, vb)} <> t), R2))
+
+# ---- the cons case, continued: the GT-LT, GT-EQ... branches for the new b past the head and the new a before it ----
+
+# GT, LT: the new a is before the head, so it goes to the front; the new b is past the head and stays behind it
+def x2_GL(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == GT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_gt(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t), s1)
+  s3 = xi_lt(Merge.xins(Merge.XEntry{kb, vb}, t), ka, va, kh, vh, eA)
+  r1 = xi_lt(t, ka, va, kh, vh, eA)
+  r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), r1)
+  r3 = xi_gt(Merge.XEntry{kh, vh} <> t, kb, vb, ka, va, w_gl(ka, kh, kb, eA, eB))
+  r4 = cong_xcons(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t), xi_gt(t, kb, vb, kh, vh, eB))
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), L1, Equal.sym(List<&2, Merge.XEntry>, Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kb, vb}, t)), r4))
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), R1))
+
+# LT, GT: the new b is before the head, so it goes to the front; the new a is past the head and stays behind it
+def x2_LG(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == GT{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_lt(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), s1)
+  s3 = xi_gt(Merge.XEntry{kh, vh} <> t, ka, va, kb, vb, w_lg(ka, kh, kb, eA, eB))
+  s4 = cong_xcons(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t), xi_gt(t, ka, va, kh, vh, eA))
+  r1 = xi_gt(t, ka, va, kh, vh, eA)
+  r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t), r1)
+  r3 = xi_lt(Merge.xins(Merge.XEntry{ka, va}, t), kb, vb, kh, vh, eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), r2, r3)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{ka, va}, t)), R1))
+
+# LT, EQ: the new b is before the head; the new a merges into the head
+def x2_LE(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == EQ{} : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  s1 = xi_lt(t, kb, vb, kh, vh, eB)
+  s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), s1)
+  s3 = xi_gt(Merge.XEntry{kh, vh} <> t, ka, va, kb, vb, w_le(ka, kh, kb, eA, eB))
+  s4 = cong_xcons(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, va)} <> t, xi_eq(t, ka, va, kh, vh, eA))
+  r1 = xi_eq(t, ka, va, kh, vh, eA)
+  r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, va)} <> t, r1)
+  r3 = xi_lt(t, kb, vb, kh, Nat.max(vh, va), eB)
+  L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), s2, s3)
+  L2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, Nat.max(vh, va)} <> t), L1, s4)
+  R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, Nat.max(vh, va)} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, Nat.max(vh, va)} <> t), r2, r3)
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, Nat.max(vh, va)} <> t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, Nat.max(vh, va)} <> t), R1))
+
+# LT, LT: both new entries are before the head; the order of ka and kb decides the front, and the EQ case joins by xp_eq_swap
+def x2_LL(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +eB: {Merge.skey_cmp(kb, kh) == LT{} : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == LT{} : Cmp}, +c3: Cmp, +ec3: {Merge.skey_cmp(ka, kb) == c3 : Cmp}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  match c3:
+    case LT{}:
+      s1 = xi_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), s1)
+      s3 = xi_lt(Merge.XEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = xi_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), r1)
+      r3 = xi_gt(Merge.XEntry{kh, vh} <> t, kb, vb, ka, va, rev_lt(ka, kb, ec3))
+      r4 = cong_xcons(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), xi_lt(t, kb, vb, kh, vh, eB))
+      L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), r2, r3)
+      R2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), R1, r4)
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L1, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, va} <> (Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), R2))
+    case EQ{}:
+      s1 = xi_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), s1)
+      s3 = xi_eq(Merge.XEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      r1 = xi_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), r1)
+      r3 = xi_eq(Merge.XEntry{kh, vh} <> t, kb, vb, ka, va, eq_flip(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, Nat.max(vb, va)} <> (Merge.XEntry{kh, vh} <> t), s2, s3)
+      R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, Nat.max(va, vb)} <> (Merge.XEntry{kh, vh} <> t), r2, r3)
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, Nat.max(va, vb)} <> (Merge.XEntry{kh, vh} <> t), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, Nat.max(vb, va)} <> (Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, Nat.max(va, vb)} <> (Merge.XEntry{kh, vh} <> t), L1, xp_eq_swap(ka, va, kb, vb, ec3, Merge.XEntry{kh, vh} <> t)), Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{ka, Nat.max(va, vb)} <> (Merge.XEntry{kh, vh} <> t), R1))
+    case GT{}:
+      s1 = xi_lt(t, kb, vb, kh, vh, eB)
+      s2 = cong_xins(ka, va, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t), s1)
+      s3 = xi_gt(Merge.XEntry{kh, vh} <> t, ka, va, kb, vb, ec3)
+      s4 = cong_xcons(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), xi_lt(t, ka, va, kh, vh, eA))
+      r1 = xi_lt(t, ka, va, kh, vh, eA)
+      r2 = cong_xins(kb, vb, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t), r1)
+      r3 = xi_lt(Merge.XEntry{kh, vh} <> t, kb, vb, ka, va, rev_gt(ka, kb, ec3))
+      L1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kb, vb} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), s2, s3)
+      L2 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), L1, s4)
+      R1 = Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), r2, r3)
+      Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), L2, Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)), Merge.XEntry{kb, vb} <> (Merge.XEntry{ka, va} <> (Merge.XEntry{kh, vh} <> t)), R1))
+
+# ---- the cons case dispatch: cb = skey(kb, kh) and ca = skey(ka, kh) choose the branch lemma ----
+
+def xins2_cons(+ka: String, +va: Nat, +kb: String, +vb: Nat, +kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +cb: Cmp, +ca: Cmp, +eB: {Merge.skey_cmp(kb, kh) == cb : Cmp}, +eA: {Merge.skey_cmp(ka, kh) == ca : Cmp}, +ih: {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, t)) : List<&2, Merge.XEntry>}) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, Merge.XEntry{kh, vh} <> t)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, Merge.XEntry{kh, vh} <> t)) : List<&2, Merge.XEntry>}:
+  match cb:
+    case LT{}:
+      match ca:
+        case LT{}:
+          x2_LL(ka, va, kb, vb, kh, vh, t, eB, eA, Merge.skey_cmp(ka, kb), {==})
+        case EQ{}:
+          x2_LE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          x2_LG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case EQ{}:
+      match ca:
+        case LT{}:
+          x2_EL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          x2_EE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          x2_EG(ka, va, kb, vb, kh, vh, t, eB, eA)
+    case GT{}:
+      match ca:
+        case LT{}:
+          x2_GL(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case EQ{}:
+          x2_GE(ka, va, kb, vb, kh, vh, t, eB, eA)
+        case GT{}:
+          x2_GG(ka, va, kb, vb, kh, vh, t, eB, eA, ih)
+
+# ---- two lesson insertions commute on any list (no sortedness needed) ----
+
+def xins2(+ka: String, +va: Nat, +kb: String, +vb: Nat, +s: List<&2, Merge.XEntry>) -> {Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kb, vb}, s)) == Merge.xins(Merge.XEntry{kb, vb}, Merge.xins(Merge.XEntry{ka, va}, s)) : List<&2, Merge.XEntry>}:
+  match s:
+    case Nil{}:
+      xins2_nil_c(ka, va, kb, vb, Merge.skey_cmp(ka, kb), {==})
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          xins2_cons(ka, va, kb, vb, kh, vh, t, Merge.skey_cmp(kb, kh), Merge.skey_cmp(ka, kh), {==}, {==}, xins2(ka, va, kb, vb, t))
+
+# ---- the fold: a fold over b, with the same accumulator changed, is congruent ----
+
+def cong_xfold(+b: List<&2, Merge.XEntry>, +x: List<&2, Merge.XEntry>, +y: List<&2, Merge.XEntry>, e: {x == y : List<&2, Merge.XEntry>}) -> {Merge.xfold(b, x) == Merge.xfold(b, y) : List<&2, Merge.XEntry>}:
+  Equal.cong(List<&2, Merge.XEntry>, List<&2, Merge.XEntry>, (z => Merge.xfold(b, z)), x, y, e)
+
+# inserting A into the accumulator before folding b equals inserting it after: the fold passes it along
+def xf_lins(+ka: String, +va: Nat, +b: List<&2, Merge.XEntry>, +acc: List<&2, Merge.XEntry>) -> {Merge.xfold(b, Merge.xins(Merge.XEntry{ka, va}, acc)) == Merge.xins(Merge.XEntry{ka, va}, Merge.xfold(b, acc)) : List<&2, Merge.XEntry>}:
+  match b:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(Merge.XEntry{kh, vh} <> t, Merge.xins(Merge.XEntry{ka, va}, acc)), Merge.xfold(t, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kh, vh}, acc))), Merge.xins(Merge.XEntry{ka, va}, Merge.xfold(Merge.XEntry{kh, vh} <> t, acc)),
+            cong_xfold(t, Merge.xins(Merge.XEntry{kh, vh}, Merge.xins(Merge.XEntry{ka, va}, acc)), Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kh, vh}, acc)), Equal.sym(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{ka, va}, Merge.xins(Merge.XEntry{kh, vh}, acc)), Merge.xins(Merge.XEntry{kh, vh}, Merge.xins(Merge.XEntry{ka, va}, acc)), xins2(ka, va, kh, vh, acc))),
+            xf_lins(ka, va, t, Merge.xins(Merge.XEntry{kh, vh}, acc)))
+
+# the fold of b over a's entries and the fold of a over b's entries agree: the insertions of one list commute past the other
+def xf_comm(+a: List<&2, Merge.XEntry>, +b: List<&2, Merge.XEntry>, +acc: List<&2, Merge.XEntry>) -> {Merge.xfold(b, Merge.xfold(a, acc)) == Merge.xfold(a, Merge.xfold(b, acc)) : List<&2, Merge.XEntry>}:
+  match a:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(b, Merge.xfold(Merge.XEntry{kh, vh} <> t, acc)), Merge.xfold(t, Merge.xfold(b, Merge.xins(Merge.XEntry{kh, vh}, acc))), Merge.xfold(Merge.XEntry{kh, vh} <> t, Merge.xfold(b, acc)),
+            xf_comm(t, b, Merge.xins(Merge.XEntry{kh, vh}, acc)),
+            cong_xfold(t, Merge.xfold(b, Merge.xins(Merge.XEntry{kh, vh}, acc)), Merge.xins(Merge.XEntry{kh, vh}, Merge.xfold(b, acc)), xf_lins(kh, vh, b, acc)))
+
+# LAW: xp_comm: the lesson merge is commutative on any two lists (see LAWS.bend)
+def Laws.xp_comm(a, b):
+  xf_comm(a, b, Nil{})
+
+# ---- lessons: idempotence (a sorted map folded into itself gives the map back) ----
+
+# inserting an entry whose key is already at the front, with its own value, changes nothing
+def xins_self(+kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>) -> {Merge.xins(Merge.XEntry{kh, vh}, Merge.XEntry{kh, vh} <> t) == Merge.XEntry{kh, vh} <> t : List<&2, Merge.XEntry>}:
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xins(Merge.XEntry{kh, vh}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, Nat.max(vh, vh)} <> t, Merge.XEntry{kh, vh} <> t,
+    xi_eq(t, kh, vh, kh, vh, skey_self(kh)),
+    Equal.cong(Nat, List<&2, Merge.XEntry>, (u => Merge.XEntry{kh, u} <> t), Nat.max(vh, vh), vh, Laws.max_self(vh)))
+
+# folding t into an accumulator whose front key is below every key of t: the front entry stays in front
+def xf_gt(+kh: String, +vh: Nat, +t: List<&2, Merge.XEntry>, +s: List<&2, Merge.XEntry>, w: S.KAllX(t, kh)) -> {Merge.xfold(t, Merge.XEntry{kh, vh} <> s) == Merge.XEntry{kh, vh} <> Merge.xfold(t, s) : List<&2, Merge.XEntry>}:
+  match t:
+    case Nil{}:
+      {==}
+    case +h <> +t2:
+      match h:
+        case Merge.XEntry{+kt, +vt}:
+          (wi, wt) = w
+          Equal.trans(List<&2, Merge.XEntry>,
+            Merge.xfold(t2, Merge.xins(Merge.XEntry{kt, vt}, Merge.XEntry{kh, vh} <> s)),
+            Merge.xfold(t2, Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kt, vt}, s)),
+            Merge.XEntry{kh, vh} <> Merge.xfold(t2, Merge.xins(Merge.XEntry{kt, vt}, s)),
+            cong_xfold(t2, Merge.xins(Merge.XEntry{kt, vt}, Merge.XEntry{kh, vh} <> s), Merge.XEntry{kh, vh} <> Merge.xins(Merge.XEntry{kt, vt}, s), xi_gt(s, kt, vt, kh, vh, islt_skey_gt(kh, kt, wi))),
+            xf_gt(kh, vh, t2, Merge.xins(Merge.XEntry{kt, vt}, s), wt))
+
+# a sorted map folded into itself stays itself
+def xf_self(+s: List<&2, Merge.XEntry>, ws: S.SortedX(s)) -> {Merge.xfold(s, s) == s : List<&2, Merge.XEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(Merge.XEntry{kh, vh} <> t, Merge.XEntry{kh, vh} <> t), Merge.xfold(t, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> t,
+            cong_xfold(t, Merge.xins(Merge.XEntry{kh, vh}, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> t, xins_self(kh, vh, t)),
+            Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(t, Merge.XEntry{kh, vh} <> t), Merge.XEntry{kh, vh} <> Merge.xfold(t, t), Merge.XEntry{kh, vh} <> t,
+              xf_gt(kh, vh, t, t, wk),
+              cong_xcons(kh, vh, Merge.xfold(t, t), t, xf_self(t, wt))))
+
+# a sorted map folded into the empty list gives the map back
+def xf_nil(+s: List<&2, Merge.XEntry>, ws: S.SortedX(s)) -> {Merge.xfold(s, Nil{}) == s : List<&2, Merge.XEntry>}:
+  match s:
+    case Nil{}:
+      {==}
+    case +h <> +t:
+      match h:
+        case Merge.XEntry{+kh, +vh}:
+          (wk, wt) = ws
+          Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(Merge.XEntry{kh, vh} <> t, Nil{}), Merge.XEntry{kh, vh} <> Merge.xfold(t, Nil{}), Merge.XEntry{kh, vh} <> t,
+            xf_gt(kh, vh, t, Nil{}, wk),
+            cong_xcons(kh, vh, Merge.xfold(t, Nil{}), t, xf_nil(t, wt)))
+
+# a sorted lesson map merged with itself is itself: the fold over a of (a folded into the empty list) gives a.
+# The two copies of the witness arrive as a parameter, since a match cannot scrutinize a computed pair.
+def xidem_pair(+a: List<&2, Merge.XEntry>, dd: (S.SortedX(a) & S.SortedX(a))) -> {Merge.merge_xp(a, a) == a : List<&2, Merge.XEntry>}:
+  (s1, s2) = dd
+  Equal.trans(List<&2, Merge.XEntry>, Merge.xfold(a, Merge.xfold(a, Nil{})), Merge.xfold(a, a), a,
+    cong_xfold(a, Merge.xfold(a, Nil{}), a, xf_nil(a, s1)),
+    xf_self(a, s2))
+
+def xidem(+a: List<&2, Merge.XEntry>, sa: S.SortedX(a)) -> {Merge.merge_xp(a, a) == a : List<&2, Merge.XEntry>}:
+  xidem_pair(a, sortedx_dup(a, sa))
+
+# LAW: xp_idem: merging a sorted lesson map with itself gives the map back (see LAWS.bend)
+def Laws.xp_idem(a, sa):
+  xidem(a, sa)
+
+# ---- xsum_comm: the total XP is a function of the merged map, so the map's commutation carries over ----
+
+# LAW: xsum_comm, from xp_comm by congruence on xsum
+def xsum_comm_h(+a: List<&2, Merge.XEntry>, +b: List<&2, Merge.XEntry>) -> {Merge.xsum(Merge.merge_xp(a, b)) == Merge.xsum(Merge.merge_xp(b, a)) : Nat}:
+  Equal.cong(List<&2, Merge.XEntry>, Nat, (z => Merge.xsum(z)), Merge.merge_xp(a, b), Merge.merge_xp(b, a), Laws.xp_comm(a, b))
+
+def Laws.xsum_comm(a, b):
+  xsum_comm_h(a, b)
