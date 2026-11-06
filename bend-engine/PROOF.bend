@@ -1683,3 +1683,175 @@ def lex_step(+p: Cmp, +q: Cmp, +r: Cmp, +Tp: Cmp, +Tq: Cmp, +Tr: Cmp,
       Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hp)
     case GT{} GT{}:
       Empty.absurd(Ord.IsLT(Merge.cmp_then(r, Tr)), hp)
+
+# ---- card order: 11-level chain and transitivity ----
+def cc11(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Nat.cmp(Merge.last_key(t1), Merge.last_key(t2))
+
+def cc10(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(r1, r2), cc11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc9(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(s1, s2), cc10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc8(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(d1, d2), cc9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc7(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(e1, e2), cc8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc6(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(v1, v2), cc7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc5(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Merge.skey_cmp(l1, l2), cc6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc4(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Merge.skey_cmp(i1, i2), cc5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc3(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(d1, d2), cc4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc2(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(r1, r2), cc3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def cc1(+A: Merge.Card, +B: Merge.Card) -> Cmp:
+  match A B:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2}:
+      Merge.cmp_then(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), cc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}))
+
+def ltc11(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc11(a, b)), h2: Ord.IsLT(cc11(b, c))) -> Ord.IsLT(cc11(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      nat_lt_w(Merge.last_key(t1), Merge.last_key(t2), Merge.last_key(t3), h1, h2)
+
+def ltc10(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc10(a, b)), h2: Ord.IsLT(cc10(b, c))) -> Ord.IsLT(cc10(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(r1, r2), Nat.cmp(r2, r3), Nat.cmp(r1, r3), cc11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc11(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_le_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_el_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_ee_w(r1, r2, r3, u1, u2),
+        u1 => u2 => ltc11(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc9(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc9(a, b)), h2: Ord.IsLT(cc9(b, c))) -> Ord.IsLT(cc9(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(s1, s2), Nat.cmp(s2, s3), Nat.cmp(s1, s3), cc10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc10(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(s1, s2, s3, u1, u2),
+        u1 => u2 => nat_le_w(s1, s2, s3, u1, u2),
+        u1 => u2 => nat_el_w(s1, s2, s3, u1, u2),
+        u1 => u2 => nat_ee_w(s1, s2, s3, u1, u2),
+        u1 => u2 => ltc10(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc8(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc8(a, b)), h2: Ord.IsLT(cc8(b, c))) -> Ord.IsLT(cc8(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(d1, d2), Nat.cmp(d2, d3), Nat.cmp(d1, d3), cc9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc9(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_le_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_el_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_ee_w(d1, d2, d3, u1, u2),
+        u1 => u2 => ltc9(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc7(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc7(a, b)), h2: Ord.IsLT(cc7(b, c))) -> Ord.IsLT(cc7(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(e1, e2), Nat.cmp(e2, e3), Nat.cmp(e1, e3), cc8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc8(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(e1, e2, e3, u1, u2),
+        u1 => u2 => nat_le_w(e1, e2, e3, u1, u2),
+        u1 => u2 => nat_el_w(e1, e2, e3, u1, u2),
+        u1 => u2 => nat_ee_w(e1, e2, e3, u1, u2),
+        u1 => u2 => ltc8(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc6(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc6(a, b)), h2: Ord.IsLT(cc6(b, c))) -> Ord.IsLT(cc6(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(v1, v2), Nat.cmp(v2, v3), Nat.cmp(v1, v3), cc7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc7(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(v1, v2, v3, u1, u2),
+        u1 => u2 => nat_le_w(v1, v2, v3, u1, u2),
+        u1 => u2 => nat_el_w(v1, v2, v3, u1, u2),
+        u1 => u2 => nat_ee_w(v1, v2, v3, u1, u2),
+        u1 => u2 => ltc7(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc5(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc5(a, b)), h2: Ord.IsLT(cc5(b, c))) -> Ord.IsLT(cc5(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Merge.skey_cmp(l1, l2), Merge.skey_cmp(l2, l3), Merge.skey_cmp(l1, l3), cc6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc6(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => str_ll(l1, l2, l3, u1, u2),
+        u1 => u2 => str_le(l1, l2, l3, u1, u2),
+        u1 => u2 => str_el(l1, l2, l3, u1, u2),
+        u1 => u2 => str_ee(l1, l2, l3, u1, u2),
+        u1 => u2 => ltc6(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc4(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc4(a, b)), h2: Ord.IsLT(cc4(b, c))) -> Ord.IsLT(cc4(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Merge.skey_cmp(i1, i2), Merge.skey_cmp(i2, i3), Merge.skey_cmp(i1, i3), cc5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc5(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => str_ll(i1, i2, i3, u1, u2),
+        u1 => u2 => str_le(i1, i2, i3, u1, u2),
+        u1 => u2 => str_el(i1, i2, i3, u1, u2),
+        u1 => u2 => str_ee(i1, i2, i3, u1, u2),
+        u1 => u2 => ltc5(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc3(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc3(a, b)), h2: Ord.IsLT(cc3(b, c))) -> Ord.IsLT(cc3(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(d1, d2), Nat.cmp(d2, d3), Nat.cmp(d1, d3), cc4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc4(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_le_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_el_w(d1, d2, d3, u1, u2),
+        u1 => u2 => nat_ee_w(d1, d2, d3, u1, u2),
+        u1 => u2 => ltc4(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc2(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc2(a, b)), h2: Ord.IsLT(cc2(b, c))) -> Ord.IsLT(cc2(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(r1, r2), Nat.cmp(r2, r3), Nat.cmp(r1, r3), cc3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc3(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_le_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_el_w(r1, r2, r3, u1, u2),
+        u1 => u2 => nat_ee_w(r1, r2, r3, u1, u2),
+        u1 => u2 => ltc3(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
+def ltc1(+a: Merge.Card, +b: Merge.Card, +c: Merge.Card, h1: Ord.IsLT(cc1(a, b)), h2: Ord.IsLT(cc1(b, c))) -> Ord.IsLT(cc1(a, c)):
+  match a b c:
+    case Merge.Card{+i1, +l1, +v1, +e1, +d1, +s1, +r1, +t1} Merge.Card{+i2, +l2, +v2, +e2, +d2, +s2, +r2, +t2} Merge.Card{+i3, +l3, +v3, +e3, +d3, +s3, +r3, +t3}:
+      lex_step(Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t2)), Nat.cmp(Merge.last_or0(t2), Merge.last_or0(t3)), Nat.cmp(Merge.last_or0(t1), Merge.last_or0(t3)), cc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}), cc2(Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}), cc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}),
+        u1 => u2 => nat_lt_w(Merge.last_or0(t1), Merge.last_or0(t2), Merge.last_or0(t3), u1, u2),
+        u1 => u2 => nat_le_w(Merge.last_or0(t1), Merge.last_or0(t2), Merge.last_or0(t3), u1, u2),
+        u1 => u2 => nat_el_w(Merge.last_or0(t1), Merge.last_or0(t2), Merge.last_or0(t3), u1, u2),
+        u1 => u2 => nat_ee_w(Merge.last_or0(t1), Merge.last_or0(t2), Merge.last_or0(t3), u1, u2),
+        u1 => u2 => ltc2(Merge.Card{i1, l1, v1, e1, d1, s1, r1, t1}, Merge.Card{i2, l2, v2, e2, d2, s2, r2, t2}, Merge.Card{i3, l3, v3, e3, d3, s3, r3, t3}, u1, u2),
+        h1, h2)
+
