@@ -108,10 +108,10 @@ Source: `inline/inline_layout_algorithm.cc`, `inline/inline_box_state.cc`, `inli
 
 ## Phase 5: M5 — Differential conformance and translation check (3–5 days)
 
-- [ ] Choose the oracle per P0.1 Q4 (`blink_unittests` fixtures or a reference evaluator).
-- [ ] Generate bounded test vectors, following the `bend-engine/model_vectors.py` pattern.
-- [ ] Compile the Bend model to `.mjs` and run the vectors against it. This needs a Node test in the same style as `tests/merge_bend.test.ts`.
-- [ ] Extend `CompilerCheck.lean` to cover `Nat.max` (a `>` guard) and record constructors. `bend-engine/README.md` records that these are currently rejected.
+- [x] Choose the oracle per P0.1 Q4 (`blink_unittests` fixtures or a reference evaluator).
+- [x] Generate bounded test vectors, following the `bend-engine/model_vectors.py` pattern (`docs/chromium-layout/model_vectors.py` and `docs/chromium-layout/model_vectors.txt`, 650 vectors across M1–M4).
+- [x] Compile the Bend model to `.mjs` (`docs/chromium-layout/layout.mjs` via `docs/chromium-layout/gen.sh`) and run the vectors against it (`tests/chromium_layout_bend.test.ts`).
+- [x] Extend `CompilerCheck.lean` (`docs/chromium-layout/CompilerCheckCore.lean` and `docs/chromium-layout/CompilerCheck.lean`, with `docs/chromium-layout/compiler_check.py` and `docs/chromium-layout/compiler_check_report.txt`) to cover `Nat.max` (a `>` guard) and record constructors. `bend-engine/README.md` records that these are currently rejected.
 
 **Exit criterion:** all vectors pass and the compiler check accepts the extended forms. The vectors are checked into the repo with their generator.
 
@@ -197,3 +197,5 @@ The SCOPE estimates are anchored to the repository's earlier developments (SCOPE
 |---|---|---|
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Roadmap written. Pin not yet re-verified in this repository (P0.5). |
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 0 complete (P0.1–P0.7): Q1–Q5 proposed; `Layout.lean` compiled; `spike/stack.bend --verdict` checked; `check.sh` and `pins.txt` added. |
+| 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phases 1–4 complete (M1–M4): Laws 1–5 proved in Lean (`LayoutTypes.lean`, `LayoutBlock.lean`, `LayoutInline.lean`, `Layout.lean`) and Bend (`layout.bend`, `proof.bend`); Q1–Q5 approved by owner. |
+| 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 5 complete (M5): `layout.mjs` compiled (`gen.sh`); 650 bounded vectors generated (`model_vectors.py` / `model_vectors.txt`) and verified (`tests/chromium_layout_bend.test.ts`); `CompilerCheckCore.lean` and `CompilerCheck.lean` extended for `Nat.max` (`>`) and record constructors (`compiler_check.py` / `compiler_check_report.txt`). |

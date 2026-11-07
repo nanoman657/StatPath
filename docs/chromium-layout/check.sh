@@ -73,92 +73,144 @@ for bf in "${BEND_FILES[@]}"; do
   fi
 done
 
-# 2, 3, 4. Check all .lean files with `lean <file>` and verify `#print axioms` on every theorem
-mapfile -t LEAN_FILES < <(find "$HERE" -name '*.lean' -type f | sort)
-if [[ "${#LEAN_FILES[@]}" -eq 0 ]]; then
-  echo "FAIL: no .lean files found under $HERE" >&2
-  exit 1
-fi
+# 2, 3, 4. Check all .lean files one at a time in topological import order with
+# `lean -j 1 -o <OLEAN_DIR>/<Mod>.olean <Mod>.lean` and `LEAN_PATH=<OLEAN_DIR>`
+# (keeping every single `lean` invocation well below 600 MB peak RSS),
+# and verify `#print axioms` on every theorem.
+OLEAN_DIR="${OLEAN_DIR:-/root/agy-scratch/chromium-layout/olean}"
+mkdir -p "$OLEAN_DIR"
+export LEAN_PATH="$OLEAN_DIR"
 
-for lf in "${LEAN_FILES[@]}"; do
-  rel="${lf#"$HERE"/}"
-  echo "== Checking Lean file: $rel"
-  python3 - "$lf" "$LEAN_BIN" "$TMP_DIR" <<'PY'
+python3 - "$HERE" "$LEAN_BIN" "$TMP_DIR" "$OLEAN_DIR" <<'PY'
 import os
 import re
 import subprocess
 import sys
 
-lean_file, lean_bin, tmp_dir = sys.argv[1], sys.argv[2], sys.argv[3]
-with open(lean_file, "r", encoding="utf-8") as f:
-    src = f.read()
+here, lean_bin, tmp_dir, olean_dir = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 
-# Extract theorems and track namespace stack so `#print axioms` can be appended at EOF
-ns_stack = []
-theorems = []
-for raw_line in src.splitlines():
-    line = re.sub(r"--.*$", "", raw_line).strip()
-    m_ns = re.match(r"^namespace\s+([A-Za-z0-9_.]+)", line)
-    if m_ns:
-        ns_stack.append(m_ns.group(1))
-        continue
-    m_end = re.match(r"^end\s+([A-Za-z0-9_.]+)", line)
-    if m_end and ns_stack:
-        ns_stack.pop()
-        continue
-    m_thm = re.match(r"^(?:private\s+|protected\s+)?theorem\s+([A-Za-z0-9_']+)", line)
-    if m_thm:
-        tname = m_thm.group(1)
-        prefix = ".".join(ns_stack)
-        fqname = f"{prefix}.{tname}" if prefix else tname
-        theorems.append(fqname)
+# Discover all .lean files under `here`
+lean_files = []
+for root, _, files in os.walk(here):
+    for fn in files:
+        if fn.endswith(".lean"):
+            lean_files.append(os.path.join(root, fn))
+lean_files.sort()
 
-# Compile the file with `#print axioms` appended for every theorem in a single pass
-if theorems:
-    aug_path = os.path.join(tmp_dir, os.path.basename(lean_file))
-    extra = "\n".join(f"#print axioms {t}" for t in theorems)
-    with open(aug_path, "w", encoding="utf-8") as f:
-        f.write(src + "\n\n" + extra + "\n")
-    res = subprocess.run(["nice", "-n", "19", lean_bin, aug_path], capture_output=True, text=True)
-    out = res.stdout + res.stderr
-    if res.returncode != 0:
-        sys.stderr.write(out)
-        sys.exit(f"FAIL: lean exited with {res.returncode} on {lean_file}")
-else:
-    res = subprocess.run(["nice", "-n", "19", lean_bin, lean_file], capture_output=True, text=True)
-    out = res.stdout + res.stderr
-    if res.returncode != 0:
-        sys.stderr.write(out)
-        sys.exit(f"FAIL: lean exited with {res.returncode} on {lean_file}")
+if not lean_files:
+    sys.exit(f"FAIL: no .lean files found under {here}")
 
-if "sorryAx" in out or "declaration uses 'sorry'" in out:
-    sys.stderr.write(out)
-    sys.exit(f"FAIL: sorryAx detected in {lean_file}")
+# Build module map and topological order by `import <Mod>`
+mod_to_path = {}
+deps = {}
+for lf in lean_files:
+    mod = os.path.splitext(os.path.basename(lf))[0]
+    mod_to_path[mod] = lf
+    with open(lf, "r", encoding="utf-8") as f:
+        src = f.read()
+    imp = []
+    for raw_line in src.splitlines():
+        line = re.sub(r"--.*$", "", raw_line).strip()
+        m_imp = re.match(r"^import\s+([A-Za-z0-9_'.]+)", line)
+        if m_imp:
+            imp.append(m_imp.group(1))
+    deps[lf] = imp
 
+visited = set()
+ordered_files = []
+
+def visit(lf):
+    if lf in visited:
+        return
+    visited.add(lf)
+    for d in deps.get(lf, []):
+        if d in mod_to_path:
+            visit(mod_to_path[d])
+    ordered_files.append(lf)
+
+for lf in lean_files:
+    visit(lf)
+
+env = dict(os.environ, LEAN_PATH=olean_dir)
 allowed = {"propext", "Classical.choice", "Quot.sound"}
-seen_theorems = set()
-for line in out.splitlines():
-    m_none = re.match(r"^'([^']+)' does not depend on any axioms$", line.strip())
-    if m_none:
-        seen_theorems.add(m_none.group(1))
-        continue
-    m_dep = re.match(r"^'([^']+)' depends on axioms:\s*\[([^\]]*)\]$", line.strip())
-    if m_dep:
-        tname = m_dep.group(1)
-        seen_theorems.add(tname)
-        axioms = [a.strip() for a in m_dep.group(2).split(",") if a.strip()]
-        bad = [a for a in axioms if a not in allowed]
-        if bad:
-            sys.stderr.write(out)
-            sys.exit(f"FAIL: disallowed axioms {bad} on theorem {tname} in {lean_file}")
 
-missing = [t for t in theorems if t not in seen_theorems]
-if missing:
-    sys.stderr.write(out)
-    sys.exit(f"FAIL: missing #print axioms output for theorems {missing} in {lean_file}")
+for lf in ordered_files:
+    rel = os.path.relpath(lf, here)
+    mod = os.path.splitext(os.path.basename(lf))[0]
+    olean_out = os.path.join(olean_dir, f"{mod}.olean")
+    print(f"== Checking Lean file: {rel} -> {olean_out}", flush=True)
+    with open(lf, "r", encoding="utf-8") as f:
+        src = f.read()
 
-print(f"OK: {os.path.basename(lean_file)} ({len(theorems)} theorems checked; no sorryAx; allowed axioms only)")
+    # Extract theorems and track namespace stack so `#print axioms` can be appended at EOF
+    ns_stack = []
+    theorems = []
+    for raw_line in src.splitlines():
+        line = re.sub(r"--.*$", "", raw_line).strip()
+        m_ns = re.match(r"^namespace\s+([A-Za-z0-9_.]+)", line)
+        if m_ns:
+            ns_stack.append(m_ns.group(1))
+            continue
+        m_end = re.match(r"^end\s+([A-Za-z0-9_.]+)", line)
+        if m_end and ns_stack:
+            ns_stack.pop()
+            continue
+        m_thm = re.match(r"^(?:private\s+|protected\s+)?theorem\s+([A-Za-z0-9_']+)", line)
+        if m_thm:
+            tname = m_thm.group(1)
+            prefix = ".".join(ns_stack)
+            fqname = f"{prefix}.{tname}" if prefix else tname
+            theorems.append(fqname)
+
+    if theorems:
+        aug_path = os.path.join(tmp_dir, os.path.basename(lf))
+        extra = "\n".join(f"#print axioms {t}" for t in theorems)
+        with open(aug_path, "w", encoding="utf-8") as f:
+            f.write(src + "\n\n" + extra + "\n")
+        cmd = ["nice", "-n", "19", lean_bin, "-j", "1", "-R", tmp_dir, "-o", olean_out, aug_path]
+    else:
+        cmd = ["nice", "-n", "19", lean_bin, "-j", "1", "-R", os.path.dirname(lf), "-o", olean_out, lf]
+
+    res = subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        env=env,
+    )
+    out = res.stdout + res.stderr
+    if res.returncode != 0:
+        sys.stderr.write(out)
+        sys.exit(f"FAIL: lean exited with {res.returncode} on {lf}")
+
+    if "sorryAx" in out or "declaration uses 'sorry'" in out:
+        sys.stderr.write(out)
+        sys.exit(f"FAIL: sorryAx detected in {lf}")
+
+    seen_theorems = set()
+    for line in out.splitlines():
+        m_none = re.match(r"^'([^']+)' does not depend on any axioms$", line.strip())
+        if m_none:
+            seen_theorems.add(m_none.group(1))
+            continue
+        m_dep = re.match(r"^'([^']+)' depends on axioms:\s*\[([^\]]*)\]$", line.strip())
+        if m_dep:
+            tname = m_dep.group(1)
+            seen_theorems.add(tname)
+            axioms = [a.strip() for a in m_dep.group(2).split(",") if a.strip()]
+            bad = [a for a in axioms if a not in allowed]
+            if bad:
+                sys.stderr.write(out)
+                sys.exit(f"FAIL: disallowed axioms {bad} on theorem {tname} in {lf}")
+
+    missing = [t for t in theorems if t not in seen_theorems]
+    if missing:
+        sys.stderr.write(out)
+        sys.exit(f"FAIL: missing #print axioms output for theorems {missing} in {lf}")
+
+    print(
+        f"OK: {rel} ({len(theorems)} theorems checked; no sorryAx; allowed axioms only)",
+        flush=True,
+    )
 PY
-done
 
 echo "== ALL CHECKS PASSED"

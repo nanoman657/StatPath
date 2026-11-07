@@ -844,10 +844,14 @@ def child_inline_lines(+avail_inline: Nat, c: LayoutInputNode) -> StackedLinesRe
 def child_border_box_block_size(+avail_inline: Nat, +c: LayoutInputNode) -> Nat:
   match c:
     case BlockChild{+id, +b, +p, +m, +ew, +eh, +bfc, +csz, +has_c, +ist, +ien}:
+      +has_end_edge = Bool.or(
+        Bool.or(nat_pos(Nat.add(box_strut_block_end(b), box_strut_block_end(p))), bfc),
+        maybe_nat_is_some(eh))
+      +trailing = nat_ite(has_end_edge, margin_strut_sum(ien), 0n)
       +bp = Nat.add(box_strut_block_sum(b), box_strut_block_sum(p))
       maybe_nat_get_or(
         eh,
-        nat_ite(child_is_self_collapsing(c), 0n, Nat.add(bp, csz)))
+        nat_ite(child_is_self_collapsing(c), 0n, Nat.add(Nat.add(bp, csz), trailing)))
     case InlineChild{+id, +b, +p, +m, +ew, +eh, +st, +items}:
       +stacked = child_inline_lines(avail_inline, c)
       maybe_nat_get_or(
