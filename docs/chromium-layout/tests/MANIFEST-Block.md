@@ -5,12 +5,21 @@ folder `third_party/blink/renderer/core/layout/`. The tests are the specificatio
 what each test says layout must do. Implementation `.cc/.h` files were opened only where a row
 says so.
 
+## Formalization rule
+
+A row is marked `formalized` only if ALL of the following hold:
+- **(a)** The test's input (its HTML/CSS, viewport and constraints) is written as a value of a model input type, e.g. a box tree (`BF`) or item list (`List Item`).
+- **(b)** A **GENERAL** model function, one that works on any input of that type and does not mention any test, computes the output from that input.
+- **(c)** The theorem compares that computed output with the test's `EXPECT_*` values written as literals on the right-hand side.
+
+No model function may branch on test names, test ids, or an enum invented to stand for one test's case. A function whose body is a table of a test's expected numbers is a lookup, not a model.
+
 Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable layout rule),
 `internal` (C++ plumbing only). Status: `formalized`, `partly formalized`, `blocked` (reason
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes), `BlockSticky.lean` (single-axis sticky propagation), `BlockPhysicalFragment.lean` (float descendant propagation, fragmentation roots, overflow clip margin), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints).
+percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -82,17 +91,17 @@ checks every row against the pinned sources and the Lean modules.
 | block_node_test.cc:153 | BlockNodeForTest.ChildOofAfterInline | behaviour | formalized | `TestsBlock.ChildOofAfterInline_vectors` |
 | block_node_test.cc:169 | BlockNodeForTest.MinContentForControls | geometry | blocked | needs form-control intrinsic sizes (select, file input, marquee) as flex items; not modelled |
 | layout_block_flow_test.cc:16 | LayoutBlockFlowTest.RecalcInlineChildrenScrollableOverflow | internal | internal | crash/DCHECK regression (passes if no DCHECK failure in ink_overflow.cc) |
-| layout_block_flow_test.cc:38 | LayoutBlockFlowTest.IsInsideMulticol | behaviour | formalized | `TestsBlock.IsInsideMulticol_vectors` |
-| layout_block_flow_test.cc:109 | LayoutBlockFlowTest.AnonymousContainer | behaviour | formalized | `TestsBlock.AnonymousContainer_vectors` |
-| layout_block_flow_test.cc:165 | LayoutBlockFlowTest.NoAnonymousContainer | behaviour | formalized | `TestsBlock.NoAnonymousContainer_vectors` |
+| layout_block_flow_test.cc:38 | LayoutBlockFlowTest.IsInsideMulticol | internal | internal | checks C++ LayoutObject::IsInsideMulticol query |
+| layout_block_flow_test.cc:109 | LayoutBlockFlowTest.AnonymousContainer | internal | internal | checks C++ anonymous LayoutBlockFlow wrapper insertion for inline children in multicol |
+| layout_block_flow_test.cc:165 | LayoutBlockFlowTest.NoAnonymousContainer | internal | internal | checks C++ anonymous LayoutBlockFlow wrapper insertion for inline children in multicol |
 | layout_block_test.cc:20 | LayoutBlockTest.LayoutNameCalledWithNullStyle | internal | internal | checks DecoratedName() string on an unstyled object |
 | layout_block_test.cc:28 | LayoutBlockTest.WidthAvailableToChildrenChanged | geometry | formalized | `TestsBlock.WidthAvailableToChildrenChanged_vectors`, `TestsBlock.scroller_content_height` (scrollbar width kept symbolic: test compares against ComputeScrollbars) |
 | layout_block_test.cc:61 | LayoutBlockTest.OverflowWithTransformAndPerspective | geometry | blocked | expects scrollable overflow 187.625 under rotateY(-45deg) with perspective; 3D transforms are not modelled |
 | layout_block_test.cc:73 | LayoutBlockTest.NestedInlineVisualOverflow | geometry | blocked | expects visual overflow rect of an img with negative margin in a zero-size box (inline replaced layout); not modelled |
 | layout_block_test.cc:86 | LayoutBlockTest.NestedInlineVisualOverflowVerticalRL | geometry | blocked | same as NestedInlineVisualOverflow in vertical-rl; writing modes not modelled |
-| layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | formalized | `TestsBlock.ContainmentStyleChange_vectors` |
-| constraint_space_builder_test.cc:17 | ConstraintSpaceBuilderTest.AvailableSizeFromHorizontalICB | geometry | formalized | `TestsBlock.AvailableSizeFromHorizontalICB_vectors`, `BlockWritingMode.indefinite_inline_falls_back` |
-| constraint_space_builder_test.cc:49 | ConstraintSpaceBuilderTest.AvailableSizeFromVerticalICB | geometry | formalized | `TestsBlock.AvailableSizeFromVerticalICB_vectors`, `BlockWritingMode.indefinite_inline_falls_back` |
+| layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | blocked | model lacks layout containment containing block resolution on box trees |
+| constraint_space_builder_test.cc:17 | ConstraintSpaceBuilderTest.AvailableSizeFromHorizontalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
+| constraint_space_builder_test.cc:49 | ConstraintSpaceBuilderTest.AvailableSizeFromVerticalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
 | length_utils_test.cc:120 | LengthUtilsTest.TestResolveInlineLength | geometry | formalized | `TestsBlock.TestResolveInlineLength_vectors` |
 | length_utils_test.cc:144 | LengthUtilsTest.TestIndefiniteResolveInlineLength | geometry | formalized | `TestsBlock.TestIndefiniteResolveInlineLength_vectors` |
 | length_utils_test.cc:155 | LengthUtilsTest.TestResolveBlockLength | geometry | formalized | `TestsBlock.TestResolveBlockLength_vectors` |
@@ -108,34 +117,34 @@ checks every row against the pinned sources and the Lean modules.
 | length_utils_test.cc:612 | LengthUtilsTest.TestColumnWidthAndCount | geometry | formalized | `TestsBlock.TestColumnWidthAndCount_vectors`, `ColumnWidth.columns_fit` |
 | length_utils_test.cc:657 | LengthUtilsTest.AspectRatio | geometry | formalized | `TestsBlock.AspectRatio_vectors`, `BlockLength.inlineFromAspectRatio_le_max`, `BlockLength.inlineFromAspectRatio_one` |
 | min_max_size_test.cc:13 | MinMaxSizesTest.ShrinkToFit | geometry | formalized | `TestsBlock.ShrinkToFit_vectors`, `BlockFlow.shrinkToFit_bounds` |
-| min_max_sizes_cache_test.cc:14 | MinMaxSizesCacheTest.Eviction | behaviour | formalized | `TestsBlock.Eviction_vectors`, `BlockMinMaxCache.lru_eviction` |
-| physical_fragment_test.cc:84 | StickyFragmentPropagationTest.StickyAxisEnabled | behaviour | formalized | `TestsBlock.StickyAxisEnabled_vectors`, `BlockSticky.propagation_disjoint` |
-| physical_fragment_test.cc:113 | StickyFragmentPropagationTest.StickyAxisDisabled | behaviour | formalized | `TestsBlock.StickyAxisDisabled_vectors` |
+| min_max_sizes_cache_test.cc:14 | MinMaxSizesCacheTest.Eviction | internal | internal | checks C++ MinMaxSizesCache LRU eviction plumbing |
+| physical_fragment_test.cc:84 | StickyFragmentPropagationTest.StickyAxisEnabled | behaviour | blocked | model lacks single-axis sticky scroll container fragment propagation |
+| physical_fragment_test.cc:113 | StickyFragmentPropagationTest.StickyAxisDisabled | behaviour | blocked | model lacks single-axis sticky scroll container fragment propagation |
 | physical_fragment_test.cc:134 | PhysicalFragmentTest.DumpFragmentTreeBasic | geometry | formalized | `TestsBlock.DumpFragmentTreeBasic_vectors` |
-| physical_fragment_test.cc:149 | PhysicalFragmentTest.DumpFragmentTreeWithAbspos | geometry | formalized | `TestsBlock.DumpFragmentTreeWithAbspos_vectors` |
-| physical_fragment_test.cc:165 | PhysicalFragmentTest.DumpFragmentTreeWithAbsposInRelpos | geometry | formalized | `TestsBlock.DumpFragmentTreeWithAbsposInRelpos_vectors` |
+| physical_fragment_test.cc:149 | PhysicalFragmentTest.DumpFragmentTreeWithAbspos | geometry | blocked | model lacks out-of-flow fragment positioning in layoutRoot |
+| physical_fragment_test.cc:165 | PhysicalFragmentTest.DumpFragmentTreeWithAbsposInRelpos | geometry | blocked | model lacks out-of-flow fragment positioning inside relative container |
 | physical_fragment_test.cc:184 | PhysicalFragmentTest.DumpFragmentTreeWithGrid | geometry | blocked | needs grid layout algorithm (display: grid); not modelled |
-| physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | formalized | `TestsBlock.DumpFragmentTreeWithTargetInsideColumn_vectors` |
+| physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | blocked | model lacks multicolumn target fragment tree dump |
 | physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | blocked | needs table layout with repeated header group across multicol columns; not modelled |
 | physical_fragment_test.cc:295 | PhysicalFragmentTest.CrashInScrollableOverflowCalculator | internal | internal | crash regression in ScrollableOverflowCalculator under fullscreen menulist keyframes |
-| physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineChlidren_vectors` |
-| physical_box_fragment_test.cc:46 | PhysicalBoxFragmentTest.FloatingDescendantsBlockChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsBlockChlidren_vectors` |
-| physical_box_fragment_test.cc:65 | PhysicalBoxFragmentTest.FloatingDescendantsInlineBlock | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineBlock_vectors`, `BlockPhysicalFragment.inline_block_isolates_floats` |
-| physical_box_fragment_test.cc:83 | PhysicalBoxFragmentTest.FloatingDescendantsBlockFormattingContext | behaviour | formalized | `TestsBlock.FloatingDescendantsBlockFormattingContext_vectors` |
+| physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
+| physical_box_fragment_test.cc:46 | PhysicalBoxFragmentTest.FloatingDescendantsBlockChlidren | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
+| physical_box_fragment_test.cc:65 | PhysicalBoxFragmentTest.FloatingDescendantsInlineBlock | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
+| physical_box_fragment_test.cc:83 | PhysicalBoxFragmentTest.FloatingDescendantsBlockFormattingContext | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
 | physical_box_fragment_test.cc:104 | PhysicalBoxFragmentTest.ReplacedBlock | internal | internal | checks C++ Type(), IsAtomicInline() and GetBoxType() flags on replaced block fragment |
-| physical_box_fragment_test.cc:115 | PhysicalBoxFragmentTest.IsFragmentationContextRoot | behaviour | formalized | `TestsBlock.IsFragmentationContextRoot_vectors` |
-| physical_box_fragment_test.cc:135 | PhysicalBoxFragmentTest.IsFragmentationContextRootNested | behaviour | formalized | `TestsBlock.IsFragmentationContextRootNested_vectors` |
-| physical_box_fragment_test.cc:169 | PhysicalBoxFragmentTest.IsFragmentationContextRootFieldset | behaviour | formalized | `TestsBlock.IsFragmentationContextRootFieldset_vectors` |
-| physical_box_fragment_test.cc:201 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStart | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStart_vectors` |
-| physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStartBlockInInline_vectors` |
-| physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | formalized | `TestsBlock.OverflowClipMarginVisualBox_vectors`, `BlockPhysicalFragment.clip_margin_monotonic` |
+| physical_box_fragment_test.cc:115 | PhysicalBoxFragmentTest.IsFragmentationContextRoot | behaviour | blocked | model lacks fragmentation context root query on physical fragments |
+| physical_box_fragment_test.cc:135 | PhysicalBoxFragmentTest.IsFragmentationContextRootNested | behaviour | blocked | model lacks fragmentation context root query on physical fragments |
+| physical_box_fragment_test.cc:169 | PhysicalBoxFragmentTest.IsFragmentationContextRootFieldset | behaviour | blocked | model lacks fragmentation context root query on physical fragments |
+| physical_box_fragment_test.cc:201 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStart | behaviour | blocked | model lacks descendant overflow above block-start query on physical fragments |
+| physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | blocked | model lacks descendant overflow above block-start query on physical fragments |
+| physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | blocked | model lacks visual box overflow-clip-margin calculation |
 | physical_box_fragment_test.cc:294 | PhysicalBoxFragmentTest.CloneWithPostLayoutFragments | internal | internal | checks CloneWithPostLayoutFragments preserves C++ frame set layout data pointer |
 | relative_utils_test.cc:49 | RelativeUtilsTest.HorizontalTB | geometry | formalized | `TestsBlock.HorizontalTB_vectors`, `BlockRelative.opposing_sum_zero` |
 | absolute_utils_test.cc:150 | AbsoluteUtilsTest.Horizontal | geometry | formalized | `TestsBlock.Horizontal_vectors` |
 | absolute_utils_test.cc:315 | AbsoluteUtilsTest.Vertical | geometry | formalized | `TestsBlock.Vertical_vectors` |
-| absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | formalized | `TestsBlock.CenterStaticPosition_vectors` |
-| absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `BlockAbsolute.clamp_bounds` |
-| out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | formalized | `TestsBlock.FixedInsideAbs_vectors`, `OutOfFlowCB.fixed_no_containment` |
+| absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | blocked | model lacks static position alignment for out-of-flow |
+| absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | blocked | model lacks min/max size clamping in out-of-flow dimension solver |
+| out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | blocked | model lacks out-of-flow fragment positioning inside positioned ancestor |
 | out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
@@ -184,19 +193,13 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockFlow.shrinkToFit_bounds`: shrink-to-fit always lies within [min-content, max-content].
 - `BlockFlow.fragmentation_conserves_size`: fragment sizes sum to the box's block size.
 - `BlockNode.iterate_mem`: the child iterator only returns real children.
-- `BlockWritingMode.indefinite_inline_falls_back`: indefinite available inline size falls back to orthogonal fallback size.
 - `BlockWritingMode.toPhysical_toLogical`: physical to logical edge mapping is an isomorphism.
 - `BlockLength.clampSize_ge_min`: clamping by min/max never returns less than the minimum.
 - `BlockLength.inlineFromAspectRatio_le_max`: aspect ratio inline size saturates at LayoutUnit::Max().
 - `BlockLength.inlineFromAspectRatio_one`: 1:1 aspect ratio preserves block size below saturation.
 - `ColumnWidth.columns_fit`: multicol columns plus gaps fit the available inline size.
-- `BlockMinMaxCache.lru_eviction`: 8-way LRU cache evicts the least recently used entry on insertion at capacity.
-- `BlockSticky.propagation_disjoint`: single-axis sticky propagation partitions element axes into consumed and pending disjointly.
-- `BlockPhysicalFragment.clip_margin_monotonic`: overflow clip margin monotonically expands ink overflow from content-box to padding-box to border-box.
-- `BlockPhysicalFragment.inline_block_isolates_floats`: inline-block isolates floats within its IFC while block-level contexts propagate.
 - `BlockRelative.opposing_sum_zero`: when only one opposing relative inset is specified, the resolved insets sum to zero.
 - `BlockAbsolute.clamp_bounds`: clamping always stays within [minVal, maxVal] when minVal ≤ maxVal.
-- `OutOfFlowCB.fixed_no_containment`: when no ancestor has layout containment, fixed-position containing block is viewport (none).
 
 ## Merge notes
 

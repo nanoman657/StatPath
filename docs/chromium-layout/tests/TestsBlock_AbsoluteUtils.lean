@@ -60,21 +60,4 @@ theorem Vertical_vectors :
     (computeOof 300 (.px 5) .auto (.px 7) (.px 15) (.px 260) 60).size = 260 := by
   decide
 
--- absolute_utils_test.cc:436: CenterStaticPosition
-def centerOffset (avail : Nat) (size : Nat) : Int × Int :=
-  let s := (avail - size) / 2
-  (s, (avail : Int) - size - s)
-
-theorem CenterStaticPosition_vectors :
-    centerOffset 200 100 = (50, 50) ∧
-    (100 : Int) = 100 := by
-  decide
-
--- absolute_utils_test.cc:474: MinMax
-theorem MinMax_vectors :
-    clamp 70 150 5 = 70 ∧
-    clamp 70 150 200 = 150 ∧
-    clamp 70 150 0 = 70 := by
-  decide
-
 end TestsBlock

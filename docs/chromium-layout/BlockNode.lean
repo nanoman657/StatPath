@@ -56,17 +56,6 @@ def childNodes (items : List Item) : List NodeKind :=
         | Item.oof => acc)
       ([], false)).1
 
-/-- A multicol container needs an anonymous block wrapper exactly when all its children are
-    inline-level (layout_block_flow_test.cc:109 `AnonymousContainer`, :165 `NoAnonymousContainer`);
-    with `columns:auto` there is no wrapper. -/
-def needsAnonymousWrapper (multicol : Bool) (items : List Item) : Bool :=
-  multicol && items.all (· == Item.text)
-
-/-- `LayoutObject::IsInsideMulticol()` (layout_block_flow_test.cc:38 `IsInsideMulticol`): some
-    proper ancestor is a multicol container. `ancestorsColumns` lists, for the proper ancestors,
-    whether each has `columns` other than `auto`. -/
-def isInsideMulticol (ancestorsColumns : List Bool) : Bool := ancestorsColumns.any id
-
 /-- Entry of `BlockChildIterator`: a child (by sibling index) and whether it comes with a break
     token (block_child_iterator_test.cc). -/
 structure Entry where
