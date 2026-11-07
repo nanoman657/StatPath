@@ -353,6 +353,118 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_layout_algorithm_test.cc:1373 | RubyTextEmphasisHeight | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisHeight layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:1406 | TextBoxTrimOnInlineBox | geometry | blocked | - | Blocked: model lacks TextBoxTrimOnInlineBox layout algorithm support |
 
+| inline/inline_node_shape_cache_test.cc:51 | ShapeCacheMultipleItems | internal | internal | - | Tests IsNGShapeCacheAllowed flag for multiple items |
+| inline/inline_node_shape_cache_test.cc:58 | ShapeCacheOpenAndCloseTags | internal | internal | - | Tests IsNGShapeCacheAllowed flag for open/close tags |
+| inline/inline_node_shape_cache_test.cc:65 | ShapeCacheSpacingRequired | internal | internal | - | Tests IsNGShapeCacheAllowed flag with letter-spacing |
+| inline/inline_node_shape_cache_test.cc:73 | ShapeCacheNewLine | internal | internal | - | Tests IsNGShapeCacheAllowed flag with newline |
+| inline/inline_node_shape_cache_test.cc:79 | ShapeCacheBreakLine | internal | internal | - | Tests IsNGShapeCacheAllowed flag with br |
+| inline/inline_node_shape_cache_test.cc:85 | ShapeCacheBreakWord | internal | internal | - | Tests IsNGShapeCacheAllowed flag with wbr |
+| inline/inline_node_shape_cache_test.cc:91 | ShapeResultPointerEqualNewLine | internal | internal | - | Pointer equality check for ShapeResult cache across newline and br |
+| inline/inline_node_shape_cache_test.cc:105 | ShapeCacheFloating | internal | internal | - | Tests IsNGShapeCacheAllowed flag with float |
+| inline/inline_node_shape_cache_test.cc:111 | ShapeCacheOutOfFlowPositioned | internal | internal | - | Tests IsNGShapeCacheAllowed flag with abspos |
+| inline/inline_node_shape_cache_test.cc:118 | ShapeCacheFontFeatures | internal | internal | - | Tests IsNGShapeCacheAllowed flag with font-feature-settings |
+| inline/inline_node_shape_cache_test.cc:126 | ShapeCacheSpacing | internal | internal | - | Tests IsNGShapeCacheAllowed flag with letter-spacing and float |
+| inline/inline_node_shape_cache_test.cc:135 | ShapeResultPointerEqualFloatsAndOutOfFlow | internal | internal | - | Pointer equality check for ShapeResult cache across floats and abspos |
+| inline/inline_node_shape_cache_test.cc:152 | ShapeResultPointerEqualInline | internal | internal | - | Pointer equality check for ShapeResult cache across inline span |
+| inline/justification_utils_test.cc:14 | SetupItemJustificationOpportunityCrash | internal | internal | - | Crash regression test for null dereference in InlineItem::Style |
+| inline/line_break_candidate_test.cc:50 | Text | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:76 | SoftHyphen | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:104 | SoftHyphenDisabled | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:130 | Span | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:157 | SpanMidWord | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:183 | SpanCloseAfterSpace | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:210 | TrailingSpacesCollapsed | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:247 | AtomicInline | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:276 | AtomicInlineBr | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:307 | AtomicInlineTrailingSpaces | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:339 | ForcedBreak | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
+| inline/line_info_test.cc:23 | InflowEndOffset | behaviour | blocked | - | Blocked: model lacks ruby column item parsing and LineInfo::InflowEndOffset |
+| inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | internal | internal | - | Crash regression / DCHECK test for zero-length control item in trailing spaces |
+| inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | geometry | blocked | - | Blocked: model lacks LineWidths opportunity precomputation |
+| inline/offset_mapping_test.cc:213 | CollapseSpaces | behaviour | formalized | `test_OffsetMapping_CollapseSpaces` | Whitespace collapsing indices across normal, nowrap, pre, pre-wrap |
+| inline/offset_mapping_test.cc:224 | CollapseTabs | behaviour | formalized | `test_OffsetMapping_CollapseTabs` | Tab character collapsing indices |
+| inline/offset_mapping_test.cc:235 | CollapseNewLines | behaviour | formalized | `test_OffsetMapping_CollapseNewLines` | Newline character collapsing indices |
+| inline/offset_mapping_test.cc:246 | CollapseNewlinesAsSpaces | behaviour | formalized | `test_OffsetMapping_CollapseNewlinesAsSpaces` | Consecutive newline character collapsing indices |
+| inline/offset_mapping_test.cc:253 | CollapseAcrossElements | behaviour | blocked | - | Blocked: model lacks multi-element offset mapping |
+| inline/offset_mapping_test.cc:258 | CollapseLeadingSpaces | behaviour | formalized | `test_OffsetMapping_CollapseLeadingSpaces` | Leading space character collapsing indices |
+| inline/offset_mapping_test.cc:266 | CollapseTrailingSpaces | behaviour | blocked | - | Blocked: model lacks trailing space offset mapping |
+| inline/offset_mapping_test.cc:276 | DISABLED_CollapseAllSpaces | internal | internal | - | Disabled upstream unit test |
+| inline/offset_mapping_test.cc:283 | CollapseLeadingNewlines | behaviour | blocked | - | Blocked: model lacks multi-newline offset mapping |
+| inline/offset_mapping_test.cc:299 | CollapseTrailingNewlines | behaviour | blocked | - | Blocked: model lacks trailing newline offset mapping |
+| inline/offset_mapping_test.cc:309 | CollapseNewlineAcrossElements | behaviour | blocked | - | Blocked: model lacks multi-element newline offset mapping |
+| inline/offset_mapping_test.cc:315 | CollapseBeforeAndAfterNewline | behaviour | blocked | - | Blocked: model lacks pre-line newline offset mapping |
+| inline/offset_mapping_test.cc:321 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | - | Blocked: model lacks pre-wrap offset mapping |
+| inline/offset_mapping_test.cc:333 | CollapseZeroWidthSpaces | behaviour | blocked | - | Blocked: model lacks zero-width space offset mapping |
+| inline/offset_mapping_test.cc:358 | CollapseEastAsianWidth | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
+| inline/offset_mapping_test.cc:389 | StoredResult | internal | internal | - | Checks offset_mapping pointer storage on LayoutBlockFlow |
+| inline/offset_mapping_test.cc:396 | NGInlineFormattingContextOf | internal | internal | - | Checks formatting context container lookup pointer equality |
+| inline/offset_mapping_test.cc:429 | OneTextNode | behaviour | formalized | `test_OffsetMapping_OneTextNode` | OffsetMappingUnit for single text node |
+| inline/offset_mapping_test.cc:492 | TwoTextNodes | behaviour | blocked | - | Blocked: model lacks multi-node offset mapping |
+| inline/offset_mapping_test.cc:558 | BRBetweenTextNodes | behaviour | blocked | - | Blocked: model lacks forced break offset mapping |
+| inline/offset_mapping_test.cc:613 | OneTextNodeWithCollapsedSpace | behaviour | formalized | `test_OffsetMapping_OneTextNodeWithCollapsedSpace` | OffsetMappingUnits partitioning into identity and collapsed runs |
+| inline/offset_mapping_test.cc:686 | FullyCollapsedWhiteSpaceNode | behaviour | blocked | - | Blocked: model lacks empty whitespace node offset mapping |
+| inline/offset_mapping_test.cc:748 | ReplacedElement | behaviour | blocked | - | Blocked: model lacks replaced element offset mapping |
+| inline/offset_mapping_test.cc:805 | FirstLetter | behaviour | blocked | - | Blocked: model lacks first-letter offset mapping |
+| inline/offset_mapping_test.cc:835 | FirstLetterWithLeadingSpace | behaviour | blocked | - | Blocked: model lacks first-letter leading space offset mapping |
+| inline/offset_mapping_test.cc:871 | FirstLetterWithoutRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter text offset mapping |
+| inline/offset_mapping_test.cc:902 | FirstLetterInDifferentBlock | behaviour | blocked | - | Blocked: model lacks first-letter block offset mapping |
+| inline/offset_mapping_test.cc:967 | WhiteSpaceTextNodeWithoutLayoutText | behaviour | blocked | - | Blocked: model lacks whitespace node offset mapping |
+| inline/offset_mapping_test.cc:976 | ContainerWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
+| inline/offset_mapping_test.cc:1006 | InlineBlockWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
+| inline/offset_mapping_test.cc:1046 | Table | behaviour | blocked | - | Blocked: model lacks table offset mapping |
+| inline/offset_mapping_test.cc:1070 | GetMappingForInlineBlock | behaviour | blocked | - | Blocked: model lacks inline block offset mapping |
+| inline/offset_mapping_test.cc:1098 | NoWrapSpaceAndCollapsibleSpace | behaviour | blocked | - | Blocked: model lacks nowrap offset mapping |
+| inline/offset_mapping_test.cc:1128 | PreLine | behaviour | blocked | - | Blocked: model lacks pre-line offset mapping |
+| inline/offset_mapping_test.cc:1152 | BiDiAroundForcedBreakInPreLine | behaviour | blocked | - | Blocked: model lacks bidi pre-line offset mapping |
+| inline/offset_mapping_test.cc:1176 | BiDiAroundForcedBreakInPreWrap | behaviour | blocked | - | Blocked: model lacks bidi pre-wrap offset mapping |
+| inline/offset_mapping_test.cc:1200 | BiDiAroundForcedBreakInPre | behaviour | blocked | - | Blocked: model lacks bidi pre offset mapping |
+| inline/offset_mapping_test.cc:1224 | SoftHyphen | behaviour | blocked | - | Blocked: model lacks soft hyphen offset mapping |
+| inline/offset_mapping_test.cc:1241 | PreWrapAndReusing | behaviour | blocked | - | Blocked: model lacks pre-wrap reuse offset mapping |
+| inline/offset_mapping_test.cc:1266 | RestoreTrailingCollapsibleSpaceReplace | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1295 | RestoreTrailingCollapsibleSpaceReplaceKeep | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1324 | RestoreTrailingCollapsibleSpaceNone | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1349 | RestoreTrailingCollapsibleSpaceSplit | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1378 | RestoreTrailingCollapsibleSpaceSplitKeep | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1409 | TextOverflowEllipsis | behaviour | blocked | - | Blocked: model lacks ellipsis offset mapping |
+| inline/offset_mapping_test.cc:1426 | StartOfNextNonCollapsedContentWithPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element offset mapping |
+| inline/offset_mapping_test.cc:1444 | EndOfLastNonCollapsedContentWithPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element offset mapping |
+| inline/offset_mapping_test.cc:1461 | WordBreak | behaviour | blocked | - | Blocked: model lacks word break offset mapping |
+| inline/offset_mapping_test.cc:1481 | NoCrashByListStyleTypeChange | internal | internal | - | Crash regression test for list-style-type change |
+| inline/offset_mapping_test.cc:1497 | OffsetMappingGetterTest.Get | internal | internal | - | Checks OffsetMapping getter caching plumbing |
+| inline/offset_mapping_test.cc:1515 | LayoutObjectConverter | internal | internal | - | Checks LayoutObject converter internal plumbing |
+| inline/paragraph_line_breaker_test.cc:27 | IsDisabledByBlockInInline | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:52 | IsDisabledByFirstLine | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:75 | IsDisabledByFloatLeading | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:97 | IsDisabledByFloat | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:119 | IsDisabledByForcedBreak | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:140 | IsDisabledByForcedBreakReusing | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:163 | IsDisabledByInitialLetter | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:186 | IsDisabledByTabulationCharacters | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/physical_line_box_fragment_test.cc:44 | HasPropagatedDescendantsFloat | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
+| inline/physical_line_box_fragment_test.cc:62 | HasPropagatedDescendantsOOF | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
+| inline/ruby_utils_test.cc:25 | GroupLinesEmpty | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:32 | GroupLinesOneAnnotationLevel | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:49 | GroupLinesNested | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:67 | GroupLinesBothSides | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:106 | GroupLinesAnnotationForAnnotation | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:129 | PlaceLinesTreePlacement | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/score_line_breaker_test.cc:78 | LastLines | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:136 | BalanceMaxLinesExceeded | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:237 | ForcedBreak | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:370 | DisabledByLineBreakerTest.Data | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:408 | FloatRetry | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:433 | Ruby | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:453 | Zoom | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | internal | internal | - | UseCounter metric check |
+| inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | internal | internal | - | UseCounter metric check |
+| inline/score_line_breaker_test.cc:506 | LineCountMismatchFallback | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
+| inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
+| inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
 ---
 
 ## Merge Notes
