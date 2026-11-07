@@ -1,5 +1,11 @@
 # Chromium Layout Lane Manifest — Inline
 
+## Formalization rule
+A row is "formalized" only if ALL hold:
+(a) the test's input (its HTML/CSS, viewport and constraints) is written as a value of a model input type, e.g. a box tree or item list;
+(b) a GENERAL model function, one that works on any input of that type and does not mention any test, computes the output from that input;
+(c) the theorem compares that computed output with the test's EXPECT_* values written as literals on the right-hand side. No model function may branch on test names, test ids, or an enum invented to stand for one test's case. A function whose body is a table of a test's expected numbers is a lookup, not a model.
+
 ## Scope and Ordering
 Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 1. `inline/line_breaker_test.cc`
@@ -20,44 +26,42 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 
 ## Test Inventory and Status
 
-### `inline/line_breaker_test.cc`
-
 | File:Line | Test Name | Class | Status | Theorem / Vector | Notes |
 |---|---|---|---|---|---|
-| inline/line_breaker_test.cc:144 | FitWithEpsilon | geometry | formalized | `lineBreaker_fitWithEpsilon_pass` | 50px text fits container with 1-epsilon tolerance in 1 line |
-| inline/line_breaker_test.cc:171 | SingleNode | geometry | formalized | `lineBreaker_singleNode_pass` | Greedily breaks 123 456 789 at 80px (2 lines) and 60px (3 lines) with trailing space collapse |
-| inline/line_breaker_test.cc:197 | TextCombineCloseTag | geometry | blocked | - | Blink treats text-combine as unbreakable 1 line; model splits at AtomicInline (producing 3 lines) |
-| inline/line_breaker_test.cc:223 | TextCombineBreak | geometry | blocked | - | Text-combine hyphen break depends on internal vertical-lr/tcy shaping |
-| inline/line_breaker_test.cc:241 | TextCombineNoBreak | geometry | blocked | - | Blink keeps unbreakable text-combine on 1 line; model splits at AtomicInline (producing 3 lines) |
-| inline/line_breaker_test.cc:258 | TextCombineNoBreakWithSpace | geometry | blocked | - | Space inside text-combine ignored in Blink; model treats space as break opportunity |
-| inline/line_breaker_test.cc:275 | OverflowWord | geometry | partly formalized | `lineBreaker_overflowWord_pass` | Formalized width 40 (2 lines); width 20 blocked (model produces 3 lines due to space item on its own line; Blink collapses leading space producing 2 lines) |
-| inline/line_breaker_test.cc:301 | OverflowTab | geometry | formalized | `lineBreaker_overflowTab_pass` | Tab characters expand to tab stops without breaking |
-| inline/line_breaker_test.cc:323 | OverflowTabBreakWord | geometry | formalized | `lineBreaker_overflowTab_pass` | Tab characters do not break under word-wrap: break-word |
-| inline/line_breaker_test.cc:346 | OverflowAtomicInline | geometry | formalized | `lineBreaker_overflowAtomic_pass` | Atomic inline wrapping at boundaries across widths 80, 70, 40, 20 |
-| inline/line_breaker_test.cc:387 | OverflowMargin | geometry | blocked | - | Blink looks ahead at closing tag margins and wraps to line 2 (3 lines); model takeLineAux consumes word on line 1 and CloseTag on line 2 (2 lines) |
-| inline/line_breaker_test.cc:423 | OverflowAfterSpacesAcrossElements | geometry | formalized | `lineBreaker_overflowAfterSpaces_pass` | Trailing spaces across element boundaries collapse at line end |
-| inline/line_breaker_test.cc:447 | WrapLastWord | geometry | formalized | `lineBreaker_wrapLastWord_pass` | Wrap last word before inline span preserves subsequent items on next line |
-| inline/line_breaker_test.cc:466 | WrapLetterSpacing | geometry | formalized | `lineBreaker_wrapLetterSpacing_pass` | Letter-spacing increases shaped segment advance width |
-| inline/line_breaker_test.cc:486 | BoundaryInWord | geometry | blocked | - | Blink forbids breaking inside a word across span boundaries (3 lines); model takeLineAux does not check canBreakAfter (2 lines) |
-| inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | partly formalized | `lineBreaker_boundaryInFirstWord_pass` | Formalized width 80 (2 lines); width 50/20 blocked (model takeLineAux does not check canBreakAfter on first word) |
-| inline/line_breaker_test.cc:548 | IdeographicTrailingSpaces | geometry | formalized | `lineBreaker_ideographicTrailingSpaces_pass` | Ideographic spaces (U+3000) are preserved as non-collapsible text |
-| inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | formalized | `lineBreaker_whitespaceState_none, lineBreaker_whitespaceState_collapsed, lineBreaker_whitespaceState_preserved, lineBreaker_whitespaceState_leading` | WhitespaceState classification (kNone, kCollapsed, kPreserved, kLeading) |
-| inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | formalized | `lineBreaker_trailingSpaceWidth_pass` | Hanging space width calculation in pre-wrap |
+| inline/line_breaker_test.cc:144 | FitWithEpsilon | geometry | formalized | `lineBreaker_fitWithEpsilon` | 50px text fits container with 1-epsilon tolerance in 1 line |
+| inline/line_breaker_test.cc:171 | SingleNode | geometry | formalized | `lineBreaker_singleNode` | Greedily breaks 123 456 789 at 80px (2 lines) and 60px (3 lines) with trailing space collapse |
+| inline/line_breaker_test.cc:197 | TextCombineCloseTag | geometry | blocked | - | Blocked: model lacks TextCombineCloseTag layout support |
+| inline/line_breaker_test.cc:223 | TextCombineBreak | geometry | blocked | - | Blocked: model lacks TextCombineBreak layout support |
+| inline/line_breaker_test.cc:241 | TextCombineNoBreak | geometry | blocked | - | Blocked: model lacks TextCombineNoBreak layout support |
+| inline/line_breaker_test.cc:258 | TextCombineNoBreakWithSpace | geometry | blocked | - | Blocked: model lacks TextCombineNoBreakWithSpace layout support |
+| inline/line_breaker_test.cc:275 | OverflowWord | geometry | blocked | - | Blocked: model lacks leading space collapse on second line |
+| inline/line_breaker_test.cc:301 | OverflowTab | geometry | formalized | `lineBreaker_overflowTab` | Tab characters expand to tab stops without breaking |
+| inline/line_breaker_test.cc:323 | OverflowTabBreakWord | geometry | formalized | `lineBreaker_overflowTab` | Tab characters do not break under word-wrap: break-word |
+| inline/line_breaker_test.cc:346 | OverflowAtomicInline | geometry | formalized | `lineBreaker_overflowAtomic` | Atomic inline wrapping at boundaries across widths 80, 70, 40, 20 |
+| inline/line_breaker_test.cc:387 | OverflowMargin | geometry | blocked | - | Blocked: model lacks OverflowMargin layout support |
+| inline/line_breaker_test.cc:423 | OverflowAfterSpacesAcrossElements | geometry | formalized | `lineBreaker_overflowAfterSpaces` | Trailing spaces across element boundaries collapse at line end |
+| inline/line_breaker_test.cc:447 | WrapLastWord | geometry | formalized | `lineBreaker_wrapLastWord` | Wrap last word before inline span preserves subsequent items on next line |
+| inline/line_breaker_test.cc:466 | WrapLetterSpacing | geometry | formalized | `lineBreaker_wrapLetterSpacing` | Letter-spacing increases shaped segment advance width |
+| inline/line_breaker_test.cc:486 | BoundaryInWord | geometry | blocked | - | Blocked: model lacks BoundaryInWord layout support |
+| inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | blocked | - | Blocked: model lacks first-word break prevention |
+| inline/line_breaker_test.cc:548 | IdeographicTrailingSpaces | geometry | formalized | `lineBreaker_ideographicTrailingSpaces` | Ideographic spaces (U+3000) are preserved as non-collapsible text |
+| inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | blocked | - | Blocked: model lacks WhitespaceState tracking in LineBreaker |
+| inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | blocked | - | Blocked: model lacks trailing space hanging width computation in LineBreaker |
 | inline/line_breaker_test.cc:706 | FullyCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:732 | TrailingCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
-| inline/line_breaker_test.cc:762 | SplitTextZero | behaviour | formalized | `lineBreaker_splitTextZero_pass` | DOM splitText(0) zero-length node does not affect line breaking output |
-| inline/line_breaker_test.cc:789 | ForcedBreakFollowedByCloseTag | geometry | blocked | - | Blink elides trailing empty lines created by CloseTag after ForcedBreak (1 line); model creates trailing line for CloseTag (2 lines) |
+| inline/line_breaker_test.cc:762 | SplitTextZero | behaviour | blocked | - | Blocked: model lacks DOM text node split synchronization |
+| inline/line_breaker_test.cc:789 | ForcedBreakFollowedByCloseTag | geometry | blocked | - | Blocked: model lacks ForcedBreakFollowedByCloseTag layout support |
 | inline/line_breaker_test.cc:821 | TableCellWidthCalculationQuirkOutOfFlow | internal | internal | - | Checks no DCHECK in quirks mode with out-of-flow child |
 | inline/line_breaker_test.cc:842 | BoxDecorationBreakCloneWithoutBoxDecorations | internal | internal | - | Checks no DCHECK with -webkit-box-decoration-break: clone |
 | inline/line_breaker_test.cc:849 | RewindPositionedFloat | internal | internal | - | Regression test for float rewinding with large border |
 | inline/line_breaker_test.cc:864 | RewindRubyColumn | internal | internal | - | Regression test for ruby column rewinding |
-| inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | formalized | `lineBreaker_splitTextIntoSegments_conservation` | Advance width splitting preserves shaped segment length |
+| inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | blocked | - | Blocked: model lacks text shaping segment splitting |
 | inline/line_breaker_test.cc:913 | SplitTextIntoSegementsCrash | internal | internal | - | Crash regression test for SVG combining characters |
 | inline/line_breaker_test.cc:940 | GetOverhangCrash | internal | internal | - | Crash regression test for ruby overhang |
-| inline/line_breaker_test.cc:965 | IdeographicSpaceBeforeEndBracket | geometry | formalized | `lineBreaker_ideographicBeforeBracket_pass` | Ideographic space followed by closing bracket breaks at prior break opportunity |
-| inline/line_breaker_test.cc:1002 | BreakAt | geometry | formalized | `lineBreaker_breakAt_pass` | Explicit breakpoints partition line widths (10, 40, 10, 30) |
-| inline/line_breaker_test.cc:1044 | BreakAtTrailingSpaces | geometry | formalized | `lineBreaker_breakAt_pass` | Breakpoints with trailing spaces (40, 20) |
-| inline/line_breaker_test.cc:1079 | BreakAtTrailingSpacesAfterAtomicInline | geometry | formalized | `lineBreaker_breakAt_pass` | Breakpoints with atomic inlines (10, 20) |
+| inline/line_breaker_test.cc:965 | IdeographicSpaceBeforeEndBracket | geometry | formalized | `lineBreaker_ideographicBeforeBracket` | Ideographic space followed by closing bracket breaks at prior break opportunity |
+| inline/line_breaker_test.cc:1002 | BreakAt | geometry | formalized | `lineBreaker_breakAt` | Explicit breakpoints partition line widths (10, 40, 10, 30) |
+| inline/line_breaker_test.cc:1044 | BreakAtTrailingSpaces | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with trailing spaces (40, 20) |
+| inline/line_breaker_test.cc:1079 | BreakAtTrailingSpacesAfterAtomicInline | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with atomic inlines (10, 20) |
 | inline/line_breaker_test.cc:1117 | WideContentInRuby | internal | internal | - | Crash regression test for ruby wider than LayoutUnit::Max() |
 | inline/line_breaker_test.cc:1144 | SetInputRange | internal | internal | - | Unit test for internal C++ helper LineBreaker::SetInputRange |
 | inline/line_breaker_test.cc:1169 | CreateSubLineInfoAvailableWidth | internal | internal | - | Regression test for sub-linebreaker float handling in ruby |
@@ -66,21 +70,16 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1220 | MinMaxWithAtomicInlineInRuby | internal | internal | - | Crash regression test for atomic inline in ruby |
 | inline/line_breaker_test.cc:1229 | RemoveTrailingCollapsibleSpace | internal | internal | - | Crash regression test (division by zero) |
 | inline/line_breaker_test.cc:1241 | MinMaxWithEmptyRubyBase | internal | internal | - | Crash regression test for empty ruby base |
-| inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | formalized | `lineBreaker_canBreakInside_single, lineBreaker_canBreakInside_space, lineBreaker_canBreakInside_nowrap, lineBreaker_canBreakInside_atomicPair, lineBreaker_canBreakInside_wordAtomic, lineBreaker_canBreakInside_singleAtomic` | CanBreakInside predicate across whitespace, nowrap, and atomic inlines |
+| inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | blocked | - | Blocked: model lacks CanBreakInside predicate |
 | inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
-| inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter_pass` | Container line height matches single line font height (10px) |
-
-### `inline/inline_node_test.cc`
-
-| File:Line | Test Name | Class | Status | Theorem / Vector | Notes |
-|---|---|---|---|---|---|
-| inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectText_pass` | Collects 5 items (Text, OpenTag, Text, CloseTag, Text) |
-| inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | formalized | `inlineNode_collectBR_pass` | Collects 3 items (Text, ForcedBreak, Text) |
+| inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
+| inline/inline_node_test.cc:192 | CollectInlinesText | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
+| inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
 | inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | internal | internal | - | String sharing optimization for single Text node |
 | inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | internal | internal | - | String sharing optimization with whitespace collapse |
 | inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
 | inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | internal | - | Float items in inline formatting context |
-| inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlineBlock_pass` | Collects 3 items with AtomicInline for inline-block |
+| inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
 | inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | internal | - | UTF-16 surrogate pairs in inline items |
 | inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | internal | - | LTR text does not enable bidi |
 | inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | internal | - | RTL text sets bidi enabled |
@@ -97,16 +96,16 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:497 | SegmentSplit3To4 | behaviour | internal | - | Script run splitting |
 | inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | internal | - | Bidi-override segmentation |
 | inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | internal | - | Bidi-isolate segmentation |
-| inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMax_pass` | ComputeMinMaxSizes (min size = longest word, max size = sum of all words/spaces) |
-| inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSaturated_pass` | MinMax sizes saturate at kLayoutUnitMax 33554431 |
+| inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | blocked | - | Blocked: model lacks InlineNode min-max size computation from box tree |
+| inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | blocked | - | Blocked: model lacks LayoutUnit saturation in min-max computation |
 | inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
 | inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
-| inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | formalized | `inlineNode_invalidation_rule` | DOM setData marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
 | inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | internal | internal | - | Crash regression in OffsetMapping |
-| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | formalized | `inlineNode_invalidation_rule` | Font/display change marks NeedsCollectInlines |
-| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | formalized | `inlineNode_invalidation_rule` | Inserting child marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
+| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
 | inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | internal | internal | - | Out of flow button insert |
-| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_invalidation_rule` | Removing child marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
 | inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
 | inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
 | inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | internal | - | Adding span adds OpenTag/CloseTag items |
@@ -145,21 +144,21 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
 | inline/inline_node_test.cc:1671 | InitialLetter | geometry | internal | - | Initial letter box fragment and kInitialLetterBox item |
 | inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | internal | - | Text combine > 1 char uses scaleX |
-| inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombine_zeroes_spacing` | Text combine zeroes word-spacing and letter-spacing |
+| inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | blocked | - | Blocked: model lacks text combine word spacing resolution |
 | inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
 | inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
 | inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
-| inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText_vector` | Text node wrapping into 2 line fragments |
-| inline/fragment_item_test.cc:173 | RtlText | geometry | formalized | `fragmentItem_rtlText_vector` | BiDi reordering in RTL container |
-| inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | formalized | `fragmentItem_basicInlineBox_vector` | Inline box fragmentation and ink overflow |
-| inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | formalized | `fragmentItem_culledInlineBox_vector` | Culled inline bounding box aggregation |
+| inline/fragment_item_test.cc:126 | BasicText | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:173 | RtlText | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | internal | - | Invalidation and visual overflow recalc on self-painting layer |
-| inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | formalized | `fragmentItem_startOffsetInContainer_vector` | Soft hyphen generated text container offsets |
-| inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | formalized | `fragmentItem_ellipsizedAtomicInline_rule` | Atomic inline ellipsization marks isLastForNode |
+| inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:417 | LineFragmentId | behaviour | internal | - | Multicol column line fragment ID tagging |
-| inline/fragment_item_test.cc:451 | Outline | geometry | formalized | `fragmentItem_outline_vector` | Outline rect computation for inline box and inline block |
+| inline/fragment_item_test.cc:451 | Outline | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:526 | MarkLineBoxesDirtyOnInsert | behaviour | internal | - | Incremental layout dirty line index tracking on insert |
 | inline/fragment_item_test.cc:543 | MarkLineBoxesDirtyOnAppend | behaviour | internal | - | Dirty line index tracking on append |
 | inline/fragment_item_test.cc:560 | MarkLineBoxesDirtyOnAppend2 | behaviour | internal | - | Dirty line index tracking on append to second line |
@@ -185,136 +184,174 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_item_test.cc:876 | MarkLineBoxesDirtyWrappedLine | behaviour | internal | - | Dirty line index tracking on wrapped line modification |
 | inline/fragment_item_test.cc:895 | MarkLineBoxesDirtyInsideInlineBlock | behaviour | internal | - | Dirty line index tracking inside inline block |
 | inline/fragment_item_test.cc:910 | Disabled_DebugVisualizers | internal | internal | - | MSVC natvis debugger visualization check |
-| inline/fragment_item_test.cc:931 | CaretInlinePositionForOffset_TextFit | geometry | formalized | `fragmentItem_caretPosition_textFit_vector` | Caret position with text-fit: grow font scaling |
-| inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | formalized | `fragmentItem_isRubyAnnotationLine_rule` | Identifying ruby annotation line vs base line |
-| inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | formalized | `fragmentItemsBuilder_multipleLines_vector` | FragmentItemsBuilder multi-line assembly and reordering |
+| inline/fragment_item_test.cc:931 | CaretInlinePositionForOffset_TextFit | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | blocked | - | Blocked: model lacks FragmentItemsBuilder line assembly |
 | inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
-| inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | formalized | `fragmentItems_isContainerForCulledInline_vector` | Multicolumn fragmentation of culled inline |
-| inline/hyphen_result_test.cc:37 | Horizontal | geometry | formalized | `hyphenResult_horizontal_vector` | Hyphen glyph rotation in horizontal mode is regular |
-| inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | formalized | `hyphenResult_verticalUpright_vector` | Hyphen glyph rotation with text-orientation: upright rotates canvas |
-| inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | formalized | `hyphenResult_verticalMixed_vector` | Hyphen glyph rotation with text-orientation: mixed is regular |
-| inline/inline_caret_position_test.cc:69 | AfterSpan | behaviour | formalized | `inlineCaret_afterSpan_rule` | Caret after non-culled span has kAfterBox type |
-| inline/inline_caret_position_test.cc:79 | AfterSpanCulled | behaviour | formalized | `inlineCaret_afterSpanCulled_rule` | Caret after culled span resolves to text offset |
-| inline/inline_caret_position_test.cc:89 | InlineCaretPositionInOneLineOfText | behaviour | formalized | `inlineCaret_oneLineText_vector` | Caret positions on single text line with upstream/downstream affinity |
-| inline/inline_caret_position_test.cc:115 | InlineCaretPositionAtSoftHyphen | behaviour | formalized | `inlineCaret_softHyphen_vector` | Caret position at soft hyphen character |
-| inline/inline_caret_position_test.cc:130 | InlineCaretPositionAtSoftLineWrap | behaviour | formalized | `inlineCaret_softLineWrap_vector` | Soft wrap upstream binds to line 1, downstream to line 2 |
-| inline/inline_caret_position_test.cc:146 | InlineCaretPositionAtSoftLineWrapWithSpace | behaviour | formalized | `inlineCaret_softLineWrapWithSpace_vector` | Line wrap with trailing space caret positions |
-| inline/inline_caret_position_test.cc:169 | InlineCaretPositionAtForcedLineBreak | behaviour | formalized | `inlineCaret_forcedLineBreak_vector` | Forced BR break caret positions |
-| inline/inline_caret_position_test.cc:190 | InlineCaretPositionAtEmptyLine | behaviour | formalized | `inlineCaret_emptyLine_vector` | Empty line between BRs caret resolution |
-| inline/inline_caret_position_test.cc:203 | InlineCaretPositionInOneLineOfImage | behaviour | formalized | `inlineCaret_image_rule` | Caret before and after atomic inline image |
-| inline/inline_caret_position_test.cc:221 | InlineCaretPositionAtSoftLineWrapBetweenImages | behaviour | formalized | `inlineCaret_wrapBetweenImages_rule` | Soft line wrap between atomic image boxes |
-| inline/inline_caret_position_test.cc:238 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodes | behaviour | formalized | `inlineCaret_wrapBetweenTextNodes_vector` | Wrap between multiple text nodes |
-| inline/inline_caret_position_test.cc:263 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodesRtl | behaviour | formalized | `inlineCaret_wrapBetweenTextNodesRtl_vector` | Wrap between text nodes in RTL |
-| inline/inline_caret_position_test.cc:288 | InlineCaretPositionAtSoftLineWrapBetweenDeepTextNodes | behaviour | formalized | `inlineCaret_wrapDeepTextNodes_vector` | Wrap between deep text nodes with borders |
-| inline/inline_caret_position_test.cc:315 | GeneratedZeroWidthSpace | behaviour | formalized | `inlineCaret_generatedZws_vector` | Caret resolution at pre-wrap generated ZWS |
-| inline/inline_caret_position_test.cc:345 | MultiColumnSingleText | behaviour | formalized | `inlineCaret_multicolSingleText_vector` | Caret offsets across multicolumn text fragments |
-| inline/inline_caret_position_test.cc:452 | SoftLineWrap | behaviour | formalized | `inlineCaret_softLineWrapEditable_vector` | Contenteditable soft line wrap caret resolution |
-| inline/inline_caret_position_test.cc:481 | ZeroWidthSpace | behaviour | formalized | `inlineCaret_zws_vector` | Caret at zero-width space character |
-| inline/inline_caret_position_test.cc:509 | InlineBlockBeforeContent | behaviour | formalized | `inlineCaret_inlineBlockBefore_rule` | ::before inline-block caret text offset invariance |
-| inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | formalized | `inlineCaret_bidiControlCodesLtr_vector` | Caret offset with injected bidi control codes in LTR |
-| inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | formalized | `inlineCaret_bidiControlCodesRtl_vector` | Caret offset with injected bidi control codes in RTL |
+| inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | blocked | - | Blocked: model lacks multicolumn culled inline container resolution |
+| inline/hyphen_result_test.cc:37 | Horizontal | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
+| inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
+| inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
+| inline/inline_caret_position_test.cc:69 | AfterSpan | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:79 | AfterSpanCulled | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:89 | InlineCaretPositionInOneLineOfText | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:115 | InlineCaretPositionAtSoftHyphen | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:130 | InlineCaretPositionAtSoftLineWrap | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:146 | InlineCaretPositionAtSoftLineWrapWithSpace | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:169 | InlineCaretPositionAtForcedLineBreak | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:190 | InlineCaretPositionAtEmptyLine | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:203 | InlineCaretPositionInOneLineOfImage | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:221 | InlineCaretPositionAtSoftLineWrapBetweenImages | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:238 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodes | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:263 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodesRtl | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:288 | InlineCaretPositionAtSoftLineWrapBetweenDeepTextNodes | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:315 | GeneratedZeroWidthSpace | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:345 | MultiColumnSingleText | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:452 | SoftLineWrap | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:481 | ZeroWidthSpace | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:509 | InlineBlockBeforeContent | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | internal | internal | - | Crash regression test for area element without layout object |
-| inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | formalized | `inlineCursor_bidiLevel_ltr_vector` | BiDi levels in LTR container |
-| inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | formalized | `inlineCursor_bidiLevel_rtl_vector` | BiDi levels in RTL container |
-| inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | formalized | `inlineCursor_bidiLevel_simpleLtr_vector` | BiDi levels across lines in LTR |
-| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | formalized | `inlineCursor_bidiLevel_simpleRtl_vector` | BiDi levels across lines in RTL |
-| inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | formalized | `inlineCursor_bidiFirstLine_vector` | First line uppercase text transform bidi level |
-| inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | formalized | `inlineCursor_bidiFirstLineBr_vector` | First line uppercase text transform with BR |
+| inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:184 | GetLayoutBlockFlowWithScopedCursor | internal | internal | - | Scoped cursor block flow pointer equality |
-| inline/inline_cursor_test.cc:191 | Parent | behaviour | formalized | `inlineCursor_parent_vector` | Ancestor navigation in inline cursor |
-| inline/inline_cursor_test.cc:226 | ContainingLine | behaviour | formalized | `inlineCursor_containingLine_vector` | Mapping items to containing line box fragment |
-| inline/inline_cursor_test.cc:257 | CulledInlineWithAtomicInline | behaviour | formalized | `inlineCursor_culledAtomic_vector` | Culled inline traversal with atomic inline and break |
-| inline/inline_cursor_test.cc:271 | CulledInlineWithFloat | behaviour | formalized | `inlineCursor_culledFloat_vector` | Float is not in IFC items list |
-| inline/inline_cursor_test.cc:281 | CulledInlineWithOOF | behaviour | formalized | `inlineCursor_culledOof_vector` | Absolute child is not in IFC items list |
-| inline/inline_cursor_test.cc:292 | CulledInlineNested | behaviour | formalized | `inlineCursor_culledNested_vector` | Nested culled inline traversal |
+| inline/inline_cursor_test.cc:191 | Parent | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:226 | ContainingLine | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:257 | CulledInlineWithAtomicInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:271 | CulledInlineWithFloat | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:281 | CulledInlineWithOOF | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:292 | CulledInlineNested | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | internal | - | Block in inline anonymous wrapper splitting |
-| inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | formalized | `inlineCursor_culledWithRoot_vector` | Culled inline traversal with root cursor |
-| inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | formalized | `inlineCursor_culledWithoutRoot_vector` | Culled inline traversal without root cursor |
+| inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | internal | - | Multicolumn fragmentainer boundary crossing |
-| inline/inline_cursor_test.cc:365 | FirstChild | behaviour | formalized | `inlineCursor_firstChild_rule` | MoveToFirstChild visits first child item |
-| inline/inline_cursor_test.cc:375 | FirstChild2 | behaviour | formalized | `inlineCursor_firstChild2_rule` | MoveToFirstChild visits inline box then child |
-| inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | formalized | `inlineCursor_logicalLeaves_vector` | First and last logical leaf in simple text |
-| inline/inline_cursor_test.cc:403 | FirstLastLogicalLeafInRtlText | behaviour | formalized | `inlineCursor_logicalLeavesRtl_vector` | First and last logical leaf in RTL text |
-| inline/inline_cursor_test.cc:420 | FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | formalized | `inlineCursor_logicalLeavesDeep_vector` | Logical leaf traversal with deep nesting |
+| inline/inline_cursor_test.cc:365 | FirstChild | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:375 | FirstChild2 | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:403 | FirstLastLogicalLeafInRtlText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:420 | FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:439 | MoveToEndOfLineWithNoCharsLtr | behaviour | internal | - | End of empty line cursor in textarea LTR |
 | inline/inline_cursor_test.cc:470 | MoveToEndOfLineWithNoCharsRtl | behaviour | internal | - | End of empty line cursor in textarea RTL |
-| inline/inline_cursor_test.cc:502 | FirstLastLogicalLeafWithInlineBlock | behaviour | formalized | `inlineCursor_leavesInlineBlock_rule` | Inline block stops logical leaf traversal |
-| inline/inline_cursor_test.cc:520 | FirstLastLogicalLeafWithImages | behaviour | formalized | `inlineCursor_leavesImages_rule` | Atomic image stops logical leaf traversal |
+| inline/inline_cursor_test.cc:502 | FirstLastLogicalLeafWithInlineBlock | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:520 | FirstLastLogicalLeafWithImages | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:534 | FirstNonPseudoLeafWithBlockImage | behaviour | internal | - | Block-in-inline image leaf traversal |
-| inline/inline_cursor_test.cc:554 | IsEmptyLineBox | behaviour | formalized | `inlineCursor_emptyLineBox_vector` | Empty line box detection for empty span with margin |
-| inline/inline_cursor_test.cc:565 | LastChild | behaviour | formalized | `inlineCursor_lastChild_rule` | MoveToLastChild visits last child item |
-| inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | formalized | `inlineCursor_lastChild2_rule` | MoveToLastChild on span visits last child |
-| inline/inline_cursor_test.cc:588 | Next | behaviour | formalized | `inlineCursor_nextDfs_vector` | Pre-order DFS sequence over IFC items |
+| inline/inline_cursor_test.cc:554 | IsEmptyLineBox | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:565 | LastChild | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:588 | Next | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | internal | - | Next traversal across multicol fragmentainers |
-| inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | formalized | `inlineCursor_nextEllipsis_vector` | Text overflow ellipsis item sequence |
+| inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | internal | - | Empty inline box ellipsis traversal |
-| inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | formalized | `inlineCursor_nextListMarker_vector` | List marker item precedes line box |
-| inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | formalized | `inlineCursor_nextSoftHyphens_vector` | Soft hyphen item enumeration |
-| inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | formalized | `inlineCursor_nextInlineLeaf_vector` | Next inline leaf traversal |
-| inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_nextLeafOnLine_vector` | Next leaf on line from layout inline |
-| inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_nextLeafNested_vector` | Next leaf on line skips descendants |
-| inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_nextLeafText_vector` | Next leaf on line from text node |
-| inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | formalized | `inlineCursor_leafEllipsis_vector` | Next leaf with ellipsis skips hidden text |
-| inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | formalized | `inlineCursor_leafSoftHyphens_vector` | Next leaf with soft hyphens |
-| inline/inline_cursor_test.cc:788 | NextInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_leafIgnoreBr_vector` | Next leaf traversal ignoring BR |
-| inline/inline_cursor_test.cc:800 | NextLine | behaviour | formalized | `inlineCursor_nextLine_rule` | MoveToNextLine line box navigation |
-| inline/inline_cursor_test.cc:821 | NextWithImage | behaviour | formalized | `inlineCursor_nextImage_vector` | Cursor traversal with inline image |
-| inline/inline_cursor_test.cc:827 | NextWithInlineBox | behaviour | formalized | `inlineCursor_nextInlineBox_vector` | Cursor traversal with inline-block |
-| inline/inline_cursor_test.cc:839 | NextForSameLayoutObject | behaviour | formalized | `inlineCursor_nextSameObject_vector` | Multiple fragments for single layout text |
-| inline/inline_cursor_test.cc:847 | NextForSameLayoutObjectWithRange | behaviour | formalized | `inlineCursor_nextSameObjectRange_rule` | Line-ranged cursor restricts same object fragments |
-| inline/inline_cursor_test.cc:882 | Sibling | behaviour | formalized | `inlineCursor_sibling_vector` | Line sibling items traversal |
-| inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | formalized | `inlineCursor_sibling2_vector` | Nested span sibling items traversal |
-| inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | formalized | `inlineCursor_skipChildren_vector` | Next skipping subtree traversal |
-| inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | formalized | `inlineCursor_emptyOof_rule` | Empty out-of-flow produces 0 cursor items |
-| inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | formalized | `inlineCursor_hitTestLtr_vector` | Hit testing text offset by X coordinate in LTR |
-| inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | formalized | `inlineCursor_hitTestRtl_vector` | Hit testing text offset by X coordinate in RTL |
-| inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | formalized | `inlineCursor_hitTestVerticalLtr_vector` | Hit testing text offset in vertical-lr mode |
-| inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | formalized | `inlineCursor_hitTestVerticalRtl_vector` | Hit testing text offset in vertical-rl mode |
+| inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:788 | NextInlineLeafIgnoringLineBreak | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:800 | NextLine | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:821 | NextWithImage | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:827 | NextWithInlineBox | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:839 | NextForSameLayoutObject | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:847 | NextForSameLayoutObjectWithRange | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:882 | Sibling | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | internal | - | Hit testing on inline-block with block children |
-| inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previousDfs_vector` | Backward traversal over IFC items |
+| inline/inline_cursor_test.cc:1110 | Previous | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
-| inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_prevLeaf_vector` | Backward inline leaf traversal |
-| inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_prevLeafIgnoreBr_vector` | Backward leaf traversal ignoring BR |
-| inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_prevLeafOnLine_vector` | Backward leaf on line from layout inline |
-| inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_prevLeafNested_vector` | Backward leaf from container skips descendants |
-| inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_prevLeafText_vector` | Backward leaf on line from layout text |
-| inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | formalized | `inlineCursor_prevLine_rule` | MoveToPreviousLine line box navigation |
-| inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | formalized | `inlineCursor_descendants_vector` | Scoped cursor restricting to subtree descendants |
-| inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | formalized | `inlineCursor_visualFirstLast_vector` | Visual order vs logical order in RTL |
-| inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_columnFragments_vector` | Column fragmentation layout object fragments |
+| inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
 | inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | internal | internal | - | Crash regression test for non-IFC ruby child |
-| inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces_vector` | Whitespace space collapsing rules across modes |
-| inline/inline_items_builder_test.cc:216 | CollapseTabs | behaviour | formalized | `inlineItemsBuilder_collapseTabs_vector` | Whitespace tab collapsing rules |
-| inline/inline_items_builder_test.cc:226 | CollapseNewLines | behaviour | formalized | `inlineItemsBuilder_collapseNewlines_vector` | Whitespace newline collapsing rules |
-| inline/inline_items_builder_test.cc:236 | CollapseNewlinesAsSpaces | behaviour | formalized | `inlineItemsBuilder_collapseNewlinesAsSpaces_vector` | Newlines collapsing to single spaces |
-| inline/inline_items_builder_test.cc:243 | CollapseAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseAcrossElements_vector` | Space collapsing across element boundaries |
-| inline/inline_items_builder_test.cc:248 | CollapseLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseLeadingSpaces_vector` | Leading spaces removal at block start |
-| inline/inline_items_builder_test.cc:254 | CollapseTrailingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseTrailingSpaces_vector` | Trailing spaces removal at block end |
-| inline/inline_items_builder_test.cc:260 | CollapseAllSpaces | behaviour | formalized | `inlineItemsBuilder_collapseAllSpaces_vector` | All-whitespace text collapsing to empty |
-| inline/inline_items_builder_test.cc:267 | CollapseLeadingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseLeadingNewlines_vector` | Leading newlines removal |
-| inline/inline_items_builder_test.cc:281 | CollapseTrailingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseTrailingNewlines_vector` | Trailing newlines removal |
-| inline/inline_items_builder_test.cc:289 | CollapseNewlineAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseNewlineAcrossElements_vector` | Newline across element boundaries collapsing |
-| inline/inline_items_builder_test.cc:295 | CollapseBeforeAndAfterNewline | behaviour | formalized | `inlineItemsBuilder_collapseAroundNewline_vector` | Spaces before and after newline removal |
-| inline/inline_items_builder_test.cc:301 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | formalized | `inlineItemsBuilder_noCollapseAfterPreWrap_vector` | Space after pre-wrap space does not collapse |
-| inline/inline_items_builder_test.cc:309 | CollapseZeroWidthSpaces | behaviour | formalized | `inlineItemsBuilder_collapseZws_vector` | Newline adjacent to zero-width space removal |
-| inline/inline_items_builder_test.cc:334 | CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | formalized | `inlineItemsBuilder_collapseZwsAtEnd_vector` | Newline after ZWS at end removal |
+| inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces` | Whitespace space collapsing rules across modes |
+| inline/inline_items_builder_test.cc:216 | CollapseTabs | behaviour | formalized | `inlineItemsBuilder_collapseTabs` | Whitespace tab collapsing rules |
+| inline/inline_items_builder_test.cc:226 | CollapseNewLines | behaviour | formalized | `inlineItemsBuilder_collapseNewlines` | Whitespace newline collapsing rules |
+| inline/inline_items_builder_test.cc:236 | CollapseNewlinesAsSpaces | behaviour | formalized | `inlineItemsBuilder_collapseNewlinesAsSpaces` | Newlines collapsing to single spaces |
+| inline/inline_items_builder_test.cc:243 | CollapseAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseAcrossElements` | Space collapsing across element boundaries |
+| inline/inline_items_builder_test.cc:248 | CollapseLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseLeadingSpaces` | Leading spaces removal at block start |
+| inline/inline_items_builder_test.cc:254 | CollapseTrailingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseTrailingSpaces` | Trailing spaces removal at block end |
+| inline/inline_items_builder_test.cc:260 | CollapseAllSpaces | behaviour | formalized | `inlineItemsBuilder_collapseAllSpaces` | All-whitespace text collapsing to empty |
+| inline/inline_items_builder_test.cc:267 | CollapseLeadingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseLeadingNewlines` | Leading newlines removal |
+| inline/inline_items_builder_test.cc:281 | CollapseTrailingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseTrailingNewlines` | Trailing newlines removal |
+| inline/inline_items_builder_test.cc:289 | CollapseNewlineAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseNewlineAcrossElements` | Newline across element boundaries collapsing |
+| inline/inline_items_builder_test.cc:295 | CollapseBeforeAndAfterNewline | behaviour | blocked | - | Blocked: model lacks CollapseBeforeAndAfterNewline handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:301 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | - | Blocked: model lacks CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:309 | CollapseZeroWidthSpaces | behaviour | blocked | - | Blocked: model lacks CollapseZeroWidthSpaces handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:334 | CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | blocked | - | Blocked: model lacks CollapseZeroWidthSpaceAndNewLineAtEnd handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:340 | CollapseEastAsianWidth | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
-| inline/inline_items_builder_test.cc:357 | OpaqueToSpaceCollapsing | behaviour | formalized | `inlineItemsBuilder_bidiControlOpaque_vector` | BidiControl characters are opaque to space collapsing |
-| inline/inline_items_builder_test.cc:367 | CollapseAroundReplacedElement | behaviour | formalized | `inlineItemsBuilder_aroundAtomic_vector` | Spaces around atomic inline object preserved |
-| inline/inline_items_builder_test.cc:375 | CollapseNewlineAfterObject | behaviour | formalized | `inlineItemsBuilder_newlineBetweenObjects_vector` | Newline between objects turns into single space |
-| inline/inline_items_builder_test.cc:387 | AppendEmptyString | behaviour | formalized | `inlineItemsBuilder_emptyString_vector` | Empty string produces zero-length item |
-| inline/inline_items_builder_test.cc:393 | NewLines | behaviour | formalized | `inlineItemsBuilder_newlinesPre_vector` | Newlines in pre mode produce control items |
-| inline/inline_items_builder_test.cc:405 | IgnorablePre | behaviour | formalized | `inlineItemsBuilder_ignorablePre_vector` | Form feed character produces control item |
-| inline/inline_items_builder_test.cc:426 | Empty | behaviour | formalized | `inlineItemsBuilder_emptyBlock_vector` | Empty block flow produces empty string |
-| inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | formalized | `inlineItemsBuilder_spaceAfterNoWrap_vector` | Space after nowrap text break opportunity |
-| inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_breakOpportunityPreWrap_vector` | Pre-wrap leading space break opportunity |
-| inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | formalized | `inlineItemsBuilder_bidiBlockOverride_vector` | Bidi block override RTL control code injection |
-| inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | formalized | `inlineItemsBuilder_bidiIsolate_vector` | Bidi isolate RTL control code injection |
-| inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | formalized | `inlineItemsBuilder_bidiIsolateOverride_vector` | Bidi isolate override RTL control code injection |
-| inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | formalized | `inlineItemsBuilder_blockInInline_vector` | Block-in-inline collapses surrounding spaces |
-| inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | formalized | `inlineItemsBuilder_rubyColumns_vector` | Open and close ruby column paired items |
+| inline/inline_items_builder_test.cc:357 | OpaqueToSpaceCollapsing | behaviour | blocked | - | Blocked: model lacks OpaqueToSpaceCollapsing handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:367 | CollapseAroundReplacedElement | behaviour | blocked | - | Blocked: model lacks CollapseAroundReplacedElement handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:375 | CollapseNewlineAfterObject | behaviour | blocked | - | Blocked: model lacks CollapseNewlineAfterObject handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:387 | AppendEmptyString | behaviour | blocked | - | Blocked: model lacks AppendEmptyString handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:393 | NewLines | behaviour | blocked | - | Blocked: model lacks NewLines handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:405 | IgnorablePre | behaviour | blocked | - | Blocked: model lacks IgnorablePre handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:426 | Empty | behaviour | blocked | - | Blocked: model lacks Empty handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | blocked | - | Blocked: model lacks CollapsedSpaceAfterNoWrap handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | blocked | - | Blocked: model lacks GenerateBreakOpportunityAfterLeadingSpaces handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | blocked | - | Blocked: model lacks BidiBlockOverride handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | blocked | - | Blocked: model lacks BidiIsolate handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | blocked | - | Blocked: model lacks BidiIsolateOverride handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | blocked | - | Blocked: model lacks BlockInInline handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | blocked | - | Blocked: model lacks OpenCloseRubyColumns handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
+| inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | blocked | - | Blocked: model lacks Types layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:113 | TypesForFirstLine | behaviour | blocked | - | Blocked: model lacks TypesForFirstLine layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:137 | TypesForBlockInInline | behaviour | blocked | - | Blocked: model lacks TypesForBlockInInline layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:192 | BreakToken | behaviour | formalized | `test_BreakToken_chain` | Chaining of inline break tokens across line layout passes |
+| inline/inline_layout_algorithm_test.cc:245 | EmptyLineWithOutOfFlowInInlineContainingBlock | geometry | blocked | - | Blocked: model lacks EmptyLineWithOutOfFlowInInlineContainingBlock layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:291 | BoxForEndMargin | behaviour | blocked | - | Blocked: model lacks BoxForEndMargin layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:333 | InlineBoxBorderPadding | geometry | formalized | `test_InlineBoxBorderPadding_partition` | Border and padding partitioning across line breaks |
+| inline/inline_layout_algorithm_test.cc:397 | ContainerBorderPadding | geometry | blocked | - | Blocked: model lacks ContainerBorderPadding layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:431 | MAYBE_VerticalAlignBottomReplaced | geometry | blocked | - | Blocked: model lacks MAYBE_VerticalAlignBottomReplaced layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:454 | TextFloatsAroundFloatsBefore | geometry | formalized | `test_TextFloatsAroundFloatsBefore` | Line offsets around multiple active left floats |
+| inline/inline_layout_algorithm_test.cc:519 | TextFloatsAroundInlineFloatThatFitsOnLine | geometry | blocked | - | Blocked: model lacks TextFloatsAroundInlineFloatThatFitsOnLine layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:565 | TextFloatsAroundInlineFloatThatDoesNotFitOnLine | geometry | blocked | - | Blocked: model lacks TextFloatsAroundInlineFloatThatDoesNotFitOnLine layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:596 | FloatsArePositionedWithRespectToTopEdgeAlignmentRule | geometry | blocked | - | Blocked: model lacks FloatsArePositionedWithRespectToTopEdgeAlignmentRule layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:635 | BlockInInlineAppend | behaviour | blocked | - | Blocked: model lacks BlockInInlineAppend layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:670 | PositionFloatsWithMargins | geometry | formalized | `test_PositionFloatsWithMargins` | Percentage margins on floats accounted for in line positioning |
+| inline/inline_layout_algorithm_test.cc:694 | InkOverflow | geometry | formalized | `test_InkOverflow` | Glyph bounding box half-leading creates vertical ink overflow |
+| inline/inline_layout_algorithm_test.cc:718 | TextCombineBasic | geometry | blocked | - | Blocked: model lacks TextCombineBasic layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:745 | TextCombineFake | geometry | blocked | - | Blocked: model lacks TextCombineFake layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:775 | InitialLetterEmpty | geometry | blocked | - | Blocked: model lacks InitialLetterEmpty layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:790 | InitialLetterWithEmptyInline | geometry | blocked | - | Blocked: model lacks InitialLetterWithEmptyInline layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:806 | LineBoxWithHangingWidthRTLRightAligned | geometry | formalized | `test_LineBoxWithHangingWidthRTLRightAligned` | RTL right-aligned hanging spaces conditional vs unconditional |
+| inline/inline_layout_algorithm_test.cc:839 | LineBoxWithHangingWidthRTLCenterAligned | geometry | formalized | `test_LineBoxWithHangingWidthRTLCenterAligned` | RTL center-aligned hanging spaces centering calculation |
+| inline/inline_layout_algorithm_test.cc:888 | TextBoxTrimConstraintSpace | behaviour | formalized | `test_TextBoxTrimConstraintSpace` | text-box-trim trim-both applies only to first and last in-flow child |
+| inline/inline_layout_algorithm_test.cc:944 | TextBoxTrimConstraintSpaceSingle | behaviour | formalized | `test_TextBoxTrimConstraintSpaceSingle` | Single in-flow child before empty child start trim |
+| inline/inline_layout_algorithm_test.cc:967 | TextBoxTrimConstraintSpaceEmptyOnly | behaviour | formalized | `test_TextBoxTrimConstraintSpaceEmptyOnly` | Sole in-flow child receives both start and end trim |
+| inline/inline_layout_algorithm_test.cc:984 | TextBoxTrimConstraintSpaceNone | behaviour | formalized | `test_TextBoxTrimConstraintSpaceNone` | Empty parent receives neither start nor end trim |
+| inline/inline_layout_algorithm_test.cc:999 | TextFitDivisionByZero | internal | internal | - | Crash regression test for text-fit grow per-line |
+| inline/inline_layout_algorithm_test.cc:1008 | BoxFragmentInRubyCrash | internal | internal | - | Crash regression test for ruby column box fragment |
+| inline/inline_layout_algorithm_test.cc:1026 | BidiControlsInLineClampedLines | internal | internal | - | Crash regression test for bidi controls in line clamp |
+| inline/inline_layout_algorithm_test.cc:1044 | LineClampAndMaxContent | behaviour | blocked | - | Blocked: model lacks LineClampAndMaxContent layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1086 | EllipsisFallbackToDots | behaviour | formalized | `test_EllipsisFallbackToDots` | Missing U+2026 glyph falls back to three dots |
+| inline/inline_layout_algorithm_test.cc:1129 | EllipsisFallbackToDotsFirstLine | behaviour | blocked | - | Blocked: model lacks EllipsisFallbackToDotsFirstLine layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1175 | TextEmphasisAsRuby | geometry | blocked | - | Blocked: model lacks TextEmphasisAsRuby layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1272 | RubyTextEmphasisAnnotationMetricsVerticalLr | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsVerticalLr layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1276 | RubyTextEmphasisAnnotationMetricsVerticalRl | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsVerticalRl layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1280 | RubyTextEmphasisAnnotationMetricsHorizontal | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsHorizontal layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1373 | RubyTextEmphasisHeight | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisHeight layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1406 | TextBoxTrimOnInlineBox | geometry | blocked | - | Blocked: model lacks TextBoxTrimOnInlineBox layout algorithm support |
 
 ---
 
