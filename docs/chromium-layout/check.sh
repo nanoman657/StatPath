@@ -218,4 +218,9 @@ if [[ -f "$HERE/verify_transcription.py" ]]; then
   python3 "$HERE/verify_transcription.py"
 fi
 
+if [[ -f "$HERE/tests/check_tests.sh" ]]; then
+  echo "== Checking block-lane test manifest"
+  bash "$HERE/tests/check_tests.sh"
+fi
+
 echo "== ALL CHECKS PASSED"
