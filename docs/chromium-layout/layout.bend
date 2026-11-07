@@ -451,6 +451,49 @@ def break_lines_fuel(fuel: Nat, +avail: Nat, items: List<&2, InlineItem>) -> Lis
 def break_lines(+avail: Nat, +items: List<&2, InlineItem>) -> List<&2, LineInfo>:
   break_lines_fuel(inline_item_list_len(items), avail, items)
 
+def line_info_items(li: LineInfo) -> List<&2, InlineItem>:
+  match li:
+    case LInfo{items, +isz, +cnt}:
+      items
+
+def line_info_inline_size(li: LineInfo) -> Nat:
+  match li:
+    case LInfo{+items, isz, +cnt}:
+      isz
+
+def line_info_non_break_count(li: LineInfo) -> Nat:
+  match li:
+    case LInfo{+items, +isz, cnt}:
+      cnt
+
+def line_info_list_len(ls: List<&2, LineInfo>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case +h <> t:
+      Nat.add(1n, line_info_list_len(t))
+
+def line_info_head_inline_size(ls: List<&2, LineInfo>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case h <> +t:
+      line_info_inline_size(h)
+
+def line_info_head_non_break_count(ls: List<&2, LineInfo>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case h <> +t:
+      line_info_non_break_count(h)
+
+def inline_item_append(xs: List<&2, InlineItem>, +ys: List<&2, InlineItem>) -> List<&2, InlineItem>:
+  match xs:
+    case Nil{}:
+      ys
+    case h <> t:
+      h <> inline_item_append(t, ys)
+
 # Accumulate FontHeight across all items on a line (inline/inline_box_state.cc:277-445)
 def accumulate_line_metrics(items: List<&2, InlineItem>, +strut: FontHeight) -> FontHeight:
   match items:

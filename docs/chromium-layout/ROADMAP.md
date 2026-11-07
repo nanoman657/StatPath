@@ -84,10 +84,10 @@ Source: `block_layout_algorithm.cc` / `.h`, `block_layout_algorithm_utils.cc`, `
 
 Source: `inline/line_breaker.cc` / `.h`, `inline/inline_items_builder.cc`.
 
-- [ ] Define `InlineItem` (`TextSegment`, `AtomicInline`, `OpenSpan`, `CloseSpan`, `HardBreak`) with the pre-computed fields from SCOPE §2, item 5.
-- [ ] Define `breakLines` as an accumulator loop with a termination measure (`items.length`).
-- [ ] Model trailing collapsible space removal, forced breaks, and the single-item fallback on overflow.
-- [ ] Prove Law 4 (`line_breaker_progress_and_partition`): progress, partition, and the non-overflow-or-single-item condition.
+- [x] Define `InlineItem` (`TextSegment`, `AtomicInline`, `OpenSpan`, `CloseSpan`, `HardBreak`) with the pre-computed fields from SCOPE §2, item 5.
+- [x] Define `breakLines` as an accumulator loop with a termination measure (`items.length`).
+- [x] Model trailing collapsible space removal, forced breaks, and the single-item fallback on overflow.
+- [x] Prove Law 4 (`line_breaker_progress_and_partition`): progress, partition, and the non-overflow-or-single-item condition.
 
 **Exit criterion:** Law 4 passes both checkers. The termination argument is in the file, not left implicit.
 

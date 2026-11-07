@@ -387,3 +387,154 @@ law blink_m2_test_vectors:
 
 def blink_m2_test_vectors():
   {==}
+
+# ==============================================================================
+# M3 Laws: Greedy Line Breaking, Termination Measure, and Law 4
+# Source:
+# - inline/line_breaker.cc:740-925, 1024-1130, 2432-2515
+# - inline/inline_layout_algorithm.cc:1340-1410
+# ==============================================================================
+
+# Explicit termination measure decrease on forced break (remaining length = rest.length)
+law take_line_forced_break_termination_and_partition:
+  for +avail: Nat
+  for +id: Nat
+  for +rest: List<&2, Layout.InlineItem>
+  {Layout.inline_item_append(
+    Layout.line_info_items(Layout.take_line_info(Layout.take_line(avail, Layout.ForcedBreak{id}, rest))),
+    Layout.take_line_rem(Layout.take_line(avail, Layout.ForcedBreak{id}, rest))) ==
+   (Layout.ForcedBreak{id} <> rest) : List<&2, Layout.InlineItem>}
+
+def take_line_forced_break_termination_and_partition(avail, id, rest):
+  {==}
+
+# Single-item line partition: for any InlineItem `first`, take_line(avail, first, Nil{})
+# partitions `[first]` into `items = [first]` and `remaining = Nil{}` (strictly decreasing length 1 -> 0).
+law take_line_single_item_partition:
+  for +avail: Nat
+  for +first: Layout.InlineItem
+  {Layout.inline_item_append(
+    Layout.line_info_items(Layout.take_line_info(Layout.take_line(avail, first, Nil{}))),
+    Layout.take_line_rem(Layout.take_line(avail, first, Nil{}))) ==
+   (first <> Nil{}) : List<&2, Layout.InlineItem>}
+
+def take_line_single_item_partition(avail, first):
+  match first:
+    case Layout.TextSeg{id, w, fh, cb, is_ts}:
+      match is_ts:
+        case True{}:
+          {==}
+        case False{}:
+          {==}
+    case Layout.AtomicInline{id, w, bs, fh}:
+      {==}
+    case Layout.OpenTag{id, b, p, m, fh}:
+      {==}
+    case Layout.CloseTag{id, b, p, m}:
+      {==}
+    case Layout.ForcedBreak{id}:
+      {==}
+
+# Single-item fallback fit law: for any InlineItem `first`, take_line(avail, first, Nil{})
+# has non_break_item_count <= 1 (even if `first` overflows `avail`).
+law take_line_single_item_non_break_count_le_one:
+  for +avail: Nat
+  for +first: Layout.InlineItem
+  {Layout.nat_le(
+    Layout.line_info_non_break_count(Layout.take_line_info(Layout.take_line(avail, first, Nil{}))),
+    1n) == True{} : Bool}
+
+def take_line_single_item_non_break_count_le_one(avail, first):
+  match first:
+    case Layout.TextSeg{id, w, fh, cb, is_ts}:
+      match is_ts:
+        case True{}:
+          {==}
+        case False{}:
+          {==}
+    case Layout.AtomicInline{id, w, bs, fh}:
+      {==}
+    case Layout.OpenTag{id, b, p, m, fh}:
+      {==}
+    case Layout.CloseTag{id, b, p, m}:
+      {==}
+    case Layout.ForcedBreak{id}:
+      {==}
+
+# Law 4a (Progress & termination bound): for any fuel, avail, items,
+# break_lines_fuel(fuel, avail, items) produces at most `fuel` lines.
+law break_lines_fuel_len_le_fuel:
+  for +fuel: Nat
+  for +avail: Nat
+  for +items: List<&2, Layout.InlineItem>
+  {Layout.nat_le(
+    Layout.line_info_list_len(Layout.break_lines_fuel(fuel, avail, items)),
+    fuel) == True{} : Bool}
+
+def break_lines_fuel_len_le_fuel(fuel, avail, items):
+  match fuel:
+    case 0n:
+      {==}
+    case 1n+p:
+      match items:
+        case Nil{}:
+          {==}
+        case +first <> +rest:
+          break_lines_fuel_len_le_fuel(p, avail, Layout.take_line_rem(Layout.take_line(avail, first, rest)))
+
+# Law 4 progress bound specialized to `break_lines(avail, items)` (`fuel = items.length`):
+law line_breaker_progress_bound:
+  for +avail: Nat
+  for +items: List<&2, Layout.InlineItem>
+  {Layout.nat_le(
+    Layout.line_info_list_len(Layout.break_lines(avail, items)),
+    Layout.inline_item_list_len(items)) == True{} : Bool}
+
+def line_breaker_progress_bound(avail, items):
+  break_lines_fuel_len_le_fuel(Layout.inline_item_list_len(items), avail, items)
+
+# Transcribed Blink M3 unit test vectors (inline/line_breaker_test.cc & inline/inline_layout_algorithm_test.cc):
+def m3_fh() -> Layout.FontHeight:
+  Layout.FHeight{10n, 4n}
+
+def m3_lines1() -> List<&2, Layout.LineInfo>:
+  Layout.break_lines(100n, [
+    Layout.TextSeg{1n, 40n, m3_fh(), True{}, False{}},
+    Layout.TextSeg{2n, 10n, m3_fh(), True{}, True{}},
+    Layout.TextSeg{3n, 40n, m3_fh(), True{}, False{}},
+    Layout.TextSeg{4n, 40n, m3_fh(), True{}, False{}}
+  ])
+
+def m3_lines2() -> List<&2, Layout.LineInfo>:
+  Layout.break_lines(100n, [
+    Layout.TextSeg{5n, 95n, m3_fh(), True{}, False{}},
+    Layout.TextSeg{6n, 20n, m3_fh(), True{}, True{}}
+  ])
+
+def m3_lines3() -> List<&2, Layout.LineInfo>:
+  Layout.break_lines(100n, [
+    Layout.TextSeg{1n, 40n, m3_fh(), True{}, False{}},
+    Layout.ForcedBreak{7n},
+    Layout.TextSeg{3n, 40n, m3_fh(), True{}, False{}}
+  ])
+
+def m3_lines4() -> List<&2, Layout.LineInfo>:
+  Layout.break_lines(100n, [
+    Layout.TextSeg{8n, 150n, m3_fh(), True{}, False{}},
+    Layout.TextSeg{1n, 40n, m3_fh(), True{}, False{}}
+  ])
+
+law blink_m3_test_vectors:
+  {[
+    Layout.line_info_list_len(m3_lines1()),
+    Layout.line_info_head_inline_size(m3_lines1()),
+    Layout.line_info_list_len(m3_lines2()),
+    Layout.line_info_head_inline_size(m3_lines2()),
+    Layout.line_info_list_len(m3_lines3()),
+    Layout.line_info_list_len(m3_lines4()),
+    Layout.line_info_head_non_break_count(m3_lines4()),
+    Layout.line_info_head_inline_size(m3_lines4())
+  ] == [2n, 90n, 1n, 95n, 2n, 2n, 1n, 150n] : List<&2, Nat>}
+
+def blink_m3_test_vectors():
+  {==}

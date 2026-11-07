@@ -1106,4 +1106,300 @@ theorem blink_m2_test_vectors_pass :
 #print axioms bfc_intrinsic_block_size_conservation
 #print axioms blink_m2_test_vectors_pass
 
+/-! ## 8. M3 Proofs: Greedy Line Breaking, Termination Argument, and Law 4 -/
+
+/-- Auxiliary partition lemma: `takeLineAux` partitions `more` into `subItems ++ rem = more`. -/
+theorem takeLineAux_partition (avail : Nat) :
+    ∀ (more : List InlineItem) (curWidth pendingSpace nonBreakCount : Nat),
+      let res := takeLineAux avail curWidth pendingSpace nonBreakCount more
+      res.1 ++ res.2.2.2 = more
+  | [], _, _, _ => by
+    simp [takeLineAux]
+  | next :: more, curWidth, pendingSpace, nonBreakCount => by
+    cases next with
+    | ForcedBreak id =>
+      simp [takeLineAux]
+    | TextSeg id w m cb isTs =>
+      cases isTs with
+      | true =>
+        dsimp [takeLineAux]
+        split
+        · have ih := takeLineAux_partition avail more curWidth (pendingSpace + w) (nonBreakCount + 1)
+          simp only [List.cons_append]
+          exact congrArg (List.cons _) ih
+        · rfl
+      | false =>
+        dsimp [takeLineAux]
+        split
+        · have ih := takeLineAux_partition avail more (curWidth + pendingSpace + w) 0 (nonBreakCount + 1)
+          simp only [List.cons_append]
+          exact congrArg (List.cons _) ih
+        · rfl
+    | AtomicInline id sz m asc =>
+      dsimp [takeLineAux]
+      split
+      · have ih := takeLineAux_partition avail more
+          (curWidth + pendingSpace + (InlineItem.AtomicInline id sz m asc).rawInlineSize) 0 (nonBreakCount + 1)
+        simp only [List.cons_append]
+        exact congrArg (List.cons _) ih
+      · rfl
+    | OpenTag id bp s =>
+      dsimp [takeLineAux]
+      split
+      · have ih := takeLineAux_partition avail more
+          (curWidth + pendingSpace + (InlineItem.OpenTag id bp s).rawInlineSize) 0 (nonBreakCount + 1)
+        simp only [List.cons_append]
+        exact congrArg (List.cons _) ih
+      · rfl
+    | CloseTag id bp =>
+      dsimp [takeLineAux]
+      split
+      · have ih := takeLineAux_partition avail more
+          (curWidth + pendingSpace + (InlineItem.CloseTag id bp).rawInlineSize) 0 (nonBreakCount + 1)
+        simp only [List.cons_append]
+        exact congrArg (List.cons _) ih
+      · rfl
+
+theorem takeLine_partition (avail : Nat) (first : InlineItem) (rest : List InlineItem) :
+    (takeLine avail first rest).1.items ++ (takeLine avail first rest).2 = first :: rest := by
+  cases first with
+  | ForcedBreak id =>
+    simp [takeLine]
+  | TextSeg id w m cb isTs =>
+    cases isTs with
+    | true =>
+      dsimp [takeLine]
+      exact congrArg (List.cons _) (takeLineAux_partition avail rest 0 w 1)
+    | false =>
+      dsimp [takeLine, InlineItem.rawInlineSize]
+      exact congrArg (List.cons _) (takeLineAux_partition avail rest w 0 1)
+  | AtomicInline id sz m asc =>
+    dsimp [takeLine]
+    exact congrArg (List.cons _)
+      (takeLineAux_partition avail rest (InlineItem.AtomicInline id sz m asc).rawInlineSize 0 1)
+  | OpenTag id bp s =>
+    dsimp [takeLine]
+    exact congrArg (List.cons _)
+      (takeLineAux_partition avail rest (InlineItem.OpenTag id bp s).rawInlineSize 0 1)
+  | CloseTag id bp =>
+    dsimp [takeLine]
+    exact congrArg (List.cons _)
+      (takeLineAux_partition avail rest (InlineItem.CloseTag id bp).rawInlineSize 0 1)
+
+/-- Auxiliary length bound: `takeLineAux` never increases the length of the remaining item list. -/
+theorem takeLineAux_rem_length_le (avail : Nat)
+    (more : List InlineItem) (curWidth pendingSpace nonBreakCount : Nat) :
+    (takeLineAux avail curWidth pendingSpace nonBreakCount more).2.2.2.length ≤ more.length := by
+  have h := congrArg List.length (takeLineAux_partition avail more curWidth pendingSpace nonBreakCount)
+  simp only [List.length_append] at h
+  omega
+
+/-- Explicit termination measure decrease for `takeLine` (`ROADMAP.md` Phase 3 exit criterion):
+    Every call to `takeLine avail first rest` consumes at least `first`, so the remaining list
+    `(takeLine avail first rest).2` has length `≤ rest.length < (first :: rest).length`. -/
+theorem takeLine_rem_length_le (avail : Nat) (first : InlineItem) (rest : List InlineItem) :
+    (takeLine avail first rest).2.length ≤ rest.length := by
+  cases first with
+  | ForcedBreak id =>
+    simp [takeLine]
+  | TextSeg id w m cb isTs =>
+    cases isTs with
+    | true =>
+      simpa [takeLine] using takeLineAux_rem_length_le avail rest 0 w 1
+    | false =>
+      simpa [takeLine, InlineItem.rawInlineSize] using takeLineAux_rem_length_le avail rest w 0 1
+  | AtomicInline id sz m asc =>
+    simpa [takeLine] using
+      takeLineAux_rem_length_le avail rest (InlineItem.AtomicInline id sz m asc).rawInlineSize 0 1
+  | OpenTag id bp s =>
+    simpa [takeLine] using
+      takeLineAux_rem_length_le avail rest (InlineItem.OpenTag id bp s).rawInlineSize 0 1
+  | CloseTag id bp =>
+    simpa [takeLine] using
+      takeLineAux_rem_length_le avail rest (InlineItem.CloseTag id bp).rawInlineSize 0 1
+
+theorem takeLine_termination_measure_lt (avail : Nat) (first : InlineItem) (rest : List InlineItem) :
+    (takeLine avail first rest).2.length < (first :: rest).length := by
+  have h := takeLine_rem_length_le avail first rest
+  simp only [List.length_cons]
+  omega
+
+/-- Auxiliary width/single-item fallback invariant for `takeLineAux`. -/
+theorem takeLineAux_fit (avail : Nat) :
+    ∀ (more : List InlineItem) (curWidth pendingSpace nonBreakCount : Nat),
+      (nonBreakCount ≤ 1 ∨ curWidth ≤ avail) →
+      let res := takeLineAux avail curWidth pendingSpace nonBreakCount more
+      res.2.2.1 ≤ 1 ∨ res.2.1 ≤ avail
+  | [], curWidth, pendingSpace, nonBreakCount, hInv => by
+    simpa [takeLineAux] using hInv
+  | next :: more, curWidth, pendingSpace, nonBreakCount, hInv => by
+    cases next with
+    | ForcedBreak id =>
+      simpa [takeLineAux] using hInv
+    | TextSeg id w m cb isTs =>
+      cases isTs with
+      | true =>
+        dsimp [takeLineAux]
+        split
+        · rename_i hFit
+          exact takeLineAux_fit avail more curWidth (pendingSpace + w) (nonBreakCount + 1) (Or.inr hFit)
+        · exact hInv
+      | false =>
+        dsimp [takeLineAux]
+        split
+        · rename_i hFit
+          exact takeLineAux_fit avail more (curWidth + pendingSpace + w) 0 (nonBreakCount + 1) (Or.inr hFit)
+        · exact hInv
+    | AtomicInline id sz m asc =>
+      dsimp [takeLineAux]
+      split
+      · rename_i hFit
+        exact takeLineAux_fit avail more
+          (curWidth + pendingSpace + (InlineItem.AtomicInline id sz m asc).rawInlineSize) 0 (nonBreakCount + 1)
+          (Or.inr hFit)
+      · exact hInv
+    | OpenTag id bp s =>
+      dsimp [takeLineAux]
+      split
+      · rename_i hFit
+        exact takeLineAux_fit avail more
+          (curWidth + pendingSpace + (InlineItem.OpenTag id bp s).rawInlineSize) 0 (nonBreakCount + 1)
+          (Or.inr hFit)
+      · exact hInv
+    | CloseTag id bp =>
+      dsimp [takeLineAux]
+      split
+      · rename_i hFit
+        exact takeLineAux_fit avail more
+          (curWidth + pendingSpace + (InlineItem.CloseTag id bp).rawInlineSize) 0 (nonBreakCount + 1)
+          (Or.inr hFit)
+      · exact hInv
+
+theorem takeLine_fit (avail : Nat) (first : InlineItem) (rest : List InlineItem) :
+    let line := (takeLine avail first rest).1
+    line.nonBreakItemCount ≤ 1 ∨ line.inlineSize ≤ avail := by
+  have hOne : (1 : Nat) ≤ 1 := Nat.le_refl 1
+  cases first with
+  | ForcedBreak id =>
+    simp [takeLine]
+  | TextSeg id w m cb isTs =>
+    cases isTs with
+    | true =>
+      simpa [takeLine] using takeLineAux_fit avail rest 0 w 1 (Or.inl hOne)
+    | false =>
+      simpa [takeLine, InlineItem.rawInlineSize] using takeLineAux_fit avail rest w 0 1 (Or.inl hOne)
+  | AtomicInline id sz m asc =>
+    simpa [takeLine] using
+      takeLineAux_fit avail rest (InlineItem.AtomicInline id sz m asc).rawInlineSize 0 1 (Or.inl hOne)
+  | OpenTag id bp s =>
+    simpa [takeLine] using
+      takeLineAux_fit avail rest (InlineItem.OpenTag id bp s).rawInlineSize 0 1 (Or.inl hOne)
+  | CloseTag id bp =>
+    simpa [takeLine] using
+      takeLineAux_fit avail rest (InlineItem.CloseTag id bp).rawInlineSize 0 1 (Or.inl hOne)
+
+/-- Inductive specification of `breakLinesFuel` for any `fuel ≥ items.length`. -/
+theorem breakLinesFuel_spec (avail : Nat) :
+    ∀ (fuel : Nat) (items : List InlineItem),
+      items.length ≤ fuel →
+      (breakLinesFuel fuel avail items).length ≤ items.length ∧
+      (breakLinesFuel fuel avail items).flatMap LineInfo.items = items ∧
+      ∀ line ∈ breakLinesFuel fuel avail items,
+        line.nonBreakItemCount ≤ 1 ∨ line.inlineSize ≤ avail
+  | 0, items, hFuel => by
+    cases items with
+    | nil =>
+      simp [breakLinesFuel]
+    | cons first rest =>
+      simp only [List.length_cons] at hFuel
+      omega
+  | fuel + 1, [], _ => by
+    simp [breakLinesFuel]
+  | fuel + 1, first :: rest, hFuel => by
+    have hRemLe : (takeLine avail first rest).2.length ≤ rest.length :=
+      takeLine_rem_length_le avail first rest
+    have hRemFuel : (takeLine avail first rest).2.length ≤ fuel := by
+      simp only [List.length_cons] at hFuel
+      omega
+    have ih := breakLinesFuel_spec avail fuel (takeLine avail first rest).2 hRemFuel
+    rcases ih with ⟨ihLen, ihPart, ihFit⟩
+    refine ⟨?_, ?_, ?_⟩
+    · dsimp [breakLinesFuel]
+      omega
+    · dsimp [breakLinesFuel]
+      simp only [List.flatMap_cons, ihPart]
+      exact takeLine_partition avail first rest
+    · intro line hMem
+      dsimp [breakLinesFuel] at hMem
+      simp only [List.mem_cons] at hMem
+      rcases hMem with rfl | hTail
+      · exact takeLine_fit avail first rest
+      · exact ihFit line hTail
+
+/-- Law 4 (`line_breaker_progress_and_partition`, `SCOPE.md` §4):
+    For any non-empty input `items : List InlineItem` and `availableInlineSize : Nat`:
+    1. **Progress & termination**: `breakLines` consumes at least one item per line,
+       terminates in at most `items.length` lines (`(breakLines avail items).length ≤ items.length`).
+    2. **Order-preserving partition**: `(breakLines avail items).flatMap LineInfo.items = items`.
+    3. **Non-overflow (or single-item fallback)**: every produced line satisfies
+       `line.nonBreakItemCount ≤ 1 ∨ line.inlineSize ≤ avail`. -/
+theorem line_breaker_progress_and_partition (avail : Nat) (items : List InlineItem) :
+    (breakLines avail items).length ≤ items.length ∧
+    (breakLines avail items).flatMap LineInfo.items = items ∧
+    ∀ line ∈ breakLines avail items,
+      line.nonBreakItemCount ≤ 1 ∨ line.inlineSize ≤ avail :=
+  breakLinesFuel_spec avail items.length items (Nat.le_refl items.length)
+
+/-- Transcribed Blink M3 line-breaking unit test vectors (`inline/line_breaker_test.cc`,
+    `inline/inline_layout_algorithm_test.cc`):
+    1. Greedy packing of 3 words (`w = 40`, space `w = 10` trailing, `w = 40`, `w = 40`) in `avail = 100`:
+       Line 1 packs word 1 (40) + space (10) + word 2 (40) = `inlineSize 90`; Line 2 packs word 3 (`inlineSize 40`).
+    2. Trailing collapsible space hangs at end of line without causing overflow:
+       word 1 (`w = 95`) + trailing space (`w = 20`) in `avail = 100` -> 1 line with `inlineSize = 95`.
+    3. Forced break (`kForcedBreak` / `<br>`) splits onto a new line immediately.
+    4. Single-item overflow fallback: a single word of width `150` in `avail = 100` is emitted on its own line
+       with `nonBreakItemCount = 1` and `inlineSize = 150`. -/
+def blinkM3TestVectors : List (Nat × Nat) :=
+  let fh : FontHeight := { ascent := 10, descent := 4 }
+  let w1 : InlineItem := .TextSeg 1 40 fh true false
+  let sp : InlineItem := .TextSeg 2 10 fh true true
+  let w2 : InlineItem := .TextSeg 3 40 fh true false
+  let w3 : InlineItem := .TextSeg 4 40 fh true false
+  let lines1 := breakLines 100 [w1, sp, w2, w3]
+
+  let w95 : InlineItem := .TextSeg 5 95 fh true false
+  let sp20 : InlineItem := .TextSeg 6 20 fh true true
+  let lines2 := breakLines 100 [w95, sp20]
+
+  let br : InlineItem := .ForcedBreak 7
+  let lines3 := breakLines 100 [w1, br, w2]
+
+  let w150 : InlineItem := .TextSeg 8 150 fh true false
+  let lines4 := breakLines 100 [w150, w1]
+
+  [ (lines1.length, 2)
+  , ((lines1.headD {}).inlineSize, 90)
+  , (lines2.length, 1)
+  , ((lines2.headD {}).inlineSize, 95)
+  , (lines3.length, 2)
+  , (lines4.length, 2)
+  , ((lines4.headD {}).nonBreakItemCount, 1)
+  , ((lines4.headD {}).inlineSize, 150)
+  ]
+
+theorem blink_m3_test_vectors_pass :
+    ∀ p ∈ blinkM3TestVectors, p.1 = p.2 := by
+  decide
+
+#print axioms takeLineAux_rem_length_le
+#print axioms takeLine_rem_length_le
+#print axioms takeLine_termination_measure_lt
+#print axioms takeLineAux_partition
+#print axioms takeLine_partition
+#print axioms takeLineAux_fit
+#print axioms takeLine_fit
+#print axioms breakLinesFuel_spec
+#print axioms line_breaker_progress_and_partition
+#print axioms blink_m3_test_vectors_pass
+
 end ChromiumLayout
