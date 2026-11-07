@@ -190,6 +190,30 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | formalized | `fragmentItemsBuilder_multipleLines_vector` | FragmentItemsBuilder multi-line assembly and reordering |
 | inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
 | inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | formalized | `fragmentItems_isContainerForCulledInline_vector` | Multicolumn fragmentation of culled inline |
+| inline/hyphen_result_test.cc:37 | Horizontal | geometry | formalized | `hyphenResult_horizontal_vector` | Hyphen glyph rotation in horizontal mode is regular |
+| inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | formalized | `hyphenResult_verticalUpright_vector` | Hyphen glyph rotation with text-orientation: upright rotates canvas |
+| inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | formalized | `hyphenResult_verticalMixed_vector` | Hyphen glyph rotation with text-orientation: mixed is regular |
+| inline/inline_caret_position_test.cc:69 | AfterSpan | behaviour | formalized | `inlineCaret_afterSpan_rule` | Caret after non-culled span has kAfterBox type |
+| inline/inline_caret_position_test.cc:79 | AfterSpanCulled | behaviour | formalized | `inlineCaret_afterSpanCulled_rule` | Caret after culled span resolves to text offset |
+| inline/inline_caret_position_test.cc:89 | InlineCaretPositionInOneLineOfText | behaviour | formalized | `inlineCaret_oneLineText_vector` | Caret positions on single text line with upstream/downstream affinity |
+| inline/inline_caret_position_test.cc:115 | InlineCaretPositionAtSoftHyphen | behaviour | formalized | `inlineCaret_softHyphen_vector` | Caret position at soft hyphen character |
+| inline/inline_caret_position_test.cc:130 | InlineCaretPositionAtSoftLineWrap | behaviour | formalized | `inlineCaret_softLineWrap_vector` | Soft wrap upstream binds to line 1, downstream to line 2 |
+| inline/inline_caret_position_test.cc:146 | InlineCaretPositionAtSoftLineWrapWithSpace | behaviour | formalized | `inlineCaret_softLineWrapWithSpace_vector` | Line wrap with trailing space caret positions |
+| inline/inline_caret_position_test.cc:169 | InlineCaretPositionAtForcedLineBreak | behaviour | formalized | `inlineCaret_forcedLineBreak_vector` | Forced BR break caret positions |
+| inline/inline_caret_position_test.cc:190 | InlineCaretPositionAtEmptyLine | behaviour | formalized | `inlineCaret_emptyLine_vector` | Empty line between BRs caret resolution |
+| inline/inline_caret_position_test.cc:203 | InlineCaretPositionInOneLineOfImage | behaviour | formalized | `inlineCaret_image_rule` | Caret before and after atomic inline image |
+| inline/inline_caret_position_test.cc:221 | InlineCaretPositionAtSoftLineWrapBetweenImages | behaviour | formalized | `inlineCaret_wrapBetweenImages_rule` | Soft line wrap between atomic image boxes |
+| inline/inline_caret_position_test.cc:238 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodes | behaviour | formalized | `inlineCaret_wrapBetweenTextNodes_vector` | Wrap between multiple text nodes |
+| inline/inline_caret_position_test.cc:263 | InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodesRtl | behaviour | formalized | `inlineCaret_wrapBetweenTextNodesRtl_vector` | Wrap between text nodes in RTL |
+| inline/inline_caret_position_test.cc:288 | InlineCaretPositionAtSoftLineWrapBetweenDeepTextNodes | behaviour | formalized | `inlineCaret_wrapDeepTextNodes_vector` | Wrap between deep text nodes with borders |
+| inline/inline_caret_position_test.cc:315 | GeneratedZeroWidthSpace | behaviour | formalized | `inlineCaret_generatedZws_vector` | Caret resolution at pre-wrap generated ZWS |
+| inline/inline_caret_position_test.cc:345 | MultiColumnSingleText | behaviour | formalized | `inlineCaret_multicolSingleText_vector` | Caret offsets across multicolumn text fragments |
+| inline/inline_caret_position_test.cc:452 | SoftLineWrap | behaviour | formalized | `inlineCaret_softLineWrapEditable_vector` | Contenteditable soft line wrap caret resolution |
+| inline/inline_caret_position_test.cc:481 | ZeroWidthSpace | behaviour | formalized | `inlineCaret_zws_vector` | Caret at zero-width space character |
+| inline/inline_caret_position_test.cc:509 | InlineBlockBeforeContent | behaviour | formalized | `inlineCaret_inlineBlockBefore_rule` | ::before inline-block caret text offset invariance |
+| inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | formalized | `inlineCaret_bidiControlCodesLtr_vector` | Caret offset with injected bidi control codes in LTR |
+| inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | formalized | `inlineCaret_bidiControlCodesRtl_vector` | Caret offset with injected bidi control codes in RTL |
+| inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | internal | internal | - | Crash regression test for area element without layout object |
 
 ---
 
