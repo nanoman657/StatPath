@@ -284,6 +284,37 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_columnFragments_vector` | Column fragmentation layout object fragments |
 | inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
 | inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | internal | internal | - | Crash regression test for non-IFC ruby child |
+| inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces_vector` | Whitespace space collapsing rules across modes |
+| inline/inline_items_builder_test.cc:216 | CollapseTabs | behaviour | formalized | `inlineItemsBuilder_collapseTabs_vector` | Whitespace tab collapsing rules |
+| inline/inline_items_builder_test.cc:226 | CollapseNewLines | behaviour | formalized | `inlineItemsBuilder_collapseNewlines_vector` | Whitespace newline collapsing rules |
+| inline/inline_items_builder_test.cc:236 | CollapseNewlinesAsSpaces | behaviour | formalized | `inlineItemsBuilder_collapseNewlinesAsSpaces_vector` | Newlines collapsing to single spaces |
+| inline/inline_items_builder_test.cc:243 | CollapseAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseAcrossElements_vector` | Space collapsing across element boundaries |
+| inline/inline_items_builder_test.cc:248 | CollapseLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseLeadingSpaces_vector` | Leading spaces removal at block start |
+| inline/inline_items_builder_test.cc:254 | CollapseTrailingSpaces | behaviour | formalized | `inlineItemsBuilder_collapseTrailingSpaces_vector` | Trailing spaces removal at block end |
+| inline/inline_items_builder_test.cc:260 | CollapseAllSpaces | behaviour | formalized | `inlineItemsBuilder_collapseAllSpaces_vector` | All-whitespace text collapsing to empty |
+| inline/inline_items_builder_test.cc:267 | CollapseLeadingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseLeadingNewlines_vector` | Leading newlines removal |
+| inline/inline_items_builder_test.cc:281 | CollapseTrailingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseTrailingNewlines_vector` | Trailing newlines removal |
+| inline/inline_items_builder_test.cc:289 | CollapseNewlineAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseNewlineAcrossElements_vector` | Newline across element boundaries collapsing |
+| inline/inline_items_builder_test.cc:295 | CollapseBeforeAndAfterNewline | behaviour | formalized | `inlineItemsBuilder_collapseAroundNewline_vector` | Spaces before and after newline removal |
+| inline/inline_items_builder_test.cc:301 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | formalized | `inlineItemsBuilder_noCollapseAfterPreWrap_vector` | Space after pre-wrap space does not collapse |
+| inline/inline_items_builder_test.cc:309 | CollapseZeroWidthSpaces | behaviour | formalized | `inlineItemsBuilder_collapseZws_vector` | Newline adjacent to zero-width space removal |
+| inline/inline_items_builder_test.cc:334 | CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | formalized | `inlineItemsBuilder_collapseZwsAtEnd_vector` | Newline after ZWS at end removal |
+| inline/inline_items_builder_test.cc:340 | CollapseEastAsianWidth | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
+| inline/inline_items_builder_test.cc:357 | OpaqueToSpaceCollapsing | behaviour | formalized | `inlineItemsBuilder_bidiControlOpaque_vector` | BidiControl characters are opaque to space collapsing |
+| inline/inline_items_builder_test.cc:367 | CollapseAroundReplacedElement | behaviour | formalized | `inlineItemsBuilder_aroundAtomic_vector` | Spaces around atomic inline object preserved |
+| inline/inline_items_builder_test.cc:375 | CollapseNewlineAfterObject | behaviour | formalized | `inlineItemsBuilder_newlineBetweenObjects_vector` | Newline between objects turns into single space |
+| inline/inline_items_builder_test.cc:387 | AppendEmptyString | behaviour | formalized | `inlineItemsBuilder_emptyString_vector` | Empty string produces zero-length item |
+| inline/inline_items_builder_test.cc:393 | NewLines | behaviour | formalized | `inlineItemsBuilder_newlinesPre_vector` | Newlines in pre mode produce control items |
+| inline/inline_items_builder_test.cc:405 | IgnorablePre | behaviour | formalized | `inlineItemsBuilder_ignorablePre_vector` | Form feed character produces control item |
+| inline/inline_items_builder_test.cc:426 | Empty | behaviour | formalized | `inlineItemsBuilder_emptyBlock_vector` | Empty block flow produces empty string |
+| inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | formalized | `inlineItemsBuilder_spaceAfterNoWrap_vector` | Space after nowrap text break opportunity |
+| inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_breakOpportunityPreWrap_vector` | Pre-wrap leading space break opportunity |
+| inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | formalized | `inlineItemsBuilder_bidiBlockOverride_vector` | Bidi block override RTL control code injection |
+| inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | formalized | `inlineItemsBuilder_bidiIsolate_vector` | Bidi isolate RTL control code injection |
+| inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | formalized | `inlineItemsBuilder_bidiIsolateOverride_vector` | Bidi isolate override RTL control code injection |
+| inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | formalized | `inlineItemsBuilder_blockInInline_vector` | Block-in-inline collapses surrounding spaces |
+| inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | formalized | `inlineItemsBuilder_rubyColumns_vector` | Open and close ruby column paired items |
+| inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
 
 ---
 

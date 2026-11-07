@@ -187,20 +187,16 @@ for lf in ordered_files:
         sys.exit(f"FAIL: sorryAx detected in {lf}")
 
     seen_theorems = set()
-    for line in out.splitlines():
-        m_none = re.match(r"^'([^']+)' does not depend on any axioms$", line.strip())
-        if m_none:
-            seen_theorems.add(m_none.group(1))
-            continue
-        m_dep = re.match(r"^'([^']+)' depends on axioms:\s*\[([^\]]*)\]$", line.strip())
-        if m_dep:
-            tname = m_dep.group(1)
-            seen_theorems.add(tname)
-            axioms = [a.strip() for a in m_dep.group(2).split(",") if a.strip()]
-            bad = [a for a in axioms if a not in allowed]
-            if bad:
-                sys.stderr.write(out)
-                sys.exit(f"FAIL: disallowed axioms {bad} on theorem {tname} in {lf}")
+    for m in re.finditer(r"'([^']+)' does not depend on any axioms", out):
+        seen_theorems.add(m.group(1))
+    for m in re.finditer(r"'([^']+)' depends on axioms:\s*\[([^\]]*)\]", out, re.DOTALL):
+        tname = m.group(1)
+        seen_theorems.add(tname)
+        axioms = [re.sub(r"\s+", " ", a).strip() for a in m.group(2).split(",") if a.strip()]
+        bad = [a for a in axioms if a not in allowed]
+        if bad:
+            sys.stderr.write(out)
+            sys.exit(f"FAIL: disallowed axioms {bad} on theorem {tname} in {lf}")
 
     missing = [t for t in theorems if t not in seen_theorems]
     if missing:
