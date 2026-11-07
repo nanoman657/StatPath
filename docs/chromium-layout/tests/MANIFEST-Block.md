@@ -10,7 +10,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes), `BlockSticky.lean` (single-axis sticky propagation).
+percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes), `BlockSticky.lean` (single-axis sticky propagation), `BlockPhysicalFragment.lean` (float descendant propagation, fragmentation roots, overflow clip margin).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -118,6 +118,18 @@ checks every row against the pinned sources and the Lean modules.
 | physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | formalized | `TestsBlock.DumpFragmentTreeWithTargetInsideColumn_vectors` |
 | physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | blocked | needs table layout with repeated header group across multicol columns; not modelled |
 | physical_fragment_test.cc:295 | PhysicalFragmentTest.CrashInScrollableOverflowCalculator | internal | internal | crash regression in ScrollableOverflowCalculator under fullscreen menulist keyframes |
+| physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineChlidren_vectors` |
+| physical_box_fragment_test.cc:46 | PhysicalBoxFragmentTest.FloatingDescendantsBlockChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsBlockChlidren_vectors` |
+| physical_box_fragment_test.cc:65 | PhysicalBoxFragmentTest.FloatingDescendantsInlineBlock | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineBlock_vectors`, `BlockPhysicalFragment.inline_block_isolates_floats` |
+| physical_box_fragment_test.cc:83 | PhysicalBoxFragmentTest.FloatingDescendantsBlockFormattingContext | behaviour | formalized | `TestsBlock.FloatingDescendantsBlockFormattingContext_vectors` |
+| physical_box_fragment_test.cc:104 | PhysicalBoxFragmentTest.ReplacedBlock | internal | internal | checks C++ Type(), IsAtomicInline() and GetBoxType() flags on replaced block fragment |
+| physical_box_fragment_test.cc:115 | PhysicalBoxFragmentTest.IsFragmentationContextRoot | behaviour | formalized | `TestsBlock.IsFragmentationContextRoot_vectors` |
+| physical_box_fragment_test.cc:135 | PhysicalBoxFragmentTest.IsFragmentationContextRootNested | behaviour | formalized | `TestsBlock.IsFragmentationContextRootNested_vectors` |
+| physical_box_fragment_test.cc:169 | PhysicalBoxFragmentTest.IsFragmentationContextRootFieldset | behaviour | formalized | `TestsBlock.IsFragmentationContextRootFieldset_vectors` |
+| physical_box_fragment_test.cc:201 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStart | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStart_vectors` |
+| physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStartBlockInInline_vectors` |
+| physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | formalized | `TestsBlock.OverflowClipMarginVisualBox_vectors`, `BlockPhysicalFragment.clip_margin_monotonic` |
+| physical_box_fragment_test.cc:294 | PhysicalBoxFragmentTest.CloneWithPostLayoutFragments | internal | internal | checks CloneWithPostLayoutFragments preserves C++ frame set layout data pointer |
 
 ## Laws proved
 
@@ -136,6 +148,8 @@ checks every row against the pinned sources and the Lean modules.
 - `ColumnWidth.columns_fit`: multicol columns plus gaps fit the available inline size.
 - `BlockMinMaxCache.lru_eviction`: 8-way LRU cache evicts the least recently used entry on insertion at capacity.
 - `BlockSticky.propagation_disjoint`: single-axis sticky propagation partitions element axes into consumed and pending disjointly.
+- `BlockPhysicalFragment.clip_margin_monotonic`: overflow clip margin monotonically expands ink overflow from content-box to padding-box to border-box.
+- `BlockPhysicalFragment.inline_block_isolates_floats`: inline-block isolates floats within its IFC while block-level contexts propagate.
 
 ## Merge notes
 
