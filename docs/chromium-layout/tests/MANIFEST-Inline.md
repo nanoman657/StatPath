@@ -214,6 +214,76 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | formalized | `inlineCaret_bidiControlCodesLtr_vector` | Caret offset with injected bidi control codes in LTR |
 | inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | formalized | `inlineCaret_bidiControlCodesRtl_vector` | Caret offset with injected bidi control codes in RTL |
 | inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | internal | internal | - | Crash regression test for area element without layout object |
+| inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | formalized | `inlineCursor_bidiLevel_ltr_vector` | BiDi levels in LTR container |
+| inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | formalized | `inlineCursor_bidiLevel_rtl_vector` | BiDi levels in RTL container |
+| inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | formalized | `inlineCursor_bidiLevel_simpleLtr_vector` | BiDi levels across lines in LTR |
+| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | formalized | `inlineCursor_bidiLevel_simpleRtl_vector` | BiDi levels across lines in RTL |
+| inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | formalized | `inlineCursor_bidiFirstLine_vector` | First line uppercase text transform bidi level |
+| inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | formalized | `inlineCursor_bidiFirstLineBr_vector` | First line uppercase text transform with BR |
+| inline/inline_cursor_test.cc:184 | GetLayoutBlockFlowWithScopedCursor | internal | internal | - | Scoped cursor block flow pointer equality |
+| inline/inline_cursor_test.cc:191 | Parent | behaviour | formalized | `inlineCursor_parent_vector` | Ancestor navigation in inline cursor |
+| inline/inline_cursor_test.cc:226 | ContainingLine | behaviour | formalized | `inlineCursor_containingLine_vector` | Mapping items to containing line box fragment |
+| inline/inline_cursor_test.cc:257 | CulledInlineWithAtomicInline | behaviour | formalized | `inlineCursor_culledAtomic_vector` | Culled inline traversal with atomic inline and break |
+| inline/inline_cursor_test.cc:271 | CulledInlineWithFloat | behaviour | formalized | `inlineCursor_culledFloat_vector` | Float is not in IFC items list |
+| inline/inline_cursor_test.cc:281 | CulledInlineWithOOF | behaviour | formalized | `inlineCursor_culledOof_vector` | Absolute child is not in IFC items list |
+| inline/inline_cursor_test.cc:292 | CulledInlineNested | behaviour | formalized | `inlineCursor_culledNested_vector` | Nested culled inline traversal |
+| inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | internal | - | Block in inline anonymous wrapper splitting |
+| inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | formalized | `inlineCursor_culledWithRoot_vector` | Culled inline traversal with root cursor |
+| inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | formalized | `inlineCursor_culledWithoutRoot_vector` | Culled inline traversal without root cursor |
+| inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | internal | - | Multicolumn fragmentainer boundary crossing |
+| inline/inline_cursor_test.cc:365 | FirstChild | behaviour | formalized | `inlineCursor_firstChild_rule` | MoveToFirstChild visits first child item |
+| inline/inline_cursor_test.cc:375 | FirstChild2 | behaviour | formalized | `inlineCursor_firstChild2_rule` | MoveToFirstChild visits inline box then child |
+| inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | formalized | `inlineCursor_logicalLeaves_vector` | First and last logical leaf in simple text |
+| inline/inline_cursor_test.cc:403 | FirstLastLogicalLeafInRtlText | behaviour | formalized | `inlineCursor_logicalLeavesRtl_vector` | First and last logical leaf in RTL text |
+| inline/inline_cursor_test.cc:420 | FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | formalized | `inlineCursor_logicalLeavesDeep_vector` | Logical leaf traversal with deep nesting |
+| inline/inline_cursor_test.cc:439 | MoveToEndOfLineWithNoCharsLtr | behaviour | internal | - | End of empty line cursor in textarea LTR |
+| inline/inline_cursor_test.cc:470 | MoveToEndOfLineWithNoCharsRtl | behaviour | internal | - | End of empty line cursor in textarea RTL |
+| inline/inline_cursor_test.cc:502 | FirstLastLogicalLeafWithInlineBlock | behaviour | formalized | `inlineCursor_leavesInlineBlock_rule` | Inline block stops logical leaf traversal |
+| inline/inline_cursor_test.cc:520 | FirstLastLogicalLeafWithImages | behaviour | formalized | `inlineCursor_leavesImages_rule` | Atomic image stops logical leaf traversal |
+| inline/inline_cursor_test.cc:534 | FirstNonPseudoLeafWithBlockImage | behaviour | internal | - | Block-in-inline image leaf traversal |
+| inline/inline_cursor_test.cc:554 | IsEmptyLineBox | behaviour | formalized | `inlineCursor_emptyLineBox_vector` | Empty line box detection for empty span with margin |
+| inline/inline_cursor_test.cc:565 | LastChild | behaviour | formalized | `inlineCursor_lastChild_rule` | MoveToLastChild visits last child item |
+| inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | formalized | `inlineCursor_lastChild2_rule` | MoveToLastChild on span visits last child |
+| inline/inline_cursor_test.cc:588 | Next | behaviour | formalized | `inlineCursor_nextDfs_vector` | Pre-order DFS sequence over IFC items |
+| inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | internal | - | Next traversal across multicol fragmentainers |
+| inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | formalized | `inlineCursor_nextEllipsis_vector` | Text overflow ellipsis item sequence |
+| inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | internal | - | Empty inline box ellipsis traversal |
+| inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | formalized | `inlineCursor_nextListMarker_vector` | List marker item precedes line box |
+| inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | formalized | `inlineCursor_nextSoftHyphens_vector` | Soft hyphen item enumeration |
+| inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | formalized | `inlineCursor_nextInlineLeaf_vector` | Next inline leaf traversal |
+| inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_nextLeafOnLine_vector` | Next leaf on line from layout inline |
+| inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_nextLeafNested_vector` | Next leaf on line skips descendants |
+| inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_nextLeafText_vector` | Next leaf on line from text node |
+| inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | formalized | `inlineCursor_leafEllipsis_vector` | Next leaf with ellipsis skips hidden text |
+| inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | formalized | `inlineCursor_leafSoftHyphens_vector` | Next leaf with soft hyphens |
+| inline/inline_cursor_test.cc:788 | NextInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_leafIgnoreBr_vector` | Next leaf traversal ignoring BR |
+| inline/inline_cursor_test.cc:800 | NextLine | behaviour | formalized | `inlineCursor_nextLine_rule` | MoveToNextLine line box navigation |
+| inline/inline_cursor_test.cc:821 | NextWithImage | behaviour | formalized | `inlineCursor_nextImage_vector` | Cursor traversal with inline image |
+| inline/inline_cursor_test.cc:827 | NextWithInlineBox | behaviour | formalized | `inlineCursor_nextInlineBox_vector` | Cursor traversal with inline-block |
+| inline/inline_cursor_test.cc:839 | NextForSameLayoutObject | behaviour | formalized | `inlineCursor_nextSameObject_vector` | Multiple fragments for single layout text |
+| inline/inline_cursor_test.cc:847 | NextForSameLayoutObjectWithRange | behaviour | formalized | `inlineCursor_nextSameObjectRange_rule` | Line-ranged cursor restricts same object fragments |
+| inline/inline_cursor_test.cc:882 | Sibling | behaviour | formalized | `inlineCursor_sibling_vector` | Line sibling items traversal |
+| inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | formalized | `inlineCursor_sibling2_vector` | Nested span sibling items traversal |
+| inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | formalized | `inlineCursor_skipChildren_vector` | Next skipping subtree traversal |
+| inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | formalized | `inlineCursor_emptyOof_rule` | Empty out-of-flow produces 0 cursor items |
+| inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | formalized | `inlineCursor_hitTestLtr_vector` | Hit testing text offset by X coordinate in LTR |
+| inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | formalized | `inlineCursor_hitTestRtl_vector` | Hit testing text offset by X coordinate in RTL |
+| inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | formalized | `inlineCursor_hitTestVerticalLtr_vector` | Hit testing text offset in vertical-lr mode |
+| inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | formalized | `inlineCursor_hitTestVerticalRtl_vector` | Hit testing text offset in vertical-rl mode |
+| inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | internal | - | Hit testing on inline-block with block children |
+| inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previousDfs_vector` | Backward traversal over IFC items |
+| inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
+| inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_prevLeaf_vector` | Backward inline leaf traversal |
+| inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_prevLeafIgnoreBr_vector` | Backward leaf traversal ignoring BR |
+| inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_prevLeafOnLine_vector` | Backward leaf on line from layout inline |
+| inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_prevLeafNested_vector` | Backward leaf from container skips descendants |
+| inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_prevLeafText_vector` | Backward leaf on line from layout text |
+| inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | formalized | `inlineCursor_prevLine_rule` | MoveToPreviousLine line box navigation |
+| inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | formalized | `inlineCursor_descendants_vector` | Scoped cursor restricting to subtree descendants |
+| inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | formalized | `inlineCursor_visualFirstLast_vector` | Visual order vs logical order in RTL |
+| inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_columnFragments_vector` | Column fragmentation layout object fragments |
+| inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
+| inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | internal | internal | - | Crash regression test for non-IFC ruby child |
 
 ---
 
