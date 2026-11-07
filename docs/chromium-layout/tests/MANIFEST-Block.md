@@ -366,6 +366,52 @@ checks every row against the pinned sources and the Lean modules.
 | fragmentation_test.cc:345 | FragmentationTest.ConsumedBlockSizeOverflowInflow | geometry | formalized | `TestsBlock.ConsumedBlockSizeOverflowInflow_vectors`, `BlockFlow.consumedBlockSize_step` |
 | fragmentation_test.cc:373 | FragmentationTest.ConsumedBlockSizeOverflowOutOfFlow | geometry | blocked | needs out-of-flow fragmentation in containing block with break tokens |
 
+| flex/flex_layout_algorithm_test.cc:42 | FlexLayoutAlgorithmTest.DetailsFlexDoesntCrash | internal | internal | crash regression with details element styled as display:flex |
+| flex/flex_layout_algorithm_test.cc:50 | FlexLayoutAlgorithmTest.ReplacedAspectRatioPrecision | geometry | blocked | needs SVG replaced aspect-ratio sizing in flex column |
+| flex/flex_layout_algorithm_test.cc:72 | FlexLayoutAlgorithmTest.GapDecorationsOneLine | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:144 | FlexLayoutAlgorithmTest.GapDecorationsBasic | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:219 | FlexLayoutAlgorithmTest.GapDecorationsContentEndPastContainer | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:285 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:370 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn2 | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:453 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedCenter | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:538 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStart | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:623 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStretch | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:708 | FlexLayoutAlgorithmTest.GapDecorationsColumnFlexDirection | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:790 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGaps | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:878 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGapsBetweenLines | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:939 | FlexLayoutAlgorithmTest.DevtoolsBasic | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:953 | FlexLayoutAlgorithmTest.DevtoolsWrap | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:968 | FlexLayoutAlgorithmTest.DevtoolsCoordinates | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:983 | FlexLayoutAlgorithmTest.DevtoolsOverflow | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:993 | FlexLayoutAlgorithmTest.DevtoolsWithRelPosItem | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1012 | FlexLayoutAlgorithmTest.DevtoolsBaseline | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1032 | FlexLayoutAlgorithmTest.DevtoolsOneImageItemCrash | internal | internal | crash regression with devtools flex layout on lone image item |
+| flex/flex_layout_algorithm_test.cc:1040 | FlexLayoutAlgorithmTest.DevtoolsColumnWrap | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1052 | FlexLayoutAlgorithmTest.DevtoolsColumnWrapOrtho | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1064 | FlexLayoutAlgorithmTest.DevtoolsRowWrapOrtho | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1077 | FlexLayoutAlgorithmTest.DevtoolsLegacyItem | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1091 | FlexLayoutAlgorithmTest.DevtoolsFragmentedItemDoesntCrash | internal | internal | crash regression with fragmented flex item in devtools |
+| flex/flex_layout_algorithm_test.cc:1103 | FlexLayoutAlgorithmTest.DevtoolsAutoScrollbar | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1127 | FlexLayoutAlgorithmTest.SingleAxisScrollerAutoMinSizeUseCount | internal | internal | checks UseCounter for SingleAxisScrollerAutoMinSize feature |
+| layout_flexible_box_test.cc:96 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:123 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:151 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:160 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowReverseHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:200 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowReverseVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:229 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRowReverseVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:238 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:247 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:256 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:269 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnReverseHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:292 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnReverseVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:315 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsColumnReverseVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:357 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:366 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:375 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:384 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowReverseHTB | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:409 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowReverseVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:418 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowReverseVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
+| layout_flexible_box_test.cc:427 | LayoutFlexibleBoxTest.ResizedFlexChildRequiresVisualOverflowRecalc | behaviour | blocked | needs flexbox visual overflow invalidation tracking on child resize |
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
