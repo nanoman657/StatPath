@@ -173,14 +173,16 @@ The link from Blink's C++ to the Bend and Lean definitions is a hand transcripti
 
 Each assumption must appear as an explicit hypothesis in Lean or Bend, never as an `axiom`. The `#print axioms` gate in P0.4 enforces this.
 
-| Assumption (SCOPE §5 / §8) | What the model does | Work needed |
+- [x] Document and formalize each assumption in [`docs/chromium-layout/README.md`](file:///root/github/StatPath/docs/chromium-layout/README.md) and [`docs/chromium-layout/Layout.lean`](file:///root/github/StatPath/docs/chromium-layout/Layout.lean) without any `axiom` declarations (`check.sh` verifies `#print axioms` on all theorems).
+
+| Assumption (SCOPE §5 / §8) | What the model does | Work needed / Resolution |
 |---|---|---|
-| Font metrics | Input `FontHeight` on each item | Document the source and the precondition. |
-| HarfBuzz shaping, line-break and bidi (ICU) | Pre-segmented `TextSeg` tokens with boolean flags | Document the sub-additivity precondition. |
-| Computed style and length resolution | Inputs already resolved to `BoxStrut` and `MaybeNat` | Document which properties are pre-resolved. |
-| `LayoutUnit` is a 32-bit saturating int, while the model uses `Nat` (SCOPE §8.2) | Unbounded `Nat` | State the bound `2^31 − 1` as a hypothesis. Prove no intermediate exceeds it for the inputs considered. Note the `2^48` limit from `Transitions.lean`. |
-| Subpixel rounding and pixel snapping (SCOPE §8.3) | Out of scope | Keep it out and say so in the README. |
-| Caching and incremental layout (SCOPE §8.4) | Out of scope | Keep it out and say so in the README. |
+| Font metrics | Input `FontHeight` on each item | **Done:** Documented in `README.md` (`platform/fonts/font_height.h`, `SimpleFontData`, `inline/inline_box_state.h:35-85`); precondition formalized as `FontMetricsBounded` (`h.ascent + h.descent ≤ kLayoutUnitMax`) with `font_height_merge_no_overflow` and `line_box_items_within_layout_unit` in `Layout.lean`. |
+| HarfBuzz shaping, line-break and bidi (ICU) | Pre-segmented `TextSeg` tokens with boolean flags | **Done:** Documented in `README.md` (`harfbuzz_shaper.h`, `text_break_iterator.h`, `inline_items_builder.cc`); sub-additivity precondition formalized as `ShapingSubadditive` (`∀ s1 s2, shapeWidth (s1 ++ s2) = shapeWidth s1 + shapeWidth s2`) and `shaping_segments_width_conservation` in `Layout.lean`. |
+| Computed style and length resolution | Inputs already resolved to `BoxStrut` and `MaybeNat` | **Done:** Documented in `README.md` (`computed_style.h`, `length_utils.cc`); pre-resolved properties formalized via `BoxStrutBounded`, `MarginStrutBounded`, `AllMarginsNonNegative`, and `AllChildrenNonSelfCollapsing` in `LayoutTypes.lean` and `Layout.lean`. |
+| `LayoutUnit` is a 32-bit saturating int, while the model uses `Nat` (SCOPE §8.2) | Unbounded `Nat` | **Done:** Defined `kLayoutUnitMax := 2147483647` (`2^31 - 1`) and `kBendNatImmediateMax := 281474976710655` (`2^48 - 1`, matching `LIMIT` in `Transitions.lean` / `CompilerCheckCore.lean`), and proved `kLayoutUnitMax_le_kBendNatImmediateMax`, `margin_strut_append_no_overflow`, `margin_strut_apply_offset_no_overflow`, `font_height_merge_no_overflow`, `line_box_items_within_layout_unit`, `bfc_block_layout_within_layout_unit`, and `blink_test_vectors_within_layout_unit_max` in `Layout.lean`. |
+| Subpixel rounding and pixel snapping (SCOPE §8.3) | Out of scope | **Done:** Explicitly kept out of scope and documented in `README.md` ("Assumptions Register" row 5). |
+| Caching and incremental layout (SCOPE §8.4) | Out of scope | **Done:** Explicitly kept out of scope and documented in `README.md` ("Assumptions Register" row 6). |
 
 ---
 
@@ -241,3 +243,4 @@ The SCOPE estimates are anchored to the repository's earlier developments (SCOPE
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phases 1–4 complete (M1–M4): Laws 1–5 proved in Lean (`LayoutTypes.lean`, `LayoutBlock.lean`, `LayoutInline.lean`, `Layout.lean`) and Bend (`layout.bend`, `proof.bend`); Q1–Q5 approved by owner. |
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 5 complete (M5): `layout.mjs` compiled (`gen.sh`); 650 bounded vectors generated (`model_vectors.py` / `model_vectors.txt`) and verified (`tests/chromium_layout_bend.test.ts`); `CompilerCheckCore.lean` and `CompilerCheck.lean` extended for `Nat.max` (`>`) and record constructors (`compiler_check.py` / `compiler_check_report.txt`). |
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 6 complete: 36-row Transcription Audit Table added with dual reviewer sign-off; mechanized verification added in `verify_transcription.py` (checking `layout.bend`, `LayoutTypes.lean`, `pins.txt`, and pinned Chromium C++ slice hashes); external WPT layout geometry probe added in `wpt_geometry_check.cjs` (Playwright 1.63.0 + headless Chromium against `layout.mjs`). |
+| 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 7 complete: Assumptions Register documented in `README.md` and `ROADMAP.md`; explicit hypotheses and `LayoutUnit` (`2^31 - 1`) / `nat_chk` (`2^48 - 1`) overflow-bound theorems proved in `Layout.lean`. |

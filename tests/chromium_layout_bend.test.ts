@@ -425,4 +425,39 @@ describe("the generated layout.mjs module and Bend proofs", () => {
     });
     expect(wptOut).toContain("OK: WPT layout geometry check passed");
   }, 90_000);
+
+  it("every row of docs/chromium-layout/README.md points to real Lean theorems, Bend theorems, and JS functions", () => {
+    const readme = readFileSync(join(ROOT, "README.md"), "utf8");
+    const leanAll = [
+      readFileSync(join(ROOT, "LayoutTypes.lean"), "utf8"),
+      readFileSync(join(ROOT, "LayoutBlock.lean"), "utf8"),
+      readFileSync(join(ROOT, "LayoutInline.lean"), "utf8"),
+      readFileSync(join(ROOT, "Layout.lean"), "utf8"),
+    ].join("\n");
+    const proofBend = readFileSync(join(ROOT, "proof.bend"), "utf8");
+    const lawsTable = readme.slice(
+      readme.indexOf("## Mechanized Laws"),
+      readme.indexOf("## Assumptions Register"),
+    );
+    const rows = lawsTable.split("\n").filter((l) => l.startsWith("| **Law"));
+    expect(rows.length).toBe(5);
+    const ids = (cell: string): string[] =>
+      [...cell.matchAll(/`([A-Za-z0-9_]+)`/g)].map((m) => m[1]);
+    for (const row of rows) {
+      const [, leanCell, bendCell, jsCell] = row.split("|").slice(1, -1).map((c) => c.trim());
+      for (const thm of ids(leanCell)) {
+        expect(leanAll, `Lean theorem ${thm}`).toMatch(new RegExp(`theorem\\s+${thm}\\b`));
+      }
+      for (const bthm of ids(bendCell)) {
+        expect(proofBend, `Bend theorem ${bthm}`).toMatch(new RegExp(`law\\s+${bthm}\\b`));
+      }
+      for (const fn of ids(jsCell)) {
+        expect(typeof (layout as Record<string, unknown>)[fn], `layout.mjs export ${fn}`).toBe("function");
+      }
+    }
+    expect(readme).toContain("kLayoutUnitMax");
+    expect(readme).toContain("kBendNatImmediateMax");
+    expect(readme).toContain("Subpixel rounding & physical pixel snapping");
+    expect(readme).toContain("Caching & incremental layout");
+  });
 });
