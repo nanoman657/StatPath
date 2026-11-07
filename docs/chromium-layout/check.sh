@@ -218,4 +218,9 @@ if [[ -f "$HERE/verify_transcription.py" ]]; then
   python3 "$HERE/verify_transcription.py"
 fi
 
+if [[ -f "$HERE/tests/check_inline_tests.sh" ]]; then
+  echo "== Checking Inline test manifest and theorems"
+  bash "$HERE/tests/check_inline_tests.sh"
+fi
+
 echo "== ALL CHECKS PASSED"
