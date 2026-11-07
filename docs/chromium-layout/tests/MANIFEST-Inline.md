@@ -70,6 +70,87 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter_pass` | Container line height matches single line font height (10px) |
 
+### `inline/inline_node_test.cc`
+
+| File:Line | Test Name | Class | Status | Theorem / Vector | Notes |
+|---|---|---|---|---|---|
+| inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectText_pass` | Collects 5 items (Text, OpenTag, Text, CloseTag, Text) |
+| inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | formalized | `inlineNode_collectBR_pass` | Collects 3 items (Text, ForcedBreak, Text) |
+| inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | internal | internal | - | String sharing optimization for single Text node |
+| inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | internal | internal | - | String sharing optimization with whitespace collapse |
+| inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
+| inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | internal | - | Float items in inline formatting context |
+| inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlineBlock_pass` | Collects 3 items with AtomicInline for inline-block |
+| inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | internal | - | UTF-16 surrogate pairs in inline items |
+| inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | internal | - | LTR text does not enable bidi |
+| inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | internal | - | RTL text sets bidi enabled |
+| inline/inline_node_test.cc:353 | CollectInlinesRtlWithSpan | behaviour | internal | - | RTL inside span enables bidi |
+| inline/inline_node_test.cc:369 | CollectInlinesMixedText | behaviour | internal | - | Mixed LTR/RTL text |
+| inline/inline_node_test.cc:385 | CollectInlinesMixedTextEndWithON | behaviour | internal | - | Bidi neutral character resolution |
+| inline/inline_node_test.cc:402 | CollectInlinesTextCombineBR | geometry | internal | - | Text combine with BR |
+| inline/inline_node_test.cc:418 | CollectInlinesTextCombineListItemMarker | geometry | internal | - | Text combine list marker |
+| inline/inline_node_test.cc:438 | CollectInlinesTextCombineNewline | geometry | internal | - | Text combine newline |
+| inline/inline_node_test.cc:453 | CollectInlinesTextCombineWBR | geometry | internal | - | Text combine WBR |
+| inline/inline_node_test.cc:468 | SegmentASCII | behaviour | internal | - | ASCII run segmentation |
+| inline/inline_node_test.cc:477 | SegmentHebrew | behaviour | internal | - | Hebrew run segmentation |
+| inline/inline_node_test.cc:487 | SegmentSplit1To2 | behaviour | internal | - | Mixed script segmentation |
+| inline/inline_node_test.cc:497 | SegmentSplit3To4 | behaviour | internal | - | Script run splitting |
+| inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | internal | - | Bidi-override segmentation |
+| inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | internal | - | Bidi-isolate segmentation |
+| inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMax_pass` | ComputeMinMaxSizes (min size = longest word, max size = sum of all words/spaces) |
+| inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSaturated_pass` | MinMax sizes saturate at kLayoutUnitMax 33554431 |
+| inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
+| inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
+| inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | formalized | `inlineNode_invalidation_rule` | DOM setData marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | internal | internal | - | Crash regression in OffsetMapping |
+| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | formalized | `inlineNode_invalidation_rule` | Font/display change marks NeedsCollectInlines |
+| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | formalized | `inlineNode_invalidation_rule` | Inserting child marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | internal | internal | - | Out of flow button insert |
+| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_invalidation_rule` | Removing child marks NeedsCollectInlines up to container |
+| inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
+| inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
+| inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | internal | - | Adding span adds OpenTag/CloseTag items |
+| inline/inline_node_test.cc:1097 | InvalidateRemoveSpan | behaviour | internal | - | Removing span sets NeedsCollectInlines |
+| inline/inline_node_test.cc:1107 | InvalidateAddInnerSpan | behaviour | internal | - | Adding inner span adds items |
+| inline/inline_node_test.cc:1123 | InvalidateRemoveInnerSpan | behaviour | internal | - | Removing inner span sets NeedsCollectInlines |
+| inline/inline_node_test.cc:1133 | InvalidateSetText | behaviour | internal | - | SetTextIfNeeded marks NeedsCollectInlines |
+| inline/inline_node_test.cc:1142 | InvalidateAddAbsolute | behaviour | internal | - | Adding absolute child adds OOF item |
+| inline/inline_node_test.cc:1159 | InvalidateRemoveAbsolute | behaviour | internal | - | Removing absolute child sets NeedsCollectInlines |
+| inline/inline_node_test.cc:1171 | InvalidateChangeToAbsolute | behaviour | internal | - | Changing to position:absolute replaces span items with OOF |
+| inline/inline_node_test.cc:1189 | InvalidateChangeFromAbsolute | behaviour | internal | - | Changing from absolute replaces OOF with span items |
+| inline/inline_node_test.cc:1207 | InvalidateAddFloat | behaviour | internal | - | Adding float child adds float item |
+| inline/inline_node_test.cc:1224 | InvalidateRemoveFloat | behaviour | internal | - | Removing float child sets NeedsCollectInlines |
+| inline/inline_node_test.cc:1236 | SpaceRestoredByInsertingWord | behaviour | internal | - | Inserting word between collapsed spaces restores space |
+| inline/inline_node_test.cc:1251 | RemoveInlineNodeDataIfBlockBecomesEmpty1 | internal | internal | - | Clearing InlineNodeData when container becomes empty |
+| inline/inline_node_test.cc:1262 | RemoveInlineNodeDataIfBlockBecomesEmpty2 | internal | internal | - | Clearing InlineNodeData on innerHTML="" |
+| inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | internal | internal | - | Clearing InlineNodeData when block child added |
+| inline/inline_node_test.cc:1285 | ClearFirstInlineFragmentOnSplitFlow | internal | internal | - | SplitFlow layout tree mutation |
+| inline/inline_node_test.cc:1336 | AddChildToSVGRoot | internal | internal | - | SVG text root element traversal |
+| inline/inline_node_test.cc:1353 | PreservedNewlineWithBidiAndRelayout | behaviour | internal | - | Bidi isolate characters around \n |
+| inline/inline_node_test.cc:1367 | PreservedNewlineWithRemovedBidiAndRelayout | behaviour | internal | - | Removing dir attribute removes bidi characters |
+| inline/inline_node_test.cc:1379 | PreservedNewlineWithRemovedLtrDirAndRelayout | behaviour | internal | - | Removing dir=ltr attribute removes bidi characters |
+| inline/inline_node_test.cc:1392 | InsertedWBRWithLineBreakInRelayout | geometry | internal | - | wbr causes \n to collapse to zero-width space |
+| inline/inline_node_test.cc:1405 | CollapsibleSpaceFollowingBRWithNoWrapStyle | geometry | internal | - | Collapsible space after br collapses to empty |
+| inline/inline_node_test.cc:1414 | CollapsibleSpaceFollowingNewlineWithPreStyle | geometry | internal | - | Collapsible space after newline in pre collapses |
+| inline/inline_node_test.cc:1425 | RemoveSegmentBreakFromJapaneseInRelayout | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
+| inline/inline_node_test.cc:1442 | RemoveSegmentBreakFromJapaneseInRelayout2 | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
+| inline/inline_node_test.cc:1459 | SegmentRanges | behaviour | internal | - | Segment offset range slicing |
+| inline/inline_node_test.cc:1504 | ReusingWithPreservedCase1 | behaviour | internal | - | Text content after removing br with pre-wrap |
+| inline/inline_node_test.cc:1518 | ReusingWithPreservedCase2 | behaviour | internal | - | Text content after removing br in pre-wrap container |
+| inline/inline_node_test.cc:1532 | ReusingWithPreservedCase3 | behaviour | internal | - | Text content with multiple pre-wrap spaces |
+| inline/inline_node_test.cc:1550 | ReusingWithCollapsed | behaviour | internal | - | Removing br with float preserves single space |
+| inline/inline_node_test.cc:1564 | ReusingRTLAsLTR | behaviour | internal | - | Removing dir=rtl attribute updates items from 8 to 3 |
+| inline/inline_node_test.cc:1590 | ReuseFirstNonSafe | internal | internal | - | Shape cache safe-to-reuse flag |
+| inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | internal | internal | - | Shape cache safe-to-reuse flag in RTL |
+| inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
+| inline/inline_node_test.cc:1671 | InitialLetter | geometry | internal | - | Initial letter box fragment and kInitialLetterBox item |
+| inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | internal | - | Text combine > 1 char uses scaleX |
+| inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombine_zeroes_spacing` | Text combine zeroes word-spacing and letter-spacing |
+| inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |
+| inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |
+| inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
+| inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
+
 ---
 
 ## Merge Notes
