@@ -142,3 +142,125 @@ law stack_two_example:
 def stack_two_example():
   {==}
 
+# ---- M1 Extension: Signed MarginStrut (geometry/margin_strut.h:16-58, geometry/margin_strut.cc:11-46) ----
+
+type SignedMarginStrut is Data:
+  SMarg{pos: Nat, neg: Nat}
+
+type SignedBlockBox is Data:
+  SBox{
+    margin_start: SignedMarginStrut,
+    border_start: Nat,
+    content_size: Nat,
+    border_end: Nat,
+    margin_end: SignedMarginStrut
+  }
+
+def append_margin_strut(s1: SignedMarginStrut, s2: SignedMarginStrut) -> SignedMarginStrut:
+  match s1 s2:
+    case SMarg{p1, n1} SMarg{p2, n2}:
+      SMarg{Nat.max(p1, p2), Nat.max(n1, n2)}
+
+def sum_margin_strut(s: SignedMarginStrut) -> Nat:
+  match s:
+    case SMarg{p, n}:
+      Nat.sub(p, n)
+
+def apply_margin_strut(y: Nat, s: SignedMarginStrut) -> Nat:
+  match s:
+    case SMarg{p, n}:
+      Nat.sub(Nat.add(y, p), n)
+
+def stack_two_signed(+pad_start: Nat, +pad_end: Nat, +b1: SignedBlockBox, +b2: SignedBlockBox) -> StackLayout:
+  match b1 b2:
+    case SBox{+m1s, +b1s, +c1, +b1e, +m1e} SBox{+m2s, +b2s, +c2, +b2e, +m2e}:
+      y1   = apply_margin_strut(pad_start, m1s)
+      h1   = Nat.add(Nat.add(b1s, c1), b1e)
+      y1e  = Nat.add(apply_margin_strut(pad_start, m1s), Nat.add(Nat.add(b1s, c1), b1e))
+      gap  = sum_margin_strut(append_margin_strut(m1e, m2s))
+      y2   = apply_margin_strut(y1e, append_margin_strut(m1e, m2s))
+      h2   = Nat.add(Nat.add(b2s, c2), b2e)
+      y2e  = Nat.add(
+        apply_margin_strut(
+          Nat.add(apply_margin_strut(pad_start, m1s), Nat.add(Nat.add(b1s, c1), b1e)),
+          append_margin_strut(m1e, m2s)),
+        Nat.add(Nat.add(b2s, c2), b2e))
+      csz  = Nat.add(apply_margin_strut(y2e, m2e), pad_end)
+      Stacked{y1, h1, gap, y2, h2, csz}
+
+# LAW 6: collapse_margins is associative: Nat.max(Nat.max(a, b), c) == Nat.max(a, Nat.max(b, c)).
+law collapse_margins_assoc:
+  for +a: Nat
+  for +b: Nat
+  for +c: Nat
+  {collapse_margins(collapse_margins(a, b), c) == collapse_margins(a, collapse_margins(b, c)) : Nat}
+
+def collapse_margins_assoc(a, b, c):
+  match a b c:
+    case 0n 0n 0n:
+      {==}
+    case 0n 0n 1n+cp:
+      {==}
+    case 0n 1n+bp 0n:
+      {==}
+    case 0n 1n+bp 1n+cp:
+      {==}
+    case 1n+ap 0n 0n:
+      {==}
+    case 1n+ap 0n 1n+cp:
+      {==}
+    case 1n+ap 1n+bp 0n:
+      {==}
+    case 1n+ap 1n+bp 1n+cp:
+      Equal.cong(Nat, Nat, p => 1n+p, Nat.max(Nat.max(ap, bp), cp), Nat.max(ap, Nat.max(bp, cp)), collapse_margins_assoc(ap, bp, cp))
+
+# LAW 7: Signed MarginStrut append is idempotent.
+law append_margin_strut_idem:
+  for +s: SignedMarginStrut
+  {append_margin_strut(s, s) == s : SignedMarginStrut}
+
+def append_margin_strut_idem(s):
+  match s:
+    case SMarg{p, n}:
+      s1 = Equal.cong(Nat, SignedMarginStrut, x => SMarg{x, Nat.max(n, n)}, Nat.max(p, p), p, collapse_margins_idem(p))
+      s2 = Equal.cong(Nat, SignedMarginStrut, y => SMarg{p, y}, Nat.max(n, n), n, collapse_margins_idem(n))
+      Equal.trans(SignedMarginStrut, SMarg{Nat.max(p, p), Nat.max(n, n)}, SMarg{p, Nat.max(n, n)}, SMarg{p, n}, s1, s2)
+
+# LAW 8: Signed MarginStrut append is commutative.
+law append_margin_strut_comm:
+  for +s1: SignedMarginStrut
+  for +s2: SignedMarginStrut
+  {append_margin_strut(s1, s2) == append_margin_strut(s2, s1) : SignedMarginStrut}
+
+def append_margin_strut_comm(s1, s2):
+  match s1 s2:
+    case SMarg{p1, n1} SMarg{p2, n2}:
+      t1 = Equal.cong(Nat, SignedMarginStrut, x => SMarg{x, Nat.max(n1, n2)}, Nat.max(p1, p2), Nat.max(p2, p1), collapse_margins_comm(p1, p2))
+      t2 = Equal.cong(Nat, SignedMarginStrut, y => SMarg{Nat.max(p2, p1), y}, Nat.max(n1, n2), Nat.max(n2, n1), collapse_margins_comm(n1, n2))
+      Equal.trans(SignedMarginStrut, SMarg{Nat.max(p1, p2), Nat.max(n1, n2)}, SMarg{Nat.max(p2, p1), Nat.max(n1, n2)}, SMarg{Nat.max(p2, p1), Nat.max(n2, n1)}, t1, t2)
+
+# LAW 9: Signed MarginStrut append is associative.
+law append_margin_strut_assoc:
+  for +s1: SignedMarginStrut
+  for +s2: SignedMarginStrut
+  for +s3: SignedMarginStrut
+  {append_margin_strut(append_margin_strut(s1, s2), s3) == append_margin_strut(s1, append_margin_strut(s2, s3)) : SignedMarginStrut}
+
+def append_margin_strut_assoc(s1, s2, s3):
+  match s1 s2 s3:
+    case SMarg{p1, n1} SMarg{p2, n2} SMarg{p3, n3}:
+      t1 = Equal.cong(Nat, SignedMarginStrut, x => SMarg{x, Nat.max(Nat.max(n1, n2), n3)}, Nat.max(Nat.max(p1, p2), p3), Nat.max(p1, Nat.max(p2, p3)), collapse_margins_assoc(p1, p2, p3))
+      t2 = Equal.cong(Nat, SignedMarginStrut, y => SMarg{Nat.max(p1, Nat.max(p2, p3)), y}, Nat.max(Nat.max(n1, n2), n3), Nat.max(n1, Nat.max(n2, n3)), collapse_margins_assoc(n1, n2, n3))
+      Equal.trans(SignedMarginStrut,
+        SMarg{Nat.max(Nat.max(p1, p2), p3), Nat.max(Nat.max(n1, n2), n3)},
+        SMarg{Nat.max(p1, Nat.max(p2, p3)), Nat.max(Nat.max(n1, n2), n3)},
+        SMarg{Nat.max(p1, Nat.max(p2, p3)), Nat.max(n1, Nat.max(n2, n3))},
+        t1, t2)
+
+# LAW 10: Concrete signed-margin stacking test vector (positive 50 and negative -30 collapse to 20).
+law stack_two_signed_example:
+  {sum_margin_strut(append_margin_strut(SMarg{50n, 0n}, SMarg{0n, 30n})) == 20n : Nat}
+
+def stack_two_signed_example():
+  {==}
+

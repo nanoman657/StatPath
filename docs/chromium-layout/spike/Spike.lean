@@ -115,4 +115,101 @@ theorem stackTwo_container_size (padStart padEnd : Nat) (b1 b2 : BlockBox) :
 #print axioms stackTwo_non_overlap
 #print axioms stackTwo_container_size
 
+/-! ## M1 Extension: Signed `MarginStrut` (`geometry/margin_strut.h:16-58`, `geometry/margin_strut.cc:11-46`) -/
+
+/-- Signed `MarginStrut` (`geometry/margin_strut.h:16-18`) storing the maximum positive margin (`pos`)
+    and maximum negative margin magnitude (`neg`). -/
+structure SignedMarginStrut where
+  pos : Nat
+  neg : Nat
+  deriving DecidableEq, Repr
+
+/-- `MarginStrut::Append` (`geometry/margin_strut.cc:11-30`, non-quirky case). -/
+def appendMarginStrut (s1 s2 : SignedMarginStrut) : SignedMarginStrut :=
+  { pos := Nat.max s1.pos s2.pos, neg := Nat.max s1.neg s2.neg }
+
+/-- `MarginStrut::Sum` (`geometry/margin_strut.h:40-44`, clamped to `Nat`). -/
+def sumMarginStrut (s : SignedMarginStrut) : Nat :=
+  s.pos - s.neg
+
+/-- Apply a signed `MarginStrut` offset (`+ s.pos - s.neg`) to a block offset `y` (`geometry/margin_strut.h:40-44`). -/
+def applyMarginStrut (y : Nat) (s : SignedMarginStrut) : Nat :=
+  (y + s.pos) - s.neg
+
+/-- A block box with signed block-start and block-end margin struts. -/
+structure SignedBlockBox where
+  marginStart : SignedMarginStrut
+  borderStart : Nat
+  contentSize : Nat
+  borderEnd   : Nat
+  marginEnd   : SignedMarginStrut
+  deriving DecidableEq, Repr
+
+/-- Stack two in-flow block boxes with signed margins vertically inside a BFC-root container. -/
+def stackTwoSigned (padStart padEnd : Nat) (b1 b2 : SignedBlockBox) : StackLayout :=
+  let y1   := applyMarginStrut padStart b1.marginStart
+  let h1   := (b1.borderStart + b1.contentSize) + b1.borderEnd
+  let y1e  := y1 + h1
+  let mGap := appendMarginStrut b1.marginEnd b2.marginStart
+  let gap  := sumMarginStrut mGap
+  let y2   := applyMarginStrut y1e mGap
+  let h2   := (b2.borderStart + b2.contentSize) + b2.borderEnd
+  let y2e  := y2 + h2
+  let csz  := applyMarginStrut y2e b2.marginEnd + padEnd
+  { y1 := y1, h1 := h1, collapsedGap := gap, y2 := y2, h2 := h2, containerSize := csz }
+
+/-- Theorem 7: Signed `MarginStrut` append is idempotent. -/
+theorem appendMarginStrut_idem (s : SignedMarginStrut) :
+    appendMarginStrut s s = s := by
+  cases s
+  simp [appendMarginStrut]
+
+/-- Theorem 8: Signed `MarginStrut` append is commutative. -/
+theorem appendMarginStrut_comm (s1 s2 : SignedMarginStrut) :
+    appendMarginStrut s1 s2 = appendMarginStrut s2 s1 := by
+  cases s1
+  cases s2
+  simp [appendMarginStrut, Nat.max_comm]
+
+/-- Theorem 9: Signed `MarginStrut` append is associative. -/
+theorem appendMarginStrut_assoc (s1 s2 s3 : SignedMarginStrut) :
+    appendMarginStrut (appendMarginStrut s1 s2) s3 =
+      appendMarginStrut s1 (appendMarginStrut s2 s3) := by
+  cases s1
+  cases s2
+  cases s3
+  simp [appendMarginStrut, Nat.max_assoc]
+
+/-- Theorem 10: Signed `MarginStrut` forms a join-semilattice (Law 1 on `SignedMarginStrut`). -/
+theorem signed_margin_strut_semilattice (s1 s2 s3 : SignedMarginStrut) :
+    appendMarginStrut (appendMarginStrut s1 s2) s3 =
+      appendMarginStrut s1 (appendMarginStrut s2 s3) ∧
+    appendMarginStrut s1 s2 = appendMarginStrut s2 s1 ∧
+    appendMarginStrut s1 s1 = s1 := by
+  exact ⟨appendMarginStrut_assoc s1 s2 s3, appendMarginStrut_comm s1 s2, appendMarginStrut_idem s1⟩
+
+/-- Theorem 11: When negative margin components are zero, `stackTwoSigned` agrees with `stackTwo`. -/
+theorem stackTwoSigned_nonneg_eq (padStart padEnd : Nat) (b1 b2 : BlockBox) :
+    let sb1 : SignedBlockBox :=
+      { marginStart := ⟨b1.marginStart, 0⟩
+      , borderStart := b1.borderStart
+      , contentSize := b1.contentSize
+      , borderEnd   := b1.borderEnd
+      , marginEnd   := ⟨b1.marginEnd, 0⟩ }
+    let sb2 : SignedBlockBox :=
+      { marginStart := ⟨b2.marginStart, 0⟩
+      , borderStart := b2.borderStart
+      , contentSize := b2.contentSize
+      , borderEnd   := b2.borderEnd
+      , marginEnd   := ⟨b2.marginEnd, 0⟩ }
+    stackTwoSigned padStart padEnd sb1 sb2 = stackTwo padStart padEnd b1 b2 := by
+  simp [stackTwoSigned, stackTwo, applyMarginStrut, appendMarginStrut, sumMarginStrut,
+    collapseMargins, boxBorderSize, Nat.add_assoc]
+
+#print axioms appendMarginStrut_idem
+#print axioms appendMarginStrut_comm
+#print axioms appendMarginStrut_assoc
+#print axioms signed_margin_strut_semilattice
+#print axioms stackTwoSigned_nonneg_eq
+
 end ChromiumLayout.Spike
