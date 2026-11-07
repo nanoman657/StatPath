@@ -135,6 +135,45 @@ checks every row against the pinned sources and the Lean modules.
 | absolute_utils_test.cc:315 | AbsoluteUtilsTest.Vertical | geometry | formalized | `TestsBlock.Vertical_vectors` |
 | absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | formalized | `TestsBlock.CenterStaticPosition_vectors` |
 | absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `BlockAbsolute.clamp_bounds` |
+| out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | formalized | `TestsBlock.FixedInsideAbs_vectors`, `OutOfFlowCB.fixed_no_containment` |
+| out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:238 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:279 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewEmptyColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:320 | OutOfFlowLayoutPartTest.BreakInsideAvoid | behaviour | blocked | needs break-inside: avoid on out-of-flow node in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:359 | OutOfFlowLayoutPartTest.BreakBeforeColumn | behaviour | blocked | needs break-before: column on out-of-flow node in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:398 | OutOfFlowLayoutPartTest.BreakAfterColumn | behaviour | blocked | needs break-after: column on out-of-flow node in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:437 | OutOfFlowLayoutPartTest.ChildBreakInsideAvoid | behaviour | blocked | needs break-inside: avoid on descendant in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:479 | OutOfFlowLayoutPartTest.ChildBreakBeforeAvoid | behaviour | blocked | needs break-before: avoid on descendant in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:523 | OutOfFlowLayoutPartTest.ChildBreakAfterAvoid | behaviour | blocked | needs break-after: avoid on descendant in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:568 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNegativeTopPropertyAndNewEmptyColumn | geometry | blocked | needs out-of-flow fragmentation in multicolumn with negative top; not modelled |
+| out_of_flow_layout_part_test.cc:610 | OutOfFlowLayoutPartTest.PositionedFragmentationWithBottomProperty | geometry | blocked | needs out-of-flow fragmentation in multicolumn with bottom property; not modelled |
+| out_of_flow_layout_part_test.cc:649 | OutOfFlowLayoutPartTest.PositionedFragmentationInFlowWithAddedColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with added columns; not modelled |
+| out_of_flow_layout_part_test.cc:694 | OutOfFlowLayoutPartTest.PositionedFragmentationAndColumnSpanners | geometry | blocked | needs column spanners (column-span: all) with out-of-flow fragmentation; not modelled |
+| out_of_flow_layout_part_test.cc:745 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNestedSpanner | geometry | blocked | needs nested column spanners with out-of-flow fragmentation; not modelled |
+| out_of_flow_layout_part_test.cc:787 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNestedSpanners | geometry | blocked | needs nested column spanners with out-of-flow fragmentation; not modelled |
+| out_of_flow_layout_part_test.cc:842 | OutOfFlowLayoutPartTest.AbsposInSpanner | geometry | blocked | needs abspos inside column spanner; not modelled |
+| out_of_flow_layout_part_test.cc:895 | OutOfFlowLayoutPartTest.AbsposInSpannerStaticPos | geometry | blocked | needs abspos inside column spanner static position; not modelled |
+| out_of_flow_layout_part_test.cc:945 | OutOfFlowLayoutPartTest.SpannerInAbspos | geometry | blocked | needs column spanner inside abspos container; not modelled |
+| out_of_flow_layout_part_test.cc:987 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumnsAndSpanners | geometry | blocked | needs column spanner with abspos fragmentation and new columns; not modelled |
+| out_of_flow_layout_part_test.cc:1038 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumnsAfterSpanner | geometry | blocked | needs column spanner with abspos fragmentation and fixed bottom; not modelled |
+| out_of_flow_layout_part_test.cc:1083 | OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewColumnsAutoHeight | geometry | blocked | needs column spanner with abspos fragmentation and auto height; not modelled |
+| out_of_flow_layout_part_test.cc:1128 | OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewEmptyColumns | geometry | blocked | needs column spanner with abspos fragmentation and new empty columns; not modelled |
+| out_of_flow_layout_part_test.cc:1175 | OutOfFlowLayoutPartTest.AbsposFragmentationPctResolution | geometry | blocked | needs percentage resolution in multicol out-of-flow fragmentation; not modelled |
+| out_of_flow_layout_part_test.cc:1218 | OutOfFlowLayoutPartTest.AbsposFragmentationPctResolutionWithOverflow | geometry | blocked | needs percentage resolution with overflow in multicol out-of-flow; not modelled |
+| out_of_flow_layout_part_test.cc:1278 | OutOfFlowLayoutPartTest.SimpleAbsposNestedFragmentation | geometry | blocked | needs nested multicol out-of-flow fragmentation; not modelled |
+| out_of_flow_layout_part_test.cc:1322 | OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewColumns | geometry | blocked | needs nested multicol out-of-flow fragmentation with new columns; not modelled |
+| out_of_flow_layout_part_test.cc:1375 | OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewEmptyColumns | geometry | blocked | needs nested multicol out-of-flow fragmentation with new empty columns; not modelled |
+| out_of_flow_layout_part_test.cc:1431 | OutOfFlowLayoutPartTest.PositionedFragmentationWithBottomPropertyAndHeightAuto | geometry | blocked | needs out-of-flow fragmentation with bottom property and height auto; not modelled |
+| out_of_flow_layout_part_test.cc:1479 | OutOfFlowLayoutPartTest.AbsposFragWithInlineCBAndSpanner | geometry | blocked | needs inline containing block and column spanner in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:1549 | OutOfFlowLayoutPartTest.PositionedObjectsInMulticol | behaviour | blocked | needs multicolumn positioned objects tracking; not modelled |
+| out_of_flow_layout_part_test.cc:1572 | OutOfFlowLayoutPartTest.PositionedObjectsInMulticolWithInline | behaviour | blocked | needs multicolumn positioned objects with inline; not modelled |
+| out_of_flow_layout_part_test.cc:1596 | OutOfFlowLayoutPartTest.FragmentainerBreakTokens | behaviour | blocked | needs fragmentainer break token sequence tracking with column spanner; not modelled |
+| out_of_flow_layout_part_test.cc:1657 | OutOfFlowLayoutPartTest.FragmentainerBreakTokenBeforeSpanner | behaviour | blocked | needs fragmentainer break token before spanner; not modelled |
+| out_of_flow_layout_part_test.cc:1716 | OutOfFlowLayoutPartTest.RelayoutNestedMulticolWithOOF | behaviour | blocked | needs nested multicol relayout cache with out-of-flow; not modelled |
+| out_of_flow_layout_part_test.cc:1764 | OutOfFlowLayoutPartTest.EmptyFragmentainersBeforeOOF | behaviour | blocked | needs empty fragmentainers break token tracking before out-of-flow; not modelled |
+| out_of_flow_layout_part_test.cc:1810 | OutOfFlowLayoutPartTest.MultipleUnfragmentedOOFs | behaviour | blocked | needs unfragmented out-of-flow break token propagation in multicol; not modelled |
 
 ## Laws proved
 
@@ -157,6 +196,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockPhysicalFragment.inline_block_isolates_floats`: inline-block isolates floats within its IFC while block-level contexts propagate.
 - `BlockRelative.opposing_sum_zero`: when only one opposing relative inset is specified, the resolved insets sum to zero.
 - `BlockAbsolute.clamp_bounds`: clamping always stays within [minVal, maxVal] when minVal ≤ maxVal.
+- `OutOfFlowCB.fixed_no_containment`: when no ancestor has layout containment, fixed-position containing block is viewport (none).
 
 ## Merge notes
 
