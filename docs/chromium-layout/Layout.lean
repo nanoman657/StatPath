@@ -326,6 +326,57 @@ def createLineBox (strut : FontHeight) (lineInfo : LineInfo) : LineBoxFragment :
   , metrics := metrics
   , items := placeLineItems metrics 0 lineInfo.items }
 
+/-- `InlineLayoutStateStack` push/pop step (`inline/inline_box_state.h:40-235`,
+    `inline/inline_box_state.cc:277-445`, `ROADMAP.md` P0.1 Q3 & Phase 4):
+    maintains the active inline box's `FontHeight` and a stack of ancestor `FontHeight`s
+    across `OpenTag` (`OnOpenTag` push) and `CloseTag` (`OnCloseTag` pop + `FontHeight::Merge`). -/
+def stepBoxStateStack (active : FontHeight) (stack : List FontHeight) (it : InlineItem) :
+    FontHeight × List FontHeight :=
+  match it with
+  | .OpenTag _ _ s =>
+    -- `OnOpenTag`: push parent box metrics and initialize child box metrics with `s`.
+    (s, active :: stack)
+  | .CloseTag _ _ =>
+    -- `OnCloseTag`: pop parent box metrics and merge child box metrics into parent.
+    match stack with
+    | [] => (active, [])
+    | parent :: restStack => (FontHeight.merge parent active, restStack)
+  | _ =>
+    (FontHeight.merge active it.fontHeight, stack)
+
+/-- Run `stepBoxStateStack` over a line's `InlineItem` list (`OnBeginPlaceItems` .. `OnEndPlaceItems`). -/
+def runBoxStateStack (active : FontHeight) (stack : List FontHeight) :
+    List InlineItem → FontHeight × List FontHeight
+  | [] => (active, stack)
+  | it :: rest =>
+    let (nextActive, nextStack) := stepBoxStateStack active stack it
+    runBoxStateStack nextActive nextStack rest
+
+/-- Flush any unclosed ancestor inline boxes at line end (`OnEndPlaceItems`,
+    `inline/inline_box_state.cc:426-445`). -/
+def flushBoxStateStack (active : FontHeight) : List FontHeight → FontHeight
+  | [] => active
+  | parent :: rest => flushBoxStateStack (FontHeight.merge parent active) rest
+
+/-- Full `InlineLayoutStateStack` line-metrics pass (`inline/inline_box_state.cc:277-445`). -/
+def applyBoxStateStack (strut : FontHeight) (items : List InlineItem) : FontHeight :=
+  let (active, stack) := runBoxStateStack strut [] items
+  flushBoxStateStack active stack
+
+/-- Stack line boxes vertically inside an inline formatting context
+    (`InlineLayoutAlgorithm::Layout`, `inline/inline_layout_algorithm.cc:1340-1410`,
+    `ROADMAP.md` Phase 4). -/
+def stackLineBoxes (strut : FontHeight) (blockOff : Nat) :
+    List LineInfo → List LineBoxFragment × Nat
+  | [] => ([], blockOff)
+  | li :: rest =>
+    let lb := createLineBox strut li
+    let lh := lb.metrics.lineHeight
+    let positioned : LineBoxFragment :=
+      { lb with bfcOffset := { inlineOffset := 0, blockOffset := blockOff } }
+    let (restLines, totalBs) := stackLineBoxes strut (blockOff + lh) rest
+    (positioned :: restLines, totalBs)
+
 /-! ## 3. In-Flow Block Layout (`BlockLayoutAlgorithm`, M2)
     Source:
     - `block_layout_algorithm.h:34-430`, `block_layout_algorithm.cc:555-576, 800-935, 1172-1500, 2385-3137, 3851-3915`
@@ -467,7 +518,8 @@ def inlineChildLines : LayoutInputNode → List LineBoxFragment
   | blockChild _ _ _ _ _ _ _ _ _ _ _ => []
   | inlineChild _ b p _ expW _ strut items =>
       let avail := expW.getD 0 - (b.inlineSum + p.inlineSum)
-      (breakLines avail items).map (createLineBox strut)
+      let startOff := b.blockStart + p.blockStart
+      (stackLineBoxes strut startOff (breakLines avail items)).1
 
 /-- Total block size of a list of line boxes stacked vertically. -/
 def linesTotalBlockSize : List LineBoxFragment → Nat
@@ -1401,5 +1453,265 @@ theorem blink_m3_test_vectors_pass :
 #print axioms breakLinesFuel_spec
 #print axioms line_breaker_progress_and_partition
 #print axioms blink_m3_test_vectors_pass
+
+/-! ## 9. M4 Proofs: Inline Box State, Line Boxes, Law 5, and Blink Test Vectors -/
+
+/-- Explicit `Nat.max` order lemmas required by the Phase 4 exit criterion (`ROADMAP.md` Phase 4). -/
+theorem nat_le_max_left (a b : Nat) : a ≤ Nat.max a b :=
+  Nat.le_max_left a b
+
+theorem nat_le_max_right (a b : Nat) : b ≤ Nat.max a b :=
+  Nat.le_max_right a b
+
+theorem FontHeight.merge_assoc (a b c : FontHeight) :
+    FontHeight.merge (FontHeight.merge a b) c =
+      FontHeight.merge a (FontHeight.merge b c) := by
+  cases a
+  cases b
+  cases c
+  simp [FontHeight.merge, Nat.max_assoc]
+
+theorem FontHeight.merge_comm (a b : FontHeight) :
+    FontHeight.merge a b = FontHeight.merge b a := by
+  cases a
+  cases b
+  simp [FontHeight.merge, Nat.max_comm]
+
+theorem FontHeight.merge_idem (a : FontHeight) :
+    FontHeight.merge a a = a := by
+  cases a
+  simp [FontHeight.merge]
+
+theorem FontHeight.merge_zero_left (a : FontHeight) :
+    FontHeight.merge { ascent := 0, descent := 0 } a = a := by
+  cases a
+  simp [FontHeight.merge]
+
+theorem FontHeight.merge_zero_right (a : FontHeight) :
+    FontHeight.merge a { ascent := 0, descent := 0 } = a := by
+  cases a
+  simp [FontHeight.merge]
+
+theorem flushBoxStateStack_merge (active extra : FontHeight) :
+    ∀ (stack : List FontHeight),
+      flushBoxStateStack (FontHeight.merge active extra) stack =
+        FontHeight.merge (flushBoxStateStack active stack) extra
+  | [] => rfl
+  | parent :: rest => by
+    dsimp [flushBoxStateStack]
+    rw [← FontHeight.merge_assoc parent active extra]
+    exact flushBoxStateStack_merge (FontHeight.merge parent active) extra rest
+
+theorem stepBoxStateStack_flush (active : FontHeight) (stack : List FontHeight) (it : InlineItem) :
+    let (nextActive, nextStack) := stepBoxStateStack active stack it
+    flushBoxStateStack nextActive nextStack =
+      FontHeight.merge it.fontHeight (flushBoxStateStack active stack) := by
+  cases it with
+  | OpenTag id bp s =>
+    dsimp [stepBoxStateStack, flushBoxStateStack, InlineItem.fontHeight]
+    rw [flushBoxStateStack_merge active s stack, FontHeight.merge_comm]
+  | CloseTag id bp =>
+    cases stack with
+    | nil =>
+      dsimp [stepBoxStateStack, flushBoxStateStack, InlineItem.fontHeight]
+      rw [FontHeight.merge_zero_left]
+    | cons parent rest =>
+      dsimp [stepBoxStateStack, flushBoxStateStack, InlineItem.fontHeight]
+      rw [FontHeight.merge_zero_left]
+  | TextSeg id w m cb isTs =>
+    dsimp [stepBoxStateStack, InlineItem.fontHeight]
+    rw [flushBoxStateStack_merge active m stack, FontHeight.merge_comm]
+  | AtomicInline id sz m asc =>
+    dsimp [stepBoxStateStack, InlineItem.fontHeight]
+    rw [flushBoxStateStack_merge active _ stack, FontHeight.merge_comm]
+  | ForcedBreak id =>
+    dsimp [stepBoxStateStack, InlineItem.fontHeight]
+    rw [flushBoxStateStack_merge active _ stack, FontHeight.merge_comm]
+
+theorem runBoxStateStack_flush :
+    ∀ (items : List InlineItem) (active : FontHeight) (stack : List FontHeight),
+      let (finalActive, finalStack) := runBoxStateStack active stack items
+      flushBoxStateStack finalActive finalStack =
+        accumulateLineMetrics (flushBoxStateStack active stack) items
+  | [], active, stack => rfl
+  | it :: rest, active, stack => by
+    dsimp [runBoxStateStack, accumulateLineMetrics]
+    have ih := runBoxStateStack_flush rest (stepBoxStateStack active stack it).1 (stepBoxStateStack active stack it).2
+    have hStep := stepBoxStateStack_flush active stack it
+    dsimp at ih hStep
+    rw [ih, hStep]
+    clear ih hStep
+    induction rest with
+    | nil =>
+      dsimp [accumulateLineMetrics]
+    | cons r rs ihRest =>
+      dsimp [accumulateLineMetrics]
+      rw [ihRest, ← FontHeight.merge_assoc, FontHeight.merge_comm r.fontHeight it.fontHeight, FontHeight.merge_assoc]
+
+/-- Equivalence of `InlineLayoutStateStack` push/pop accumulation (`applyBoxStateStack`)
+    and `accumulateLineMetrics` for arbitrary inline box nesting depth (`ROADMAP.md` P0.1 Q3 & Phase 4). -/
+theorem applyBoxStateStack_eq_accumulateLineMetrics (strut : FontHeight) (items : List InlineItem) :
+    applyBoxStateStack strut items = accumulateLineMetrics strut items :=
+  runBoxStateStack_flush items strut []
+
+/-- Every item on a line has its `ascent` and `descent` bounded by `accumulateLineMetrics`. -/
+theorem accumulateLineMetrics_encloses (strut : FontHeight) :
+    ∀ (items : List InlineItem) (it : InlineItem),
+      it ∈ items →
+      it.fontHeight.ascent ≤ (accumulateLineMetrics strut items).ascent ∧
+      it.fontHeight.descent ≤ (accumulateLineMetrics strut items).descent
+  | [], _, hMem => by
+    cases hMem
+  | head :: tail, it, hMem => by
+    simp only [List.mem_cons] at hMem
+    dsimp [accumulateLineMetrics, FontHeight.merge]
+    rcases hMem with rfl | hTail
+    · exact ⟨nat_le_max_left _ _, nat_le_max_left _ _⟩
+    · rcases accumulateLineMetrics_encloses strut tail it hTail with ⟨hAsc, hDesc⟩
+      exact ⟨Nat.le_trans hAsc (nat_le_max_right _ _), Nat.le_trans hDesc (nat_le_max_right _ _)⟩
+
+/-- Every `PlacedInlineItem` emitted by `placeLineItems` fits vertically within `lineMetrics`. -/
+theorem placeLineItems_encloses (lineMetrics : FontHeight) :
+    ∀ (items : List InlineItem) (inlineOff : Nat),
+      (∀ it ∈ items,
+        it.fontHeight.ascent ≤ lineMetrics.ascent ∧
+        it.fontHeight.descent ≤ lineMetrics.descent) →
+      ∀ placed ∈ placeLineItems lineMetrics inlineOff items,
+        placed.blockOffset + placed.blockSize ≤ lineMetrics.ascent + lineMetrics.descent
+  | [], _, _, placed, hMem => by
+    cases hMem
+  | it :: rest, inlineOff, hBounds, placed, hMem => by
+    dsimp [placeLineItems] at hMem
+    simp only [List.mem_cons] at hMem
+    rcases hMem with rfl | hTail
+    · rcases hBounds it (List.Mem.head rest) with ⟨hAsc, hDesc⟩
+      dsimp
+      omega
+    · exact placeLineItems_encloses lineMetrics rest (inlineOff + it.rawInlineSize)
+        (fun x hx => hBounds x (List.Mem.tail it hx)) placed hTail
+
+/-- Law 5 (`line_box_height_encloses_items`, `SCOPE.md` §4):
+    In `InlineLayoutAlgorithm::CreateLine` (`inline/inline_layout_algorithm.cc:378-430`)
+    and `InlineLayoutStateStack::OnEndPlaceItems` (`inline/inline_box_state.cc:426-445`),
+    for any line box constructed from baseline-aligned inline items with per-item
+    `FontHeight(ascent_i, descent_i)` and initial line strut `strut`, the line box's
+    computed `FontHeight(ascent, descent)` satisfies `ascent ≥ ascent_i` and
+    `descent ≥ descent_i` for every item on the line, so every item's vertical extent
+    `[ascent - ascent_i, (ascent - ascent_i) + (ascent_i + descent_i)]` lies within
+    `[0, ascent + descent]`. -/
+theorem line_box_height_encloses_items
+    (strut : FontHeight) (lineInfo : LineInfo)
+    (item : PlacedInlineItem)
+    (hMem : item ∈ (createLineBox strut lineInfo).items) :
+    let line := createLineBox strut lineInfo
+    item.blockOffset + item.blockSize ≤ line.metrics.ascent + line.metrics.descent := by
+  dsimp [createLineBox] at hMem ⊢
+  exact placeLineItems_encloses
+    (accumulateLineMetrics strut lineInfo.items)
+    lineInfo.items 0
+    (fun it hit => accumulateLineMetrics_encloses strut lineInfo.items it hit)
+    item hMem
+
+/-- Every line box emitted by `stackLineBoxes` has `bfcOffset.blockOffset ≥ blockOff`. -/
+theorem stackLineBoxes_offset_ge (strut : FontHeight) :
+    ∀ (lines : List LineInfo) (blockOff : Nat) (lf : LineBoxFragment),
+      lf ∈ (stackLineBoxes strut blockOff lines).1 →
+      blockOff ≤ lf.bfcOffset.blockOffset
+  | [], _, _, hMem => by
+    simp [stackLineBoxes] at hMem
+  | li :: rest, blockOff, lf, hMem => by
+    dsimp [stackLineBoxes] at hMem
+    simp only [List.mem_cons] at hMem
+    rcases hMem with rfl | hTail
+    · exact Nat.le_refl blockOff
+    · have ih := stackLineBoxes_offset_ge strut rest
+        (blockOff + (createLineBox strut li).metrics.lineHeight) lf hTail
+      omega
+
+/-- Vertical non-overlapping stacking of line boxes inside an enclosing block (`ROADMAP.md` Phase 4). -/
+theorem stackLineBoxes_monotonic_non_overlapping (strut : FontHeight) :
+    ∀ (lines : List LineInfo) (blockOff : Nat)
+      (i j : Nat) (hij : i < j)
+      (hj : j < (stackLineBoxes strut blockOff lines).1.length),
+      let lfs := (stackLineBoxes strut blockOff lines).1
+      let li := lfs[i]'(Nat.lt_trans hij hj)
+      let lj := lfs[j]'hj
+      li.bfcOffset.blockOffset + li.metrics.lineHeight ≤ lj.bfcOffset.blockOffset
+  | [], _, _, _, _, hj => by
+    simp [stackLineBoxes] at hj
+  | l :: rest, blockOff, i, j, hij, hj => by
+    let lh := (createLineBox strut l).metrics.lineHeight
+    cases i with
+    | zero =>
+      cases j with
+      | zero => omega
+      | succ j' =>
+        have hj' : j' < (stackLineBoxes strut (blockOff + lh) rest).1.length := by
+          simpa [stackLineBoxes, lh] using hj
+        have hMem : (stackLineBoxes strut (blockOff + lh) rest).1[j'] ∈
+            (stackLineBoxes strut (blockOff + lh) rest).1 :=
+          List.getElem_mem hj'
+        have hGe := stackLineBoxes_offset_ge strut rest (blockOff + lh) _ hMem
+        simpa [stackLineBoxes, lh] using hGe
+    | succ i' =>
+      cases j with
+      | zero => omega
+      | succ j' =>
+        have hij' : i' < j' := Nat.lt_of_succ_lt_succ hij
+        have hj' : j' < (stackLineBoxes strut (blockOff + lh) rest).1.length := by
+          simpa [stackLineBoxes, lh] using hj
+        have ih := stackLineBoxes_monotonic_non_overlapping strut rest (blockOff + lh) i' j' hij' hj'
+        simpa [stackLineBoxes, lh] using ih
+
+/-- Transcribed Blink M4 inline box state and line box unit test vectors
+    (`inline/inline_layout_algorithm_test.cc`, `inline/inline_box_state.cc:277-445`):
+    1. Line with strut `(10, 4)`, text `(12, 3)`, and nested `<span>` (`OpenTag` `(16, 6)` + text `(14, 5)` + `CloseTag`):
+       `createLineBox` and `applyBoxStateStack` both compute `FontHeight(16, 6)` (`lineHeight = 22`).
+    2. First text item (`ascent = 12, descent = 3`) is placed at `blockOffset = 16 - 12 = 4` with `blockSize = 15`,
+       so `blockOffset + blockSize = 19 ≤ 22` (Law 5).
+    3. Multi-line vertical stacking inside an `inlineChild` with `padding.blockStart = 5` and two lines of heights `14` and `22`:
+       line 0 is at `blockOffset = 5`, line 1 is at `blockOffset = 19`, and total block size is `5 + 14 + 22 = 41`. -/
+def blinkM4TestVectors : List (Nat × Nat) :=
+  let strut : FontHeight := { ascent := 10, descent := 4 }
+  let t1 : InlineItem := .TextSeg 1 30 { ascent := 12, descent := 3 } true false
+  let openSpan : InlineItem := .OpenTag 2 2 { ascent := 16, descent := 6 }
+  let t2 : InlineItem := .TextSeg 3 40 { ascent := 14, descent := 5 } true false
+  let closeSpan : InlineItem := .CloseTag 4 2
+  let li1 : LineInfo := { items := [t1, openSpan, t2, closeSpan], inlineSize := 74, nonBreakItemCount := 4 }
+  let lb1 := createLineBox strut li1
+  let stackMetrics := applyBoxStateStack strut li1.items
+  let firstPlaced := lb1.items.headD {}
+
+  let li0 : LineInfo := { items := [t1], inlineSize := 30, nonBreakItemCount := 1 }
+  let (stacked, totalBs) := stackLineBoxes strut 5 [li0, li1]
+
+  [ (lb1.metrics.ascent, 16)
+  , (lb1.metrics.descent, 6)
+  , (stackMetrics.ascent, 16)
+  , (stackMetrics.descent, 6)
+  , (firstPlaced.blockOffset, 4)
+  , (firstPlaced.blockSize, 15)
+  , (stacked.length, 2)
+  , ((stacked.headD {}).bfcOffset.blockOffset, 5)
+  , ((stacked.getD 1 {}).bfcOffset.blockOffset, 21)
+  , (totalBs, 43)
+  ]
+
+theorem blink_m4_test_vectors_pass :
+    ∀ p ∈ blinkM4TestVectors, p.1 = p.2 := by
+  decide
+
+#print axioms nat_le_max_left
+#print axioms nat_le_max_right
+#print axioms FontHeight.merge_assoc
+#print axioms FontHeight.merge_comm
+#print axioms FontHeight.merge_idem
+#print axioms applyBoxStateStack_eq_accumulateLineMetrics
+#print axioms accumulateLineMetrics_encloses
+#print axioms placeLineItems_encloses
+#print axioms line_box_height_encloses_items
+#print axioms stackLineBoxes_offset_ge
+#print axioms stackLineBoxes_monotonic_non_overlapping
+#print axioms blink_m4_test_vectors_pass
 
 end ChromiumLayout

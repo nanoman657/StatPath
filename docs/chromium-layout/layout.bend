@@ -518,6 +518,114 @@ def place_line_items(items: List<&2, InlineItem>, +line_metrics: FontHeight, +in
         font_height_line_height(fh)
       } <> place_line_items(rest, line_metrics, Nat.add(inline_off, w))
 
+# InlineLayoutStateStack push/pop model (inline/inline_box_state.h:40-235, inline/inline_box_state.cc:277-445)
+type InlineBoxStackState is Data:
+  BoxStack{active: FontHeight, stack: List<&2, FontHeight>}
+
+def box_stack_active(st: InlineBoxStackState) -> FontHeight:
+  match st:
+    case BoxStack{active, +stack}:
+      active
+
+def box_stack_list(st: InlineBoxStackState) -> List<&2, FontHeight>:
+  match st:
+    case BoxStack{+active, stack}:
+      stack
+
+def step_box_state_stack(+it: InlineItem, stack: List<&2, FontHeight>, +active: FontHeight) -> InlineBoxStackState:
+  match it:
+    case OpenTag{+id, +b, +p, +m, fh}:
+      BoxStack{fh, active <> stack}
+    case CloseTag{+id, +b, +p, +m}:
+      match stack:
+        case Nil{}:
+          BoxStack{active, Nil{}}
+        case parent <> rest:
+          BoxStack{font_height_merge(parent, active), rest}
+    case _:
+      BoxStack{font_height_merge(active, inline_item_font_height(it)), stack}
+
+def run_box_state_stack(items: List<&2, InlineItem>, +active: FontHeight, +stack: List<&2, FontHeight>) -> InlineBoxStackState:
+  match items:
+    case Nil{}:
+      BoxStack{active, stack}
+    case +it <> rest:
+      +next = step_box_state_stack(it, stack, active)
+      run_box_state_stack(rest, box_stack_active(next), box_stack_list(next))
+
+def flush_box_state_stack(stack: List<&2, FontHeight>, +active: FontHeight) -> FontHeight:
+  match stack:
+    case Nil{}:
+      active
+    case parent <> rest:
+      flush_box_state_stack(rest, font_height_merge(parent, active))
+
+def apply_box_state_stack(+strut: FontHeight, items: List<&2, InlineItem>) -> FontHeight:
+  +st = run_box_state_stack(items, strut, Nil{})
+  flush_box_state_stack(box_stack_list(st), box_stack_active(st))
+
+def placed_item_block_offset(p: PlacedInlineItem) -> Nat:
+  match p:
+    case PlacedItem{+id, +ioff, boff, +isz, +bsz}:
+      boff
+
+def placed_item_block_size(p: PlacedInlineItem) -> Nat:
+  match p:
+    case PlacedItem{+id, +ioff, +boff, +isz, bsz}:
+      bsz
+
+def placed_item_head_block_offset(ps: List<&2, PlacedInlineItem>) -> Nat:
+  match ps:
+    case Nil{}:
+      0n
+    case p <> +rest:
+      placed_item_block_offset(p)
+
+def placed_item_head_block_size(ps: List<&2, PlacedInlineItem>) -> Nat:
+  match ps:
+    case Nil{}:
+      0n
+    case p <> +rest:
+      placed_item_block_size(p)
+
+def line_frag_metrics(lf: LineBoxFragment) -> FontHeight:
+  match lf:
+    case LineFrag{+off, +isz, metrics, +placed}:
+      metrics
+
+def line_frag_items(lf: LineBoxFragment) -> List<&2, PlacedInlineItem>:
+  match lf:
+    case LineFrag{+off, +isz, +metrics, placed}:
+      placed
+
+def line_frag_block_offset(lf: LineBoxFragment) -> Nat:
+  match lf:
+    case LineFrag{off, +isz, +metrics, +placed}:
+      match off:
+        case LOffset{+ioff, boff}:
+          boff
+
+def line_frag_list_len(ls: List<&2, LineBoxFragment>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case +h <> t:
+      Nat.add(1n, line_frag_list_len(t))
+
+def line_frag_head_block_offset(ls: List<&2, LineBoxFragment>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case h <> +t:
+      line_frag_block_offset(h)
+
+def line_frag_second_block_offset(ls: List<&2, LineBoxFragment>) -> Nat:
+  match ls:
+    case Nil{}:
+      0n
+    case +h <> t:
+      line_frag_head_block_offset(t)
+
 # InlineLayoutAlgorithm::CreateLine (inline/inline_layout_algorithm.cc:378-430, SCOPE.md §4 Law 5)
 def create_line_box(+strut: FontHeight, +line_info: LineInfo) -> LineBoxFragment:
   match line_info:

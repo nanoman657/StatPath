@@ -97,10 +97,10 @@ Source: `inline/line_breaker.cc` / `.h`, `inline/inline_items_builder.cc`.
 
 Source: `inline/inline_layout_algorithm.cc`, `inline/inline_box_state.cc`, `inline/inline_box_state.h` (corrected in P0.5 from `inline/inline_layout_state_stack.cc`; `InlineLayoutStateStack` is declared in `inline/inline_box_state.h` and defined in `inline/inline_box_state.cc`).
 
-- [ ] Define `createLineBox` with `FontHeight` maximum accumulation over baseline-aligned items. Use `ascent = max ascent_i` and `descent = max descent_i`.
-- [ ] Decide the nesting depth of inline boxes (P0.1 Q3). If it is more than one level, add the `InlineLayoutStateStack` push/pop model.
-- [ ] Model integration with the block container: line boxes stack vertically inside the enclosing block.
-- [ ] Prove Law 5 (`line_box_height_encloses_items`).
+- [x] Define `createLineBox` with `FontHeight` maximum accumulation over baseline-aligned items. Use `ascent = max ascent_i` and `descent = max descent_i`.
+- [x] Decide the nesting depth of inline boxes (P0.1 Q3). If it is more than one level, add the `InlineLayoutStateStack` push/pop model.
+- [x] Model integration with the block container: line boxes stack vertically inside the enclosing block.
+- [x] Prove Law 5 (`line_box_height_encloses_items`).
 
 **Exit criterion:** Law 5 passes both checkers. The `Nat.max` lemmas it needs are proved, not assumed.
 

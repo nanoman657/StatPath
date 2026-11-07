@@ -538,3 +538,249 @@ law blink_m3_test_vectors:
 
 def blink_m3_test_vectors():
   {==}
+
+# ==============================================================================
+# M4 Laws: Inline Box State, Line Boxes, Nat.max Order Lemmas, and Law 5
+# Source:
+# - inline/inline_layout_algorithm.cc:378-430, 1340-1410
+# - inline/inline_box_state.h:40-235, inline/inline_box_state.cc:277-445
+# ==============================================================================
+
+law nat_le_refl:
+  for +a: Nat
+  {Layout.nat_le(a, a) == True{} : Bool}
+
+def nat_le_refl(a):
+  match a:
+    case 0n:
+      {==}
+    case 1n+ap:
+      nat_le_refl(ap)
+
+# Explicit Nat.max order lemmas (ROADMAP.md Phase 4 exit criterion):
+law nat_le_max_left:
+  for +a: Nat
+  for +b: Nat
+  {Layout.nat_le(a, Nat.max(a, b)) == True{} : Bool}
+
+def nat_le_max_left(a, b):
+  match a b:
+    case 0n 0n:
+      {==}
+    case 0n 1n+bp:
+      {==}
+    case 1n+ap 0n:
+      nat_le_refl(ap)
+    case 1n+ap 1n+bp:
+      nat_le_max_left(ap, bp)
+
+law nat_le_max_right:
+  for +a: Nat
+  for +b: Nat
+  {Layout.nat_le(b, Nat.max(a, b)) == True{} : Bool}
+
+def nat_le_max_right(a, b):
+  match a b:
+    case 0n 0n:
+      {==}
+    case 0n 1n+bp:
+      nat_le_refl(bp)
+    case 1n+ap 0n:
+      {==}
+    case 1n+ap 1n+bp:
+      nat_le_max_right(ap, bp)
+
+law sub_self:
+  for +a: Nat
+  {Nat.sub(a, a) == 0n : Nat}
+
+def sub_self(a):
+  match a:
+    case 0n:
+      {==}
+    case 1n+ap:
+      sub_self(ap)
+
+law add_succ_right:
+  for +a: Nat
+  for +b: Nat
+  {Nat.add(a, 1n+b) == 1n+Nat.add(a, b) : Nat}
+
+def add_succ_right(a, b):
+  match a:
+    case 0n:
+      {==}
+    case 1n+ap:
+      Equal.cong(Nat, Nat, x => 1n+x, Nat.add(ap, 1n+b), 1n+Nat.add(ap, b), add_succ_right(ap, b))
+
+# Key baseline arithmetic identity for Law 5:
+# (max(a, rest_a) - a) + (a + d) == max(a, rest_a) + d
+law sub_max_add_cancel:
+  for +a: Nat
+  for +rest_a: Nat
+  for +d: Nat
+  {Nat.add(Nat.sub(Nat.max(a, rest_a), a), Nat.add(a, d)) ==
+   Nat.add(Nat.max(a, rest_a), d) : Nat}
+
+def sub_max_add_cancel(a, rest_a, d):
+  match a rest_a:
+    case 0n 0n:
+      {==}
+    case 0n 1n+bp:
+      {==}
+    case 1n+ap 0n:
+      Equal.cong(
+        Nat, Nat,
+        x => Nat.add(x, 1n+Nat.add(ap, d)),
+        Nat.sub(ap, ap),
+        0n,
+        sub_self(ap))
+    case 1n+ap 1n+bp:
+      s1 = add_succ_right(Nat.sub(Nat.max(ap, bp), ap), Nat.add(ap, d))
+      s2 = Equal.cong(
+        Nat, Nat,
+        x => 1n+x,
+        Nat.add(Nat.sub(Nat.max(ap, bp), ap), Nat.add(ap, d)),
+        Nat.add(Nat.max(ap, bp), d),
+        sub_max_add_cancel(ap, bp, d))
+      Equal.trans(
+        Nat,
+        Nat.add(Nat.sub(Nat.max(ap, bp), ap), 1n+Nat.add(ap, d)),
+        1n+Nat.add(Nat.sub(Nat.max(ap, bp), ap), Nat.add(ap, d)),
+        1n+Nat.add(Nat.max(ap, bp), d),
+        s1, s2)
+
+law nat_le_add_left_cancel:
+  for +m: Nat
+  for +x: Nat
+  for +y: Nat
+  {Layout.nat_le(Nat.add(m, x), Nat.add(m, y)) == Layout.nat_le(x, y) : Bool}
+
+def nat_le_add_left_cancel(m, x, y):
+  match m:
+    case 0n:
+      {==}
+    case 1n+mp:
+      nat_le_add_left_cancel(mp, x, y)
+
+# Law 5 (line_box_height_encloses_items) on FontHeight pairs:
+# For any item FontHeight(a, d) and accumulated rest FontHeight(rest_a, rest_d),
+# (max(a, rest_a) - a) + (a + d) <= max(a, rest_a) + max(d, rest_d).
+law line_box_height_encloses_bounds:
+  for +a: Nat
+  for +rest_a: Nat
+  for +d: Nat
+  for +rest_d: Nat
+  {Layout.nat_le(
+    Nat.add(Nat.sub(Nat.max(a, rest_a), a), Nat.add(a, d)),
+    Nat.add(Nat.max(a, rest_a), Nat.max(d, rest_d))) == True{} : Bool}
+
+def line_box_height_encloses_bounds(a, rest_a, d, rest_d):
+  s1 = Equal.cong(
+    Nat, Bool,
+    x => Layout.nat_le(x, Nat.add(Nat.max(a, rest_a), Nat.max(d, rest_d))),
+    Nat.add(Nat.sub(Nat.max(a, rest_a), a), Nat.add(a, d)),
+    Nat.add(Nat.max(a, rest_a), d),
+    sub_max_add_cancel(a, rest_a, d))
+  s2 = nat_le_add_left_cancel(Nat.max(a, rest_a), d, Nat.max(d, rest_d))
+  s3 = nat_le_max_left(d, rest_d)
+  Equal.trans(
+    Bool,
+    Layout.nat_le(Nat.add(Nat.sub(Nat.max(a, rest_a), a), Nat.add(a, d)), Nat.add(Nat.max(a, rest_a), Nat.max(d, rest_d))),
+    Layout.nat_le(Nat.add(Nat.max(a, rest_a), d), Nat.add(Nat.max(a, rest_a), Nat.max(d, rest_d))),
+    True{},
+    s1,
+    Equal.trans(
+      Bool,
+      Layout.nat_le(Nat.add(Nat.max(a, rest_a), d), Nat.add(Nat.max(a, rest_a), Nat.max(d, rest_d))),
+      Layout.nat_le(d, Nat.max(d, rest_d)),
+      True{},
+      s2, s3))
+
+law line_box_height_encloses_font_heights:
+  for +item_fh: Layout.FontHeight
+  for +rest_fh: Layout.FontHeight
+  {Layout.nat_le(
+    Nat.add(
+      Nat.sub(
+        Layout.font_height_ascent(Layout.font_height_merge(item_fh, rest_fh)),
+        Layout.font_height_ascent(item_fh)),
+      Layout.font_height_line_height(item_fh)),
+    Layout.font_height_line_height(Layout.font_height_merge(item_fh, rest_fh))) == True{} : Bool}
+
+def line_box_height_encloses_font_heights(item_fh, rest_fh):
+  match item_fh rest_fh:
+    case Layout.FHeight{a, d} Layout.FHeight{rest_a, rest_d}:
+      line_box_height_encloses_bounds(a, rest_a, d, rest_d)
+
+# Law 5 (line_box_height_encloses_items, SCOPE.md §4):
+# For any line strut `strut`, inline item `it`, and rest-of-line `rest`,
+# the placed item for `it` in `create_line_box(strut, LInfo{it <> rest, isz, cnt})`
+# has `block_offset + block_size <= line.metrics.ascent + line.metrics.descent`.
+law line_box_height_encloses_items:
+  for +strut: Layout.FontHeight
+  for +it: Layout.InlineItem
+  for +rest: List<&2, Layout.InlineItem>
+  for +isz: Nat
+  for +cnt: Nat
+  {Layout.nat_le(
+    Nat.add(
+      Layout.placed_item_head_block_offset(
+        Layout.line_frag_items(Layout.create_line_box(strut, Layout.LInfo{it <> rest, isz, cnt}))),
+      Layout.placed_item_head_block_size(
+        Layout.line_frag_items(Layout.create_line_box(strut, Layout.LInfo{it <> rest, isz, cnt})))),
+    Layout.line_frag_line_height(
+      Layout.create_line_box(strut, Layout.LInfo{it <> rest, isz, cnt}))) == True{} : Bool}
+
+def line_box_height_encloses_items(strut, it, rest, isz, cnt):
+  line_box_height_encloses_font_heights(
+    Layout.inline_item_font_height(it),
+    Layout.accumulate_line_metrics(rest, strut))
+
+# Transcribed Blink M4 unit test vectors (inline/inline_layout_algorithm_test.cc & inline/inline_box_state.cc:277-445):
+def m4_strut() -> Layout.FontHeight:
+  Layout.FHeight{10n, 4n}
+
+def m4_t1() -> Layout.InlineItem:
+  Layout.TextSeg{1n, 30n, Layout.FHeight{12n, 3n}, True{}, False{}}
+
+def m4_open_span() -> Layout.InlineItem:
+  Layout.OpenTag{2n, 1n, 1n, 0n, Layout.FHeight{16n, 6n}}
+
+def m4_t2() -> Layout.InlineItem:
+  Layout.TextSeg{3n, 40n, Layout.FHeight{14n, 5n}, True{}, False{}}
+
+def m4_close_span() -> Layout.InlineItem:
+  Layout.CloseTag{4n, 1n, 1n, 0n}
+
+def m4_li0() -> Layout.LineInfo:
+  Layout.LInfo{[m4_t1()], 30n, 1n}
+
+def m4_li1() -> Layout.LineInfo:
+  Layout.LInfo{[m4_t1(), m4_open_span(), m4_t2(), m4_close_span()], 74n, 4n}
+
+def m4_lb1() -> Layout.LineBoxFragment:
+  Layout.create_line_box(m4_strut(), m4_li1())
+
+def m4_stack_metrics() -> Layout.FontHeight:
+  Layout.apply_box_state_stack(m4_strut(), [m4_t1(), m4_open_span(), m4_t2(), m4_close_span()])
+
+def m4_stacked() -> Layout.StackedLinesResult:
+  Layout.stack_line_boxes([m4_li0(), m4_li1()], m4_strut(), 5n)
+
+law blink_m4_test_vectors:
+  {[
+    Layout.font_height_ascent(Layout.line_frag_metrics(m4_lb1())),
+    Layout.font_height_descent(Layout.line_frag_metrics(m4_lb1())),
+    Layout.font_height_ascent(m4_stack_metrics()),
+    Layout.font_height_descent(m4_stack_metrics()),
+    Layout.placed_item_head_block_offset(Layout.line_frag_items(m4_lb1())),
+    Layout.placed_item_head_block_size(Layout.line_frag_items(m4_lb1())),
+    Layout.line_frag_list_len(Layout.stacked_lines_list(m4_stacked())),
+    Layout.line_frag_head_block_offset(Layout.stacked_lines_list(m4_stacked())),
+    Layout.line_frag_second_block_offset(Layout.stacked_lines_list(m4_stacked())),
+    Layout.stacked_lines_block_size(m4_stacked())
+  ] == [16n, 6n, 16n, 6n, 4n, 15n, 2n, 5n, 21n, 43n] : List<&2, Nat>}
+
+def blink_m4_test_vectors():
+  {==}
