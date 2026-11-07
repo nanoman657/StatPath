@@ -10,7 +10,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count).
+percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -108,6 +108,7 @@ checks every row against the pinned sources and the Lean modules.
 | length_utils_test.cc:612 | LengthUtilsTest.TestColumnWidthAndCount | geometry | formalized | `TestsBlock.TestColumnWidthAndCount_vectors`, `ColumnWidth.columns_fit` |
 | length_utils_test.cc:657 | LengthUtilsTest.AspectRatio | geometry | formalized | `TestsBlock.AspectRatio_vectors`, `BlockLength.inlineFromAspectRatio_le_max`, `BlockLength.inlineFromAspectRatio_one` |
 | min_max_size_test.cc:13 | MinMaxSizesTest.ShrinkToFit | geometry | formalized | `TestsBlock.ShrinkToFit_vectors`, `BlockFlow.shrinkToFit_bounds` |
+| min_max_sizes_cache_test.cc:14 | MinMaxSizesCacheTest.Eviction | behaviour | formalized | `TestsBlock.Eviction_vectors`, `BlockMinMaxCache.lru_eviction` |
 
 ## Laws proved
 
@@ -124,6 +125,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockLength.inlineFromAspectRatio_le_max`: aspect ratio inline size saturates at LayoutUnit::Max().
 - `BlockLength.inlineFromAspectRatio_one`: 1:1 aspect ratio preserves block size below saturation.
 - `ColumnWidth.columns_fit`: multicol columns plus gaps fit the available inline size.
+- `BlockMinMaxCache.lru_eviction`: 8-way LRU cache evicts the least recently used entry on insertion at capacity.
 
 ## Merge notes
 
