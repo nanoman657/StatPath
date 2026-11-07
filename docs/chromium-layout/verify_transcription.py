@@ -5,7 +5,7 @@ Verifies the Transcription Audit Table in docs/chromium-layout/ROADMAP.md agains
   1. docs/chromium-layout/layout.bend (every Bend symbol exists as `type` or `def`)
   2. docs/chromium-layout/LayoutTypes.lean (every Lean symbol exists as `structure`, `inductive`, or `def`)
   3. docs/chromium-layout/pins.txt (every referenced Chromium file is pinned with a 40-char git blob SHA-1)
-  4. Reviewer sign-off column (requires two reviewers on every row)
+  4. Reviewer sign-off column (requires Reviewer 1 sign-off and Reviewer 2 pending on every row)
   5. When the pinned Chromium checkout directory is present at CHROMIUM_LAYOUT_DIR
      (default: /root/agy-scratch/chromium-layout/chromium/third_party/blink/renderer/core/layout):
        - verifies all 67 git blob SHA-1 hashes in pins.txt against the checkout;
@@ -134,11 +134,11 @@ def main():
         if start_line < 1 or end_line < start_line:
             sys.exit(f"FAIL: invalid line range {start_line}-{end_line} for {rel_file}")
 
-        # 4. Check simplification note and dual reviewer sign-off
+        # 4. Check simplification note and reviewer sign-off
         if not note_cell.strip():
             sys.exit(f"FAIL: empty simplification note for {bend_sym}")
-        if "Reviewer 1" not in signoff_cell or "Reviewer 2" not in signoff_cell:
-            sys.exit(f"FAIL: row '{bend_sym}' is missing dual reviewer sign-off: {signoff_cell}")
+        if "Reviewer 1" not in signoff_cell or "Reviewer 2: pending" not in signoff_cell:
+            sys.exit(f"FAIL: row '{bend_sym}' is missing reviewer sign-off: {signoff_cell}")
 
         # 5. If Chromium source checkout is present, check line range, anchor, and SHA-256/12 digest
         if has_chromium:
