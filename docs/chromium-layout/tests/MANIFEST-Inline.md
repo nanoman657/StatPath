@@ -150,6 +150,46 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
 | inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
+| inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
+| inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText_vector` | Text node wrapping into 2 line fragments |
+| inline/fragment_item_test.cc:173 | RtlText | geometry | formalized | `fragmentItem_rtlText_vector` | BiDi reordering in RTL container |
+| inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | formalized | `fragmentItem_basicInlineBox_vector` | Inline box fragmentation and ink overflow |
+| inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | formalized | `fragmentItem_culledInlineBox_vector` | Culled inline bounding box aggregation |
+| inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | internal | - | Invalidation and visual overflow recalc on self-painting layer |
+| inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | formalized | `fragmentItem_startOffsetInContainer_vector` | Soft hyphen generated text container offsets |
+| inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | formalized | `fragmentItem_ellipsizedAtomicInline_rule` | Atomic inline ellipsization marks isLastForNode |
+| inline/fragment_item_test.cc:417 | LineFragmentId | behaviour | internal | - | Multicol column line fragment ID tagging |
+| inline/fragment_item_test.cc:451 | Outline | geometry | formalized | `fragmentItem_outline_vector` | Outline rect computation for inline box and inline block |
+| inline/fragment_item_test.cc:526 | MarkLineBoxesDirtyOnInsert | behaviour | internal | - | Incremental layout dirty line index tracking on insert |
+| inline/fragment_item_test.cc:543 | MarkLineBoxesDirtyOnAppend | behaviour | internal | - | Dirty line index tracking on append |
+| inline/fragment_item_test.cc:560 | MarkLineBoxesDirtyOnAppend2 | behaviour | internal | - | Dirty line index tracking on append to second line |
+| inline/fragment_item_test.cc:578 | MarkLineBoxesDirtyOnAppendAfterBR | behaviour | internal | - | Dirty line index tracking on append after br |
+| inline/fragment_item_test.cc:596 | MarkLineBoxesDirtyOnRemove | behaviour | internal | - | Dirty line index tracking on remove child |
+| inline/fragment_item_test.cc:609 | MarkLineBoxesDirtyOnRemoveFirst | behaviour | internal | - | Dirty line index tracking on remove first child |
+| inline/fragment_item_test.cc:624 | MarkLineBoxesDirtyOnRemove2 | behaviour | internal | - | Dirty line index tracking on remove second child |
+| inline/fragment_item_test.cc:638 | MarkLineBoxesDirtyOnRemoveAfterBR | behaviour | internal | - | Dirty line index tracking on remove after br |
+| inline/fragment_item_test.cc:654 | MarkLineBoxesDirtyOnEndSpaceCollapsed | behaviour | internal | - | Dirty line index tracking when end space collapsed |
+| inline/fragment_item_test.cc:685 | MarkLineBoxesDirtyOnNeedsLayoutFirst | behaviour | internal | - | Dirty line index tracking on child needs layout |
+| inline/fragment_item_test.cc:699 | MarkLineBoxesDirtyOnNeedsLayoutFirstWithBox | behaviour | internal | - | Dirty line index tracking on child with box needs layout |
+| inline/fragment_item_test.cc:712 | MarkLineBoxesDirtyOnNeedsLayout | behaviour | internal | - | Dirty line index tracking on needs layout |
+| inline/fragment_item_test.cc:727 | MarkLineBoxesDirtyOnNeedsLayoutWithBox | behaviour | internal | - | Dirty line index tracking with box needs layout |
+| inline/fragment_item_test.cc:743 | MarkLineBoxesDirtyOnChildOfWrappedBox | behaviour | internal | - | Dirty line index tracking on child of wrapped box |
+| inline/fragment_item_test.cc:760 | MarkLineBoxesDirtyInInlineBlock | behaviour | internal | - | Dirty line index tracking in inline block |
+| inline/fragment_item_test.cc:773 | MarkLineBoxesDirtyByRemoveChildAfterForcedBreak | behaviour | internal | - | Dirty line index tracking by removing child after forced break |
+| inline/fragment_item_test.cc:787 | MarkLineBoxesDirtyByRemoveForcedBreak | behaviour | internal | - | Dirty line index tracking by removing forced break |
+| inline/fragment_item_test.cc:801 | MarkLineBoxesDirtyByRemoveSpanWithForcedBreak | behaviour | internal | - | Dirty line index tracking by removing span with forced break |
+| inline/fragment_item_test.cc:816 | MarkLineBoxesDirtyByInsertAtStart | behaviour | internal | - | Dirty line index tracking on insert at start |
+| inline/fragment_item_test.cc:832 | MarkLineBoxesDirtyByInsertAtLast | behaviour | internal | - | Dirty line index tracking on insert at end |
+| inline/fragment_item_test.cc:846 | MarkLineBoxesDirtyByInsertAtMiddle | behaviour | internal | - | Dirty line index tracking on insert in middle |
+| inline/fragment_item_test.cc:862 | MarkLineBoxesDirtyByTextSetData | behaviour | internal | - | Dirty line index tracking on Text.data update |
+| inline/fragment_item_test.cc:876 | MarkLineBoxesDirtyWrappedLine | behaviour | internal | - | Dirty line index tracking on wrapped line modification |
+| inline/fragment_item_test.cc:895 | MarkLineBoxesDirtyInsideInlineBlock | behaviour | internal | - | Dirty line index tracking inside inline block |
+| inline/fragment_item_test.cc:910 | Disabled_DebugVisualizers | internal | internal | - | MSVC natvis debugger visualization check |
+| inline/fragment_item_test.cc:931 | CaretInlinePositionForOffset_TextFit | geometry | formalized | `fragmentItem_caretPosition_textFit_vector` | Caret position with text-fit: grow font scaling |
+| inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | formalized | `fragmentItem_isRubyAnnotationLine_rule` | Identifying ruby annotation line vs base line |
+| inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | formalized | `fragmentItemsBuilder_multipleLines_vector` | FragmentItemsBuilder multi-line assembly and reordering |
+| inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
+| inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | formalized | `fragmentItems_isContainerForCulledInline_vector` | Multicolumn fragmentation of culled inline |
 
 ---
 
