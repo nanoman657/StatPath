@@ -412,6 +412,167 @@ checks every row against the pinned sources and the Lean modules.
 | layout_flexible_box_test.cc:409 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowReverseVLR | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
 | layout_flexible_box_test.cc:418 | LayoutFlexibleBoxTest.GeometriesWithScrollbarsRTLRowReverseVRL | geometry | blocked | needs flexible box scrollable overflow and scroll offsets with scrollbars across writing modes |
 | layout_flexible_box_test.cc:427 | LayoutFlexibleBoxTest.ResizedFlexChildRequiresVisualOverflowRecalc | behaviour | blocked | needs flexbox visual overflow invalidation tracking on child resize |
+| table/layout_table_section_test.cc:18 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithLayerAndCollapsedBorder | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
+| table/layout_table_section_test.cc:35 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithBorderSpacing | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
+| table/layout_table_section_test.cc:50 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithEmptyCell | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
+| table/layout_table_section_test.cc:66 | LayoutTableSectionTest.VisualOverflowWithCollapsedBorders | geometry | blocked | needs table section visual overflow with collapsed borders |
+| table/layout_table_section_test.cc:99 | LayoutTableSectionTest.RowCollapseNegativeHeightCrash | internal | internal | crash regression in row collapse with negative height |
+| table/layout_table_test.cc:21 | LayoutTableTest.OverflowViaOutline | geometry | blocked | needs table visual overflow rect calculation |
+| table/layout_table_test.cc:47 | LayoutTableTest.OverflowWithCollapsedBorders | geometry | blocked | needs table visual overflow rect calculation |
+| table/layout_table_test.cc:88 | LayoutTableTest.CollapsedBorders | geometry | blocked | needs table collapsed borders layout model |
+| table/layout_table_test.cc:143 | LayoutTableTest.CollapsedBordersWithCol | geometry | blocked | needs table collapsed borders layout model |
+| table/layout_table_test.cc:207 | LayoutTableTest.WidthPercentagesExceedHundred | geometry | blocked | needs table column percentage and max width resolution |
+| table/layout_table_test.cc:230 | LayoutTableTest.CloseToMaxWidth | geometry | blocked | needs table column percentage and max width resolution |
+| table/layout_table_test.cc:250 | LayoutTableTest.PaddingWithCollapsedBorder | geometry | blocked | needs table padding with collapsed borders |
+| table/layout_table_test.cc:260 | LayoutTableTest.OutOfOrderHeadAndBody | geometry | blocked | needs table section fragment tree ordering |
+| table/layout_table_test.cc:279 | LayoutTableTest.OutOfOrderFootAndBody | geometry | blocked | needs table section fragment tree ordering |
+| table/layout_table_test.cc:298 | LayoutTableTest.OutOfOrderHeadFootAndBody | geometry | blocked | needs table section fragment tree ordering |
+| table/layout_table_test.cc:330 | LayoutTableTest.VisualOverflowCleared | geometry | blocked | needs table visual overflow rect calculation |
+| table/table_layout_utils_test.cc:55 | TableLayoutUtilsTest.DistributeColspanAutoPercent | geometry | blocked | needs table colspan column width distribution algorithm |
+| table/table_layout_utils_test.cc:93 | TableLayoutUtilsTest.DistributeColspanAutoSizeUnconstrained | geometry | blocked | needs table colspan column width distribution algorithm |
+| table/table_layout_utils_test.cc:121 | TableLayoutUtilsTest.DistributeColspanAutoSizeConstrained | geometry | blocked | needs table colspan column width distribution algorithm |
+| table/table_layout_utils_test.cc:149 | TableLayoutUtilsTest.DistributeColspanAutoExactMaxSize | geometry | blocked | needs table colspan column width distribution algorithm |
+| table/table_layout_utils_test.cc:187 | TableLayoutUtilsTest.ComputeGridInlineMinMax | geometry | blocked | needs table grid inline min/max sizes algorithm |
+| table/table_layout_utils_test.cc:246 | TableLayoutUtilsTest.DistributeRowspanCellToRows | geometry | blocked | needs table rowspan row height distribution algorithm |
+| table/table_layout_utils_test.cc:280 | TableLayoutUtilsTest.DistributeSectionFixedBlockSizeToRows | geometry | blocked | needs table and section block size distribution to rows |
+| table/table_layout_utils_test.cc:294 | TableLayoutUtilsTest.DistributeTableBlockSizeToSections | geometry | blocked | needs table and section block size distribution to rows |
+| grid/grid_layout_algorithm_test.cc:171 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAvailableRowSizes | geometry | blocked | needs CSS grid layout algorithm |
+| grid/grid_layout_algorithm_test.cc:209 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGapGeometry | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:290 | GridLayoutAlgorithmTest.GapGeomoetryWithSpanningItems | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:421 | GridLayoutAlgorithmTest.GapGeometryWithEmptyCellsAndSpanningItems | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:603 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRanges | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:650 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesWithAutoRepeater | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:701 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicit | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:764 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoColumns | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:822 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoRows | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:881 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitMixed | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:929 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoGridPositions | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1003 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoDense | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1159 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1216 | GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:1273 | GridLayoutAlgorithmTest.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:1356 | GridLayoutAlgorithmTest.FixedSizePositioning | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1405 | GridLayoutAlgorithmTest.FixedSizePositioningAutoRows | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1462 | GridLayoutAlgorithmTest.SpecifiedPositionsOutOfOrder | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1536 | GridLayoutAlgorithmTest.GridWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1586 | GridLayoutAlgorithmTest.GridWithPercentGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1640 | GridLayoutAlgorithmTest.AutoSizedGridWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1694 | GridLayoutAlgorithmTest.AutoSizedGridWithPercentageGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1739 | GridLayoutAlgorithmTest.ItemsSizeWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1800 | GridLayoutAlgorithmTest.PositionedOutOfFlowItems | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1940 | GridLayoutAlgorithmTest.NGGridAxisType | geometry | blocked | needs CSS grid layout algorithm |
+| grid/grid_layout_algorithm_test.cc:1973 | GridLayoutAlgorithmTest.SubgridLineNameList | geometry | blocked | needs CSS subgrid line names and track alignment |
+| grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | blocked | needs CSS subgrid line names and track alignment |
+| grid/grid_layout_algorithm_test.cc:2090 | GridLayoutAlgorithmTest.SingleAxisScrollerAutoMinSizeUseCount | internal | internal | checks UseCounter for SingleAxisScrollerAutoMinSize feature |
+| grid/grid_layout_algorithm_test.cc:2136 | GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice | geometry | blocked | needs fragmented out-of-flow grid items placement |
+| grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:119 | GridTrackCollectionTest.TestGridTrackList | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:171 | GridTrackCollectionTest.TestGridRangeBuilder | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:188 | GridTrackCollectionTest.TestGridRangeBuilderCollapsed | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:208 | GridTrackCollectionTest.TestGridRangeBuilderImplicit | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:248 | GridTrackCollectionTest.TestGridSetTrackSizeNormalization | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:300 | GridTrackCollectionTest.TestGridSizingTrackCollectionSetIterator | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:351 | GridTrackCollectionTest.TestGridSizingTrackCollectionExplicitTracks | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:459 | GridTrackCollectionTest.TestGridSizingTrackCollectionImplicitTracks | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:539 | GridTrackCollectionTest.TestGridSizingTrackCollectionIntrinsicAndFlexTracks | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:259 | GridLanesLayoutAlgorithmTest.ConstructGridLanesItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:310 | GridLanesLayoutAlgorithmTest.GridLanesAutoPlacedItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:346 | GridLanesLayoutAlgorithmTest.ConstructGridLanesItemsParentAutoPlacedMarksAll | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:378 | GridLanesLayoutAlgorithmTest.BuildRanges | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:425 | GridLanesLayoutAlgorithmTest.BuildFixedTrackSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:455 | GridLanesLayoutAlgorithmTest.CollectGridLanesItemGroups | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:499 | GridLanesLayoutAlgorithmTest.CollectGridLanesItemGroupsWithBaseline | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:559 | GridLanesLayoutAlgorithmTest.ExplicitlyPlacedVirtualItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:608 | GridLanesLayoutAlgorithmTest.AutoPlacedVirtualItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:662 | GridLanesLayoutAlgorithmTest.BuildIntrinsicTrackSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:697 | GridLanesLayoutAlgorithmTest.MaximizeAndStretchAutoTracks | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:737 | GridLanesLayoutAlgorithmTest.ExpandFlexibleTracks | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:766 | GridLanesLayoutAlgorithmTest.BuildRowSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:797 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:837 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:877 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:919 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:962 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoSizeAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1005 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoSizeAndAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1050 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoAndAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1095 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1138 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1180 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1222 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1266 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1311 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoSizeAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1356 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoSizeAndAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1401 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoAndAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1447 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1492 | GridLanesLayoutAlgorithmTest.GetFirstEligibleLine | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1533 | GridLanesLayoutAlgorithmTest.GetMaxPositionsForAllTracks | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1549 | GridLanesLayoutAlgorithmTest.IncludeSubgriddedItemsIncludesNestedDescendants | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1580 | GridLanesLayoutAlgorithmTest.ItemsSubgriddedToParentExcludesDirectItems | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1609 | GridLanesLayoutAlgorithmTest.AppendSubgriddedItemsColumns | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1659 | GridLanesLayoutAlgorithmTest.AppendSubgriddedItemsRows | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1710 | GridLanesLayoutAlgorithmTest.SubgridRowsIgnoredInColumnGridLanes | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1758 | GridLanesLayoutAlgorithmTest.SubgridColumnsIgnoredInRowGridLanes | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1807 | GridLanesLayoutAlgorithmTest.OrthogonalAppendSubgriddedItemsColumns | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1859 | GridLanesLayoutAlgorithmTest.OrthogonalAppendSubgriddedItemsRows | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1914 | GridLanesLayoutAlgorithmTest.AutoPlacedSubgriddedItemsAreAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1973 | GridLanesLayoutAlgorithmTest.DefiniteSubgridChildrenAreExplicitlyPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2036 | GridLanesLayoutAlgorithmTest.OppositeDirectionSubgridReversesChildSpans | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2093 | GridLanesLayoutAlgorithmTest.OrthogonalSubgridColumnsIgnoredInColumnGridLanes | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2145 | GridLanesLayoutAlgorithmTest.OrthogonalSubgridRowsIgnoredInRowGridLanes | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2201 | GridLanesLayoutAlgorithmTest.DefiniteSubgridsAtDifferentPositionsProduceSeparateVirtualItems | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2261 | GridLanesLayoutAlgorithmTest.AutoPlacedSubgridChildrenAreAutoPlacedForVirtualItems | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2327 | GridLanesLayoutAlgorithmTest.DefiniteSubgridAutoPlacedChildProducesDefiniteVirtualItem | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2386 | GridLanesLayoutAlgorithmTest.NestedSubgridInAutoPlacedSubgridIsAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2448 | GridLanesLayoutAlgorithmTest.ExplicitlyPlacedNestedSubgridInAutoPlacedSubgridIsAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2503 | GridLanesLayoutAlgorithmTest.NestedSubgridUnderExplicitOuterSubgridIsNotAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2558 | GridLanesLayoutAlgorithmTest.DeepNestedAutoPlacedSubgridsAreAllAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2621 | GridLanesLayoutAlgorithmTest.AllChildrenOfAutoPlacedSubgridAreAutoPlaced | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2668 | GridLanesLayoutAlgorithmTest.AppendColumnSubgriddedGridLanesItems | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2709 | GridLanesLayoutAlgorithmTest.AppendRowSubgriddedGridLanesItems | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2744 | GridLanesLayoutAlgorithmTest.GridLanesSubgridIgnoresNonGridAxis | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2778 | GridLanesLayoutAlgorithmTest.OrthogonalGridLanesSubgridMapsGridAxis | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2807 | GridLanesLayoutAlgorithmTest.BuildsNestedGridLanesSubgrids | geometry | blocked | needs grid lanes subgridded item layout and mapping |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2842 | GridLanesLayoutAlgorithmTest.GridLanesDirectionChangeMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2870 | GridLanesLayoutAlgorithmTest.GridLanesPackChangeMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2899 | GridLanesLayoutAlgorithmTest.ResolvedGridAxisFlipMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2925 | GridLanesLayoutAlgorithmTest.GapGeometryColumn | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2979 | GridLanesLayoutAlgorithmTest.GapGeometryRow | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3031 | GridLanesLayoutAlgorithmTest.GapGeometryEmptyExplicitTracks | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3066 | GridLanesLayoutAlgorithmTest.GapGeometrySingleTrack | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3096 | GridLanesLayoutAlgorithmTest.GapGeometryRequiresGapRule | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3125 | GridLanesLayoutAlgorithmTest.GapGeometryCollapsedAutoFitTracks | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3171 | GridLanesLayoutAlgorithmTest.GapGeometryGridAxisAlignment | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3219 | GridLanesLayoutAlgorithmTest.GapGeometryColumnStackingAxisOverflow | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3265 | GridLanesLayoutAlgorithmTest.GapGeometryRowStackingAxisOverflow | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3310 | GridLanesLayoutAlgorithmTest.PopulateGridLanesBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3346 | GridLanesLayoutAlgorithmTest.SharePlacementDataAcrossFragments | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3385 | GridLanesLayoutAlgorithmTest.ShareExpansionDataAcrossFragments | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3419 | GridLanesLayoutAlgorithmTest.PopulateRowGridLanesBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3446 | GridLanesLayoutAlgorithmTest.PopulateSpannerBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3501 | GridLanesLayoutAlgorithmTest.PopulateDensePackedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3535 | GridLanesLayoutAlgorithmTest.PopulateDensePackedSpannerBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3572 | GridLanesLayoutAlgorithmTest.PopulateDenseSpannerWithDifferentParentsPerLane | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3637 | GridLanesLayoutAlgorithmTest.PopulateDenseItemAboveDenseSpannerUsesParentSpanner | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3674 | GridLanesLayoutAlgorithmTest.PopulateDenseItemsUseCorrectSpannerForMultipleOpenings | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3718 | GridLanesLayoutAlgorithmTest.PopulateGridAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3752 | GridLanesLayoutAlgorithmTest.PopulateRowGridAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3785 | GridLanesLayoutAlgorithmTest.PopulateStackingAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3810 | GridLanesLayoutAlgorithmTest.PopulateRowStackingAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3835 | GridLanesLayoutAlgorithmTest.PopulateExplicitStackingAxisStretchBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3862 | GridLanesLayoutAlgorithmTest.PopulateRowExplicitStackingAxisStretchBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3889 | GridLanesLayoutAlgorithmTest.PopulateStackingAxisStretchSpaceBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3914 | GridLanesLayoutAlgorithmTest.PopulateRowStackingAxisStretchSpaceBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3940 | GridLanesLayoutAlgorithmTest.PopulateStackingAxisStretchSpannerSpaceBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3976 | GridLanesLayoutAlgorithmTest.PopulateRowStackingAxisStretchSpannerSpaceBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4012 | GridLanesLayoutAlgorithmTest.PopulateLastStackingAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4042 | GridLanesLayoutAlgorithmTest.PopulateRowLastStackingAxisAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4073 | GridLanesLayoutAlgorithmTest.PopulateStackingAxisAlignedSpannerBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4104 | GridLanesLayoutAlgorithmTest.PopulateRowStackingAxisAlignedSpannerBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4135 | GridLanesLayoutAlgorithmTest.PopulateContentAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4163 | GridLanesLayoutAlgorithmTest.PopulateRowContentAlignedBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4191 | GridLanesLayoutAlgorithmTest.PopulateColumnFillAndTrackReverseBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4236 | GridLanesLayoutAlgorithmTest.PopulateRowFillAndTrackReverseBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:4281 | GridLanesLayoutAlgorithmTest.PopulateIndefiniteFillReverseBreakTokenData | geometry | blocked | needs grid lanes fragmentation break token data tracking |
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
