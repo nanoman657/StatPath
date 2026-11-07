@@ -44,6 +44,17 @@ def sliceTotal (F : Nat) (y : Int) (h : Nat) : Nat → Nat
   | 0 => 0
   | n + 1 => sliceTotal F y h n + sliceSize F y h n
 
+/-- Consumed block size up to fragmentainer k (`break_token->ConsumedBlockSize()`,
+    `fragmentation_test.cc: ConsumedBlockSizeOverflowInflow`). -/
+def consumedBlockSize (F : Nat) (k : Nat) : Nat :=
+  (k + 1) * F
+
+/-- Consumed block size increases by fragmentainer size with each fragment. -/
+theorem consumedBlockSize_step (F k : Nat) :
+    consumedBlockSize F (k + 1) = consumedBlockSize F k + F := by
+  unfold consumedBlockSize
+  rw [Nat.succ_mul]
+
 /-- Closed form of the first `n` slice sizes: the clamped extent of `[y, y+h)` in `[0, nF)`. -/
 theorem sliceTotal_eq (F : Nat) (y : Int) (h : Nat) (hy : 0 ≤ y) (n : Nat) :
     (sliceTotal F y h n : Int) = min (y + h) ((n * F : Nat) : Int) - min y ((n * F : Nat) : Int) := by

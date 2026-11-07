@@ -356,8 +356,19 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:6893 | ColumnLayoutAlgorithmTest.GapDecorationColumnWrapLastRowNotFilled | geometry | blocked | needs column gap decorations layout |
 | column_layout_algorithm_test.cc:6951 | ColumnLayoutAlgorithmTest.GapDecorationTwoSpanners | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
 
+| fragmentation_test.cc:25 | FragmentationTest.MultipleFragments | geometry | formalized | `TestsBlock.MultipleFragments_vectors` |
+| fragmentation_test.cc:68 | FragmentationTest.MultipleFragmentsAndColumnSpanner | geometry | blocked | needs column spanners (column-span: all) and line fragmentation |
+| fragmentation_test.cc:132 | FragmentationTest.MultipleFragmentsNestedMulticol | geometry | blocked | needs nested multicolumn fragmentation |
+| fragmentation_test.cc:187 | FragmentationTest.HasSeenAllChildrenIfc | behaviour | blocked | needs inline formatting context break tokens HasSeenAllChildren tracking |
+| fragmentation_test.cc:235 | FragmentationTest.InkOverflowInline | geometry | blocked | needs inline-block visual ink overflow calculation across columns |
+| fragmentation_test.cc:271 | FragmentationTest.OffsetFromOwnerLayoutBoxFloat | geometry | blocked | needs float fragmentation OffsetFromOwnerLayoutBox calculation |
+| fragmentation_test.cc:303 | FragmentationTest.OffsetFromOwnerLayoutBoxNested | geometry | blocked | needs nested multicol OffsetFromOwnerLayoutBox calculation |
+| fragmentation_test.cc:345 | FragmentationTest.ConsumedBlockSizeOverflowInflow | geometry | formalized | `TestsBlock.ConsumedBlockSizeOverflowInflow_vectors`, `BlockFlow.consumedBlockSize_step` |
+| fragmentation_test.cc:373 | FragmentationTest.ConsumedBlockSizeOverflowOutOfFlow | geometry | blocked | needs out-of-flow fragmentation in containing block with break tokens |
+
 ## Laws proved
 
+- `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
 - `ColumnLayout.colStride_pos`: column stride is strictly positive when column width is positive.
 - `ColumnLayout.columnInlineOffset_step`: column offset advances by stride for each subsequent column.
 - `ColumnLayout.columns_non_overlapping`: columns do not overlap when gap is non-negative and column width is positive.
