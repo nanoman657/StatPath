@@ -695,4 +695,69 @@ def line_box_height_encloses_items_stmt : Prop :=
     let line := createLineBox strut lineInfo
     item.blockOffset + item.blockSize ≤ line.metrics.ascent + line.metrics.descent
 
+/-! ## 6. M1 Proofs: `BoxStrut`, Signed `MarginStrut`, Law 1, and Blink Test Vectors -/
+
+theorem MarginStrut.append_assoc (s1 s2 s3 : MarginStrut) :
+    MarginStrut.append (MarginStrut.append s1 s2) s3 =
+      MarginStrut.append s1 (MarginStrut.append s2 s3) := by
+  cases s1
+  cases s2
+  cases s3
+  simp [MarginStrut.append, Nat.max_assoc]
+
+theorem MarginStrut.append_comm (s1 s2 : MarginStrut) :
+    MarginStrut.append s1 s2 = MarginStrut.append s2 s1 := by
+  cases s1
+  cases s2
+  simp [MarginStrut.append, Nat.max_comm]
+
+theorem MarginStrut.append_idem (s : MarginStrut) :
+    MarginStrut.append s s = s := by
+  cases s
+  simp [MarginStrut.append]
+
+/-- Law 1 (`margin_strut_semilattice`, `SCOPE.md` §4):
+    `MarginStrut.append` (modeling `MarginStrut::Append` in `geometry/margin_strut.cc:11-30`
+    for non-quirky margins) is associative, commutative, and idempotent, so
+    `MarginStrut.sum` produces the same collapsed margin regardless of how
+    adjacent self-collapsing boxes are grouped. -/
+theorem margin_strut_semilattice (s1 s2 s3 : MarginStrut) :
+    MarginStrut.append (MarginStrut.append s1 s2) s3 =
+      MarginStrut.append s1 (MarginStrut.append s2 s3) ∧
+    MarginStrut.append s1 s2 = MarginStrut.append s2 s1 ∧
+    MarginStrut.append s1 s1 = s1 := by
+  exact ⟨MarginStrut.append_assoc s1 s2 s3, MarginStrut.append_comm s1 s2, MarginStrut.append_idem s1⟩
+
+/-- Transcribed Blink unit test vectors for `MarginStrut` and `BoxStrut`
+    (`block_layout_algorithm_test.cc:568-1025`, `geometry/box_strut_test.cc:16-135`). -/
+def blinkM1TestVectors : List (Nat × Nat) :=
+  [ -- CollapsingMarginsCase3 (`block_layout_algorithm_test.cc:605`): max(20, 200) = 200
+    ((MarginStrut.append ⟨20, 0⟩ ⟨200, 0⟩).sum, 200)
+  , -- CollapsingMarginsCase4 (`block_layout_algorithm_test.cc:662`): max(8, 30) = 30
+    ((MarginStrut.append ⟨8, 0⟩ ⟨30, 0⟩).sum, 30)
+  , -- CollapsingMarginsCase6 (`block_layout_algorithm_test.cc:810`): max(10, 40) = 40
+    ((MarginStrut.append ⟨10, 0⟩ ⟨40, 0⟩).sum, 40)
+  , -- CollapsingMarginsEmptyBlockWithClearance (`block_layout_algorithm_test.cc:968-983`):
+    -- offset 90 with signed strut {50, 70} gives (90 + 50) - 70 = 70
+    (MarginStrut.applyOffset 90 (MarginStrut.append ⟨50, 0⟩ ⟨0, 70⟩), 70)
+  , -- CollapsingMarginsEmptyBlockWithClearance (`block_layout_algorithm_test.cc:991-1006`):
+    -- {70, 0} appended with {0, 10} -> sum 60; with {0, 20} -> sum 50; with {80, 0} -> sum 60
+    ((MarginStrut.append ⟨70, 0⟩ ⟨0, 10⟩).sum, 60)
+  , ((MarginStrut.append ⟨70, 10⟩ ⟨0, 20⟩).sum, 50)
+  , ((MarginStrut.append ⟨70, 20⟩ ⟨80, 0⟩).sum, 60)
+  , -- GeometryUnitsTest (`geometry/box_strut_test.cc:18-24`): BoxStrut(5, 10, 15, 20)
+    ((BoxStrut.mk 5 10 15 20).inlineSum, 15)
+  , ((BoxStrut.mk 5 10 15 20).blockSum, 35)
+  ]
+
+theorem blink_m1_test_vectors_pass :
+    ∀ p ∈ blinkM1TestVectors, p.1 = p.2 := by
+  decide
+
+#print axioms MarginStrut.append_assoc
+#print axioms MarginStrut.append_comm
+#print axioms MarginStrut.append_idem
+#print axioms margin_strut_semilattice
+#print axioms blink_m1_test_vectors_pass
+
 end ChromiumLayout

@@ -54,11 +54,11 @@ Source file names in the phases below are taken from SCOPE §1 and §6.2 and hav
 
 Source: `geometry/margin_strut.h`, `geometry/margin_strut.cc`, `geometry/box_strut.h` (per SCOPE §3).
 
-- [ ] Define `BoxStrut` (inline and block start/end) in Bend and Lean.
-- [ ] Define `MarginStrut` as `(positive, negative)` per the P0.1 decision, with `append` and `sum` transcribed from `MarginStrut::Append` and `MarginStrut::Sum` (non-quirky case).
-- [ ] Prove Law 1 (`margin_strut_semilattice`): `append` is associative, commutative and idempotent. Prove it in both Bend (`--verdict`) and Lean.
-- [ ] Extend the `stack.bend` / `Spike.lean` vertical-stacking spike to signed margins.
-- [ ] Check whether Blink's margin strut unit tests exist at the pinned revision. If they do, transcribe their cases as a test vector list.
+- [x] Define `BoxStrut` (inline and block start/end) in Bend and Lean.
+- [x] Define `MarginStrut` as `(positive, negative)` per the P0.1 decision, with `append` and `sum` transcribed from `MarginStrut::Append` and `MarginStrut::Sum` (non-quirky case).
+- [x] Prove Law 1 (`margin_strut_semilattice`): `append` is associative, commutative and idempotent. Prove it in both Bend (`--verdict`) and Lean.
+- [x] Extend the `stack.bend` / `Spike.lean` vertical-stacking spike to signed margins.
+- [x] Check whether Blink's margin strut unit tests exist at the pinned revision. If they do, transcribe their cases as a test vector list (`blinkM1TestVectors` in `Layout.lean` and `blink_m1_test_vectors` in `proof.bend`, transcribed from `block_layout_algorithm_test.cc:568-1025` and `geometry/box_strut_test.cc:16-135`; no separate `geometry/margin_strut_test.cc` exists at the pin).
 
 **Exit criterion:** Law 1 passes both checkers with no `sorryAx`. Every definition has a file:line reference to the Blink source.
 
