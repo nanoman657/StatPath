@@ -10,7 +10,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block).
+percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -91,6 +91,8 @@ checks every row against the pinned sources and the Lean modules.
 | layout_block_test.cc:73 | LayoutBlockTest.NestedInlineVisualOverflow | geometry | blocked | expects visual overflow rect of an img with negative margin in a zero-size box (inline replaced layout); not modelled |
 | layout_block_test.cc:86 | LayoutBlockTest.NestedInlineVisualOverflowVerticalRL | geometry | blocked | same as NestedInlineVisualOverflow in vertical-rl; writing modes not modelled |
 | layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | formalized | `TestsBlock.ContainmentStyleChange_vectors` |
+| constraint_space_builder_test.cc:17 | ConstraintSpaceBuilderTest.AvailableSizeFromHorizontalICB | geometry | formalized | `TestsBlock.AvailableSizeFromHorizontalICB_vectors`, `BlockWritingMode.indefinite_inline_falls_back` |
+| constraint_space_builder_test.cc:49 | ConstraintSpaceBuilderTest.AvailableSizeFromVerticalICB | geometry | formalized | `TestsBlock.AvailableSizeFromVerticalICB_vectors`, `BlockWritingMode.indefinite_inline_falls_back` |
 
 ## Laws proved
 
@@ -100,6 +102,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockFlow.auto_width_fills`: auto-width box with definite margins fills the containing block.
 - `BlockFlow.fragmentation_conserves_size`: fragment sizes sum to the box's block size.
 - `BlockNode.iterate_mem`: the child iterator only returns real children.
+- `BlockWritingMode.indefinite_inline_falls_back`: indefinite available inline size falls back to orthogonal fallback size.
 
 ## Merge notes
 
