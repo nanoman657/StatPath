@@ -213,4 +213,9 @@ for lf in ordered_files:
     )
 PY
 
+if [[ -f "$HERE/verify_transcription.py" ]]; then
+  echo "== Checking Phase 6 transcription audit table"
+  python3 "$HERE/verify_transcription.py"
+fi
+
 echo "== ALL CHECKS PASSED"

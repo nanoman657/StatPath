@@ -411,4 +411,18 @@ describe("the generated layout.mjs module and Bend proofs", () => {
       rmSync(dir, { recursive: true, force: true });
     }
   }, 700_000);
+
+  it("Phase 6 transcription audit table and WPT layout geometry check pass", () => {
+    const auditOut = execFileSync("python3", [join(ROOT, "verify_transcription.py")], {
+      encoding: "utf8",
+      timeout: 30_000,
+    });
+    expect(auditOut).toContain("OK: 36 transcription audit rows verified");
+
+    const wptOut = execFileSync(process.execPath, [join(ROOT, "wpt_geometry_check.cjs")], {
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    expect(wptOut).toContain("OK: WPT layout geometry check passed");
+  }, 90_000);
 });

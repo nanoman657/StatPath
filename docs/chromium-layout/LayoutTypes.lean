@@ -30,6 +30,10 @@ structure BoxStrut where
 
 namespace BoxStrut
 
+/-- Default zero `BoxStrut` (`geometry/box_strut.h:34-48`). -/
+def zero : BoxStrut :=
+  { inlineStart := 0, inlineEnd := 0, blockStart := 0, blockEnd := 0 }
+
 /-- `BoxStrut::InlineSum()` (`geometry/box_strut.h:62`). -/
 def inlineSum (s : BoxStrut) : Nat :=
   s.inlineStart + s.inlineEnd
@@ -37,6 +41,13 @@ def inlineSum (s : BoxStrut) : Nat :=
 /-- `BoxStrut::BlockSum()` (`geometry/box_strut.h:63`). -/
 def blockSum (s : BoxStrut) : Nat :=
   s.blockStart + s.blockEnd
+
+/-- `BoxStrut::operator+=` / `operator+` (`geometry/box_strut.h:74-86`). -/
+def add (a b : BoxStrut) : BoxStrut :=
+  { inlineStart := a.inlineStart + b.inlineStart
+  , inlineEnd   := a.inlineEnd + b.inlineEnd
+  , blockStart  := a.blockStart + b.blockStart
+  , blockEnd    := a.blockEnd + b.blockEnd }
 
 /-- `BoxStrut::IsEmpty()` (`geometry/box_strut.h:68`). -/
 def isEmpty (s : BoxStrut) : Bool :=
