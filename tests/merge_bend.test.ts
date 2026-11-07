@@ -3,11 +3,12 @@ import { execFileSync } from "node:child_process";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { mergeProgress } from "../src/engine/merge";
+import { mergeProgress } from "./reference/mergeProgressTs";
 import { defaultProgress, type LessonProgress, type Progress, type SrsCard } from "../src/engine/progress";
 import bend from "../bend-engine/merge.mjs";
 
-// The Bend merge (bend-engine/merge.bend, compiled to merge.mjs) against mergeProgress. The Bend data is
+// The Bend merge (bend-engine/merge.bend, compiled to merge.mjs) against the TypeScript reference merge
+// (tests/reference/mergeProgressTs.ts), which the app's merge replaced. The Bend data is
 // the compiler's own shapes: a constructor is { $: name, field: value }, a List is Con/Nil, a Maybe is
 // Some/None, a Nat is a number and a String is a string.
 
@@ -122,15 +123,23 @@ describe("the Bend learning-data merge against mergeProgress", () => {
     expect(mismatch).toBeNull();
   });
 
-  it("orders keys as JavaScript orders them, on random strings", () => {
+  it("orders keys by code point, as Bend and the Lean model do, on random strings", () => {
     const r = rng(7);
-    const alphabet = "abcXYZ019-_ é";
+    // Characters outside the Basic Multilingual Plane are included: UTF-16 (JavaScript's `<`) orders them differently.
+    const alphabet = "abcXYZ019-_ é\u{1F600}\u{10FFFF}";
     const word = () => Array.from({ length: Math.floor(r() * 4) }, () => pick(r, [...alphabet])).join("");
+    const codePoints = (s: string) => Array.from(s, (c) => c.codePointAt(0)!);
     for (let i = 0; i < 2000; i++) {
       const a = word();
       const b = word();
       const got = (bend.skey_cmp(a, b) as { $: string }).$;
-      const want = a < b ? "LT" : a === b ? "EQ" : "GT";
+      const x = codePoints(a);
+      const y = codePoints(b);
+      let want = "EQ";
+      for (let k = 0; k < Math.min(x.length, y.length) && want === "EQ"; k++) {
+        if (x[k] !== y[k]) want = x[k] < y[k] ? "LT" : "GT";
+      }
+      if (want === "EQ" && x.length !== y.length) want = x.length < y.length ? "LT" : "GT";
       expect(got, `${JSON.stringify(a)} vs ${JSON.stringify(b)}`).toBe(want);
     }
   });
@@ -234,7 +243,7 @@ describe("the rows of bend-engine/README.md", () => {
     const readme = readFileSync(join(ROOT, "README.md"), "utf8");
     const lean = readFileSync(join(ROOT, "Merge.lean"), "utf8");
     const bendSrc = readFileSync(join(ROOT, "merge.bend"), "utf8");
-    const tsSrc = readFileSync(join(ROOT, "..", "src", "engine", "merge.ts"), "utf8");
+    const tsSrc = readFileSync(join(__dirname, "reference", "mergeProgressTs.ts"), "utf8");
     const testSrc = readFileSync(join(__dirname, "merge_bend.test.ts"), "utf8");
     const table = readme.slice(readme.indexOf("## Lean theorems"), readme.indexOf("## What is not mechanized"));
     const rows = table.split("\n").filter((l) => l.startsWith("| `"));

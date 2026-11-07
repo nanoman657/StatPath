@@ -12,8 +12,13 @@
  * That means it does not matter which device syncs first, and repeated syncs
  * never drift. The one deliberate exception is cosmetic settings (display name
  * and daily goal), which take the value from whichever copy changed last.
+ *
+ * Lessons, SRS cards and XP per day are merged by the compiled Bend module
+ * (see bendMerge.ts and bend-engine/merge.bend). The rest of the record is
+ * merged here.
  */
-import { MAX_HEARTS, type LessonProgress, type Progress, type SrsCard } from "./progress";
+import { MAX_HEARTS, type Progress } from "./progress";
+import { mergeLearning } from "./bendMerge";
 
 const maxNum = (a: number | undefined, b: number | undefined): number => Math.max(a ?? 0, b ?? 0);
 
@@ -63,58 +68,12 @@ export const recencyOf = (p: Progress): number => {
   return t;
 };
 
-const mergeLesson = (a: LessonProgress | undefined, b: LessonProgress | undefined): LessonProgress => ({
-  // Crowns and best accuracy only ever climb, so the larger value is the true one.
-  crowns: maxNum(a?.crowns, b?.crowns),
-  bestAccuracy: Math.max(a?.bestAccuracy ?? 0, b?.bestAccuracy ?? 0),
-  // Without per-device counters an exact total is not recoverable; the larger
-  // count is the safe choice, since it never invents attempts that did not happen.
-  attempts: maxNum(a?.attempts, b?.attempts),
-  lastPlayed: maxNum(a?.lastPlayed, b?.lastPlayed),
-});
-
-const cmpNum = (x: number, y: number): number => (x < y ? -1 : x > y ? 1 : 0);
-const cmpText = (x: string, y: string): number => (x < y ? -1 : x > y ? 1 : 0);
-
-/**
- * The whole card, field by field in a fixed order, so the order does not depend on which copy is merged
- * first. An absent lastReview sorts before any time. merge.bend implements the same order.
- */
-const compareCards = (a: SrsCard, b: SrsCard): number =>
-  cmpText(a.id, b.id) ||
-  cmpText(a.lessonId, b.lessonId) ||
-  cmpNum(a.interval, b.interval) ||
-  cmpNum(a.ease, b.ease) ||
-  cmpNum(a.due, b.due) ||
-  cmpNum(a.lapses, b.lapses) ||
-  cmpNum(a.reps, b.reps) ||
-  cmpNum(a.lastReview ?? -1, b.lastReview ?? -1);
-
-/**
- * The scheduling state from whichever device answered this exercise most
- * recently, so a lapse recorded on one device is not undone by an older pass
- * on another. Falls back to repetition count, then due date, for cards saved
- * before review timestamps existed. A full tie on those keeps the card with the
- * larger content, so the merge gives the same card in either order.
- */
-const mergeCard = (a: SrsCard | undefined, b: SrsCard | undefined): SrsCard => {
-  if (!a) return b!;
-  if (!b) return a;
-  const ta = a.lastReview ?? 0;
-  const tb = b.lastReview ?? 0;
-  if (ta !== tb) return ta > tb ? a : b;
-  if (a.reps !== b.reps) return a.reps > b.reps ? a : b;
-  if (a.due !== b.due) return a.due > b.due ? a : b;
-  return compareCards(a, b) >= 0 ? a : b;
-};
-
 export const mergeProgress = (a: Progress, b: Progress): Progress => {
   // XP is always recorded per day as well as in the total, so the per-day map
-  // is the source of truth and the total is derived from it. Taking the larger
-  // value per day avoids both double counting and loss.
-  const xpByDay: Record<string, number> = { ...a.xpByDay };
-  for (const [day, v] of Object.entries(b.xpByDay)) xpByDay[day] = Math.max(xpByDay[day] ?? 0, v);
-  const xp = Object.values(xpByDay).reduce((t, v) => t + v, 0);
+  // is the source of truth and the total is derived from it. The Bend merge takes
+  // the larger value per day, so nothing is double counted or lost.
+  const learning = mergeLearning(a, b);
+  const xpByDay = learning.xpByDay;
 
   const days = activeDays(xpByDay);
   const lastActiveDay =
@@ -122,16 +81,6 @@ export const mergeProgress = (a: Progress, b: Progress): Progress => {
       .filter((d): d is string => !!d)
       .sort()
       .pop() ?? null;
-
-  const lessons: Record<string, LessonProgress> = {};
-  for (const id of new Set([...Object.keys(a.lessons), ...Object.keys(b.lessons)])) {
-    lessons[id] = mergeLesson(a.lessons[id], b.lessons[id]);
-  }
-
-  const srs: Record<string, SrsCard> = {};
-  for (const id of new Set([...Object.keys(a.srs), ...Object.keys(b.srs)])) {
-    srs[id] = mergeCard(a.srs[id], b.srs[id]);
-  }
 
   // Hearts take the lower count so syncing can never be used to refill them,
   // and the later refill time so a stale clock cannot grant one early.
@@ -147,7 +96,7 @@ export const mergeProgress = (a: Progress, b: Progress): Progress => {
 
   return {
     version: 1,
-    xp,
+    xp: learning.xp,
     xpByDay,
     lastActiveDay,
     streak: streakEndingAt(xpByDay, lastActiveDay),
@@ -156,8 +105,8 @@ export const mergeProgress = (a: Progress, b: Progress): Progress => {
     heartsRefillAt,
     dailyGoal: newer.dailyGoal,
     name: newer.name,
-    lessons,
-    srs,
+    lessons: learning.lessons,
+    srs: learning.srs,
     achievements: [...new Set([...a.achievements, ...b.achievements])].sort(),
     updatedAt: Math.max(ra, rb),
   };

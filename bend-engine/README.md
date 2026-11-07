@@ -1,8 +1,9 @@
 # bend-engine: the learning-data merge, in Bend and in Lean
 
-`src/engine/merge.ts` merges two copies of a learner's progress. This folder checks its learning-data
-part: lessons, SRS cards and XP per day. Cosmetic settings, the streak (which depends on local time),
-the UI and effects are out of scope.
+`src/engine/merge.ts` merges two copies of a learner's progress. Its learning-data part (lessons, SRS cards
+and XP per day) is computed by the compiled Bend merge, through `src/engine/bendMerge.ts`. This folder checks
+that Bend merge. The cosmetic settings, the streak (which depends on local time), hearts, achievements and the
+UI are merged in TypeScript or are out of scope; the proofs do not cover them.
 
 | File | What it is |
 |------|------------|
@@ -21,7 +22,11 @@ the UI and effects are out of scope.
 | `model_vectors.txt` | Those results, committed (1,137 vectors); the test checks the compiled Bend against them |
 | `compiler_check.py` | Runs the checker's reader (`CompilerCheck.lean`) on the compiled maxima, writes the report |
 | `compiler_check_report.txt` | The committed report of that run, with the candidates and the reader's results |
-| `../tests/merge_bend.test.ts` | Compiled Bend against `mergeProgress`, the Lean model and the laws; the Bend gate (`PROOF.bend --verdict`); staleness; this README's rows |
+| `../tests/merge_bend.test.ts` | Compiled Bend against the TypeScript reference merge, the Lean model and the laws; the Bend gate (`PROOF.bend --verdict`); staleness; this README's rows |
+| `../src/engine/bendMerge.ts` | The adapter the app uses: passes the learning data to `merge.mjs`, with fractions replaced by ranks and keys in code-point order |
+| `../tests/bend_adapter.test.ts` | The app's merge against the TypeScript reference on random progress with fractions and astral keys; the NaN refusal; the order of the maps passed to Bend |
+| `../tests/reference/mergeProgressTs.ts` | The TypeScript merge the app used before Bend took over the learning data; the reference the differential tests compare against |
+| `../e2e/sync.e2e.cjs` | A Chromium test: the built app syncs against a mocked GitHub API, pushes the merged copy, then reports up to date on the next sync (`npm run test:browser`) |
 
 ## Representation
 
@@ -53,6 +58,8 @@ the same one.
     bend bend-engine/PROOF.bend --verdict         # the same, re-checked by the kernel
     bend-engine/gen.sh                            # regenerate merge.mjs
     npx vitest run tests/merge_bend.test.ts       # differential, laws in code, staleness, the Bend gate, these rows
+    npx vitest run tests/bend_adapter.test.ts     # the app's merge against the TypeScript reference
+    npm run test:browser                          # build, then the browser sync test (Chromium)
     export PATH=/root/.elan/toolchains/leanprover--lean4---v4.34.0/bin:$PATH
     lean bend-engine/Merge.lean                   # compiles; prints the axioms of the laws
     python3 bend-engine/model_vectors.py          # regenerate model_vectors.txt from Merge.lean
@@ -69,7 +76,8 @@ transcription, which is not mechanized (see below).
 
 The test `every row points to a real theorem, function and test` checks that each row's
 Lean theorem, Bend function and TypeScript function exist, and that each quoted test name is a test in
-`merge_bend.test.ts`.
+`merge_bend.test.ts`. The TypeScript functions are in `tests/reference/mergeProgressTs.ts`, the merge the app used
+before Bend took over the learning data.
 
 | Lean theorem | Bend function | TypeScript | Test | Layer |
 |---|---|---|---|---|
@@ -141,7 +149,8 @@ Base declares the order's antisymmetry as a law (`String.cmp`) but does not prov
 - **The transcription.** `Merge.lean` follows `merge.bend` by hand, function for function: `insC` is
   `lins_c`, `ins` is `lins`, `fold` is `lfold`, `fullCmp` is `full_cmp`, and so on. No tool proves that
   correspondence. What the tests add is evidence on two levels:
-  - the compiled code against `mergeProgress` on 10,000 random states (differential);
+  - the compiled code against the TypeScript reference merge (`tests/reference/mergeProgressTs.ts`) on 10,000
+    random states (differential);
   - the compiled code against the model's own results on every pair of maps in a bounded domain: two
     keys, the empty map, one key with each value, or both keys with each pair of values; lessons with 3
     values, SRS cards with 4 (one differing in ease, one with no review time, one with reps 2), XP with 3.
@@ -149,13 +158,19 @@ Base declares the order's antisymmetry as a law (`String.cmp`) but does not prov
     code makes this test fail on its first vector (checked by hand: the XP maximum changed to a minimum).
   The bounded agreement is exhaustive for its domain, not for all inputs. So the rows above are proved for
   the model, and the code is tested against the model on that domain; they are not linked by a proof.
-- **Numbers.** The Bend code and the model use `Nat`. merge.ts uses doubles, and `ease` and `bestAccuracy`
-  are not integers in general. The merge only compares and selects numbers and never computes with them, so
-  the laws do not depend on the representation; the tests use integer values. This is assumed, not proved.
-- **Key order.** The model uses Lean's `<` on `String`; the code uses `String.cmp`. The test
-  `orders keys as JavaScript orders them, on random strings` checks them against JavaScript's string order on
-  random strings. That is a test of the order, not a proof that the two agree on every string.
-- **Out of scope:** the streak, the cosmetic settings, the other engine modules.
+- **Numbers.** The Bend code and the model use `Nat`. The app's `ease` and `bestAccuracy` are fractions. The
+  adapter (`bendMerge.ts`) replaces each distinct value by its rank among the values of the two copies. Ranks
+  keep the order exactly, the merge only compares and selects these values, and the output maps the ranks back
+  to the original numbers, so nothing is rounded. A NaN is refused. `tests/bend_adapter.test.ts` checks the
+  merged values against the TypeScript reference on fractions, and that every output value was an input. That
+  ranks preserve the merge is tested, not proved.
+- **Key order.** The model uses Lean's `<` on `String`; the code uses `String.cmp`, which compares by code
+  point. The adapter passes each map strictly increasing in that order. The test
+  `orders keys by code point, as Bend and the Lean model do, on random strings` checks `skey_cmp` against a
+  code-point comparison, and `passes each map to Bend strictly increasing by code point` checks the adapter's
+  input. Those test the order; they do not prove that the two agree on every string.
+- **Out of scope:** the streak, hearts, achievements, the cosmetic settings and the other engine modules. The
+  app merges these in `src/engine/merge.ts`, outside the proofs.
 
 ## Translation validation: `CompilerCheck.lean`
 
@@ -195,3 +210,4 @@ counterexamples became the commutativity rows above; the two examples now show t
 - `merge.d.mts` is written by hand. Generating declarations from the Bend types is not done.
 - The model-to-code correspondence is a hand transcription, with the bounded agreement above (see "What is not
   mechanized").
+- The browser sync test mocks GitHub's API (`e2e/sync.e2e.cjs`). It does not use the live API or a real token.
