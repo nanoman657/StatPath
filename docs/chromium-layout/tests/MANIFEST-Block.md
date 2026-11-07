@@ -10,7 +10,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes), `BlockSticky.lean` (single-axis sticky propagation), `BlockPhysicalFragment.lean` (float descendant propagation, fragmentation roots, overflow clip margin).
+percent/shrink-to-fit widths, laws), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator, multicol), `BlockScroll.lean` (scrollbar gutter), `OutOfFlowCB.lean` (fixed containing block), `BlockWritingMode.lean` (physical/logical mapping, orthogonal fallback), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockMinMaxCache.lean` (LRU cache for min/max sizes), `BlockSticky.lean` (single-axis sticky propagation), `BlockPhysicalFragment.lean` (float descendant propagation, fragmentation roots, overflow clip margin), `BlockRelative.lean` (relative positioning insets).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -130,6 +130,7 @@ checks every row against the pinned sources and the Lean modules.
 | physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStartBlockInInline_vectors` |
 | physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | formalized | `TestsBlock.OverflowClipMarginVisualBox_vectors`, `BlockPhysicalFragment.clip_margin_monotonic` |
 | physical_box_fragment_test.cc:294 | PhysicalBoxFragmentTest.CloneWithPostLayoutFragments | internal | internal | checks CloneWithPostLayoutFragments preserves C++ frame set layout data pointer |
+| relative_utils_test.cc:49 | RelativeUtilsTest.HorizontalTB | geometry | formalized | `TestsBlock.HorizontalTB_vectors`, `BlockRelative.opposing_sum_zero` |
 
 ## Laws proved
 
@@ -150,6 +151,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockSticky.propagation_disjoint`: single-axis sticky propagation partitions element axes into consumed and pending disjointly.
 - `BlockPhysicalFragment.clip_margin_monotonic`: overflow clip margin monotonically expands ink overflow from content-box to padding-box to border-box.
 - `BlockPhysicalFragment.inline_block_isolates_floats`: inline-block isolates floats within its IFC while block-level contexts propagate.
+- `BlockRelative.opposing_sum_zero`: when only one opposing relative inset is specified, the resolved insets sum to zero.
 
 ## Merge notes
 
