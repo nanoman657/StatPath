@@ -701,6 +701,721 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:1643 | LayoutBoxModelObjectTest.ChangeStickyStatusUnderContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:1671 | LayoutBoxModelObjectTest.ChangeStickyStatusKeepLayerUnderContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:1700 | LayoutBoxModelObjectTest.RemoveStickyStatusInNestedStickyElementsWithContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
+| layout_object_test.cc:77 | LayoutObjectTest.CommonAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:131 | LayoutObjectTest.OwnerNodeId | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:160 | LayoutObjectTest.LayoutDecoratedNameCalledWithPositionedObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:172 | LayoutObjectTest.DisplayNoneCreateObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:177 | LayoutObjectTest.DisplayBlockCreateObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:186 | LayoutObjectTest.DisplayInlineBlockCreateObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:195 | LayoutObjectTest.BackdropFilterAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:217 | LayoutObjectTest.BlendModeAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:234 | LayoutObjectTest.CSSClipAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:257 | LayoutObjectTest.ClipPathAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:274 | LayoutObjectTest.IsolationAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:291 | LayoutObjectTest.MaskAsGroupingProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:309 | LayoutObjectTest.UseCountGridLanesLayout | internal | internal | Blink use counter check |
+| layout_object_test.cc:335 | LayoutObjectTest.UseCountContainWithoutContentVisibility | internal | internal | Blink use counter check |
+| layout_object_test.cc:383 | LayoutObjectTest.ContainingBoxLayoutViewShouldBeNull | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:387 | LayoutObjectTest.ContainingBoxBodyShouldBeDocumentElement | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:392 | LayoutObjectTest.ContainingBoxDocumentElementShouldBeLayoutView | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:397 | LayoutObjectTest.ContainingBoxStaticLayoutObjectShouldBeParent | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:404 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectShouldBeLayoutView | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:411 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectShouldBeNonStaticallyPositionedBlockAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:438 | LayoutObjectTest.ContainingBoxFixedPosUnderFlattened3D | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:450 | LayoutObjectTest.ContainingBoxFixedLayoutObjectInTransformedDiv | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:473 | LayoutObjectTest.ContainingBoxFixedLayoutObjectInBody | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:487 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectInBody | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:501 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectShouldNotBeNonStaticallyPositionedInlineAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:533 | LayoutObjectTest.PaintingLayerOfOverflowClipLayerUnderColumnSpanAll | behaviour | blocked | model lacks paint layer hierarchy under column span |
+| layout_object_test.cc:549 | LayoutObjectTest.FloatUnderBlock | behaviour | blocked | model lacks floats |
+| layout_object_test.cc:570 | LayoutObjectTest.InlineFloatMismatch | behaviour | blocked | model lacks floats |
+| layout_object_test.cc:584 | LayoutObjectTest.FloatUnderInline | behaviour | blocked | model lacks floats |
+| layout_object_test.cc:616 | LayoutObjectTest.MutableForPaintingClearPaintFlags | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:650 | LayoutObjectTest.DelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:673 | LayoutObjectTest.SubtreeAndDelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:693 | LayoutObjectTest.NoPaintInvalidationWhileStayingInvisible | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:725 | LayoutObjectTest.VisibleDescendantOfInvisibleObjectStillInvalidates | internal | internal | Blink LayoutObject internal check |
+| layout_object_test.cc:748 | LayoutObjectTest.PaintInvalidationWhileStayingInvisibleKillSwitch | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:765 | LayoutObjectTest.SubtreePaintPropertyUpdateReasons | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:781 | LayoutObjectTest.ShouldCheckLayoutForPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:850 | LayoutObjectTest.AssociatedLayoutObjectOfFirstLetterPunctuations | behaviour | blocked | model lacks first-letter layout object split |
+| layout_object_test.cc:877 | LayoutObjectTest.AssociatedLayoutObjectOfFirstLetterSplit | behaviour | blocked | model lacks first-letter layout object split |
+| layout_object_test.cc:899 | LayoutObjectTest.AssociatedLayoutObjectOfFirstLetterWithTrailingWhitespace | behaviour | blocked | model lacks first-letter layout object split |
+| layout_object_test.cc:929 | LayoutObjectTest.DisplayContentsInlineWrapper | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:938 | LayoutObjectTest.DisplayContentsNoInlineWrapper | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:947 | LayoutObjectTest.DisplayContentsAddInlineWrapper | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:960 | LayoutObjectTest.DisplayContentsRemoveInlineWrapper | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:973 | LayoutObjectTest.DisplayContentsWrapperPerTextNode | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:995 | LayoutObjectTest.DisplayContentsWrapperInTable | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1021 | LayoutObjectTest.DisplayContentsWrapperInTableSection | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1047 | LayoutObjectTest.DisplayContentsWrapperInTableRow | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1073 | LayoutObjectTest.DisplayContentsWrapperInTableCell | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1094 | LayoutObjectTest.DumpLayoutObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1125 | LayoutObjectTest.DumpDestroyedLayoutObject | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1146 | LayoutObjectTest.DisplayContentsSVGGElementInHTML | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1164 | LayoutObjectTest.HasDistortingVisualEffects | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1204 | LayoutObjectTest.DistortingVisualEffectsUnaliases | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1221 | LayoutObjectTest.UpdateVisualRectAfterAncestorLayout | behaviour | blocked | model lacks visual rect ancestor layout update |
+| layout_object_test.cc:1259 | LayoutObjectSimTest.TouchActionUpdatesSubframeEventHandler | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1318 | LayoutObjectSimTest.HitTestForOcclusionInIframe | behaviour | blocked | model lacks hit testing |
+| layout_object_test.cc:1347 | LayoutObjectSimTest.FirstLineBackgroundImage | internal | internal | Blink LayoutObject internal check |
+| layout_object_test.cc:1403 | LayoutObjectTest.FirstLineBackgroundImageNestedCrash | internal | internal | Blink crash regression test |
+| layout_object_test.cc:1418 | LayoutObjectTest.FirstLineBackgroundImageAddBlockBackgroundImageCrash | internal | internal | Blink crash regression test |
+| layout_object_test.cc:1435 | LayoutObjectTest.FirstLineBackgroundImageChangeStyleCrash | internal | internal | Blink crash regression test |
+| layout_object_test.cc:1459 | LayoutObjectSimTest.FirstLineBackgroundImageDirtyStyleCrash | internal | internal | Blink crash regression test |
+| layout_object_test.cc:1505 | LayoutObjectTest.NeedsScrollableOverflowRecalc | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1534 | LayoutObjectTest.ContainValueIsRelayoutBoundary | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1551 | LayoutObjectTest.PerspectiveIsNotParent | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1573 | LayoutObjectTest.PerspectiveWithAnonymousTable | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1593 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScroll | behaviour | blocked | model lacks coordinate mapping across scroll containers |
+| layout_object_test.cc:1619 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScroll | behaviour | blocked | model lacks coordinate mapping across scroll containers |
+| layout_object_test.cc:1642 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller | behaviour | blocked | model lacks coordinate mapping across scroll containers |
+| layout_object_test.cc:1676 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller | behaviour | blocked | model lacks coordinate mapping across scroll containers |
+| layout_object_test.cc:1708 | LayoutObjectTest.SetNeedsCollectInlinesForSvgText | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1724 | LayoutObjectTest.SetNeedsCollectInlinesForSvgInline | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1737 | LayoutObjectTest.RemovePendingTransformUpdatesCorrectly | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1764 | LayoutObjectTestWithCompositing.UseCountDifferentPerspectiveCBOrParent | internal | internal | Blink use counter check |
+| layout_object_test.cc:1841 | LayoutObjectTest.HasTransformRelatedProperty | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1887 | LayoutObjectTest.ContainingScrollContainer | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1927 | LayoutObjectTest.ContainingScrollContainerSingleAxis | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:1946 | LayoutObjectTest.ScrollOffsetMapping | behaviour | blocked | model lacks scroll offset coordinate mapping |
+| layout_object_test.cc:1983 | LayoutObjectTest.QuadsInAncestor_Block | behaviour | blocked | model lacks nested multicolumn coordinate mapping |
+| layout_object_test.cc:2044 | LayoutObjectTest.QuadsInAncestor_Inline | behaviour | blocked | inline lane (model lacks inline text line quad mapping) |
+| layout_object_test.cc:2099 | LayoutObjectTest.GeneratingNode | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:2166 | LayoutObjectTest.NoEllipsisForAnonymousBlockWithNonBlockParent | behaviour | blocked | model lacks text-overflow ellipsis |
+| layout_object_test.cc:2205 | LayoutObjectTest.InCanvasSubtree | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_object_test.cc:2280 | LayoutObjectTest.MAYBE_Depth | internal | internal | Blink LayoutObject tree/property plumbing check |
+| layout_view_test.cc:25 | LayoutViewTest.UpdateCountersLayout | behaviour | blocked | model lacks CSS counters layout |
+| layout_view_test.cc:48 | LayoutViewTest.DisplayNoneFrame | internal | internal | Blink display:none iframe LayoutView creation check |
+| layout_view_test.cc:72 | LayoutViewTest.NamedPages | geometry | blocked | model lacks @page named page pagination |
+| layout_view_test.cc:122 | LayoutViewTest.NamedPagesAbsPos | geometry | blocked | model lacks @page named page pagination |
+| layout_view_test.cc:197 | LayoutViewHitTestTest.BlockInInlineBelowBottom | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:242 | LayoutViewHitTestTest.BlockInInlineWithListItem | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:287 | LayoutViewHitTestTest.EmptySpan | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:316 | LayoutViewHitTestTest.FlexBlockChildren | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:345 | LayoutViewHitTestTest.FlexBlockEditableChildren | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:370 | LayoutViewHitTestTest.FloatLeftLeft | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:405 | LayoutViewHitTestTest.FloatLeftMiddle | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:440 | LayoutViewHitTestTest.FloatLeftRight | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:475 | LayoutViewHitTestTest.FloatRightLeft | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:521 | LayoutViewHitTestTest.FloatRightMiddle | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:559 | LayoutViewHitTestTest.FloatRightRight | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:593 | LayoutViewHitTestTest.PositionAbsolute | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:632 | LayoutViewHitTestTest.HitTestHorizontal | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:747 | LayoutViewHitTestTest.HitTestVerticalLR | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:857 | LayoutViewHitTestTest.HitTestVerticalRL | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:980 | LayoutViewHitTestTest.HitTestVerticalRLRoot | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1070 | LayoutViewHitTestTest.PseudoElementAfterBlock | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1095 | LayoutViewHitTestTest.PseudoElementAfterInline | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1124 | LayoutViewHitTestTest.PseudoElementAfterBlockWithMargin | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1151 | LayoutViewHitTestTest.ScrolledBlockChildren | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1190 | LayoutViewHitTestTest.ScrolledInlineChildren | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1263 | LayoutViewHitTestTest.TextAndInputsWithRtlDirection | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1353 | LayoutViewHitTestTest.TextCombineOneTextNode | behaviour | blocked | model lacks hit testing engine |
+| layout_view_test.cc:1399 | LayoutViewHitTestTest.TextCombineTwoTextNodes | behaviour | blocked | model lacks hit testing engine |
+| layout_result_caching_test.cc:51 | LayoutResultCachingTest.HitDifferentExclusionSpace | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:84 | LayoutResultCachingTest.HitDifferentBFCOffset | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:144 | LayoutResultCachingTest.HitDifferentBFCOffsetSameMarginStrut | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:170 | LayoutResultCachingTest.MissDescendantAboveBlockStart1 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:204 | LayoutResultCachingTest.MissDescendantAboveBlockStart2 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:238 | LayoutResultCachingTest.HitOOFDescendantAboveBlockStart | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:272 | LayoutResultCachingTest.HitLineBoxDescendantAboveBlockStart | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:311 | LayoutResultCachingTest.MissFloatInitiallyIntruding1 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:343 | LayoutResultCachingTest.MissFloatInitiallyIntruding2 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:375 | LayoutResultCachingTest.MissFloatWillIntrude1 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:406 | LayoutResultCachingTest.MissFloatWillIntrude2 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:437 | LayoutResultCachingTest.HitPushedByFloats1 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:468 | LayoutResultCachingTest.HitPushedByFloats2 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:499 | LayoutResultCachingTest.MissPushedByFloats1 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:531 | LayoutResultCachingTest.MissPushedByFloats2 | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:563 | LayoutResultCachingTest.HitDifferentRareData | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:588 | LayoutResultCachingTest.HitPercentageMinWidth | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:613 | LayoutResultCachingTest.HitFixedMinWidth | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:638 | LayoutResultCachingTest.HitShrinkToFit | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:685 | LayoutResultCachingTest.MissShrinkToFit | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:765 | LayoutResultCachingTest.HitShrinkToFitSameIntrinsicSizes | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:796 | LayoutResultCachingTest.HitShrinkToFitDifferentParent | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:826 | LayoutResultCachingTest.MissQuirksModePercentageBasedChild | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:856 | LayoutResultCachingTest.HitQuirksModePercentageBasedParentAndChild | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:891 | LayoutResultCachingTest.HitStandardsModePercentageBasedChild | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:920 | LayoutResultCachingTest.ChangeTableCellBlockSizeConstrainedness | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:979 | LayoutResultCachingTest.OptimisticFloatPlacementNoRelayout | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1003 | LayoutResultCachingTest.SelfCollapsingShifting | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1078 | LayoutResultCachingTest.ClearancePastAdjoiningFloatsMovement | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1136 | LayoutResultCachingTest.MarginStrutMovementSelfCollapsing | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1199 | LayoutResultCachingTest.MarginStrutMovementInFlow | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1286 | LayoutResultCachingTest.MarginStrutMovementPercentage | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1321 | LayoutResultCachingTest.HitIsFixedBlockSizeIndefinite | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1350 | LayoutResultCachingTest.MissIsFixedBlockSizeIndefinite | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1380 | LayoutResultCachingTest.HitColumnFlexBoxMeasureAndLayout | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1433 | LayoutResultCachingTest.HitRowFlexBoxMeasureAndLayout | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1488 | LayoutResultCachingTest.MissFlexReplaced | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1516 | LayoutResultCachingTest.HitFlexDefiniteChange | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1539 | LayoutResultCachingTest.HitOrthogonalRoot | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1562 | LayoutResultCachingTest.SimpleTable | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1592 | LayoutResultCachingTest.MissTableCellMiddleAlignment | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1615 | LayoutResultCachingTest.MissTableCellBottomAlignment | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1638 | LayoutResultCachingTest.HitTableCellBaselineAlignment | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1661 | LayoutResultCachingTest.MissTableCellBaselineAlignment | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1687 | LayoutResultCachingTest.MissTablePercent | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1718 | LayoutResultCachingTest.HitTableRowAdd | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1739 | LayoutResultCachingTest.MissTableRowAdd | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1760 | LayoutResultCachingTest.HitTableRowRemove | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1781 | LayoutResultCachingTest.MissTableRowRemove | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1802 | LayoutResultCachingTest.HitTableSectionAdd | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1823 | LayoutResultCachingTest.HitTableSectionRemove | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1844 | LayoutResultCachingTest.FragmentainerSizeChange | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1921 | LayoutResultCachingTest.BlockOffsetChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1963 | LayoutResultCachingTest.BfcRootBlockOffsetChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:2005 | LayoutResultCachingTest.HitBlockOffsetUnchangedInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:2035 | LayoutResultCachingTest.HitNewFormattingContextInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:2066 | LayoutResultCachingTest.MissMonolithicChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:2092 | LayoutResultCachingTest.MissGridIncorrectIntrinsicSize | behaviour | blocked | model lacks incremental layout result caching |
+| ink_overflow_test.cc:30 | InkOverflowTest.Empty | internal | internal | Blink InkOverflow union struct compaction check |
+| ink_overflow_test.cc:118 | RectDataTest.Self | internal | internal | Blink InkOverflow union struct compaction check |
+| ink_overflow_test.cc:129 | RectDataTest.Contents | internal | internal | Blink InkOverflow union struct compaction check |
+| ink_overflow_test.cc:140 | RectDataTest.Copy | internal | internal | Blink InkOverflow union struct compaction check |
+| ink_overflow_test.cc:172 | SelfAndContentsDataTest.SelfAndContents | internal | internal | Blink InkOverflow union struct compaction check |
+| outline_rect_collector_test.cc:14 | OutlineRectCollectorTest.Empty | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:23 | OutlineRectCollectorTest.AddRect | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:57 | OutlineRectCollectorTest.CombineWithOffset | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:85 | OutlineRectCollectorTest.AddEmptyRect | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:107 | OutlineRectCollectorTest.UnionCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:122 | OutlineRectCollectorTest.VectorCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:164 | OutlineRectCollectorRenderingTest.CombineWithAncestor | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:205 | OutlineRectCollectorRenderingTest.UnionCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
+| outline_rect_collector_test.cc:220 | OutlineRectCollectorRenderingTest.VectorCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
+| scrollbars_test.cc:361 | ScrollbarsTest.DocumentStyleRecalcPreservesScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:386 | ScrollbarsTest.ScrollbarsUpdatedOnOverlaySettingsChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:405 | ScrollbarsTestWithOwnWebViewHelper.ScrollbarSizeF | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:467 | ScrollbarsTest.CustomScrollbarsCauseLayoutOnExistenceChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:518 | ScrollbarsTest.TransparentBackgroundUsesLightOverlayColorScheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:543 | ScrollbarsTest.BodyBackgroundChangesOverlayColorTheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:573 | ScrollbarsTest.OverlayScrollbarChangeToDisplayNoneDynamically | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:643 | ScrollbarsTest.OverlayScrolblarNotCreatedInUnscrollableAxis | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:680 | ScrollbarsTest.HidingScrollbarsOnScrollableAreaDisablesScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:751 | ScrollbarsTest.MouseOverScrollbarInCustomCursorElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:799 | ScrollbarsTest.MouseOverCustomScrollbarInCustomCursorElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:855 | ScrollbarsTest.MouseOverCustomScrollbarWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:908 | ScrollbarsTest.MouseOverCustomScrollbarThumbWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:969 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1052 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceWithoutStyle | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1121 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceBothTrackAndTrackPieceWithoutStyle | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1183 | ScrollbarsTest.MouseOverCustomScrollbarButtonTrackWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1252 | ScrollbarsTest.MouseOverCustomScrollbarCornerTrackWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1316 | ScrollbarsTest.MouseOverCustomScrollbarCornerFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1365 | ScrollbarsTest.MouseOverLinkAndOverlayScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1456 | ScrollbarsTest.MouseOverCustomScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1523 | ScrollbarsTest.MouseOverScrollbarAndIFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1613 | ScrollbarsTest.MouseOverScrollbarAndParentElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1700 | ScrollbarsTest.MouseOverRootScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1736 | ScrollbarsTest.MouseReleaseUpdatesScrollbarHoveredPart | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1800 | ScrollbarsTest.ContextMenuUpdatesScrollbarPressedPart | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1851 | ScrollbarsTest.CustomScrollbarInOverlayScrollbarThemeWillNotCauseDCHECKFails | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1880 | ScrollbarsTest.CustomScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1962 | ScrollbarsTest.CustomScrollbarWhenStyleOwnerChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2018 | ScrollbarsTestWithVirtualTimer.DISABLED_TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2021 | ScrollbarsTestWithVirtualTimer.TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2133 | ScrollbarAppearanceTest.DISABLED_NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2136 | ScrollbarAppearanceTest.NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2229 | ScrollbarAppearanceTest.ThemeEngineDefinesMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2256 | ScrollbarAppearanceTest.HugeScrollingThumbPosition | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2295 | ScrollbarAppearanceTest.CustomScrollbarUseThemeEngineMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2343 | ScrollbarsTest.WideBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2367 | ScrollbarsTest.TallBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2392 | ScrollbarsTest.TallAndWideBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2417 | ScrollbarsTest.BodySizeEqualWindowSizeShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2442 | ScrollbarsTest.WidePercentageBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2468 | ScrollbarsTest.WidePercentageAndTallBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2494 | ScrollbarsTest.TallPercentageBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2520 | ScrollbarsTest.TallPercentageAndWideBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2546 | ScrollbarsTest.TallAndWidePercentageBodyShouldHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2570 | ScrollbarsTest.MouseOverIFrameScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2622 | ScrollbarsTest.AutosizeTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2690 | ScrollbarsTest.AutosizeHeightOverflowWithOverlayScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2730 | ScrollbarsTest.AutosizeAlmostRemovableScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2770 | ScrollbarsTest.AutosizeExpandingContentScrollable | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2801 | ScrollbarsTest.HideTheOverlayScrollbarNotCrashAfterPLSADisposedPaintLayer | internal | internal | Blink crash regression test |
+| scrollbars_test.cc:2846 | ScrollbarsTest.PLSADisposeShouldClearPointerInLayers | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2881 | ScrollbarsTest.OverlayScrollbarHitTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2941 | ScrollbarsTest.RecorderedOverlayScrollbarHitTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2972 | ScrollbarsTest.AllowMiddleButtonPressOnScrollbarWhenDisableMiddleClickAutoScroll | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3007 | ScrollbarsTest.NotAllowMiddleButtonPressOnScrollbarWhenEnableMiddleClickAutoScroll | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3042 | ScrollbarsTest.NotAllowNonLeftButtonPressOnScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3077 | ScrollbarsTest.MiddleDownShouldNotAffectScrollbarPress | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3131 | ScrollbarsTest.UseCounterNegativeWhenThumbIsNotScrolledWithMouse | internal | internal | Blink use counter check |
+| scrollbars_test.cc:3218 | ScrollbarsTest.UseCounterPositiveWhenThumbIsScrolledWithMouse | internal | internal | Blink use counter check |
+| scrollbars_test.cc:3260 | ScrollbarsTest.UseCounterNegativeWhenThumbIsNotScrolledWithTouch | internal | internal | Blink use counter check |
+| scrollbars_test.cc:3326 | ScrollbarsTest.UseCounterPositiveWhenThumbIsScrolledWithTouch | internal | internal | Blink use counter check |
+| scrollbars_test.cc:3372 | ScrollbarsTest.UseCounterCustomScrollbarPercentSize | internal | internal | Blink use counter check |
+| scrollbars_test.cc:3416 | ScrollbarsTest.CheckScrollCornerIfThereIsNoScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3467 | ScrollbarsTest.NoNeedsBeginFrameForCustomScrollbarAfterBeginFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3508 | ScrollbarsTest.CustomScrollbarHypotheticalThickness | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3550 | ScrollbarsTestWithVirtualTimer.DISABLED_PressScrollbarButtonOnInfiniteScrolling | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3553 | ScrollbarsTestWithVirtualTimer.PressScrollbarButtonOnInfiniteScrolling | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3746 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhase | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3924 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhaseOnSlottedText | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3986 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4168 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithWritingMode | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4354 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithMacScrollbarAnimatorImpl | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4468 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsCrossingDocumentBoundaries | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4683 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOutOverlayScrollbarWhenMouseWheelEventWithScrollbarAnimatorImpl | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4740 | ScrollbarsTest.ScrollableAreaTraversal | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4811 | ScrollbarsTest.ScrollableAreaTraversalCrossingDocumentBoundary | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4939 | ScrollbarTrackMarginsTest.CustomScrollbarFractionalMarginsWillNotCauseDCHECKFailure | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4955 | ScrollbarTrackMarginsTest.CustomScrollbarScaledMarginsWillNotCauseDCHECKFailure | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4979 | ScrollbarColorSchemeTest.ThemeEnginePaint | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5026 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5090 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5154 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5219 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5285 | ScrollbarsTest.ScrollbarGutterBothEdgesKeywordWithClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5366 | ScrollbarsTest.ScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5426 | ScrollbarsTest.OverlayScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5476 | ScrollbarsTest.CapturePaintPreviewWithScrollbarsEnabled | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5518 | ScrollbarsTest.CapturePaintPreviewWithOverlayScrollbarsEnabled | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5563 | ScrollbarsTest.ScrollbarsUsedColorSchemeFollowsOverlayTheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scroll_anchor_test.cc:154 | ScrollAnchorTest.VisualViewportAnchors | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:193 | ScrollAnchorTest.ClearScrollAnchorsOnAncestors | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:219 | ScrollAnchorTest.AncestorClearingWithSiblingReference | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:261 | ScrollAnchorTest.FractionalOffsetsAreRoundedBeforeComparing | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:278 | ScrollAnchorTest.AvoidStickyAnchorWhichMovesWithScroll | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:296 | ScrollAnchorTest.AnchorWithLayerInScrollingDiv | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:329 | ScrollAnchorTest.AnchorWhileDraggingScrollbar | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:385 | ScrollAnchorTest.RemoveScrollerWithLayerInScrollingDiv | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:425 | ScrollAnchorTest.FlexboxDelayedClampingAlsoDelaysAdjustment | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:456 | ScrollAnchorTest.FlexboxDelayedAdjustmentRespectsSANACLAP | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:490 | ScrollAnchorTest.AnchoringDisabledForPrinting | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:507 | ScrollAnchorTest.SerializeAnchorSimple | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:520 | ScrollAnchorTest.SerializeAnchorWithVariousLineHeights | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:628 | ScrollAnchorTest.SerializeAnchorForSvgText | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:668 | ScrollAnchorTest.SerializeAnchorUsesTagname | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:683 | ScrollAnchorTest.SerializeAnchorSetsIsAnchorBit | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:711 | ScrollAnchorTest.SerializeAnchorSetsSavedRelativeOffset | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:728 | ScrollAnchorTest.SerializeAnchorUsesClassname | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:743 | ScrollAnchorTest.SerializeAnchorUsesNthChild | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:758 | ScrollAnchorTest.SerializeAnchorUsesLeastSpecificSelector | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:780 | ScrollAnchorTest.SerializeAnchorWithNoIdAttribute | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:802 | ScrollAnchorTest.SerializeAnchorChangesWithScroll | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:826 | ScrollAnchorTest.SerializeAnchorVerticalWritingMode | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:851 | ScrollAnchorTest.RestoreAnchorVerticalRlWritingMode | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:875 | ScrollAnchorTest.SerializeAnchorQualifiedTagName | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:889 | ScrollAnchorTest.SerializeAnchorLimitsSelectorLength | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:906 | ScrollAnchorTest.SerializeAnchorIgnoresDuplicatedId | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:924 | ScrollAnchorTest.SerializeAnchorFailsForPseudoElement | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:938 | ScrollAnchorTest.SerializeAnchorFailsForShadowDOMElement | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:967 | ScrollAnchorTest.RestoreAnchorSimple | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:989 | ScrollAnchorTest.RestoreAnchorNonTrivialSelector | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1019 | ScrollAnchorTest.RestoreAnchorFailsForInvalidSelectors | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1047 | ScrollAnchorTest.RestoreAnchorSucceedsForNonBoxNonTextElement | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1070 | ScrollAnchorTest.RestoreAnchorSucceedsWhenScriptForbidden | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1087 | ScrollAnchorTest.RestoreAnchorSucceedsWithExistingAnchorObject | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1109 | ScrollAnchorTest.DeleteAnonymousBlockCrash | internal | internal | Blink crash regression test |
+| scroll_anchor_test.cc:1126 | ScrollAnchorTest.ClampAdjustsAnchorAnimation | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1166 | ScrollAnchorTest.DynamicMultiColumnCrash | internal | internal | Blink crash regression test |
+| scroll_anchor_test.cc:1267 | ScrollAnchorFindInPageTest.FindInPageResultPrioritized | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1315 | ScrollAnchorFindInPageTest.FocusPrioritizedOverFindInPage | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1374 | ScrollAnchorFindInPageTest.FocusedUnderStickyIsSkipped | behaviour | blocked | model lacks scroll anchoring engine |
+| scroll_anchor_test.cc:1428 | ScrollAnchorPageTest.SvgRelativeBoundsCrashAfterClearLayoutResults | internal | internal | Blink crash regression test |
+| scroll_anchor_test.cc:1460 | ScrollAnchorTest.SuppressScrollAnchorScopeWithNullScroller | behaviour | blocked | model lacks scroll anchoring engine |
+| anchor_scope_test.cc:33 | AnchorScopedNameTest.HashInsertDuplicate | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:44 | AnchorScopedNameTest.HashDifferentNames | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:56 | AnchorScopedNameTest.HashEqualNames | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:72 | AnchorScopedNameTest.LookupEmpty | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:80 | AnchorScopedNameTest.LookupDeleted | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:93 | AnchorScopedNameTest.ElementEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:115 | AnchorScopedNameTest.TreeScopeEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:71 | AnchorEvaluatorImplTest.AnchorNameAdd | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:104 | AnchorEvaluatorImplTest.AnchorNameChange | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:310 | AnchorEvaluatorImplTest.Relative | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:330 | AnchorEvaluatorImplTest.Transform | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:351 | AnchorEvaluatorImplTest.Scroll | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:375 | AnchorEvaluatorImplTest.FragmentedContainingBlock | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:437 | AnchorEvaluatorImplTest.FragmentHasRunningAnchorTransformAnimation | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:446 | AnchorEvaluatorImplTest.FrameViewHasRunningAnchorTransformAnimation | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:45 | AnchorPositionScrollDataTest.HasDataAndScrollAdjustment | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:94 | AnchorPositionScrollDataTest.Detach | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:142 | AnchorPositionScrollDataTest.ScrollerSizeChange | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:205 | AnchorPositionScrollDataTest.ScrollContentSizeChange | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:266 | AnchorPositionScrollDataTest.RelayoutOnScrollEnd | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:327 | AnchorPositionScrollDataTest.RelayoutOnScrollEndSimpleTranslation | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:392 | AnchorPositionScrollDataTest.ScrollableOverflowDuringAndAfterScroll | behaviour | blocked | model lacks CSS anchor positioning engine |
+| layout_shift_tracker_test.cc:44 | LayoutShiftTrackerTest.IgnoreAfterInput | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:63 | LayoutShiftTrackerTest.CompositedShiftBeforeFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:90 | LayoutShiftTrackerTest.IgnoreSVG | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:103 | LayoutShiftTrackerTest.IgnoreAfterChangeEvent | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:133 | LayoutShiftTrackerSimTest.SubframeWeighting | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:186 | LayoutShiftTrackerSimTest.ViewportSizeChange | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:220 | LayoutShiftTrackerSimTest.ZoomLevelChange | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:351 | LayoutShiftTrackerNavigationTest.BrowserInitiatedSameDocumentHistoryNavigation | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:356 | LayoutShiftTrackerNavigationTest.RendererInitiatedSameDocumentHistoryNavigation | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:437 | LayoutShiftTrackerPointerdownTest.PointerdownBecomesTap | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:441 | LayoutShiftTrackerPointerdownTest.PointerdownCancelled | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:445 | LayoutShiftTrackerPointerdownTest.PointerdownBecomesScroll | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:450 | LayoutShiftTrackerSimTest.MouseMoveDraggingAction | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:543 | LayoutShiftTrackerSimTest.TouchDraggingAction | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:626 | LayoutShiftTrackerSimTest.TouchScrollingAction | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:730 | LayoutShiftTrackerSimTest.MultiplePointerDownUps | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:823 | LayoutShiftTrackerTest.StableCompositingChanges | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:875 | LayoutShiftTrackerTest.CompositedOverflowExpansion | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:938 | LayoutShiftTrackerTest.ContentVisibilityAutoFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:960 | LayoutShiftTrackerTest.ContentVisibilityAutoOffscreenAfterScrollFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:996 | LayoutShiftTrackerTest.ContentVisibilityHiddenFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1016 | LayoutShiftTrackerTest.ContentVisibilityAutoResize | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1040 | LayoutShiftTrackerTest.ContentVisibilityAutoOnscreenAndOffscreenAfterScrollFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1115 | LayoutShiftTrackerTest.NestedFixedPos | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1135 | LayoutShiftTrackerTest.ClipByVisualViewport | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1175 | LayoutShiftTrackerTest.ScrollThenCauseScrollAnchoring | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1217 | LayoutShiftTrackerTest.NeedsToTrack | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_tracker_test.cc:1319 | LayoutShiftTrackerTest.AnimatingTransformCreatesLayoutShiftRoot | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_region_test.cc:14 | LayoutShiftRegionTest.Basic | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_region_test.cc:46 | LayoutShiftRegionTest.LargeRandom | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| layout_shift_region_test.cc:122 | LayoutShiftRegionTest.Waffle | behaviour | blocked | model lacks layout shift (CLS) tracking |
+| custom/layout_worklet_test.cc:82 | LayoutWorkletTest.ParseProperties | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:121 | LayoutWorkletTest.RegisterLayout | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:144 | LayoutWorkletTest.RegisterLayout_EmptyName | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:155 | LayoutWorkletTest.RegisterLayout_Duplicate | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:172 | LayoutWorkletTest.RegisterLayout_NoIntrinsicSizes | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:183 | LayoutWorkletTest.RegisterLayout_ThrowingPropertyGetter | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:195 | LayoutWorkletTest.RegisterLayout_BadPropertyGetter | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:207 | LayoutWorkletTest.RegisterLayout_NoPrototype | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:219 | LayoutWorkletTest.RegisterLayout_BadPrototype | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:231 | LayoutWorkletTest.RegisterLayout_BadIntrinsicSizes | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:243 | LayoutWorkletTest.RegisterLayout_NoLayout | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| custom/layout_worklet_test.cc:255 | LayoutWorkletTest.RegisterLayout_BadLayout | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
+| hit_testing_test.cc:87 | HitTestingTest.OcclusionHitTest | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:111 | HitTestingTest.OcclusionHitTestSVGTextWithFilterCrash | internal | internal | Blink crash regression test |
+| hit_testing_test.cc:136 | HitTestingTest.HitTestWithCallback | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:205 | HitTestingTest.OcclusionHitTestWithClipPath | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:253 | HitTestingTest.OcclusionHitTestWithBorderShapeStrokeMode | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:319 | HitTestingTest.OcclusionHitTestWithBorderShapeFillMode | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:384 | HitTestingTest.ScrolledInline | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:421 | HitTestingTest.ReferenceFilter | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:457 | HitTestingTest.OcclusionHitTestWith3DTransform | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:495 | HitTestingTest.OcclusionHitTestWithFlattenedPreserve3DOccluder | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:549 | SVGChild3DTransformHitTest.ShapeWithPerspectiveFunction | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:574 | SVGChild3DTransformHitTest.ShapeUnderSVGRootPerspective | behaviour | blocked | model lacks hit testing engine |
+| hit_testing_test.cc:592 | SVGChild3DTransformHitTest.ContainerUnderSVGRootPerspective | behaviour | blocked | model lacks hit testing engine |
+| paint_containment_test.cc:34 | PaintContainmentTest.BlockPaintContainment | behaviour | blocked | model lacks paint containment stacking and BFC creation |
+| paint_containment_test.cc:47 | PaintContainmentTest.InlinePaintContainment | internal | internal | Blink object type check on non-atomic inline |
+| paint_containment_test.cc:58 | PaintContainmentTest.SvgWithContainmentShouldNotCrash | internal | internal | Blink crash regression test |
+| selection_state_test.cc:14 | SelectionStateTest.StreamOutput | internal | internal | Blink C++ string serialization operator check |
+| layout_progress_test.cc:22 | LayoutProgressTest.AnimationScheduling | internal | internal | Blink animation scheduling timer check |
+| layout_quote_test.cc:40 | LayoutQuoteTest.Locale | behaviour | blocked | model lacks quote pseudo-element locale resolution |
+| layout_frame_set_test.cc:13 | LayoutFrameSetTest.GetCursor | behaviour | blocked | model lacks frameset resize cursor resolution |
+| layout_frame_set_test.cc:33 | LayoutFrameSetTest.HitTestingCrash | internal | internal | Blink crash regression test |
+| layout_image_resource_test.cc:19 | LayoutImageResourceTest.BrokenImageHighRes | internal | internal | Blink image resource cache plumbing check |
+| layout_image_resource_test.cc:24 | LayoutImageResourceTest.InvalidatePaintRequiresCachedImage | internal | internal | Blink image resource cache plumbing check |
+| layout_image_test.cc:15 | LayoutImageTest.HitTestUnderTransform | behaviour | blocked | model lacks hit testing under transform |
+| layout_image_test.cc:33 | LayoutImageTest.NeedsVisualOverflowRecalc | internal | internal | Blink image layout object flag/lifecycle check |
+| layout_image_test.cc:50 | LayoutImageTest.IsUnsizedImage | internal | internal | Blink image layout object flag/lifecycle check |
+| layout_replaced_test.cc:14 | LayoutReplacedTest.InvalidateAfterAddingBorderRadius | behaviour | blocked | model lacks paint property update invalidation on border radius mutation |
+| layout_media_test.cc:13 | LayoutMediaTest.DisallowInlineChild | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_media_test.cc:24 | LayoutMediaTest.DisallowBlockChild | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_media_test.cc:35 | LayoutMediaTest.DisallowOutOfFlowPositionedChild | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_media_test.cc:46 | LayoutMediaTest.DisallowFloatingChild | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_media_test.cc:58 | LayoutMediaTest.BlockifyInlineFlex | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_media_test.cc:71 | LayoutMediaTest.DisallowContainerBeyondMedia | internal | internal | Blink media controls pseudo child layout object creation rules |
+| layout_video_test.cc:38 | LayoutVideoTest.PosterSizeWithNormal | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
+| layout_video_test.cc:55 | LayoutVideoTest.PosterSizeWithZoom | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
+| layout_video_test.cc:72 | LayoutVideoTest.PosterSizeAfterPlay | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
+| layout_video_test.cc:98 | LayoutVideoTest.DefaultPosterImageSize | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
+| layout_theme_test.cc:47 | LayoutThemeTest.ChangeFocusRingColor | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:79 | LayoutThemeTest.AppearanceDoesNotAdjustDisplayOfNonWidgets | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:99 | LayoutThemeTest.AppearanceAdjustsDisplayOfWidgets | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:120 | LayoutThemeTest.FocusRingColorWithColorScheme | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:135 | LayoutThemeTest.SystemColorWithColorScheme | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:166 | LayoutThemeTest.SetSelectionColors | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:192 | LayoutThemeTest.SetSelectionColorsNoInvalidation | behaviour | blocked | model lacks platform theme color resolution |
+| layout_theme_test.cc:213 | LayoutThemeTest.AndroidSelectionColor | behaviour | blocked | model lacks platform theme color resolution |
+| layout_input_node_test.cc:29 | LayoutInputNodeTest.DumpBasic | internal | internal | Blink debug string dumper check |
+| layout_input_node_test.cc:47 | LayoutInputNodeTest.DumpBlockInInline | internal | internal | Blink debug string dumper check |
+| layout_input_node_test.cc:79 | LayoutInputNodeTest.DumpInlineBlockInInline | internal | internal | Blink debug string dumper check |
+| layout_input_node_test.cc:111 | LayoutInputNodeTest.DumpFloatInInline | internal | internal | Blink debug string dumper check |
+| layout_input_node_test.cc:142 | LayoutInputNodeTest.DumpAbsposInInline | internal | internal | Blink debug string dumper check |
+| layout_input_node_test.cc:173 | LayoutInputNodeTest.DumpRelposInline | internal | internal | Blink debug string dumper check |
+| map_coordinates_test.cc:127 | MapCoordinatesTest.SimpleText | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:140 | MapCoordinatesTest.SimpleInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:153 | MapCoordinatesTest.SimpleBlock | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:171 | MapCoordinatesTest.OverflowClip | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:210 | MapCoordinatesTest.TextInRelPosInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:225 | MapCoordinatesTest.RelposInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:240 | MapCoordinatesTest.RelposInlineInRelposInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:274 | MapCoordinatesTest.RelPosBlock | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:311 | MapCoordinatesTest.AbsPos | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:348 | MapCoordinatesTest.AbsPosAuto | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:385 | MapCoordinatesTest.FixedPos | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:444 | MapCoordinatesTest.FixedPosAuto | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:504 | MapCoordinatesTest.FixedPosInFixedPos | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:573 | MapCoordinatesTest.FixedPosInFixedPosScrollView | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:610 | MapCoordinatesTest.FixedPosInAbsolutePosScrollView | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:647 | MapCoordinatesTest.FixedPosInTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:689 | MapCoordinatesTest.FixedPosInContainPaint | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:732 | MapCoordinatesTest.FixedPosInIFrameWhenMainFrameScrolled | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:763 | MapCoordinatesTest.IFrameTransformed | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:797 | MapCoordinatesTest.FixedPosInScrolledIFrameWithTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:828 | MapCoordinatesTest.MulticolWithText | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:849 | MapCoordinatesTest.MulticolWithInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:868 | MapCoordinatesTest.MulticolWithBlock | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:889 | MapCoordinatesTest.MulticolWithBlockAbove | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:907 | MapCoordinatesTest.NestedMulticolWithBlock | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:945 | MapCoordinatesTest.MulticolWithAbsPosInRelPos | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:981 | MapCoordinatesTest.MulticolWithAbsPosInInlineRelPos | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1019 | MapCoordinatesTest.MulticolWithAbsPosNotContained | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1060 | MapCoordinatesTest.MulticolRtl | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1079 | MapCoordinatesTest.MulticolWithLargeBorder | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1099 | MapCoordinatesTest.FlippedBlocksWritingModeWithText | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1397 | MapCoordinatesTest.SVGShapeScale | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1417 | MapCoordinatesTest.SVGShapeWithViewBoxWithoutScale | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1436 | MapCoordinatesTest.SVGShapeWithViewBoxWithScale | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1455 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1475 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffsetAndScale | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1495 | MapCoordinatesTest.SVGForeignObject | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1532 | MapCoordinatesTest.LocalToAbsoluteTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1555 | MapCoordinatesTest.LocalToAncestorTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1693 | MapCoordinatesTest.IgnoreScrollOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1975 | MapCoordinatesTest.ElementCanvasTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:1996 | MapCoordinatesTest.NestedElementCanvasTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:2021 | MapCoordinatesTest.NestedElementCanvasTransformWithOffset | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:2046 | MapCoordinatesTest.NestedElementCanvasTransformChildWithoutCanvasTransform | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:2069 | MapCoordinatesTest.NestedElementCanvasTransformNonDrawableChild | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| map_coordinates_test.cc:2093 | MapCoordinatesTest.NestedElementCanvasTransformInline | behaviour | blocked | model lacks visual rect ancestor coordinate mapping |
+| visual_rect_mapping_test.cc:126 | VisualRectMappingTest.LayoutText | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:165 | VisualRectMappingTest.LayoutTextContainerFlippedWritingMode | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:202 | VisualRectMappingTest.LayoutInline | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:240 | VisualRectMappingTest.LayoutInlineContainerFlippedWritingMode | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:281 | VisualRectMappingTest.SkipAncestorAndViewportClipFlag | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:338 | VisualRectMappingTest.SkipAncestorAndViewportClipFlagViewportSpace | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:658 | VisualRectMappingTest.SelfFlippedWritingMode | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:681 | VisualRectMappingTest.ContainerFlippedWritingMode | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:722 | VisualRectMappingTest.ContainerOverflowScroll | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:778 | VisualRectMappingTest.ContainerFlippedWritingModeAndOverflowScroll | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:842 | VisualRectMappingTest.ContainerOverflowHidden | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:873 | VisualRectMappingTest.ContainerFlippedWritingModeAndOverflowHidden | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:912 | VisualRectMappingTest.ContainerAndTargetDifferentFlippedWritingMode | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:955 | VisualRectMappingTest.DifferentPaintInvalidaitionContainerForAbsolutePosition | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:996 | VisualRectMappingTest.ContainerOfAbsoluteAbovePaintInvalidationContainer | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1031 | VisualRectMappingTest.CSSClip | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1046 | VisualRectMappingTest.ContainPaint | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1061 | VisualRectMappingTest.FloatUnderInline | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1089 | VisualRectMappingTest.FloatUnderInlineVerticalRL | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1120 | VisualRectMappingTest.InlineBlock | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1145 | VisualRectMappingTest.InlineBlockVerticalRL | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1174 | VisualRectMappingTest.AbsoluteUnderRelativeInline | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1199 | VisualRectMappingTest.AbsoluteUnderRelativeInlineVerticalRL | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1228 | VisualRectMappingTest.ShouldAccountForPreserve3d | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1258 | VisualRectMappingTest.ShouldAccountForPreserve3dNested | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1287 | VisualRectMappingTest.ShouldAccountForPerspective | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1320 | VisualRectMappingTest.ShouldAccountForPerspectiveNested | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1352 | VisualRectMappingTest.PerspectivePlusScroll | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1392 | VisualRectMappingTest.FixedContentsInIframe | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1431 | VisualRectMappingTest.FixedContentsWithScrollOffset | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1464 | VisualRectMappingTest.FixedContentsUnderViewWithScrollOffset | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1492 | VisualRectMappingTest.InclusiveIntersect | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1522 | VisualRectMappingTest.Perspective | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:1941 | VisualRectMappingTest.FractionalSnapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2001 | VisualRectMappingTest.ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2054 | VisualRectMappingTest.ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2143 | VisualRectMappingTest.ElementCanvasTransformVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2172 | VisualRectMappingTest.NestedElementCanvasTransformVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2205 | VisualRectMappingTest.NestedElementCanvasTransformWithOffsetVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2239 | VisualRectMappingTest.NestedElementCanvasTransformChildWithoutCanvasTransformVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2273 | VisualRectMappingTest.NestedElementCanvasTransformNonDrawableChildVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| visual_rect_mapping_test.cc:2306 | VisualRectMappingTest.NestedElementCanvasTransformInlineVisualRectMapping | behaviour | blocked | model lacks visual rect mapping across transforms and clips |
+| layout_ruby_as_block_test.cc:14 | LayoutRubyAsBlockTest.TextCombineCrash | internal | internal | Blink crash regression test |
+| layout_ruby_base_test.cc:16 | LayoutRubyBaseTest.AddChildNoBlockChildren | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_ruby_base_test.cc:30 | LayoutRubyBaseTest.AddImageNoBlockChildren | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_ruby_base_test.cc:52 | LayoutRubyBaseTest.AddSpecialWithTableInternalDisplayNoBlockChildren | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_ruby_base_test.cc:73 | LayoutRubyBaseTest.ChangeToRubyNoBlockChildren | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_br_test.cc:14 | LayoutBRTest.TextMethods | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| inline_layout_test.cc:32 | InlineLayoutTest.BlockWithSingleTextNode | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| inline_layout_test.cc:59 | InlineLayoutTest.BlockWithTextAndAtomicInline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:38 | LayoutInlineTest.PhysicalLinesBoundingBox | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:69 | LayoutInlineTest.SimpleContinuation | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:93 | LayoutInlineTest.BlockInInlineRemove | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:139 | LayoutInlineTest.RegionHitTest | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:194 | LayoutInlineTest.RelativePositionedHitTest | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:241 | LayoutInlineTest.MultilineRelativePositionedHitTest | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:319 | LayoutInlineTest.HitTestCulledInlinePreWrap | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:350 | LayoutInlineTest.DISABLED_FocusRingRecursiveContinuations | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:382 | LayoutInlineTest.DISABLED_FocusRingRecursiveInlinesVerticalRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:417 | LayoutInlineTest.DISABLED_FocusRingRecursiveContinuationsVerticalRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:452 | LayoutInlineTest.DISABLED_FocusRingRecursiveInlines | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:483 | LayoutInlineTest.AbsoluteBoundingBoxRectHandlingEmptyInline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:529 | LayoutInlineTest.AbsoluteBoundingBoxRectHandlingEmptyInlineVerticalRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:575 | LayoutInlineTest.AddDraggableRegions | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:609 | LayoutInlineTest.AddDraggableRegionsVerticalRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:643 | LayoutInlineTest.VisualOverflowRecalcLegacyLayout | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:689 | LayoutInlineTest.VisualOverflowRecalcLayoutNG | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_inline_test.cc:733 | LayoutInlineTest.VisualOverflowRecalcLegacyLayoutPositionRelative | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:52 | LayoutTextCombineTest.AppendChild | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:84 | LayoutTextCombineTest.BoxBoundary | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:106 | LayoutTextCombineTest.DeleteDataToEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:137 | LayoutTextCombineTest.ElementRecalcOwnStyle | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:166 | LayoutTextCombineTest.HtmlElement | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:191 | LayoutTextCombineTest.InkOverflow | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:248 | LayoutTextCombineTest.InkOverflowEmphasisMark | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:307 | LayoutTextCombineTest.InkOverflowOverline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:364 | LayoutTextCombineTest.InkOverflowUnderline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:421 | LayoutTextCombineTest.InkOverflowWBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:488 | LayoutTextCombineTest.InsertBefore | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:523 | LayoutTextCombineTest.InsertBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:540 | LayoutTextCombineTest.ScrollableOverflow | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:582 | LayoutTextCombineTest.ListItemStyleToImage | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:621 | LayoutTextCombineTest.ListMarkerWidthOfSymbol | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:644 | LayoutTextCombineTest.MultipleTextNode | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:664 | LayoutTextCombineTest.Nested | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:684 | LayoutTextCombineTest.Outline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:758 | LayoutTextCombineTest.PropageWritingModeFromBodyToHorizontal | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:783 | LayoutTextCombineTest.PropageWritingModeFromBodyToVertical | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:810 | LayoutTextCombineTest.RebuildLayoutTreeForDetails | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:854 | LayoutTextCombineTest.RemoveBlockChild | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:886 | LayoutTextCombineTest.RemoveChildCombine | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:914 | LayoutTextCombineTest.RemoveChildToEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:944 | LayoutTextCombineTest.RemoveChildToOneCombinedText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:979 | LayoutTextCombineTest.ReplaceChildToOneCombinedText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1016 | LayoutTextCombineTest.SetDataToEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1046 | LayoutTextCombineTest.SplitText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1081 | LayoutTextCombineTest.SplitTextAtZero | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1116 | LayoutTextCombineTest.SplitTextBeforeBox | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1157 | LayoutTextCombineTest.StyleToTextCombineUprightAll | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1190 | LayoutTextCombineTest.StyleToTextCombineUprightNone | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1224 | LayoutTextCombineTest.StyleToHorizontalWritingMode | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1258 | LayoutTextCombineTest.StyleToHorizontalWritingModeWithWordBreak | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1282 | LayoutTextCombineTest.StyleToVerticalWritingMode | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1314 | LayoutTextCombineTest.VerticalWritingModeByBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1329 | LayoutTextCombineTest.VerticalWritingModeByWBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1344 | LayoutTextCombineTest.WithBidiControl | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1363 | LayoutTextCombineTest.WithBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1385 | LayoutTextCombineTest.WithMarker | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1412 | LayoutTextCombineTest.WithOrderedList | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1431 | LayoutTextCombineTest.WithQuote | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1456 | LayoutTextCombineTest.WithTab | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1476 | LayoutTextCombineTest.WithTextIndent | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1493 | LayoutTextCombineTest.WithWordBreak | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1515 | LayoutTextCombineTest.ShouldBeParentOfSvg | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1531 | LayoutTextCombineTest.InHorizontal | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_combine_test.cc:1545 | LayoutTextCombineTest.InVertical | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:47 | LayoutTextFragmentTest.Basics | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:61 | LayoutTextFragmentTest.TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:81 | LayoutTextFragmentTest.CaretMinMaxOffset | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:107 | LayoutTextFragmentTest.CaretMinMaxOffsetSpacesInBetween | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:133 | LayoutTextFragmentTest.CaretMinMaxOffsetCollapsedRemainingText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:151 | LayoutTextFragmentTest.ResolvedTextLength | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:169 | LayoutTextFragmentTest.ResolvedTextLengthSpacesInBetween | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:187 | LayoutTextFragmentTest.ResolvedTextLengthCollapsedRemainingText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:197 | LayoutTextFragmentTest.ContainsCaretOffset | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:244 | LayoutTextFragmentTest.ContainsCaretOffsetSpacesInBetween | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:258 | LayoutTextFragmentTest.ContainsCaretOffsetPre | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:273 | LayoutTextFragmentTest.ContainsCaretOffsetPreLine | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:288 | LayoutTextFragmentTest.IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:356 | LayoutTextFragmentTest.IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:386 | LayoutTextFragmentTest.SetTextWithFirstLetter | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_fragment_test.cc:442 | LayoutTextFragmentTest.SplitTextWithZero | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:166 | LayoutTextTest.PrewarmFamily | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:184 | LayoutTextTest.PrewarmFontFace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:212 | LayoutTextTest.PrewarmGenericFamily | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:265 | MapDOMOffsetToTextContentOffset.Basic | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:282 | LayoutTextTest.CharacterAfterWhitespaceCollapsing | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:326 | LayoutTextTest.CaretMinMaxOffset | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:344 | LayoutTextTest.ResolvedTextLength | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:358 | LayoutTextTest.ContainsCaretOffset | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:383 | LayoutTextTest.ContainsCaretOffsetInPre | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:420 | LayoutTextTest.ContainsCaretOffsetInPreLine | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:525 | LayoutTextTest.ContainsCaretOffsetWithTrailingSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:541 | LayoutTextTest.ContainsCaretOffsetWithTrailingSpace1 | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:568 | LayoutTextTest.ContainsCaretOffsetWithTrailingSpace2 | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:599 | LayoutTextTest.ContainsCaretOffsetWithTrailingSpace3 | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:625 | LayoutTextTest.GetTextBoxInfoWithCollapsedWhiteSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:654 | LayoutTextTest.GetTextBoxInfoWithGeneratedContent | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:696 | LayoutTextTest.GetTextBoxInfoWithHidden | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:726 | LayoutTextTest.GetTextBoxInfoWithEllipsis | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:757 | LayoutTextTest.GetTextBoxInfoWithEllipsisForPseudoAfter | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:788 | LayoutTextTest.PlainTextInPseudo | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:826 | LayoutTextTest.IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:907 | LayoutTextTest.IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:972 | LayoutTextTest.IsBeforeAfterNonCollapsedCharacterBR | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:978 | LayoutTextTest.AbsoluteQuads | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:998 | LayoutTextTest.AbsoluteQuadsVRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1020 | LayoutTextTest.PhysicalLinesBoundingBox | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1064 | LayoutTextTest.PhysicalLinesBoundingBoxTextCombine | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1097 | LayoutTextTest.PhysicalLinesBoundingBoxVerticalRL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1134 | LayoutTextTest.WordBreakElement | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1146 | LayoutTextTest.LocalSelectionRect | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1169 | LayoutTextTest.LocalSelectionRectLineBreak | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1177 | LayoutTextTest.LocalSelectionRectLineBreakPre | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1187 | LayoutTextTest.LocalSelectionRectRTL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1199 | LayoutTextTest.LocalSelectionRectVertical | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1211 | LayoutTextTest.LocalSelectionRectVerticalRTL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1224 | LayoutTextTest.LocalSelectionRectLineHeight | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1237 | LayoutTextTest.LocalSelectionRectNegativeLeading | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1253 | LayoutTextTest.LocalSelectionRectLineHeightVertical | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1269 | LayoutTextTest.PositionForPointAtLeading | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1321 | LayoutTextTest.FloatFirstLetterPlainText | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1334 | LayoutTextTest.SetTextWithOffsetAppendBidi | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1345 | LayoutTextTest.SetTextWithOffsetAppendControl | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1357 | LayoutTextTest.SetTextWithOffsetAppendCollapseWhiteSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1366 | LayoutTextTest.SetTextWithOffsetAppend | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1379 | LayoutTextTest.SetTextWithOffsetAppendEmojiWithZWJ | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1413 | LayoutTextTest.SetTextWithOffsetDelete | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1425 | LayoutTextTest.SetTextWithOffsetDeleteCollapseWhiteSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1434 | LayoutTextTest.SetTextWithOffsetDeleteCollapseWhiteSpaceEnd | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1444 | LayoutTextTest.SetTextWithOffsetCopyItemBefore | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1463 | LayoutTextTest.SetTextWithOffsetDeleteNbspInPreWrap | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1475 | LayoutTextTest.SetTextWithOffsetDeleteRTL | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1488 | LayoutTextTest.SetTextWithOffsetDeleteRTL2 | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1502 | LayoutTextTest.SetTextWithOffsetDeleteThenNonCollapse | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1515 | LayoutTextTest.SetTextWithOffsetDeleteThenNonCollapse2 | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1528 | LayoutTextTest.SetTextWithOffsetDeleteWithBidiControl | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1541 | LayoutTextTest.SetTextWithOffsetDeleteWithGeneratedBreakOpportunity | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1556 | LayoutTextTest.SetTextWithOffsetEditingTextCollapsedSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1568 | LayoutTextTest.SetTextWithOffsetInsert | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1580 | LayoutTextTest.SetTextWithOffsetInsertAfterSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1589 | LayoutTextTest.SetTextWithOffsetInserBeforetSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1599 | LayoutTextTest.SetTextWithOffsetInsertSameCharacters | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1612 | LayoutTextTest.SetTextWithOffsetNoRelocation | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1624 | LayoutTextTest.SetTextWithOffsetPrepend | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1636 | LayoutTextTest.SetTextWithOffsetReplace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1648 | LayoutTextTest.SetTextWithOffsetReplaceCollapseWhiteSpace | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1657 | LayoutTextTest.SetTextWithOffsetReplaceToExtend | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1669 | LayoutTextTest.SetTextWithOffsetReplaceToShrink | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1681 | LayoutTextTest.SetTextWithOffsetToEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1694 | LayoutTextTest.TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1707 | LayoutTextTest.TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1727 | LayoutTextTest.OriginalTextNullWhenTransformedTextIsNonNull | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| layout_text_test.cc:1755 | LayoutTextTest.OriginalTextEmptyWhenTransformedTextIsNonEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
