@@ -107,6 +107,7 @@ checks every row against the pinned sources and the Lean modules.
 | length_utils_test.cc:534 | LengthUtilsTest.TestAutoMargins | geometry | formalized | `TestsBlock.TestAutoMargins_vectors` |
 | length_utils_test.cc:612 | LengthUtilsTest.TestColumnWidthAndCount | geometry | formalized | `TestsBlock.TestColumnWidthAndCount_vectors`, `ColumnWidth.columns_fit` |
 | length_utils_test.cc:657 | LengthUtilsTest.AspectRatio | geometry | formalized | `TestsBlock.AspectRatio_vectors`, `BlockLength.inlineFromAspectRatio_le_max`, `BlockLength.inlineFromAspectRatio_one` |
+| min_max_size_test.cc:13 | MinMaxSizesTest.ShrinkToFit | geometry | formalized | `TestsBlock.ShrinkToFit_vectors`, `BlockFlow.shrinkToFit_bounds` |
 
 ## Laws proved
 
@@ -114,6 +115,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockFlow.empty_box_keeps_pos`: an empty box does not advance the flow position.
 - `BlockFlow.start_edge_top`: a non-empty box with a start edge sits at its collapsed top margin.
 - `BlockFlow.auto_width_fills`: auto-width box with definite margins fills the containing block.
+- `BlockFlow.shrinkToFit_bounds`: shrink-to-fit always lies within [min-content, max-content].
 - `BlockFlow.fragmentation_conserves_size`: fragment sizes sum to the box's block size.
 - `BlockNode.iterate_mem`: the child iterator only returns real children.
 - `BlockWritingMode.indefinite_inline_falls_back`: indefinite available inline size falls back to orthogonal fallback size.

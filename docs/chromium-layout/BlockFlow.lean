@@ -231,6 +231,13 @@ def maxContent : Nat → BF → Nat
     (`ShrinkToFit`); for plain blocks min-content = max-content. -/
 def shrinkToFit (avail minC maxC : Nat) : Nat := min (max minC avail) maxC
 
+/-- Shrink-to-fit always lies within [minC, maxC] whenever minC ≤ maxC
+    (generalises `MinMaxSizesTest.ShrinkToFit`). -/
+theorem shrinkToFit_bounds (avail minC maxC : Nat) (h : minC ≤ maxC) :
+    minC ≤ shrinkToFit avail minC maxC ∧ shrinkToFit avail minC maxC ≤ maxC := by
+  unfold shrinkToFit
+  omega
+
 /-! ## General laws -/
 
 /-- CSS 2.1 §8.3.1 for two adjoining margins: the collapsed value is the larger positive margin
