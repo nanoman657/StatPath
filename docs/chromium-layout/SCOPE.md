@@ -206,7 +206,7 @@ type LayoutResult is Data:
 
 ## 4. Lean 4 Statements for the First Five Laws
 
-All five laws are stated in Lean 4.34.0 (core only, no Mathlib) over the model types corresponding 1-to-1 to Section 3:
+All five laws are stated in Lean 4.34.0 (core only, no Mathlib) over the model types corresponding 1-to-1 to Section 3 (defined and kernel-checked in [`Layout.lean`](./Layout.lean) with no changes to the five statements below):
 
 ```lean
 namespace ChromiumLayout
