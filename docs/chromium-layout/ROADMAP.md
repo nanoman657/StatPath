@@ -68,13 +68,13 @@ Source: `geometry/margin_strut.h`, `geometry/margin_strut.cc`, `geometry/box_str
 
 Source: `block_layout_algorithm.cc` / `.h`, `block_layout_algorithm_utils.cc`, `block_node.cc`, `block_child_iterator.cc`, `geometry/margin_strut.cc`.
 
-- [ ] Define `ConstraintSpace`, `BlockContainerNode`, `LayoutInputNode` and the fragment output type.
-- [ ] Define `layoutBlock` as a recursive function over the children list (list induction, not sorted maps).
-- [ ] Model BFC-offset resolution as decided in P0.1 Q2.
-- [ ] Model self-collapsing boxes (zero border-box block size, no in-flow content).
-- [ ] Model parent–child margin collapse: through the block-start edge when `!has_block_start_edge`, and through the block-end edge when the parent has `auto` block size and zero block-end border and padding.
-- [ ] Prove Laws 2 (`block_siblings_monotonic_non_overlapping`) and 3 (`bfc_intrinsic_block_size_conservation`) in Lean, and in Bend where the proof is tractable.
-- [ ] Keep `AllMarginsNonNegative` and `AllChildrenNonSelfCollapsing` as explicit hypotheses. Do not weaken them silently.
+- [x] Define `ConstraintSpace`, `BlockContainerNode`, `LayoutInputNode` and the fragment output type.
+- [x] Define `layoutBlock` as a recursive function over the children list (list induction, not sorted maps).
+- [x] Model BFC-offset resolution as decided in P0.1 Q2.
+- [x] Model self-collapsing boxes (zero border-box block size, no in-flow content).
+- [x] Model parent–child margin collapse: through the block-start edge when `!has_block_start_edge`, and through the block-end edge when the parent has `auto` block size and zero block-end border and padding.
+- [x] Prove Laws 2 (`block_siblings_monotonic_non_overlapping`) and 3 (`bfc_intrinsic_block_size_conservation`) in Lean, and in Bend where the proof is tractable.
+- [x] Keep `AllMarginsNonNegative` and `AllChildrenNonSelfCollapsing` as explicit hypotheses. Do not weaken them silently.
 
 **Exit criterion:** Laws 1–3 pass both checkers. The §4 statements of Laws 2 and 3 match the definitions, with no changes to their meaning.
 

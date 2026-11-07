@@ -182,3 +182,208 @@ law blink_m1_test_vectors:
 
 def blink_m1_test_vectors():
   {==}
+
+# ==============================================================================
+# M2 Laws: In-Flow Block Layout, Sibling Non-Overlap (Law 2), and
+# BFC Intrinsic Block-Size Conservation (Law 3)
+# Source:
+# - block_layout_algorithm.cc:800-1500, 2385-3060
+# - block_layout_algorithm_test.cc:568-900
+# ==============================================================================
+
+# Monotonicity lemma: for all a, d : Nat, a <= a + d
+law nat_le_add_right:
+  for +a: Nat
+  for +d: Nat
+  {Layout.nat_le(a, Nat.add(a, d)) == True{} : Bool}
+
+def nat_le_add_right(a, d):
+  match a:
+    case 0n:
+      {==}
+    case 1n+ap:
+      nat_le_add_right(ap, d)
+
+# Law 2 (block_siblings_monotonic_non_overlapping) core step in Bend:
+# For any two placed non-self-collapsing siblings c0, c1, c0's block end
+# (c0_offset + c0_block_size) is <= c1's block offset (c0_end + collapsed_margin_between).
+law block_siblings_monotonic_non_overlapping_step:
+  for +avail: Nat
+  for +pos: Nat
+  for +s: Layout.MarginStrut
+  for +c0: Layout.LayoutInputNode
+  for +c1: Layout.LayoutInputNode
+  {Layout.nat_le(
+    Nat.add(
+      Nat.add(pos, Layout.margin_strut_sum(Layout.margin_strut_append(s, Layout.child_start_margin_strut(c0)))),
+      Layout.child_border_box_block_size(avail, c0)),
+    Nat.add(
+      Nat.add(
+        Nat.add(pos, Layout.margin_strut_sum(Layout.margin_strut_append(s, Layout.child_start_margin_strut(c0)))),
+        Layout.child_border_box_block_size(avail, c0)),
+      Layout.margin_strut_sum(Layout.margin_strut_append(Layout.child_end_margin_strut(c0), Layout.child_start_margin_strut(c1))))) == True{} : Bool}
+
+def block_siblings_monotonic_non_overlapping_step(avail, pos, s, c0, c1):
+  nat_le_add_right(
+    Nat.add(
+      Nat.add(pos, Layout.margin_strut_sum(Layout.margin_strut_append(s, Layout.child_start_margin_strut(c0)))),
+      Layout.child_border_box_block_size(avail, c0)),
+    Layout.margin_strut_sum(Layout.margin_strut_append(Layout.child_end_margin_strut(c0), Layout.child_start_margin_strut(c1))))
+
+# Associativity of Nat.add for Law 3 (bfc_intrinsic_block_size_conservation)
+law add_assoc:
+  for +a: Nat
+  for +b: Nat
+  for +c: Nat
+  {Nat.add(Nat.add(a, b), c) == Nat.add(a, Nat.add(b, c)) : Nat}
+
+def add_assoc(a, b, c):
+  match a:
+    case 0n:
+      {==}
+    case 1n+ap:
+      Equal.cong(Nat, Nat, x => 1n+x, Nat.add(Nat.add(ap, b), c), Nat.add(ap, Nat.add(b, c)), add_assoc(ap, b, c))
+
+# Law 3 (bfc_intrinsic_block_size_conservation) inductive conservation step:
+# ((pos + collapsed) + blk_sz) + rest_flow == pos + ((collapsed + blk_sz) + rest_flow)
+law bfc_intrinsic_block_size_conservation_step:
+  for +pos: Nat
+  for +collapsed: Nat
+  for +blk_sz: Nat
+  for +rest_flow: Nat
+  {Nat.add(Nat.add(Nat.add(pos, collapsed), blk_sz), rest_flow) ==
+   Nat.add(pos, Nat.add(Nat.add(collapsed, blk_sz), rest_flow)) : Nat}
+
+def bfc_intrinsic_block_size_conservation_step(pos, collapsed, blk_sz, rest_flow):
+  s1 = Equal.cong(
+    Nat, Nat,
+    x => Nat.add(x, rest_flow),
+    Nat.add(Nat.add(pos, collapsed), blk_sz),
+    Nat.add(pos, Nat.add(collapsed, blk_sz)),
+    add_assoc(pos, collapsed, blk_sz))
+  s2 = add_assoc(pos, Nat.add(collapsed, blk_sz), rest_flow)
+  Equal.trans(
+    Nat,
+    Nat.add(Nat.add(Nat.add(pos, collapsed), blk_sz), rest_flow),
+    Nat.add(Nat.add(pos, Nat.add(collapsed, blk_sz)), rest_flow),
+    Nat.add(pos, Nat.add(Nat.add(collapsed, blk_sz), rest_flow)),
+    s1, s2)
+
+# Helper constructors for Blink M2 test vectors (block_layout_algorithm_test.cc:568-900)
+def m2_case3_child() -> Layout.LayoutInputNode:
+  Layout.BlockChild{
+    2n,
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 200n, 0n},
+    Layout.SomeNat{100n},
+    Layout.SomeNat{50n},
+    False{},
+    50n,
+    True{},
+    Layout.MStrut{0n, 0n},
+    Layout.MStrut{0n, 0n}
+  }
+
+def m2_case3_res() -> Layout.LayoutResult:
+  Layout.layout_block(
+    Layout.CSpace{800n, Layout.NoneNat{}, 0n, 0n, Layout.MStrut{20n, 0n}, False{}},
+    Layout.BlockContainer{
+      1n,
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.Strut{0n, 0n, 20n, 0n},
+      Layout.SomeNat{100n},
+      Layout.NoneNat{},
+      False{},
+      [m2_case3_child()]
+    })
+
+def m2_case6_child1() -> Layout.LayoutInputNode:
+  Layout.BlockChild{
+    2n,
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 10n, 20n},
+    Layout.SomeNat{100n},
+    Layout.SomeNat{30n},
+    False{},
+    30n,
+    True{},
+    Layout.MStrut{0n, 0n},
+    Layout.MStrut{0n, 0n}
+  }
+
+def m2_case6_child2() -> Layout.LayoutInputNode:
+  Layout.BlockChild{
+    3n,
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 0n, 0n},
+    Layout.Strut{0n, 0n, 40n, 50n},
+    Layout.SomeNat{100n},
+    Layout.SomeNat{60n},
+    False{},
+    60n,
+    True{},
+    Layout.MStrut{0n, 0n},
+    Layout.MStrut{0n, 0n}
+  }
+
+def m2_case6_res() -> Layout.LayoutResult:
+  Layout.layout_block(
+    Layout.CSpace{800n, Layout.NoneNat{}, 0n, 0n, Layout.MStrut{0n, 0n}, False{}},
+    Layout.BlockContainer{
+      1n,
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.Strut{0n, 0n, 2n, 0n},
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.SomeNat{100n},
+      Layout.NoneNat{},
+      False{},
+      [m2_case6_child1(), m2_case6_child2()]
+    })
+
+def m2_self_collapse_res() -> Layout.LayoutResult:
+  Layout.layout_block(
+    Layout.CSpace{800n, Layout.NoneNat{}, 0n, 0n, Layout.MStrut{15n, 0n}, False{}},
+    Layout.BlockContainer{
+      4n,
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.SomeNat{100n},
+      Layout.NoneNat{},
+      False{},
+      []
+    })
+
+def m2_bfc_res() -> Layout.LayoutResult:
+  Layout.layout_block(
+    Layout.CSpace{800n, Layout.NoneNat{}, 0n, 0n, Layout.MStrut{0n, 0n}, False{}},
+    Layout.BlockContainer{
+      5n,
+      Layout.Strut{0n, 0n, 3n, 11n},
+      Layout.Strut{0n, 0n, 5n, 7n},
+      Layout.Strut{0n, 0n, 0n, 0n},
+      Layout.NoneNat{},
+      Layout.NoneNat{},
+      True{},
+      [m2_case6_child1(), m2_case6_child2()]
+    })
+
+law blink_m2_test_vectors:
+  {[
+    Layout.layout_result_bfc_block_offset_or(m2_case3_res(), 0n),
+    Layout.layout_result_intrinsic_block_size(m2_case3_res()),
+    Layout.layout_result_intrinsic_block_size(m2_case6_res()),
+    Layout.layout_result_end_margin_pos(m2_case6_res()),
+    Layout.layout_result_intrinsic_block_size(m2_self_collapse_res()),
+    Layout.layout_result_end_margin_pos(m2_self_collapse_res()),
+    Layout.layout_result_intrinsic_block_size(m2_bfc_res()),
+    Nat.add(
+      Nat.add(8n, Layout.total_collapsed_flow_block_size(800n, [m2_case6_child1(), m2_case6_child2()])),
+      18n)
+  ] == [200n, 50n, 142n, 50n, 0n, 15n, 216n, 216n] : List<&2, Nat>}
+
+def blink_m2_test_vectors():
+  {==}
