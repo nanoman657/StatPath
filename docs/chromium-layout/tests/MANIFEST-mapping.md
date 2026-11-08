@@ -119,13 +119,13 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | blocked | anchor positioning with scroll snapshots belongs to the anchor lane (CSS Anchor Positioning 1) |
 | visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | blocked | filter blur visual extent (CSS Filter Effects 1) is not modelled |
 | visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
-| visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | blocked | preserveAspectRatio="none" and the enclosing rect of a fractional result are not modelled |
+| visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | formalized | `TestsMapping.SVGTransformsFastVsSlowPath_vectors` |
 | visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | compares the geometry-mapper path with the slow path of the same mapping; the model has one path, so the row has no independent expected value to state |
 | visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | geometry | formalized | `TestsMapping.NestedTransformsComposeAngles_vectors` |
 | visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | geometry | formalized | `TestsMapping.NestedTransformsFractionalPositionSnapsOnce_vectors` |
 | visual_rect_mapping_test.cc:1941 | VisualRectMappingTest.FractionalSnapping | geometry | formalized | `TestsMapping.FractionalSnapping_vectors` |
-| visual_rect_mapping_test.cc:2001 | VisualRectMappingTest.ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | geometry | blocked | visual viewport pinch-zoom transform is not modelled |
-| visual_rect_mapping_test.cc:2054 | VisualRectMappingTest.ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | geometry | blocked | visual viewport pinch-zoom transform is not modelled |
+| visual_rect_mapping_test.cc:2001 | VisualRectMappingTest.ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | geometry | blocked | compares the geometry-mapper path with the slow path of the same mapping; the model has one path, so the row has no independent expected value to state |
+| visual_rect_mapping_test.cc:2054 | VisualRectMappingTest.ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:2143 | VisualRectMappingTest.ElementCanvasTransformVisualRectMapping | geometry | formalized | `TestsMapping.ElementCanvasTransformVisualRectMapping_vectors` |
 | visual_rect_mapping_test.cc:2172 | VisualRectMappingTest.NestedElementCanvasTransformVisualRectMapping | geometry | formalized | `TestsMapping.NestedElementCanvasTransformVisualRectMapping_vectors` |
 | visual_rect_mapping_test.cc:2205 | VisualRectMappingTest.NestedElementCanvasTransformWithOffsetVisualRectMapping | geometry | formalized | `TestsMapping.NestedElementCanvasTransformWithOffsetVisualRectMapping_vectors` |

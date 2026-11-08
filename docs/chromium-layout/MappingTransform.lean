@@ -353,5 +353,17 @@ def bboxOf (ps : List RPt) : RPt × RPt :=
     resolution of 1/64 px). -/
 def RPt.lu (p : RPt) : Int × Int := ((p.x * 64 + p.den / 2) / p.den, (p.y * 64 + p.den / 2) / p.den)
 
+/-- The viewBox transform with `preserveAspectRatio="none"` (SVG 2 §8.2): each axis scales
+    independently, `pw / vw` and `ph / vh`. -/
+def viewBoxNone (vx vy vw vh : Int) (pw ph : Nat) : Aff :=
+  ⟨pw * vh, 0, 0, ph * vw, -(pw * vh * vx), -(ph * vw * vy), (vw * vh).toNat⟩
+
+/-- The viewBox is mapped onto the whole viewport: its origin goes to the viewport origin. -/
+theorem viewBoxNone_origin (vx vy vw vh : Int) (pw ph : Nat) :
+    ((viewBoxNone vx vy vw vh pw ph).map ⟨vx, vy, 1⟩).Eq ⟨0, 0, 1⟩ := by
+  unfold RPt.Eq Aff.map viewBoxNone
+  dsimp only
+  constructor <;> grind
+
 end Mapping
 end ChromiumLayout

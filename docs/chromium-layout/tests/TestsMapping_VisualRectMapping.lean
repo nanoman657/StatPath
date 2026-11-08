@@ -397,5 +397,13 @@ theorem FractionalSnapping_vectors :
     (bboxOf (pt 1)).1.lu = (25 * 64, 0) ∧ (bboxOf (pt 1)).2.lu = (100 * 64, 100 * 64) ∧
     (bboxOf (pt 3)).1.lu = (75 * 64, 0) ∧ (bboxOf (pt 3)).2.lu = (100 * 64, 100 * 64) := by decide
 
+/-- SVGTransformsFastVsSlowPath (1741): `<svg width=100 height=100 viewBox="-10 10 100 200"
+    preserveAspectRatio="none">` with a `20×20` rect at the user-space origin: it maps to
+    `(10,-5,20,10)` and the part above the svg box is clipped away. -/
+theorem SVGTransformsFastVsSlowPath_vectors :
+    let A := viewBoxNone (-10) 10 100 200 100 100
+    enclose (A.corners ⟨0, 0, 20, 20⟩) = ⟨10, -5, 20, 10⟩ ∧
+    (enclose (A.corners ⟨0, 0, 20, 20⟩)).inter ⟨0, 0, 100, 100⟩ = ⟨10, 0, 20, 5⟩ := by decide
+
 end TestsMapping
 end ChromiumLayout
