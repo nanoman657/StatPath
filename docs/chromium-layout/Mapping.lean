@@ -12,6 +12,7 @@ import BlockFlow
 import BlockRelative
 import BlockAbsolute
 import ColumnLayout
+import BlockWritingMode
 
 namespace ChromiumLayout
 namespace Mapping
@@ -39,6 +40,41 @@ def mapUp (hs : List Hop) (p : Pt) : Pt := hs.foldl (fun q h => h.up q) p
 
 /-- Map from the ancestor down the same chain (`AncestorToLocalPoint`). -/
 def mapDown (hs : List Hop) (p : Pt) : Pt := hs.foldr (fun h q => h.down q) p
+
+abbrev WM := BlockWritingMode.WritingMode
+
+/-- A rectangle in physical coordinates of a container's border box. -/
+structure PRect where
+  x : Int
+  y : Int
+  w : Int
+  h : Int
+  deriving DecidableEq, Repr
+
+/-- A rectangle in flow-relative coordinates of a container: inline-start offset, block-start
+    offset, inline size, block size (CSS Writing Modes 3 §6.1 abstract dimensions). -/
+structure LRect where
+  i : Int
+  b : Int
+  isz : Int
+  bsz : Int
+  deriving DecidableEq, Repr
+
+/-- Logical to physical rectangle inside a container whose physical width (its border-box width,
+    which is its block size in a vertical mode) is `cw`: CSS Writing Modes 3 §6.4
+    abstract-to-physical mappings; in `vertical-rl` the block axis runs from the right edge. -/
+def LRect.toPhys (wm : WM) (cw : Int) (r : LRect) : PRect :=
+  match wm with
+  | .horizontalTb => ⟨r.i, r.b, r.isz, r.bsz⟩
+  | .verticalLr => ⟨r.b, r.i, r.bsz, r.isz⟩
+  | .verticalRl => ⟨cw - r.b - r.bsz, r.i, r.bsz, r.isz⟩
+
+/-- Physical to logical rectangle (CSS Writing Modes 3 §6.4, the other direction). -/
+def PRect.toLogical (wm : WM) (cw : Int) (p : PRect) : LRect :=
+  match wm with
+  | .horizontalTb => ⟨p.x, p.y, p.w, p.h⟩
+  | .verticalLr => ⟨p.y, p.x, p.h, p.w⟩
+  | .verticalRl => ⟨p.y, cw - p.x - p.w, p.h, p.w⟩
 
 /-- Position of a child fragment's origin in its parent fragment (both in the one coordinate
     system `layoutRoot` uses). -/
@@ -105,6 +141,7 @@ inductive Node where
       (mt ml : BlockAbsolute.MarginVal)
   | inlineIn (container : BF)
   | scrolled (s : Pt) (n : Node)
+  | flow (wm : WM) (parent child : Frag)
   | col (container : BF) (cs : Cols) (flow child : Frag) (rel : Option BlockRelative.Insets := none)
 
 /-- The hop of a node, given the hops of the ancestors above it. -/
@@ -113,6 +150,9 @@ def Node.hop (up : List Hop) : Node → Hop
   | .inline _ => ⟨0, 0⟩
   | .inlineIn c => contentOrigin c
   | .scrolled s n => ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩
+  | .flow wm p c =>
+      let q := (LRect.mk (offIn p c).x (offIn p c).y c.w c.h).toPhys wm p.h
+      ⟨q.x, q.y⟩
   | .col c cs f ch r =>
       let q := cs.place (offIn f ch).x ch.w (offIn f ch).y
       ⟨(contentOrigin c).x + q.x + (r.map (·.left)).getD 0, (contentOrigin c).y + q.y + (r.map (·.top)).getD 0⟩
@@ -299,6 +339,34 @@ theorem mapRange_oof (k : Nat) (cb : CB) (st : Pt) (t l : Int) (mt ml : BlockAbs
       = Node.hop (hops rest) (.oof k cb st (.px t) (.px l) mt ml) :: (hops rest).take k := rfl
   rw [this, List.drop_zero]
   exact oof_to_cb k cb st t l mt ml (hops rest) p
+
+/-- Physical-to-logical undoes logical-to-physical, in every writing mode. -/
+theorem toLogical_toPhys (wm : WM) (cw : Int) (r : LRect) : (r.toPhys wm cw).toLogical wm cw = r := by
+  cases wm <;> cases r <;> simp [LRect.toPhys, PRect.toLogical] <;> omega
+
+/-- And the other way round. -/
+theorem toPhys_toLogical (wm : WM) (cw : Int) (p : PRect) : (p.toLogical wm cw).toPhys wm cw = p := by
+  cases wm <;> cases p <;> simp [LRect.toPhys, PRect.toLogical] <;> omega
+
+/-- The area of a rectangle does not depend on the writing mode. -/
+theorem toPhys_area (wm : WM) (cw : Int) (r : LRect) :
+    (r.toPhys wm cw).w * (r.toPhys wm cw).h = r.isz * r.bsz := by
+  cases wm <;> simp [LRect.toPhys, Int.mul_comm]
+
+/-- A child that lies inside its container along both axes lies inside it physically too, in every
+    writing mode (`cw`, `ch`: the container's physical width and height; `bext`, `iext`: its extent
+    along the block and inline axes). -/
+theorem toPhys_inside (wm : WM) (cw ch bext iext : Int) (r : LRect)
+    (hext : (wm = .horizontalTb ∧ bext = ch ∧ iext = cw) ∨ (wm ≠ .horizontalTb ∧ bext = cw ∧ iext = ch))
+    (h0 : 0 ≤ r.b) (h1 : 0 ≤ r.i) (hb : r.b + r.bsz ≤ bext) (hi : r.i + r.isz ≤ iext) :
+    0 ≤ (r.toPhys wm cw).x ∧ (r.toPhys wm cw).x + (r.toPhys wm cw).w ≤ cw ∧
+    0 ≤ (r.toPhys wm cw).y ∧ (r.toPhys wm cw).y + (r.toPhys wm cw).h ≤ ch := by
+  cases wm <;> simp [LRect.toPhys] at hext ⊢ <;> omega
+
+/-- In a horizontal container a flowed child is placed exactly as a plain block. -/
+theorem flow_horizontalTb (p c : Frag) (up : List Hop) :
+    (Node.flow .horizontalTb p c).hop up = (Node.block p c).hop up := by
+  simp [Node.hop, LRect.toPhys, offIn]
 
 end Mapping
 end ChromiumLayout

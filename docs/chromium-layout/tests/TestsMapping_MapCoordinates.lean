@@ -320,5 +320,47 @@ theorem FixedPositionWithScrollOffset_vectors (s : Pt) :
   have key := fun rest => mapRange_oof 2 (.box {}) ⟨0, 0⟩ 200 100 (.px 0) (.px 0) rest ⟨0, 0⟩
   exact ⟨key (pageNodes h body s), key ((pageNodes h body s).map Node.ignoreScroll)⟩
 
+/-! ### Flipped blocks (CSS Writing Modes 3 §7): the CSS `width` of a child of a `vertical-rl`
+    container is its block size, its `height` its inline size; the container's own width is the
+    sum of its children's block sizes. -/
+
+/-- FlippedBlocksWritingModeWithText (1099): `vertical-rl` container > [`div{width:13px}`,
+    `div{width:200px; height:400px}` with the text, `div{width:5px}`]. -/
+def flipped (last : Nat) : BF :=
+  { children := [{ height := some 13 }, { id := 1, width := .px 400, height := some 200 },
+                 { height := some last }] }
+
+theorem FlippedBlocksWritingModeWithText_vectors :
+    let f := layoutRoot 800 (flipped 5)
+    let ns := [Node.inline, Node.flow .verticalRl f (f.kid 1)]
+    mapRange ns 0 1 ⟨75, 10⟩ = ⟨75, 10⟩ ∧ mapRangeDown ns 0 1 ⟨75, 10⟩ = ⟨75, 10⟩ ∧
+    mapRange ns 0 2 ⟨75, 10⟩ = ⟨80, 10⟩ ∧ mapRangeDown ns 0 2 ⟨80, 10⟩ = ⟨75, 10⟩ := by decide
+
+/-- FlippedBlocksWritingModeWithInline (1131): the same with the text in
+    `<span><span id=target>` and a last sibling of width 7. -/
+theorem FlippedBlocksWritingModeWithInline_vectors :
+    let f := layoutRoot 800 (flipped 7)
+    let ns := [Node.inline, Node.inline, Node.flow .verticalRl f (f.kid 1)]
+    let p : Pt := ⟨75, 10⟩
+    mapRange ns 0 1 p = p ∧ mapRangeDown ns 0 1 p = p ∧
+    mapRange ns 1 2 p = p ∧ mapRangeDown ns 1 2 p = p ∧
+    mapRange ns 0 2 p = p ∧ mapRangeDown ns 0 2 p = p ∧
+    mapRange ns 0 3 p = ⟨82, 10⟩ ∧ mapRangeDown ns 0 3 ⟨82, 10⟩ = p := by decide
+
+/-- FlippedBlocksWritingModeWithBlock (1183): `#container{vertical-rl; border:8px; padding:7px;
+    width:200px; height:200px}` > `#middle{border:1px}` > [`div{width:30px}`,
+    `#target{margin:6px; width:25px}`]. -/
+def flippedBlock : BF :=
+  bp 8 7 { width := .px 200, height := some 200,
+           children := [bp 1 0 { children := [{ height := some 30 }, mg 6 { id := 1, height := some 25 }] }] }
+
+theorem FlippedBlocksWritingModeWithBlock_vectors :
+    let f := layoutRoot 800 flippedBlock
+    let m := f.kid 0
+    let ns := [Node.flow .verticalRl m (m.kid 1), Node.flow .verticalRl f m]
+    mapRange ns 0 2 ⟨0, 0⟩ = ⟨153, 22⟩ ∧ mapRangeDown ns 0 2 ⟨153, 22⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨7, 7⟩ ∧ mapRangeDown ns 0 1 ⟨7, 7⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 1 2 ⟨7, 7⟩ = ⟨153, 22⟩ ∧ mapRangeDown ns 1 2 ⟨153, 22⟩ = ⟨7, 7⟩ := by decide
+
 end TestsMapping
 end ChromiumLayout

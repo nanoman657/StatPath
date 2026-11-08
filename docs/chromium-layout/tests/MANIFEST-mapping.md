@@ -46,9 +46,9 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1019 | MapCoordinatesTest.MulticolWithAbsPosNotContained | geometry | formalized | `TestsMapping.MulticolWithAbsPosNotContained_vectors` |
 | map_coordinates_test.cc:1060 | MapCoordinatesTest.MulticolRtl | geometry | formalized | `TestsMapping.MulticolRtl_vectors` |
 | map_coordinates_test.cc:1079 | MapCoordinatesTest.MulticolWithLargeBorder | geometry | formalized | `TestsMapping.MulticolWithLargeBorder_vectors` |
-| map_coordinates_test.cc:1099 | MapCoordinatesTest.FlippedBlocksWritingModeWithText | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1099 | MapCoordinatesTest.FlippedBlocksWritingModeWithText | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithText_vectors` |
+| map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithInline_vectors` |
+| map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithBlock_vectors` |
 | map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | geometry | blocked | not yet modelled (mapping lane, pending) |
