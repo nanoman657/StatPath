@@ -296,5 +296,44 @@ theorem canvasShift_append (l r : List CN) (h : ∃ t, CN.drawable t ∈ l) : ca
           have : ∃ t, CN.drawable t ∈ xs := ⟨t, by simpa using ht⟩
           simp [canvasShift, ih this]
 
+/-! ## Rotations (CSS Transforms 1 §13.1 rotate()) -/
+
+/-- Fixed-point scale of the trigonometric values (10^15). -/
+def trigScale : Int := 1000000000000000
+
+/-- Angle in degrees reduced to `[-180, 180]`. -/
+def reduceDeg (d : Int) : Int := if d % 360 > 180 then d % 360 - 360 else d % 360
+
+/-- Maclaurin series with twelve terms in fixed point: terms `t_{k+1} = -t_k x² / ((2k+1+o)(2k+2+o))`,
+    starting from `first`; `x` is the angle in radians times `trigScale`. -/
+def series (x first : Int) (o : Nat) : Int :=
+  ((List.range 12).foldl (fun (ts : Int × Int) k =>
+    let t := -(ts.1 * x * x / (trigScale * trigScale)) / ((2 * k + 1 + o : Nat) * (2 * k + 2 + o : Nat))
+    (t, ts.2 + t)) (first, first)).2
+
+/-- Angle in radians times `trigScale` (π ≈ 3.141592653589793). -/
+def radS (deg : Int) : Int := reduceDeg deg * 3141592653589793 / 180
+
+def sinS (deg : Int) : Int := series (radS deg) (radS deg) 1
+def cosS (deg : Int) : Int := series (radS deg) trigScale 0
+
+/-- `rotate(deg)`: the matrix `[[cos -sin], [sin cos]]` of CSS Transforms 1 §13.1, with `cos` and
+    `sin` as fixed-point integers over `trigScale` (accurate to about 1e-12). -/
+def rotation (deg : Int) : Aff := ⟨cosS deg, sinS deg, -sinS deg, cosS deg, 0, 0, trigScale.toNat⟩
+
+/-- Is `p` within `tn / td` of the point `(x / d, y / d)` on both axes? -/
+def RPt.near (p : RPt) (x y : Int) (d : Nat) (tn td : Nat) : Bool :=
+  (p.x * d - x * p.den).natAbs * td ≤ tn * p.den * d && (p.y * d - y * p.den).natAbs * td ≤ tn * p.den * d
+
+/-- A full turn changes nothing. -/
+theorem rotation_period (d : Int) : rotation (d + 360) = rotation d := by
+  have h : reduceDeg (d + 360) = reduceDeg d := by
+    unfold reduceDeg; omega
+  simp only [rotation, sinS, cosS, radS, h]
+
+/-- Rotating by zero degrees is the identity (the matrix is `trigScale` times the identity over
+    `trigScale`). -/
+theorem rotation_zero : rotation 0 = Aff.scale trigScale trigScale trigScale.toNat := by decide
+
 end Mapping
 end ChromiumLayout

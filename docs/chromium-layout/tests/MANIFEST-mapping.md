@@ -50,7 +50,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithInline_vectors` |
 | map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithBlock_vectors` |
 | map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | geometry | blocked | table cell positions (border-spacing, section order, vertical-align middle) come from the table lane model TableLayout, not modelled in Mapping |
-| map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | geometry | blocked | rotation by 45 degrees needs irrational (square root of 2) matrix entries; MappingTransform.Aff is integer-exact |
+| map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | geometry | formalized | `TestsMapping.Transforms_vectors` |
 | map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | geometry | formalized | `TestsMapping.SVGShape_vectors` |
 | map_coordinates_test.cc:1397 | MapCoordinatesTest.SVGShapeScale | geometry | formalized | `TestsMapping.SVGShapeScale_vectors` |
 | map_coordinates_test.cc:1417 | MapCoordinatesTest.SVGShapeWithViewBoxWithoutScale | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithoutScale_vectors` |
@@ -59,7 +59,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1475 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffsetAndScale | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithNonZeroOffsetAndScale_vectors` |
 | map_coordinates_test.cc:1495 | MapCoordinatesTest.SVGForeignObject | geometry | formalized | `TestsMapping.SVGForeignObject_vectors` |
 | map_coordinates_test.cc:1532 | MapCoordinatesTest.LocalToAbsoluteTransform | geometry | formalized | `TestsMapping.LocalToAbsoluteTransform_vectors` |
-| map_coordinates_test.cc:1555 | MapCoordinatesTest.LocalToAncestorTransform | geometry | blocked | rotation by 45 degrees needs irrational (square root of 2) matrix entries; MappingTransform.Aff is integer-exact |
+| map_coordinates_test.cc:1555 | MapCoordinatesTest.LocalToAncestorTransform | geometry | formalized | `TestsMapping.LocalToAncestorTransform_vectors` |
 | map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
 | map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
 | map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
@@ -83,7 +83,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:281 | VisualRectMappingTest.SkipAncestorAndViewportClipFlag | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipFlag_vectors` |
 | visual_rect_mapping_test.cc:338 | VisualRectMappingTest.SkipAncestorAndViewportClipFlagViewportSpace | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipsInSubframe_vectors` |
-| visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | blocked | rotation by 45 degrees needs irrational (square root of 2) matrix entries; MappingTransform.Aff is integer-exact |
+| visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
 | visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | geometry | formalized | `TestsMapping.LayoutView_vectors` |
 | visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
 | visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | blocked | display:none on an iframe destroys its layout objects; object lifecycle, not coordinate mapping |
@@ -118,11 +118,11 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | geometry | formalized | `TestsMapping.MapToVisualRectFastPathMapsToViewport_vectors` |
 | visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | blocked | anchor positioning with scroll snapshots belongs to the anchor lane (CSS Anchor Positioning 1) |
 | visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | blocked | filter blur visual extent (CSS Filter Effects 1) is not modelled |
-| visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | rotation by 45 degrees needs irrational (square root of 2) matrix entries; MappingTransform.Aff is integer-exact |
+| visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
 | visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | blocked | preserveAspectRatio="none" and the enclosing rect of a fractional result are not modelled |
-| visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | rotation by 45 degrees needs irrational (square root of 2) matrix entries; MappingTransform.Aff is integer-exact |
-| visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | geometry | blocked | rotation by an angle that is not a multiple of 90 degrees needs trigonometric values; not modelled |
-| visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | geometry | blocked | rotation by an angle that is not a multiple of 90 degrees needs trigonometric values; not modelled |
+| visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
+| visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | geometry | blocked | the bounding rect of a rotated and scaled rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
+| visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | geometry | blocked | the bounding rect of a rotated and scaled rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
 | visual_rect_mapping_test.cc:1941 | VisualRectMappingTest.FractionalSnapping | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
 | visual_rect_mapping_test.cc:2001 | VisualRectMappingTest.ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | geometry | blocked | visual viewport pinch-zoom transform is not modelled |
 | visual_rect_mapping_test.cc:2054 | VisualRectMappingTest.ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | geometry | blocked | visual viewport pinch-zoom transform is not modelled |

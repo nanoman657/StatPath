@@ -517,5 +517,47 @@ theorem FixedPosInIFrameWhenMainFrameScrolled_vectors :
     let q := (mapADown affs 0 7 (RPt.ofPt ⟨10, 70⟩)).toPt
     q = ⟨10, -6930⟩ ∧ (⟨q.x, q.y - 1000⟩ : Pt) = ⟨10, -7930⟩ := by decide
 
+/-- Transforms (1318): `#container` > `#outerTransform{rotate(45deg); 200×200}` >
+    `#innerTransform{rotate(45deg); 200×200}` > `#target{200×200}`; quads within 0.01. -/
+def quadPts : List Pt := [⟨0, 0⟩, ⟨200, 0⟩, ⟨200, 200⟩, ⟨0, 200⟩]
+
+/-- Do the mapped points match the expected hundredths within 0.01? -/
+def nearAll (ps : List RPt) (es : List (Int × Int)) : Bool :=
+  (ps.zip es).all (fun (p, e) => p.near e.1 e.2 100 1 100) && ps.length == es.length
+
+theorem Transforms_vectors :
+    let f := layoutRoot 800 { id := 1, children := [{ id := 2, width := .px 200, height := some 200, children :=
+      [{ id := 3, width := .px 200, height := some 200, children := [{ id := 4, width := .px 200, height := some 200 }] }] }] }
+    let outer := f.kid 0
+    let inner := outer.kid 0
+    let ns := [Node.block inner (inner.kid 0), .block outer inner, .block f outer]
+    let affs := affChain ns [none, some (Aff.center inner, rotation 45), some (Aff.center outer, rotation 45)]
+    let up (i j : Nat) (qs : List RPt) := qs.map (fun p => mapA affs i j p)
+    let q0 := quadPts.map RPt.ofPt
+    let down (i j : Nat) (qs : List RPt) := qs.map (fun p => mapADown affs i j p)
+    let unit := quadPts.map (fun p => (p.x * 100, p.y * 100))
+    let mid : List (Int × Int) := [(100 * 100, -4142), (24142, 10000), (10000, 24142), (-4142, 10000)]
+    let top : List (Int × Int) := [(20000, 0), (20000, 20000), (0, 20000), (0, 0)]
+    nearAll (up 0 3 q0) top = true ∧ nearAll (down 0 3 (up 0 3 q0)) unit = true ∧
+    nearAll (up 0 1 q0) unit = true ∧ nearAll (down 0 1 (up 0 1 q0)) unit = true ∧
+    nearAll (up 1 2 q0) mid = true ∧ nearAll (down 1 2 (up 1 2 q0)) unit = true ∧
+    nearAll (up 2 3 (mid.map (fun e => (⟨e.1, e.2, 100⟩ : RPt)))) top = true := by decide
+
+/-- LocalToAncestorTransform (1555): `#container` > `#rotate1{rotate(45deg); origin: left top}` >
+    `#rotate2{rotate(90deg); origin: left top}` > `#child`; points within `LayoutUnit::Epsilon`
+    (1/64). -/
+theorem LocalToAncestorTransform_vectors :
+    let f := layoutRoot 800 { id := 1, children := [{ id := 2, children := [{ id := 3, children := [{ id := 4 }] }] }] }
+    let r1 := f.kid 0
+    let r2 := r1.kid 0
+    let ns := [Node.block r2 (r2.kid 0), .block r1 r2, .block f r1]
+    let affs := affChain ns [none, some (z, rotation 90), some (z, rotation 45)]
+    let p : RPt := RPt.ofPt ⟨100, 0⟩
+    (composeAll (affs.take 1)).isId = true ∧
+    (composeAll (affs.take 2)).isId = false ∧
+    ((composeAll (affs.take 2)).map p).near 0 100 1 1 64 = true ∧
+    (composeAll affs).isId = false ∧
+    ((composeAll affs).map p).near (-7071068) 7071068 100000 1 64 = true := by decide
+
 end TestsMapping
 end ChromiumLayout
