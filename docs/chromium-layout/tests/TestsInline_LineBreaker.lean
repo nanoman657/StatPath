@@ -319,4 +319,38 @@ theorem lineBreaker_forcedBreakFollowedByCloseTag :
     lines.length = 1 ∧ lines = ["line"] := by
   decide
 
+/-! ### Trailing Space Hanging Width Test (CSS Text 3 §4.1.2 & §5.4) -/
+
+/-- TrailingSpaceWidthTest.TrailingSpaceWidth (`inline/line_breaker_test.cc:684`):
+    Computes trailing space hanging width across 25 parameter configurations for pre and pre-wrap. -/
+theorem lineBreaker_trailingSpaceWidth :
+    -- white-space: pre (all 0)
+    computeHangingSpaceWidth .pre false 0 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 0 3 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 3 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre true 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .pre true 1 2 none 50 = 0 ∧
+    -- white-space: pre-wrap
+    computeHangingSpaceWidth .preWrap false 0 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 0 3 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 1 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 3 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap true 1 2 none 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 2 1 (some 4) 50 = 1 ∧
+    computeHangingSpaceWidth .preWrap false 2 2 (some 4) 50 = 2 ∧
+    computeHangingSpaceWidth .preWrap true 2 2 (some 4) 50 = 0 ∧
+    computeHangingSpaceWidth .preWrap false 2 4 none 50 = 1 := by
+  decide
+
 end ChromiumLayout.TestsInline

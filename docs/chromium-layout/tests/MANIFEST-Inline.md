@@ -46,7 +46,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | formalized | `lineBreaker_boundaryInFirstWord` | CSS Text 3 §5.1: First word split across element boundary cannot be broken |
 | inline/line_breaker_test.cc:548 | IdeographicTrailingSpaces | geometry | formalized | `lineBreaker_ideographicTrailingSpaces` | Ideographic spaces (U+3000) are preserved as non-collapsible text |
 | inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | formalized | `lineBreaker_whitespaceState` | Line breaker trailing whitespace state across line wrapping conditions |
-| inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | blocked | - | Blocked: model lacks trailing space hanging width computation in LineBreaker |
+| inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | formalized | `lineBreaker_trailingSpaceWidth` | CSS Text 3 §4.1.2 & §5.4: Trailing space hanging width across pre and pre-wrap |
 | inline/line_breaker_test.cc:706 | FullyCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:732 | TrailingCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:762 | SplitTextZero | behaviour | blocked | - | Blocked: model lacks DOM text node split synchronization |

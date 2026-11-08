@@ -346,4 +346,64 @@ theorem breakSegmentLines_two_overflow (w : Nat) (txt1 txt2 : String) (w1 w2 : N
   simp [h]
   rfl
 
+/-! ## 7. Trailing Space Hanging Width (CSS Text 3 §4.1.2 & §5.4) -/
+
+/-- CSS Text 3 §3: White space handling modes. -/
+inductive WhiteSpaceMode where
+  | pre
+  | preWrap
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text 3 §4.1.2, §5.4 & Blink LineBreaker::ComputeTrailingSpaceWidth:
+    Compute hanging space width for trailing spaces at line ends.
+    - Under `pre`, spaces are preserved and do not hang (hanging width = 0).
+    - Under `pre-wrap`, trailing spaces before a soft line break hang outside the line box.
+    - Spaces before a forced break (`<br>`) do not hang (hanging width = 0).
+    - Returns the number of hanging spaces. -/
+def computeHangingSpaceWidth (mode : WhiteSpaceMode) (hasForcedBreak : Bool)
+    (word1Len : Nat) (spaceCount : Nat) (nextWordLen : Option Nat)
+    (availableWidth : Nat) (charWidth : Nat := 10) : Nat :=
+  match mode with
+  | .pre => 0
+  | .preWrap =>
+    if hasForcedBreak then 0
+    else
+      match nextWordLen with
+      | some nextLen =>
+        let totalW := word1Len * charWidth + spaceCount * charWidth + nextLen * charWidth
+        if totalW > availableWidth then
+          spaceCount
+        else
+          0
+      | none =>
+        let totalW := word1Len * charWidth + spaceCount * charWidth
+        if totalW > availableWidth then
+          (totalW - availableWidth) / charWidth
+        else
+          0
+
+/-- CSS Text 3 §5.4 Law: Under white-space pre, spaces never hang regardless of width or line breaks. -/
+theorem hangingSpace_pre_always_zero (fb : Bool) (w1 sp : Nat) (nw : Option Nat) (avail cw : Nat) :
+    computeHangingSpaceWidth .pre fb w1 sp nw avail cw = 0 := by
+  rfl
+
+/-- CSS Text 3 §5.4 Law: Preserved spaces immediately before a forced break do not hang. -/
+theorem hangingSpace_forced_break_always_zero (w1 sp : Nat) (nw : Option Nat) (avail cw : Nat) :
+    computeHangingSpaceWidth .preWrap true w1 sp nw avail cw = 0 := by
+  rfl
+
+/-- CSS Text 3 §5.4 Law: When trailing spaces fit within available width without a soft wrap, hanging width is zero. -/
+theorem hangingSpace_fit_always_zero (w1 sp : Nat) (avail cw : Nat)
+    (h : ¬ (w1 * cw + sp * cw > avail)) :
+    computeHangingSpaceWidth .preWrap false w1 sp none avail cw = 0 := by
+  unfold computeHangingSpaceWidth
+  simp [h]
+
+/-- CSS Text 3 §5.4 Law: When a soft wrap occurs after trailing spaces, all trailing spaces hang. -/
+theorem hangingSpace_soft_wrap_hangs (w1 sp nextLen : Nat) (avail cw : Nat)
+    (h : w1 * cw + sp * cw + nextLen * cw > avail) :
+    computeHangingSpaceWidth .preWrap false w1 sp (some nextLen) avail cw = sp := by
+  unfold computeHangingSpaceWidth
+  simp [h]
+
 end ChromiumLayout
