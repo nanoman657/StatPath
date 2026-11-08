@@ -207,7 +207,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_caret_position_test.cc:288 | InlineCaretPositionAtSoftLineWrapBetweenDeepTextNodes | behaviour | formalized | `inlineCaretPosition_atSoftLineWrapBetweenDeepTextNodes` | CSS Text 3 §5: Caret affinity at soft line wrap across bordered spans |
 | inline/inline_caret_position_test.cc:315 | GeneratedZeroWidthSpace | behaviour | formalized | `inlineCaretPosition_generatedZeroWidthSpace` | CSS Text 3 §4: Caret position around generated zero-width space |
 | inline/inline_caret_position_test.cc:345 | MultiColumnSingleText | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
-| inline/inline_caret_position_test.cc:452 | SoftLineWrap | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
+| inline/inline_caret_position_test.cc:452 | SoftLineWrap | behaviour | formalized | `inlineCaretPosition_softLineWrap` | CSS Text 3 §5: Soft line wrap before word with space resolves upstream to line 1 and downstream to line 2 |
 | inline/inline_caret_position_test.cc:481 | ZeroWidthSpace | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:509 | InlineBlockBeforeContent | behaviour | formalized | `inlineCaretPosition_inlineBlockBeforeContent` | CSS Inline 3 §2: Caret at text following ::before inline-block |
 | inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | formalized | `inlineCaretPosition_inlineBoxesLTR` | CSS Writing Modes 3 §3.2: Caret in bdo dir=ltr with bidi controls |

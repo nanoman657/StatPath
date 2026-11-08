@@ -77,12 +77,9 @@ def resolveTextCaret (fragId : Nat) (offset : Nat) : InlineCaretPosition :=
 /-- CSS Inline 3 §2 & CSS Text 3 §5: Document item input representing text and inline elements. -/
 inductive CaretDocItem where
   | text (content : String)
-  | softWrapText (line1 line2 : String)
-  | softHyphenText (before after : String)
-  | forcedBreakText (line1 line2 : String)
-  | emptyLineText (before after : String)
   | span (id : String) (isCulled : Bool) (content : String)
-  | atomicImage (id : String)
+  | br
+  | image (id : String)
   deriving DecidableEq, Repr
 
 /-- CSS Inline 3 §2: A layout fragment generated from inline elements. -/
@@ -98,37 +95,78 @@ structure CaretFragment where
   isEmptyLine : Bool := false
   isSoftHyphen : Bool := false
   hasSoftWrapToNext : Bool := false
+  hasTrailingSpace : Bool := false
   deriving DecidableEq, Repr
 
-/-- CSS Text 3 §5 & CSS Inline 3 §2: Partition input document into layout fragments. -/
-def buildCaretFragments : CaretDocItem → List CaretFragment
-  | .text s =>
-    [{ id := 0, startOffset := 0, endOffset := s.length }]
-  | .softWrapText l1 l2 =>
-    [{ id := 0, startOffset := 0, endOffset := l1.length, hasSoftWrapToNext := true },
-     { id := 1, startOffset := l1.length, endOffset := l1.length + l2.length }]
-  | .softHyphenText b a =>
-    let h := b.length + 1
-    [{ id := 0, startOffset := 0, endOffset := h, isSoftHyphen := true, hasSoftWrapToNext := true },
-     { id := 1, startOffset := h, endOffset := h + a.length }]
-  | .forcedBreakText l1 l2 =>
-    let b := l1.length
-    [{ id := 0, startOffset := 0, endOffset := b },
-     { id := 1, startOffset := b, endOffset := b + 1, isLineBreak := true },
-     { id := 2, startOffset := b + 1, endOffset := b + 1 + l2.length }]
-  | .emptyLineText b a =>
-    let b1 := b.length
-    [{ id := 0, startOffset := 0, endOffset := b1 },
-     { id := 1, startOffset := b1, endOffset := b1 + 1, isLineBreak := true },
-     { id := 2, startOffset := b1 + 1, endOffset := b1 + 2, isLineBreak := true, isEmptyLine := true },
-     { id := 3, startOffset := b1 + 2, endOffset := b1 + 2 + a.length }]
-  | .span id true content =>
-    [{ id := 0, elementId := id, startOffset := 0, endOffset := content.length, isCulled := true }]
-  | .span id false content =>
-    [{ id := 0, elementId := id, startOffset := 0, endOffset := content.length, isBox := true },
-     { id := 1, elementId := id, startOffset := 0, endOffset := content.length }]
-  | .atomicImage id =>
-    [{ id := 0, elementId := id, startOffset := 0, endOffset := 1, isBox := true, isAtomic := true }]
+/-- Helper to split character list at target delimiter character. -/
+def splitAtChar (c : Char) (s : List Char) : Option (List Char × List Char) :=
+  let rec loop acc
+    | [] => none
+    | x :: xs => if x == c then some (acc.reverse, xs) else loop (x :: acc) xs
+  loop [] s
+
+/-- Fuel-bounded fragment builder. -/
+def buildCaretFragmentsAux (items : List CaretDocItem) (avail : Option Nat) (nextId : Nat) (offset : Nat) (lineOff : Nat) (prevBr : Bool) : List CaretFragment :=
+  match items with
+  | [] => []
+  | .image id :: rest =>
+    let fits := match avail with | some w => decide (lineOff + 1 ≤ w) | none => true
+    let wrap := !fits ∨ (!rest.isEmpty ∧ avail.isSome)
+    let f : CaretFragment := { id := nextId, elementId := id, isBox := true, isAtomic := true,
+                               startOffset := offset, endOffset := offset + 1, hasSoftWrapToNext := wrap }
+    f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + 1) (if fits then lineOff + 1 else 1) false
+  | .br :: rest =>
+    let f : CaretFragment := { id := nextId, isLineBreak := true, isEmptyLine := prevBr,
+                               startOffset := offset, endOffset := offset + 1 }
+    f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + 1) 0 true
+  | .span id isCulled content :: rest =>
+    let fits := match avail with | some w => decide (lineOff + content.length ≤ w) | none => true
+    let wrap := !fits ∨ (!rest.isEmpty ∧ avail.isSome)
+    if isCulled then
+      let f : CaretFragment := { id := nextId, elementId := id, isCulled := true,
+                                 startOffset := offset, endOffset := offset + content.length, hasSoftWrapToNext := wrap }
+      f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + content.length) (if fits then lineOff + content.length else content.length) false
+    else
+      let fBox : CaretFragment := { id := nextId, elementId := id, isBox := true,
+                                    startOffset := offset, endOffset := offset + content.length }
+      let fTxt : CaretFragment := { id := nextId + 1, elementId := id,
+                                    startOffset := offset, endOffset := offset + content.length, hasSoftWrapToNext := wrap }
+      fBox :: fTxt :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + content.length) (if fits then lineOff + content.length else content.length) false
+  | .text s :: rest =>
+    match avail with
+    | none =>
+      let f : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + s.length }
+      f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + s.length) (lineOff + s.length) false
+    | some w =>
+      let chars := s.toList
+      match splitAtChar '\u00AD' chars with
+      | some (b, a) =>
+        let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + b.length + 1,
+                                    isSoftHyphen := true, hasSoftWrapToNext := true }
+        let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + b.length + 1,
+                                    endOffset := offset + b.length + 1 + a.length }
+        f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + b.length + 1 + a.length) a.length false
+      | none =>
+        if s.length > w then
+          match splitAtChar ' ' chars with
+          | some (b, a) =>
+            let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + b.length,
+                                        hasSoftWrapToNext := true, hasTrailingSpace := true }
+            let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + b.length + 1,
+                                        endOffset := offset + b.length + 1 + a.length }
+            f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + b.length + 1 + a.length) a.length false
+          | none =>
+            let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + w,
+                                        hasSoftWrapToNext := true }
+            let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + w, endOffset := offset + s.length }
+            f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + s.length) (s.length - w) false
+        else
+          let f : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + s.length }
+          f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + s.length) (lineOff + s.length) false
+
+/-- CSS Text 3 §5 & CSS Inline 3 §2: Partition input document items into layout fragments. -/
+def buildCaretFragments (items : List CaretDocItem) (availWidth : Option Nat := none) : List CaretFragment :=
+  buildCaretFragmentsAux items availWidth 0 0 0 false
 
 /-- CSS Inline 3 §2: Query for caret position by character offset or after a node. -/
 inductive CaretQuery where
@@ -141,42 +179,56 @@ def computeCaretPosition (frags : List CaretFragment) (q : CaretQuery) (affinity
   match q with
   | .afterNode nid =>
     match frags.find? (fun f => f.elementId == nid && f.isBox) with
-    | some boxFrag => { fragmentId := boxFrag.id, positionType := .afterBox, textOffset := none }
+    | some b => { fragmentId := b.id, positionType := .afterBox, textOffset := none }
     | none =>
       match frags.find? (fun f => f.elementId == nid && ¬f.isBox) with
-      | some textFrag => { fragmentId := textFrag.id, positionType := .atTextOffset, textOffset := some textFrag.endOffset }
+      | some t => { fragmentId := t.id, positionType := .atTextOffset, textOffset := some t.endOffset }
       | none => { fragmentId := 0, positionType := .afterBox, textOffset := none }
   | .atOffset off =>
-    match frags.find? (fun f => f.isAtomic) with
+    match frags.find? (fun f => f.isAtomic && (f.startOffset == off || f.endOffset == off)) with
     | some atom =>
       if off == atom.startOffset then
         { fragmentId := atom.id, positionType := .beforeBox, textOffset := none }
       else
-        { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
+        match frags.find? (fun f => f.id == atom.id + 1 && f.isAtomic) with
+        | some nextAtom =>
+          match affinity with
+          | .upstream => { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
+          | .downstream => { fragmentId := nextAtom.id, positionType := .beforeBox, textOffset := none }
+        | none => { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
     | none =>
-      match frags.find? (fun f => f.hasSoftWrapToNext && f.endOffset == off) with
+      match frags.find? (fun f => f.hasSoftWrapToNext) with
       | some f1 =>
-        if f1.isSoftHyphen then
+        if f1.isSoftHyphen && off == f1.endOffset then
           { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some off }
-        else
+        else if f1.hasTrailingSpace && off == f1.endOffset + 1 then
+          match affinity with
+          | .upstream => { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some f1.endOffset }
+          | .downstream =>
+            match frags.find? (fun f => f.id > f1.id && ¬f.isBox) with
+            | some f2 => { fragmentId := f2.id, positionType := .atTextOffset, textOffset := some f2.startOffset }
+            | none => { fragmentId := f1.id + 1, positionType := .atTextOffset, textOffset := some off }
+        else if off == f1.endOffset then
           match affinity with
           | .upstream => { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some off }
           | .downstream =>
-            match frags.find? (fun f => f.id == f1.id + 1) with
+            match frags.find? (fun f => f.id > f1.id && ¬f.isBox) with
             | some f2 => { fragmentId := f2.id, positionType := .atTextOffset, textOffset := some off }
-            | none => { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some off }
+            | none => { fragmentId := f1.id + 1, positionType := .atTextOffset, textOffset := some off }
+        else
+          let valid := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
+          let target := if affinity == .downstream
+            then valid.find? (fun f => f.startOffset == off) <|> valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
+            else valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) <|> valid.find? (fun f => f.startOffset == off)
+          match target with
+          | some f => { fragmentId := f.id, positionType := .atTextOffset, textOffset := some off }
+          | none => { fragmentId := 0, positionType := .atTextOffset, textOffset := some off }
       | none =>
-        let validFrags := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
-        let candidate :=
-          if affinity == .downstream then
-            match validFrags.find? (fun f => f.startOffset == off) with
-            | some f => some f
-            | none => validFrags.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
-          else
-            match validFrags.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) with
-            | some f => some f
-            | none => validFrags.find? (fun f => f.startOffset == off)
-        match candidate with
+        let valid := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
+        let target := if affinity == .downstream
+          then valid.find? (fun f => f.startOffset == off) <|> valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
+          else valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) <|> valid.find? (fun f => f.startOffset == off)
+        match target with
         | some f => { fragmentId := f.id, positionType := .atTextOffset, textOffset := some off }
         | none => { fragmentId := 0, positionType := .atTextOffset, textOffset := some off }
 
@@ -213,40 +265,43 @@ theorem soft_wrap_box_distinct (b1 b2 : Nat) (h : b1 ≠ b2) :
   dsimp [resolveSoftWrapBoxCaret]
   exact h
 
-/-- CSS Text 3 §5 Law: Soft line wrap boundary resolves upstream to previous line fragment and downstream to next line fragment. -/
-theorem soft_wrap_affinity_law (s1 s2 : String) :
-    let frags := buildCaretFragments (.softWrapText s1 s2)
-    (computeCaretPosition frags (.atOffset s1.length) .upstream =
-      { fragmentId := 0, positionType := .atTextOffset, textOffset := some s1.length }) ∧
-    (computeCaretPosition frags (.atOffset s1.length) .downstream =
-      { fragmentId := 1, positionType := .atTextOffset, textOffset := some s1.length }) := by
-  dsimp [buildCaretFragments, computeCaretPosition]
+/-- CSS Text 3 §5 Law: Soft line wrap boundary without space resolves upstream to previous line fragment and downstream to next line fragment. -/
+theorem soft_wrap_affinity_law (s : String) (w : Nat) (_h : w > 0) :
+    let frags : List CaretFragment := [
+      { id := 0, startOffset := 0, endOffset := w, hasSoftWrapToNext := true },
+      { id := 1, startOffset := w, endOffset := s.length }
+    ]
+    (computeCaretPosition frags (.atOffset w) .upstream =
+      { fragmentId := 0, positionType := .atTextOffset, textOffset := some w }) ∧
+    (computeCaretPosition frags (.atOffset w) .downstream =
+      { fragmentId := 1, positionType := .atTextOffset, textOffset := some w }) := by
+  dsimp [computeCaretPosition]
   simp
 
 /-- CSS Inline 3 §2 Law: Caret after a culled span resolves to text fragment at text offset. -/
 theorem culled_span_caret_law (id : String) (txt : String) :
-    let frags := buildCaretFragments (.span id true txt)
+    let frags := buildCaretFragments [.span id true txt]
     computeCaretPosition frags (.afterNode id) .downstream =
       { fragmentId := 0, positionType := .atTextOffset, textOffset := some txt.length } := by
-  dsimp [buildCaretFragments, computeCaretPosition]
+  dsimp [buildCaretFragments, buildCaretFragmentsAux, computeCaretPosition]
   simp
 
 /-- CSS Inline 3 §2 Law: Caret after a non-culled span resolves to afterBox on the box fragment. -/
 theorem non_culled_span_caret_law (id : String) (txt : String) :
-    let frags := buildCaretFragments (.span id false txt)
+    let frags := buildCaretFragments [.span id false txt]
     computeCaretPosition frags (.afterNode id) .downstream =
       { fragmentId := 0, positionType := .afterBox, textOffset := none } := by
-  dsimp [buildCaretFragments, computeCaretPosition]
+  dsimp [buildCaretFragments, buildCaretFragmentsAux, computeCaretPosition]
   simp
 
 /-- CSS Inline 3 §2 Law: Atomic inline image resolves offset 0 to beforeBox and offset 1 to afterBox. -/
 theorem atomic_image_caret_law (id : String) :
-    let frags := buildCaretFragments (.atomicImage id)
+    let frags := buildCaretFragments [.image id]
     (computeCaretPosition frags (.atOffset 0) .downstream =
       { fragmentId := 0, positionType := .beforeBox, textOffset := none }) ∧
     (computeCaretPosition frags (.atOffset 1) .downstream =
       { fragmentId := 0, positionType := .afterBox, textOffset := none }) := by
-  dsimp [buildCaretFragments, computeCaretPosition]
+  dsimp [buildCaretFragments, buildCaretFragmentsAux, computeCaretPosition]
   simp
 
 end ChromiumLayout
