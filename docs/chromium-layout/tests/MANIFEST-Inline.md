@@ -465,6 +465,168 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
 | inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
 | inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
+| inline_layout_test.cc:32 | BlockWithSingleTextNode | behaviour | blocked | - | Blocked: model lacks CollectInlines tree traversal |
+| inline_layout_test.cc:59 | BlockWithTextAndAtomicInline | behaviour | blocked | - | Blocked: model lacks CollectInlines tree traversal |
+| layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | blocked | - | Blocked: model lacks line positioning for RTL and vertical writing modes in PhysicalLinesBoundingBox |
+| layout_inline_test.cc:69 | SimpleContinuation | internal | internal | - | LayoutObject tree continuation structure |
+| layout_inline_test.cc:93 | BlockInInlineRemove | internal | internal | - | DOM mutation and LayoutObject tree continuation updates |
+| layout_inline_test.cc:139 | RegionHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
+| layout_inline_test.cc:194 | RelativePositionedHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
+| layout_inline_test.cc:241 | MultilineRelativePositionedHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
+| layout_inline_test.cc:319 | HitTestCulledInlinePreWrap | behaviour | blocked | - | Blocked: model lacks inline hit testing |
+| layout_inline_test.cc:350 | DISABLED_FocusRingRecursiveContinuations | internal | internal | - | Disabled upstream test for continuation focus ring |
+| layout_inline_test.cc:382 | DISABLED_FocusRingRecursiveInlinesVerticalRL | internal | internal | - | Disabled upstream test for vertical focus ring |
+| layout_inline_test.cc:417 | DISABLED_FocusRingRecursiveContinuationsVerticalRL | internal | internal | - | Disabled upstream test for vertical continuation focus ring |
+| layout_inline_test.cc:452 | DISABLED_FocusRingRecursiveInlines | internal | internal | - | Disabled upstream test for inline focus ring |
+| layout_inline_test.cc:483 | AbsoluteBoundingBoxRectHandlingEmptyInline | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
+| layout_inline_test.cc:529 | AbsoluteBoundingBoxRectHandlingEmptyInlineVerticalRL | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
+| layout_inline_test.cc:575 | AddDraggableRegions | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
+| layout_inline_test.cc:609 | AddDraggableRegionsVerticalRL | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
+| layout_inline_test.cc:643 | VisualOverflowRecalcLegacyLayout | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
+| layout_inline_test.cc:689 | VisualOverflowRecalcLayoutNG | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
+| layout_inline_test.cc:733 | VisualOverflowRecalcLegacyLayoutPositionRelative | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
+| layout_text_test.cc:166 | PrewarmFamily | internal | internal | - | Font prewarming plumbing |
+| layout_text_test.cc:184 | PrewarmFontFace | internal | internal | - | Font prewarming plumbing |
+| layout_text_test.cc:212 | PrewarmGenericFamily | internal | internal | - | Font prewarming plumbing |
+| layout_text_test.cc:265 | MapDOMOffsetToTextContentOffset.Basic | behaviour | blocked | - | Blocked: model lacks parameterized multi-node DOM-to-text mapping |
+| layout_text_test.cc:282 | CharacterAfterWhitespaceCollapsing | behaviour | blocked | - | Blocked: model lacks multi-element whitespace context |
+| layout_text_test.cc:326 | CaretMinMaxOffset | behaviour | formalized | `layoutText_caretMinMaxOffset` | DOM caret minimum and maximum offsets under CSS whitespace collapsing |
+| layout_text_test.cc:344 | ResolvedTextLength | behaviour | formalized | `layoutText_resolvedTextLength` | Resolved non-collapsed text length for normal whitespace |
+| layout_text_test.cc:358 | ContainsCaretOffset | behaviour | formalized | `layoutText_containsCaretOffset` | Caret snap codes at all offsets of whitespace-collapsed text |
+| layout_text_test.cc:383 | ContainsCaretOffsetInPre | behaviour | formalized | `layoutText_containsCaretOffsetInPre` | Caret snap codes under white-space: pre preserving whitespace and newline barriers |
+| layout_text_test.cc:420 | ContainsCaretOffsetInPreLine | behaviour | blocked | - | Blocked: model lacks pre-line newline-preserving whitespace collapsing |
+| layout_text_test.cc:525 | ContainsCaretOffsetWithTrailingSpace | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
+| layout_text_test.cc:541 | ContainsCaretOffsetWithTrailingSpace1 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
+| layout_text_test.cc:568 | ContainsCaretOffsetWithTrailingSpace2 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
+| layout_text_test.cc:599 | ContainsCaretOffsetWithTrailingSpace3 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
+| layout_text_test.cc:625 | GetTextBoxInfoWithCollapsedWhiteSpace | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:654 | GetTextBoxInfoWithGeneratedContent | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:696 | GetTextBoxInfoWithHidden | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:726 | GetTextBoxInfoWithEllipsis | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:757 | GetTextBoxInfoWithEllipsisForPseudoAfter | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:788 | PlainTextInPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element PlainText |
+| layout_text_test.cc:826 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Non-collapsed snap codes on plain strings, inner runs, and leading spaces |
+| layout_text_test.cc:907 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | - | Blocked: model lacks line-wrap aware caret positioning |
+| layout_text_test.cc:972 | IsBeforeAfterNonCollapsedCharacterBR | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedCharacterBR` | Line break element emits newline with caret barrier after newline |
+| layout_text_test.cc:978 | AbsoluteQuads | geometry | blocked | - | Blocked: model lacks LayoutText::AbsoluteQuads |
+| layout_text_test.cc:998 | AbsoluteQuadsVRL | geometry | blocked | - | Blocked: model lacks LayoutText::AbsoluteQuads |
+| layout_text_test.cc:1020 | PhysicalLinesBoundingBox | geometry | blocked | - | Blocked: model lacks LayoutText::PhysicalLinesBoundingBox |
+| layout_text_test.cc:1064 | PhysicalLinesBoundingBoxTextCombine | geometry | blocked | - | Blocked: model lacks text-combine-upright bounding box |
+| layout_text_test.cc:1097 | PhysicalLinesBoundingBoxVerticalRL | geometry | blocked | - | Blocked: model lacks vertical-rl LayoutText bounding box |
+| layout_text_test.cc:1134 | WordBreakElement | behaviour | formalized | `layoutText_wordBreakElement` | `<wbr>` word-break opportunity element has 0 resolved length and min/max offset |
+| layout_text_test.cc:1146 | LocalSelectionRect | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1169 | LocalSelectionRectLineBreak | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1177 | LocalSelectionRectLineBreakPre | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1187 | LocalSelectionRectRTL | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1199 | LocalSelectionRectVertical | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1211 | LocalSelectionRectVerticalRTL | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1224 | LocalSelectionRectLineHeight | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1237 | LocalSelectionRectNegativeLeading | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1253 | LocalSelectionRectLineHeightVertical | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1269 | PositionForPointAtLeading | behaviour | blocked | - | Blocked: model lacks LayoutText::PositionForPoint |
+| layout_text_test.cc:1321 | FloatFirstLetterPlainText | behaviour | blocked | - | Blocked: model lacks first-letter layout |
+| layout_text_test.cc:1334 | SetTextWithOffsetAppendBidi | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1345 | SetTextWithOffsetAppendControl | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1357 | SetTextWithOffsetAppendCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1366 | SetTextWithOffsetAppend | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1379 | SetTextWithOffsetAppendEmojiWithZWJ | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1413 | SetTextWithOffsetDelete | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1425 | SetTextWithOffsetDeleteCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1434 | SetTextWithOffsetDeleteCollapseWhiteSpaceEnd | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1444 | SetTextWithOffsetCopyItemBefore | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1463 | SetTextWithOffsetDeleteNbspInPreWrap | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1475 | SetTextWithOffsetDeleteRTL | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1488 | SetTextWithOffsetDeleteRTL2 | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1502 | SetTextWithOffsetDeleteThenNonCollapse | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1515 | SetTextWithOffsetDeleteThenNonCollapse2 | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1528 | SetTextWithOffsetDeleteWithBidiControl | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1541 | SetTextWithOffsetDeleteWithGeneratedBreakOpportunity | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1556 | SetTextWithOffsetEditingTextCollapsedSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1568 | SetTextWithOffsetInsert | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1580 | SetTextWithOffsetInsertAfterSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1589 | SetTextWithOffsetInserBeforetSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1599 | SetTextWithOffsetInsertSameCharacters | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1612 | SetTextWithOffsetNoRelocation | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1624 | SetTextWithOffsetPrepend | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1636 | SetTextWithOffsetReplace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1648 | SetTextWithOffsetReplaceCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1657 | SetTextWithOffsetReplaceToExtend | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1669 | SetTextWithOffsetReplaceToShrink | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1681 | SetTextWithOffsetToEmpty | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1694 | TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | blocked | - | Blocked: model lacks text-transform: capitalize |
+| layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks text-transform: capitalize |
+| layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | internal | internal | - | Pseudo element text node presence check |
+| layout_text_test.cc:1755 | OriginalTextEmptyWhenTransformedTextIsNonEmpty | internal | internal | - | Marker pseudo element text presence check |
+| layout_text_fragment_test.cc:47 | Basics | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:61 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:81 | CaretMinMaxOffset | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:107 | CaretMinMaxOffsetSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:133 | CaretMinMaxOffsetCollapsedRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:151 | ResolvedTextLength | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:169 | ResolvedTextLengthSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:187 | ResolvedTextLengthCollapsedRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:197 | ContainsCaretOffset | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:244 | ContainsCaretOffsetSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:258 | ContainsCaretOffsetPre | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:273 | ContainsCaretOffsetPreLine | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:288 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:356 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | internal | internal | - | First-letter LayoutTextFragment mutation |
+| layout_text_fragment_test.cc:442 | SplitTextWithZero | internal | internal | - | DOM text split mutation |
+| layout_br_test.cc:14 | TextMethods | behaviour | formalized | `layoutBR_textMethods` | `<br>` generates an identity mapping unit with resolved length 1 and newline snap code |
+| layout_text_combine_test.cc:52 | AppendChild | internal | internal | - | DOM mutation in text-combine container |
+| layout_text_combine_test.cc:84 | BoxBoundary | internal | internal | - | Box boundary traversal in text combine |
+| layout_text_combine_test.cc:106 | DeleteDataToEmpty | internal | internal | - | CharacterData deletion in text combine |
+| layout_text_combine_test.cc:137 | ElementRecalcOwnStyle | internal | internal | - | Style recalc in text combine |
+| layout_text_combine_test.cc:166 | HtmlElement | internal | internal | - | Text combine inside html element |
+| layout_text_combine_test.cc:191 | InkOverflow | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:248 | InkOverflowEmphasisMark | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:307 | InkOverflowOverline | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:364 | InkOverflowUnderline | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:421 | InkOverflowWBR | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:488 | InsertBefore | internal | internal | - | DOM insertion in text combine |
+| layout_text_combine_test.cc:523 | InsertBR | internal | internal | - | BR insertion in text combine |
+| layout_text_combine_test.cc:540 | ScrollableOverflow | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:582 | ListItemStyleToImage | internal | internal | - | List item marker mutation |
+| layout_text_combine_test.cc:621 | ListMarkerWidthOfSymbol | geometry | blocked | - | Blocked: model lacks text-combine-upright list marker layout |
+| layout_text_combine_test.cc:644 | MultipleTextNode | internal | internal | - | Multiple text nodes in text combine |
+| layout_text_combine_test.cc:664 | Nested | internal | internal | - | Nested text combine elements |
+| layout_text_combine_test.cc:684 | Outline | geometry | blocked | - | Blocked: model lacks text-combine-upright outline layout |
+| layout_text_combine_test.cc:758 | PropageWritingModeFromBodyToHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright writing mode propagation |
+| layout_text_combine_test.cc:783 | PropageWritingModeFromBodyToVertical | behaviour | blocked | - | Blocked: model lacks text-combine-upright writing mode propagation |
+| layout_text_combine_test.cc:810 | RebuildLayoutTreeForDetails | internal | internal | - | Layout tree rebuild in details element |
+| layout_text_combine_test.cc:854 | RemoveBlockChild | internal | internal | - | DOM block removal in text combine |
+| layout_text_combine_test.cc:886 | RemoveChildCombine | internal | internal | - | DOM combine child removal |
+| layout_text_combine_test.cc:914 | RemoveChildToEmpty | internal | internal | - | DOM child removal to empty |
+| layout_text_combine_test.cc:944 | RemoveChildToOneCombinedText | internal | internal | - | DOM child removal to single combine |
+| layout_text_combine_test.cc:979 | ReplaceChildToOneCombinedText | internal | internal | - | DOM child replacement |
+| layout_text_combine_test.cc:1016 | SetDataToEmpty | internal | internal | - | Text mutation to empty |
+| layout_text_combine_test.cc:1046 | SplitText | internal | internal | - | Text split mutation |
+| layout_text_combine_test.cc:1081 | SplitTextAtZero | internal | internal | - | Text split at zero offset |
+| layout_text_combine_test.cc:1116 | SplitTextBeforeBox | internal | internal | - | Text split before box |
+| layout_text_combine_test.cc:1157 | StyleToTextCombineUprightAll | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1190 | StyleToTextCombineUprightNone | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1224 | StyleToHorizontalWritingMode | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1258 | StyleToHorizontalWritingModeWithWordBreak | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1282 | StyleToVerticalWritingMode | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1314 | VerticalWritingModeByBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1329 | VerticalWritingModeByWBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1344 | WithBidiControl | behaviour | blocked | - | Blocked: model lacks text-combine-upright bidi control |
+| layout_text_combine_test.cc:1363 | WithBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright with BR |
+| layout_text_combine_test.cc:1385 | WithMarker | behaviour | blocked | - | Blocked: model lacks text-combine-upright with marker |
+| layout_text_combine_test.cc:1412 | WithOrderedList | behaviour | blocked | - | Blocked: model lacks text-combine-upright with list |
+| layout_text_combine_test.cc:1431 | WithQuote | behaviour | blocked | - | Blocked: model lacks text-combine-upright with quotes |
+| layout_text_combine_test.cc:1456 | WithTab | behaviour | blocked | - | Blocked: model lacks text-combine-upright with tabs |
+| layout_text_combine_test.cc:1476 | WithTextIndent | geometry | blocked | - | Blocked: model lacks text-combine-upright text-indent |
+| layout_text_combine_test.cc:1493 | WithWordBreak | behaviour | blocked | - | Blocked: model lacks text-combine-upright with wbr |
+| layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | internal | internal | - | Svg parent LayoutObject check |
+| layout_text_combine_test.cc:1531 | InHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright in horizontal mode |
+| layout_text_combine_test.cc:1545 | InVertical | behaviour | blocked | - | Blocked: model lacks text-combine-upright in vertical mode |
+| layout_ruby_base_test.cc:16 | AddChildNoBlockChildren | internal | internal | - | Ruby base anonymous block child insertion |
+| layout_ruby_base_test.cc:30 | AddImageNoBlockChildren | internal | internal | - | Ruby base inline child insertion |
+| layout_ruby_base_test.cc:52 | AddSpecialWithTableInternalDisplayNoBlockChildren | internal | internal | - | Ruby base table child insertion |
+| layout_ruby_base_test.cc:73 | ChangeToRubyNoBlockChildren | internal | internal | - | Ruby base display style mutation |
+| layout_ruby_as_block_test.cc:14 | TextCombineCrash | internal | internal | - | Crash regression test for ruby block with text combine |
 ---
 
 ## Merge Notes
