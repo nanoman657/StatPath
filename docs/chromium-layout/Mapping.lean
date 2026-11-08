@@ -368,5 +368,173 @@ theorem flow_horizontalTb (p c : Frag) (up : List Hop) :
     (Node.flow .horizontalTb p c).hop up = (Node.block p c).hop up := by
   simp [Node.hop, LRect.toPhys, offIn]
 
+/-! ## Visual rectangles (section 6) -/
+
+def PRect.translate (r : PRect) (p : Pt) : PRect := ⟨r.x + p.x, r.y + p.y, r.w, r.h⟩
+
+/-- Intersection of two rectangles; empty (zero extent) when they do not overlap. -/
+def PRect.inter (a b : PRect) : PRect :=
+  let x := max a.x b.x
+  let y := max a.y b.y
+  ⟨x, y, max 0 (min (a.x + a.w) (b.x + b.w) - x), max 0 (min (a.y + a.h) (b.y + b.h) - y)⟩
+
+/-- Bounding box of two rectangles. -/
+def PRect.union (a b : PRect) : PRect :=
+  let x := min a.x b.x
+  let y := min a.y b.y
+  ⟨x, y, max (a.x + a.w) (b.x + b.w) - x, max (a.y + a.h) (b.y + b.h) - y⟩
+
+def PRect.isEmpty (r : PRect) : Bool := r.w ≤ 0 || r.h ≤ 0
+
+/-- `r` lies inside `a` (an empty `r` lies inside everything). -/
+def PRect.Within (r a : PRect) : Prop :=
+  r.w ≤ 0 ∨ r.h ≤ 0 ∨ (a.x ≤ r.x ∧ r.x + r.w ≤ a.x + a.w ∧ a.y ≤ r.y ∧ r.y + r.h ≤ a.y + a.h)
+
+/-- What clips the descendants of a box: `overflow` other than `visible` and `contain: paint` clip to
+    the padding box (CSS Overflow 3 §3.1 overflow clip edge, CSS Containment 2 §3.3 paint
+    containment), and `clip: rect(top, right, bottom, left)` on a positioned box clips to that
+    rectangle relative to the border box (CSS Masking 1 §6.1 the clip property). -/
+structure ClipStyle where
+  overflow : Bool := false
+  containPaint : Bool := false
+  css : Option (Int × Int × Int × Int) := none
+
+def ClipStyle.rect (st : ClipStyle) (pad : PRect) : Option PRect :=
+  let a := if st.overflow || st.containPaint then some pad else none
+  let c := st.css.map (fun (t, r, b, l) => PRect.mk l t (r - l) (b - t))
+  match a, c with
+  | some a, some c => some (a.inter c)
+  | a, none => a
+  | none, c => c
+
+/-- Padding box of a box with physical borders, inside its physical border box `p`. -/
+def paddingBox (b : BF) (p : PRect) : PRect :=
+  ⟨b.bl, b.bt, p.w - b.bl - b.br, p.h - b.bt - b.bb⟩
+
+/-- Physical border box of a fragment in its own coordinates, in writing mode `wm`. -/
+def physBox (wm : WM) (f : Frag) : PRect := (LRect.mk 0 0 f.w f.h).toPhys wm f.h
+
+/-- A box given by CSS physical `width` and `height`, as the logical box `BlockFlow` lays out:
+    in a vertical writing mode the CSS width is the block size (CSS Writing Modes 3 §7.1). -/
+def BF.ofPhys (wm : WM) (w h : Option Nat) (b : BF) : BF :=
+  match wm with
+  | .horizontalTb => { b with width := (w.map .px).getD b.width, height := h }
+  | _ => { b with width := (h.map .px).getD b.width, height := w }
+
+/-- Visual overflow of a box: its border box and its box shadows, offset by `(dx, dy)` and grown by
+    `spread` (CSS Backgrounds 3 §7.1; blur is not modelled). -/
+def visualOverflow (border : PRect) (shadows : List (Int × Int × Int)) : PRect :=
+  shadows.foldl (fun acc (dx, dy, sp) =>
+    acc.union ⟨border.x + dx - sp, border.y + dy - sp, border.w + 2 * sp, border.h + 2 * sp⟩) border
+
+/-- Per-object data of a visual-rect step: position, scroll position, scroll origin of the
+    contents space (nonzero for a flipped scroller), and the clip of its descendants. -/
+structure VP where
+  scroll : Pt := ⟨0, 0⟩
+  origin : Pt := ⟨0, 0⟩
+  clip : Option PRect := none
+
+/-- Rectangle leaving a container: moved by its scroll position, then clipped to its clip. With
+    `skip`, clips are ignored (`kSkipAncestorAndViewportClips`). -/
+def leave (skip : Bool) (o : VP) (r : PRect) : PRect :=
+  let r1 := r.translate ⟨-o.scroll.x, -o.scroll.y⟩
+  match o.clip with
+  | some c => if skip then r1 else r1.inter c
+  | none => r1
+
+/-- `MapToVisualRectInAncestorSpace`: hops and properties of the objects from the target up to the
+    child of the destination (leaf first); `d` is the destination's scroll origin. -/
+def mapV (skip : Bool) (d : Pt) : List (Hop × VP) → PRect → PRect
+  | [], r => r
+  | [(h, _)], r => (r.translate h).translate ⟨-d.x, -d.y⟩
+  | (h, _) :: (h', o') :: rest, r => mapV skip d ((h', o') :: rest) (leave skip o' (r.translate h))
+
+/-- Hops and properties of a chain of nodes. -/
+def vchain (ns : List Node) (ps : List VP) : List (Hop × VP) := (hops ns).zip ps
+
+/-- The intersection lies inside both operands. -/
+theorem inter_within_left (a b : PRect) : (a.inter b).Within a := by
+  unfold PRect.inter PRect.Within; dsimp only; omega
+
+theorem inter_within_right (a b : PRect) : (a.inter b).Within b := by
+  unfold PRect.inter PRect.Within; dsimp only; omega
+
+theorem within_trans (r a b : PRect) (h : r.Within a) (h' : a.Within b) : r.Within b := by
+  unfold PRect.Within at *; omega
+
+theorem translate_within (r a : PRect) (p : Pt) (h : r.Within a) : (r.translate p).Within (a.translate p) := by
+  unfold PRect.translate PRect.Within at *; dsimp only; omega
+
+/-- A box lies inside its visual overflow (`visualOverflow` only grows it). -/
+theorem union_left (a b : PRect) : a.Within (a.union b) := by
+  unfold PRect.union PRect.Within; dsimp only; omega
+
+theorem leave_within (o : VP) (r r' : PRect) (h : r.Within r') : (leave false o r).Within (leave true o r') := by
+  unfold leave
+  have h1 := translate_within r r' ⟨-o.scroll.x, -o.scroll.y⟩ h
+  cases hc : o.clip with
+  | none => simpa using h1
+  | some c =>
+      simp only [Bool.false_eq_true, ite_false, ite_true]
+      exact within_trans _ _ _ (inter_within_left _ _) h1
+
+/-- A visual rectangle is never larger than the unclipped one: mapping with the clips of the
+    ancestors leaves a rectangle inside what mapping without them gives
+    (`kSkipAncestorAndViewportClips`), whatever the chain. -/
+theorem mapV_within (d : Pt) (os : List (Hop × VP)) (r r' : PRect) (h : r.Within r') :
+    (mapV false d os r).Within (mapV true d os r') := by
+  induction os generalizing r r' with
+  | nil => simpa [mapV] using h
+  | cons x t ih =>
+      cases t with
+      | nil =>
+          simp only [mapV]
+          exact translate_within _ _ _ (translate_within _ _ _ h)
+      | cons y rest =>
+          simp only [mapV]
+          exact ih _ _ (leave_within _ _ _ (translate_within _ _ _ h))
+
+theorem translate_empty (r : PRect) (p : Pt) (h : r.isEmpty = true) : (r.translate p).isEmpty = true := by
+  unfold PRect.translate PRect.isEmpty at *
+  simp only [Bool.or_eq_true, decide_eq_true_eq] at *
+  exact h
+
+theorem leave_empty (skip : Bool) (o : VP) (r : PRect) (h : r.isEmpty = true) : (leave skip o r).isEmpty = true := by
+  unfold leave
+  have h1 := translate_empty r ⟨-o.scroll.x, -o.scroll.y⟩ h
+  cases hc : o.clip with
+  | none => simpa using h1
+  | some c =>
+      cases skip
+      · simp only [Bool.false_eq_true, ite_false]
+        unfold PRect.isEmpty PRect.inter PRect.translate at *
+        simp only [Bool.or_eq_true, decide_eq_true_eq] at *
+        omega
+      · simpa using h1
+
+/-- An empty rectangle stays empty along any chain. -/
+theorem mapV_empty (skip : Bool) (d : Pt) (os : List (Hop × VP)) (r : PRect) (h : r.isEmpty = true) :
+    (mapV skip d os r).isEmpty = true := by
+  induction os generalizing r with
+  | nil => simpa [mapV] using h
+  | cons x t ih =>
+      cases t with
+      | nil => simp only [mapV]; exact translate_empty _ _ (translate_empty _ _ h)
+      | cons y rest => simp only [mapV]; exact ih _ (leave_empty _ _ _ (translate_empty _ _ h))
+
+
+/-- The scroll and clip data of a box: its scroll position and origin, and the clip its
+    `ClipStyle` imposes on its descendants, in the box's physical coordinates. -/
+def VP.ofBox (wm : WM) (b : BF) (f : Frag) (st : ClipStyle) (scroll : Pt := ⟨0, 0⟩)
+    (origin : Pt := ⟨0, 0⟩) : VP :=
+  { scroll := scroll, origin := origin, clip := st.rect (paddingBox b (physBox wm f)) }
+
+/-- Shrink-to-fit inline size of an `auto`-width box (CSS 2.1 §10.3.7 absolutely positioned,
+    §10.3.5 floats): its max-content width. -/
+def shrinkWrap (b : BF) : BF :=
+  match b.width with
+  | .auto => { b with width := .px (maxContent fuel b - b.hpad) }
+  | _ => b
+
 end Mapping
 end ChromiumLayout

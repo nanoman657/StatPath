@@ -76,28 +76,28 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:2046 | MapCoordinatesTest.NestedElementCanvasTransformChildWithoutCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:2069 | MapCoordinatesTest.NestedElementCanvasTransformNonDrawableChild | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:2093 | MapCoordinatesTest.NestedElementCanvasTransformInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:126 | VisualRectMappingTest.LayoutText | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:165 | VisualRectMappingTest.LayoutTextContainerFlippedWritingMode | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:202 | VisualRectMappingTest.LayoutInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:240 | VisualRectMappingTest.LayoutInlineContainerFlippedWritingMode | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:281 | VisualRectMappingTest.SkipAncestorAndViewportClipFlag | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:338 | VisualRectMappingTest.SkipAncestorAndViewportClipFlagViewportSpace | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | geometry | blocked | not yet modelled (mapping lane, pending) |
+| visual_rect_mapping_test.cc:126 | VisualRectMappingTest.LayoutText | geometry | formalized | `TestsMapping.LayoutText_vectors` |
+| visual_rect_mapping_test.cc:165 | VisualRectMappingTest.LayoutTextContainerFlippedWritingMode | geometry | formalized | `TestsMapping.LayoutTextContainerFlippedWritingMode_vectors` |
+| visual_rect_mapping_test.cc:202 | VisualRectMappingTest.LayoutInline | geometry | formalized | `TestsMapping.LayoutInline_vectors` |
+| visual_rect_mapping_test.cc:240 | VisualRectMappingTest.LayoutInlineContainerFlippedWritingMode | geometry | formalized | `TestsMapping.LayoutInlineContainerFlippedWritingMode_vectors` |
+| visual_rect_mapping_test.cc:281 | VisualRectMappingTest.SkipAncestorAndViewportClipFlag | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipFlag_vectors` |
+| visual_rect_mapping_test.cc:338 | VisualRectMappingTest.SkipAncestorAndViewportClipFlagViewportSpace | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
+| visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipsInSubframe_vectors` |
 | visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:658 | VisualRectMappingTest.SelfFlippedWritingMode | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:681 | VisualRectMappingTest.ContainerFlippedWritingMode | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:722 | VisualRectMappingTest.ContainerOverflowScroll | geometry | blocked | not yet modelled (mapping lane, pending) |
+| visual_rect_mapping_test.cc:658 | VisualRectMappingTest.SelfFlippedWritingMode | geometry | formalized | `TestsMapping.SelfFlippedWritingMode_vectors` |
+| visual_rect_mapping_test.cc:681 | VisualRectMappingTest.ContainerFlippedWritingMode | geometry | formalized | `TestsMapping.ContainerFlippedWritingMode_vectors` |
+| visual_rect_mapping_test.cc:722 | VisualRectMappingTest.ContainerOverflowScroll | geometry | formalized | `TestsMapping.ContainerOverflowScroll_vectors` |
 | visual_rect_mapping_test.cc:778 | VisualRectMappingTest.ContainerFlippedWritingModeAndOverflowScroll | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:842 | VisualRectMappingTest.ContainerOverflowHidden | geometry | blocked | not yet modelled (mapping lane, pending) |
+| visual_rect_mapping_test.cc:842 | VisualRectMappingTest.ContainerOverflowHidden | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:873 | VisualRectMappingTest.ContainerFlippedWritingModeAndOverflowHidden | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:912 | VisualRectMappingTest.ContainerAndTargetDifferentFlippedWritingMode | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:955 | VisualRectMappingTest.DifferentPaintInvalidaitionContainerForAbsolutePosition | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:996 | VisualRectMappingTest.ContainerOfAbsoluteAbovePaintInvalidationContainer | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1031 | VisualRectMappingTest.CSSClip | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1046 | VisualRectMappingTest.ContainPaint | geometry | blocked | not yet modelled (mapping lane, pending) |
+| visual_rect_mapping_test.cc:1031 | VisualRectMappingTest.CSSClip | geometry | formalized | `TestsMapping.CSSClip_vectors` |
+| visual_rect_mapping_test.cc:1046 | VisualRectMappingTest.ContainPaint | geometry | formalized | `TestsMapping.ContainPaint_vectors` |
 | visual_rect_mapping_test.cc:1061 | VisualRectMappingTest.FloatUnderInline | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:1089 | VisualRectMappingTest.FloatUnderInlineVerticalRL | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:1120 | VisualRectMappingTest.InlineBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
