@@ -107,6 +107,15 @@ def graphemeLengths (s : String) : List Nat :=
 
 /-! ## 4. Intrinsic Min/Max Size Computation (`InlineNode::ComputeMinMaxSizes`) -/
 
+/-- CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax:
+    Finite numeric limit for layout coordinates and sizes in LayoutUnit (1/64 px fixed point).
+    kIntMax = (1 << 25) - 1 = 33554431. -/
+def layoutUnitMaxInt : Nat := 33554431
+
+/-- CSS Values and Units 3 §6: Values exceeding UA finite limits are clamped to the nearest supported value. -/
+def clampLayoutUnit (v : Nat) : Nat :=
+  if v > layoutUnitMaxInt then layoutUnitMaxInt else v
+
 structure MinMaxSizes where
   minSize : Nat := 0
   maxSize : Nat := 0
@@ -142,6 +151,28 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
       toSegments 0 wordsAfterPrev totalChars rest
   let (wordLengths, totalCharCount) := toSegments 0 [] 0 tokens
   let maxWord := wordLengths.foldl Nat.max 0
-  { minSize := maxWord * 10, maxSize := totalCharCount * 10 }
+  { minSize := clampLayoutUnit (maxWord * 10), maxSize := clampLayoutUnit (totalCharCount * 10) }
+
+/-! ## 5. General Laws for LayoutUnit Saturation (CSS Values and Units 3 §6) -/
+
+/-- CSS Values and Units 3 §6 Law: Values exceeding layoutUnitMaxInt clamp to layoutUnitMaxInt. -/
+theorem clampLayoutUnit_overflow (v : Nat) (h : v > layoutUnitMaxInt) :
+    clampLayoutUnit v = layoutUnitMaxInt := by
+  unfold clampLayoutUnit
+  simp [h]
+
+/-- CSS Values and Units 3 §6 Law: Values within layoutUnitMaxInt are preserved. -/
+theorem clampLayoutUnit_within (v : Nat) (h : ¬ (v > layoutUnitMaxInt)) :
+    clampLayoutUnit v = v := by
+  unfold clampLayoutUnit
+  simp [h]
+
+/-- CSS Values and Units 3 §6 Law: Clamped value never exceeds layoutUnitMaxInt. -/
+theorem clampLayoutUnit_le_max (v : Nat) :
+    clampLayoutUnit v ≤ layoutUnitMaxInt := by
+  unfold clampLayoutUnit
+  split
+  · exact Nat.le_refl _
+  · omega
 
 end ChromiumLayout

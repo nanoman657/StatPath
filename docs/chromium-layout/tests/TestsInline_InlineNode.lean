@@ -108,4 +108,17 @@ theorem inlineNode_textCombineWordSpacing :
     (effWordSpacing = 0) := by
   decide
 
+/-- Test: MinMaxSizesSaturated (`inline/inline_node_test.cc:675`).
+    CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax:
+    Extreme width (1e8px) saturates min size to LayoutUnit::kIntMax (33554431). -/
+theorem inlineNode_minMaxSizesSaturated :
+    let tokens := [
+      InlineCollectionToken.atomicInline 100000000,
+      InlineCollectionToken.text " ",
+      InlineCollectionToken.atomicInline 0
+    ]
+    let sizes := computeMinMaxSizesAhem tokens
+    sizes.minSize = 33554431 := by
+  decide
+
 end ChromiumLayout.TestsInline

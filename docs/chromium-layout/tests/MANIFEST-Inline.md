@@ -97,7 +97,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | internal | - | Bidi-override segmentation |
 | inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | internal | - | Bidi-isolate segmentation |
 | inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMaxData` | Intrinsic min/max sizes calculation under 10px fixed-width font across word boundaries |
-| inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | blocked | - | Blocked: model lacks LayoutUnit saturation in min-max computation |
+| inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSizesSaturated` | CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax: Extreme size saturates to finite implementation limit |
 | inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
 | inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
 | inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
