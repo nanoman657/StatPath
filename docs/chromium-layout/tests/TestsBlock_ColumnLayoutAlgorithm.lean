@@ -1091,5 +1091,20 @@ theorem BreakInsideAvoidAtColumnBoundary_vectors :
     res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 20 ∧ res[1]!.kids[0]!.h = 20 := by
   decide
 
+-- column_layout_algorithm_test.cc:2728: MinMax
+-- Intrinsic sizes for multicolumn: column-count + column-width, count-only, width-only.
+-- CSS Sizing 3 §4, CSS Sizing 4 §4.1.
+theorem MinMax_vectors :
+    -- Both column-count: 3 and column-width: 80 set (gap: 10, contentMin: 50, contentMax: 100)
+    (ColumnWidth.multicolMinMax 50 100 (some 3) (some 80) 10).1 = 50 ∧
+    (ColumnWidth.multicolMinMax 50 100 (some 3) (some 80) 10).2 = 320 ∧
+    -- Only column-count: 3 set
+    (ColumnWidth.multicolMinMax 50 100 (some 3) none 10).1 = 170 ∧
+    (ColumnWidth.multicolMinMax 50 100 (some 3) none 10).2 = 320 ∧
+    -- Only column-width: 80 set
+    (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).1 = 50 ∧
+    (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).2 = 80 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

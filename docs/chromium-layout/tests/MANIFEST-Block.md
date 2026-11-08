@@ -255,7 +255,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2633 | ColumnLayoutAlgorithmTest.NewFcWithMargin | geometry | formalized | `TestsBlock.NewFcWithMargin_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2665 | ColumnLayoutAlgorithmTest.NewFcBelowFloat | geometry | formalized | `TestsBlock.NewFcBelowFloat_vectors`, `ColumnLayout.new_fc_clears_float` |
 | column_layout_algorithm_test.cc:2697 | ColumnLayoutAlgorithmTest.NewFcWithMarginPastColumnBoundary | geometry | formalized | `TestsBlock.NewFcWithMarginPastColumnBoundary_vectors`, `ColumnLayout.forced_break_col` |
-| column_layout_algorithm_test.cc:2728 | ColumnLayoutAlgorithmTest.MinMax | geometry | blocked | needs multicolumn min/max-content intrinsic size resolution |
+| column_layout_algorithm_test.cc:2728 | ColumnLayoutAlgorithmTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `ColumnWidth.col_width_clamps_min` |
 | column_layout_algorithm_test.cc:2799 | ColumnLayoutAlgorithmTest.ColumnBalancing | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
 | column_layout_algorithm_test.cc:2829 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightExactMatch | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
 | column_layout_algorithm_test.cc:2860 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightLessContent | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
