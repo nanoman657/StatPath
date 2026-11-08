@@ -314,7 +314,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | blocked | - | Blocked: model lacks BlockInInline handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | blocked | - | Blocked: model lacks OpenCloseRubyColumns handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
-| inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | blocked | - | Blocked: model lacks Types layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | formalized | `inlineLayout_emptyLineBoxTypes` | Empty inline tags generate empty line box, text does not |
 | inline/inline_layout_algorithm_test.cc:113 | TypesForFirstLine | behaviour | blocked | - | Blocked: model lacks TypesForFirstLine layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:137 | TypesForBlockInInline | behaviour | blocked | - | Blocked: model lacks TypesForBlockInInline layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:192 | BreakToken | behaviour | formalized | `test_BreakToken_chain` | Chaining of inline break tokens across line layout passes |
@@ -322,7 +322,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_layout_algorithm_test.cc:291 | BoxForEndMargin | behaviour | blocked | - | Blocked: model lacks BoxForEndMargin layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:333 | InlineBoxBorderPadding | geometry | formalized | `test_InlineBoxBorderPadding_partition` | Border and padding partitioning across line breaks |
 | inline/inline_layout_algorithm_test.cc:397 | ContainerBorderPadding | geometry | blocked | - | Blocked: model lacks ContainerBorderPadding layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:431 | MAYBE_VerticalAlignBottomReplaced | geometry | blocked | - | Blocked: model lacks MAYBE_VerticalAlignBottomReplaced layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:431 | MAYBE_VerticalAlignBottomReplaced | geometry | formalized | `inlineLayout_verticalAlignBottomReplaced` | CSS 2.1 §10.8: bottom-aligned replaced element taller than strut determines line height with top offset 0 |
 | inline/inline_layout_algorithm_test.cc:454 | TextFloatsAroundFloatsBefore | geometry | formalized | `test_TextFloatsAroundFloatsBefore` | Line offsets around multiple active left floats |
 | inline/inline_layout_algorithm_test.cc:519 | TextFloatsAroundInlineFloatThatFitsOnLine | geometry | blocked | - | Blocked: model lacks TextFloatsAroundInlineFloatThatFitsOnLine layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:565 | TextFloatsAroundInlineFloatThatDoesNotFitOnLine | geometry | blocked | - | Blocked: model lacks TextFloatsAroundInlineFloatThatDoesNotFitOnLine layout algorithm support |
@@ -465,9 +465,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
 | inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
 | inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
-| inline_layout_test.cc:32 | BlockWithSingleTextNode | behaviour | blocked | - | Blocked: model lacks CollectInlines tree traversal |
-| inline_layout_test.cc:59 | BlockWithTextAndAtomicInline | behaviour | blocked | - | Blocked: model lacks CollectInlines tree traversal |
-| layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | blocked | - | Blocked: model lacks line positioning for RTL and vertical writing modes in PhysicalLinesBoundingBox |
+| inline_layout_test.cc:32 | BlockWithSingleTextNode | behaviour | formalized | `inlineLayout_blockWithSingleTextNode` | CSS 2.1 §9.4.2: Inline formatting context flattens DOM nodes into text stream |
+| inline_layout_test.cc:59 | BlockWithTextAndAtomicInline | behaviour | formalized | `inlineLayout_blockWithTextAndAtomicInline` | CSS 2.1 §9.4.2 & §10.8: Replaced atomic inline represented by object replacement character |
+| layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | formalized | `layoutInline_physicalLinesBoundingBox` | CSS 2.1 §9.4.2 & CSS Writing Modes 3 §4: Union of line fragment rectangles across LTR, RTL, and vertical-rl |
 | layout_inline_test.cc:69 | SimpleContinuation | internal | internal | - | LayoutObject tree continuation structure |
 | layout_inline_test.cc:93 | BlockInInlineRemove | internal | internal | - | DOM mutation and LayoutObject tree continuation updates |
 | layout_inline_test.cc:139 | RegionHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
