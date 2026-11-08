@@ -256,14 +256,14 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2665 | ColumnLayoutAlgorithmTest.NewFcBelowFloat | geometry | formalized | `TestsBlock.NewFcBelowFloat_vectors`, `ColumnLayout.new_fc_clears_float` |
 | column_layout_algorithm_test.cc:2697 | ColumnLayoutAlgorithmTest.NewFcWithMarginPastColumnBoundary | geometry | formalized | `TestsBlock.NewFcWithMarginPastColumnBoundary_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2728 | ColumnLayoutAlgorithmTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `ColumnWidth.col_width_clamps_min` |
-| column_layout_algorithm_test.cc:2799 | ColumnLayoutAlgorithmTest.ColumnBalancing | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2829 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightExactMatch | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2860 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightLessContent | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2891 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightOverflowingContent | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2927 | ColumnLayoutAlgorithmTest.ColumnBalancingMinHeight | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2960 | ColumnLayoutAlgorithmTest.ColumnBalancingMaxHeight | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:2993 | ColumnLayoutAlgorithmTest.ColumnBalancingMinHeightLargerThanMaxHeight | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:3027 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightMinHeight | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
+| column_layout_algorithm_test.cc:2799 | ColumnLayoutAlgorithmTest.ColumnBalancing | geometry | formalized | `TestsBlock.ColumnBalancing_vectors`, `ColumnLayout.bal_h_unconst` |
+| column_layout_algorithm_test.cc:2829 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightExactMatch | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightExactMatch_vectors`, `ColumnLayout.bal_h_le_height` |
+| column_layout_algorithm_test.cc:2860 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightLessContent | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightLessContent_vectors`, `ColumnLayout.bal_h_le_height` |
+| column_layout_algorithm_test.cc:2891 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightOverflowingContent | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightOverflowingContent_vectors`, `ColumnLayout.bal_h_le_height` |
+| column_layout_algorithm_test.cc:2927 | ColumnLayoutAlgorithmTest.ColumnBalancingMinHeight | geometry | formalized | `TestsBlock.ColumnBalancingMinHeight_vectors`, `ColumnLayout.cont_ge_min_h` |
+| column_layout_algorithm_test.cc:2960 | ColumnLayoutAlgorithmTest.ColumnBalancingMaxHeight | geometry | formalized | `TestsBlock.ColumnBalancingMaxHeight_vectors`, `ColumnLayout.bal_h_le_max_h` |
+| column_layout_algorithm_test.cc:2993 | ColumnLayoutAlgorithmTest.ColumnBalancingMinHeightLargerThanMaxHeight | geometry | formalized | `TestsBlock.ColumnBalancingMinHeightLargerThanMaxHeight_vectors`, `ColumnLayout.cont_ge_min_h` |
+| column_layout_algorithm_test.cc:3027 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightMinHeight | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightMinHeight_vectors`, `ColumnLayout.bal_h_le_max_h` |
 | column_layout_algorithm_test.cc:3063 | ColumnLayoutAlgorithmTest.ColumnBalancing100By3 | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
 | column_layout_algorithm_test.cc:3086 | ColumnLayoutAlgorithmTest.ColumnBalancingEmpty | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
 | column_layout_algorithm_test.cc:3109 | ColumnLayoutAlgorithmTest.ColumnBalancingEmptyBlock | geometry | blocked | needs column balancing binary search algorithm in multicolumn |

@@ -1106,5 +1106,122 @@ theorem MinMax_vectors :
     (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).2 = 80 := by
   decide
 
+-- column_layout_algorithm_test.cc:2799: ColumnBalancing
+-- CSS Multi-column Layout Level 1 §4: default column-fill: balance
+theorem ColumnBalancing_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 60 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 5 ∧ res.columns[0]!.relY = 5 ∧ res.columns[0]!.w = 100 ∧ res.columns[0]!.h = 50 ∧
+    res.columns[0]!.slices = [⟨0, 0, 0, 30, 50⟩] ∧
+    res.columns[1]!.relX = 115 ∧ res.columns[1]!.relY = 5 ∧ res.columns[1]!.w = 100 ∧ res.columns[1]!.h = 50 ∧
+    res.columns[1]!.slices = [⟨0, 0, 0, 30, 50⟩] ∧
+    res.columns[2]!.relX = 225 ∧ res.columns[2]!.relY = 5 ∧ res.columns[2]!.w = 100 ∧ res.columns[2]!.h = 50 ∧
+    res.columns[2]!.slices = [⟨0, 0, 0, 30, 50⟩] := by
+  decide
+
+-- column_layout_algorithm_test.cc:2829: ColumnBalancingFixedHeightExactMatch
+-- Fixed height matching balanced column height. CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingFixedHeightExactMatch_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, height := some 50, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 60 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 5 ∧ res.columns[0]!.w = 100 ∧ res.columns[0]!.h = 50 ∧
+    res.columns[1]!.relX = 115 ∧ res.columns[1]!.w = 100 ∧ res.columns[1]!.h = 50 ∧
+    res.columns[2]!.relX = 225 ∧ res.columns[2]!.w = 100 ∧ res.columns[2]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2860: ColumnBalancingFixedHeightLessContent
+-- Fixed height greater than balanced height keeps columns balanced. CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingFixedHeightLessContent_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, height := some 100, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 110 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 5 ∧ res.columns[0]!.h = 50 ∧
+    res.columns[1]!.relX = 115 ∧ res.columns[1]!.h = 50 ∧
+    res.columns[2]!.relX = 225 ∧ res.columns[2]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2891: ColumnBalancingFixedHeightOverflowingContent
+-- Fixed height smaller than balanced height clamps columns and creates overflow columns.
+-- CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingFixedHeightOverflowingContent_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, height := some 35, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 45 ∧ res.columns.length = 5 ∧
+    res.columns[0]!.relX = 5 ∧ res.columns[0]!.h = 35 ∧ res.columns[0]!.slices = [⟨0, 0, 0, 30, 35⟩] ∧
+    res.columns[1]!.relX = 115 ∧ res.columns[1]!.h = 35 ∧ res.columns[1]!.slices = [⟨0, 0, 0, 30, 35⟩] ∧
+    res.columns[2]!.relX = 225 ∧ res.columns[2]!.h = 35 ∧ res.columns[2]!.slices = [⟨0, 0, 0, 30, 35⟩] ∧
+    res.columns[3]!.relX = 335 ∧ res.columns[3]!.h = 35 ∧ res.columns[3]!.slices = [⟨0, 0, 0, 30, 35⟩] ∧
+    res.columns[4]!.relX = 445 ∧ res.columns[4]!.h = 35 ∧ res.columns[4]!.slices = [⟨0, 0, 0, 30, 10⟩] := by
+  decide
+
+-- column_layout_algorithm_test.cc:2927: ColumnBalancingMinHeight
+-- Min-height affects container box, not column fragment height. CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingMinHeight_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, minHeight := some 70, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 80 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.h = 50 ∧ res.columns[1]!.h = 50 ∧ res.columns[2]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2960: ColumnBalancingMaxHeight
+-- Max-height clamps column height and creates overflow columns. CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingMaxHeight_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, maxHeight := some 40, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 50 ∧ res.columns.length = 4 ∧
+    res.columns[0]!.relX = 5 ∧ res.columns[0]!.h = 40 ∧ res.columns[0]!.slices = [⟨0, 0, 0, 30, 40⟩] ∧
+    res.columns[1]!.relX = 115 ∧ res.columns[1]!.h = 40 ∧ res.columns[1]!.slices = [⟨0, 0, 0, 30, 40⟩] ∧
+    res.columns[2]!.relX = 225 ∧ res.columns[2]!.h = 40 ∧ res.columns[2]!.slices = [⟨0, 0, 0, 30, 40⟩] ∧
+    res.columns[3]!.relX = 335 ∧ res.columns[3]!.h = 40 ∧ res.columns[3]!.slices = [⟨0, 0, 0, 30, 30⟩] := by
+  decide
+
+-- column_layout_algorithm_test.cc:2993: ColumnBalancingMinHeightLargerThanMaxHeight
+-- Min-height > max-height wins for container box; columns remain balanced. CSS 2.1 §10.7, CSS Multicol 1 §4.
+theorem ColumnBalancingMinHeightLargerThanMaxHeight_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, minHeight := some 70, maxHeight := some 50, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 80 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.h = 50 ∧ res.columns[1]!.h = 50 ∧ res.columns[2]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3027: ColumnBalancingFixedHeightMinHeight
+-- Specified height clamped by max-height. CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingFixedHeightMinHeight_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, height := some 40, maxHeight := some 30, border := 3, padding := 2,
+      children := [⟨0, .px 30, 150⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 330 ∧ res.h = 40 ∧ res.columns.length = 5 ∧
+    res.columns[0]!.h = 30 ∧ res.columns[0]!.slices = [⟨0, 0, 0, 30, 30⟩] ∧
+    res.columns[1]!.h = 30 ∧ res.columns[1]!.slices = [⟨0, 0, 0, 30, 30⟩] ∧
+    res.columns[2]!.h = 30 ∧ res.columns[2]!.slices = [⟨0, 0, 0, 30, 30⟩] ∧
+    res.columns[3]!.h = 30 ∧ res.columns[3]!.slices = [⟨0, 0, 0, 30, 30⟩] ∧
+    res.columns[4]!.h = 30 ∧ res.columns[4]!.slices = [⟨0, 0, 0, 30, 30⟩] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
