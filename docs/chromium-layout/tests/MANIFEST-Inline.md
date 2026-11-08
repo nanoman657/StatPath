@@ -632,14 +632,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | list/layout_list_item_test.cc:18 | FindSymbolMarkerLayoutTextWithTextCombine | internal | internal | - | Traversal check for symbol marker text inside text combine |
 | list/layout_list_item_test.cc:37 | InsideWithFirstLine | behaviour | blocked | - | Blocked: model lacks inside list marker layout with ::first-line |
 | list/list_marker_test.cc:51 | FallbackToTextWhenImagesDisable | behaviour | blocked | - | Blocked: model lacks image list marker fallback |
-| list/list_marker_test.cc:71 | AddCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:105 | RemoveCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:135 | OverridePredefinedCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:160 | RemoveOverrideOfPredefinedCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:190 | OverrideSameScopeCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:220 | RemoveOverrideOfSameScopeCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:71 | AddCounterStyle | behaviour | formalized | `listMarker_addCounterStyle` | CSS Counter Styles 3 §2 & §3.1.2: Adding scoped @counter-style rules |
+| list/list_marker_test.cc:105 | RemoveCounterStyle | behaviour | formalized | `listMarker_removeCounterStyle` | CSS Counter Styles 3 §2: Removing @counter-style falls back to predefined style |
+| list/list_marker_test.cc:135 | OverridePredefinedCounterStyle | behaviour | formalized | `listMarker_overridePredefinedCounterStyle` | CSS Counter Styles 3 §2: Overriding predefined counter style with author rule |
+| list/list_marker_test.cc:160 | RemoveOverrideOfPredefinedCounterStyle | behaviour | formalized | `listMarker_removeOverrideOfPredefinedCounterStyle` | CSS Counter Styles 3 §2: Removing author override restores predefined counter style |
+| list/list_marker_test.cc:190 | OverrideSameScopeCounterStyle | behaviour | formalized | `listMarker_overrideSameScopeCounterStyle` | CSS Counter Styles 3 §2: Cascading override in same scope |
+| list/list_marker_test.cc:220 | RemoveOverrideOfSameScopeCounterStyle | behaviour | formalized | `listMarker_removeOverrideOfSameScopeCounterStyle` | CSS Counter Styles 3 §2: Removing same-scope override unshadows previous rule |
 | list/list_marker_test.cc:256 | ModifyShadowDOMWithOwnCounterStyles | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
-| list/list_marker_test.cc:335 | WidthOfSymbolForFontSizeZero | geometry | blocked | - | Blocked: model lacks ListMarker::WidthOfSymbol |
+| list/list_marker_test.cc:335 | WidthOfSymbolForFontSizeZero | geometry | formalized | `listMarker_widthOfSymbolForFontSizeZero` | CSS Lists 3 §3: Zero font size produces zero width symbol marker |
 | list/list_marker_test.cc:349 | InlineMarginsForOutside | geometry | blocked | - | Blocked: model lacks ListMarker::InlineMarginsForOutside |
 | geometry/axis_test.cc:14 | StreamOperators | internal | internal | - | Stream operator debugging output |
 | geometry/axis_test.cc:72 | LogicalAxesOperators | geometry | blocked | - | Blocked: model lacks bitwise enum operators for LogicalAxes |
