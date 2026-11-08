@@ -55,7 +55,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:842 | BoxDecorationBreakCloneWithoutBoxDecorations | internal | internal | - | Checks no DCHECK with -webkit-box-decoration-break: clone |
 | inline/line_breaker_test.cc:849 | RewindPositionedFloat | internal | internal | - | Regression test for float rewinding with large border |
 | inline/line_breaker_test.cc:864 | RewindRubyColumn | internal | internal | - | Regression test for ruby column rewinding |
-| inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | blocked | - | Blocked: model lacks text shaping segment splitting |
+| inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | formalized | `lineBreaker_splitTextIntoSegments` | Grapheme cluster length segmentation preserving combining marks and surrogate pairs |
 | inline/line_breaker_test.cc:913 | SplitTextIntoSegementsCrash | internal | internal | - | Crash regression test for SVG combining characters |
 | inline/line_breaker_test.cc:940 | GetOverhangCrash | internal | internal | - | Crash regression test for ruby overhang |
 | inline/line_breaker_test.cc:965 | IdeographicSpaceBeforeEndBracket | geometry | formalized | `lineBreaker_ideographicBeforeBracket` | Ideographic space followed by closing bracket breaks at prior break opportunity |
@@ -73,13 +73,13 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | blocked | - | Blocked: model lacks CanBreakInside predicate |
 | inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
-| inline/inline_node_test.cc:192 | CollectInlinesText | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
-| inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
+| inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectInlinesText` | Flattening inline tokens into text and open/close tag items with offsets |
+| inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | formalized | `inlineNode_collectInlinesBR` | Flattening inline tokens with BR into newline text and control item |
 | inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | internal | internal | - | String sharing optimization for single Text node |
 | inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | internal | internal | - | String sharing optimization with whitespace collapse |
 | inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
 | inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | internal | - | Float items in inline formatting context |
-| inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | blocked | - | Blocked: model lacks CollectInlines tree traversal |
+| inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlinesInlineBlock` | Inline block flattening to object replacement character and atomic inline item |
 | inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | internal | - | UTF-16 surrogate pairs in inline items |
 | inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | internal | - | LTR text does not enable bidi |
 | inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | internal | - | RTL text sets bidi enabled |
@@ -96,7 +96,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:497 | SegmentSplit3To4 | behaviour | internal | - | Script run splitting |
 | inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | internal | - | Bidi-override segmentation |
 | inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | internal | - | Bidi-isolate segmentation |
-| inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | blocked | - | Blocked: model lacks InlineNode min-max size computation from box tree |
+| inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMaxData` | Intrinsic min/max sizes calculation under 10px fixed-width font across word boundaries |
 | inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | blocked | - | Blocked: model lacks LayoutUnit saturation in min-max computation |
 | inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
 | inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |

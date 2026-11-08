@@ -6,6 +6,7 @@
 -/
 import LayoutTypes
 import LayoutInline
+import InlineShaping
 
 namespace ChromiumLayout.TestsInline
 
@@ -161,6 +162,14 @@ theorem lineBreaker_bidiControlEnter :
     let li : LineInfo := { items := [mkWord 1 30], inlineSize := 30, nonBreakItemCount := 1 }
     let lb := createLineBox strut li
     lb.metrics.lineHeight = 10 := by
+  decide
+
+/-! ### Test 28: SplitTextIntoSegments (line_breaker_test.cc:887) -/
+theorem lineBreaker_splitTextIntoSegments :
+    let chars := ['A', 'V', Char.ofNat 0x1F197, '\u05E2', '\u05B4', '\u05D1', '\u05E8', '\u05B4', '\u05D9', '\u05EA']
+    let lens := clusterUtf16Lengths chars
+    (lens.length = 8) ∧
+    (lens = [1, 1, 2, 2, 1, 2, 1, 1]) := by
   decide
 
 /-! ### General Line Breaker Progress Law -/

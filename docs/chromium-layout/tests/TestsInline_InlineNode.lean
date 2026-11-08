@@ -3,16 +3,96 @@
 
   Test vectors and theorems transcribed from:
   `third_party/blink/renderer/core/layout/inline/inline_node_test.cc`
-
-  Note: All tests in `inline_node_test.cc` are classified as either:
-  - `internal`: asserting C++ layout invalidation flags (NeedsCollectInlines, SetText, etc.)
-  - `blocked: model lacks CollectInlines tree traversal`: requiring DOM/HTML box tree parsing.
 -/
 import LayoutTypes
 import LayoutInline
+import InlineShaping
 
 namespace ChromiumLayout.TestsInline
 
--- All tests in inline_node_test.cc are classified as internal or blocked.
+open ChromiumLayout
+
+/-- Test: CollectInlinesText (inline_node_test.cc:192)
+    Collecting inline items across elements decomposes into text runs and open/close tags. -/
+theorem inlineNode_collectInlinesText :
+    let tokens := [
+      InlineCollectionToken.text "Hello ",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "inline",
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.text " world."
+    ]
+    let res := collectInlines tokens
+    (res.items.length = 5) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 6 }) ∧
+    (res.items[1]! = { itemType := .openTag, startOffset := 6, endOffset := 6 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 6, endOffset := 12 }) ∧
+    (res.items[3]! = { itemType := .closeTag, startOffset := 12, endOffset := 12 }) ∧
+    (res.items[4]! = { itemType := .text, startOffset := 12, endOffset := 19 }) := by
+  decide
+
+/-- Test: CollectInlinesBR (inline_node_test.cc:206)
+    Collecting inlines with BR emits a control item with newline. -/
+theorem inlineNode_collectInlinesBR :
+    let tokens := [
+      InlineCollectionToken.text "Hello",
+      InlineCollectionToken.br,
+      InlineCollectionToken.text "World"
+    ]
+    let res := collectInlines tokens
+    (res.text = "Hello\nWorld") ∧
+    (res.items.length = 3) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 5 }) ∧
+    (res.items[1]! = { itemType := .control, startOffset := 5, endOffset := 6 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 6, endOffset := 11 }) := by
+  decide
+
+/-- Test: CollectInlinesInlineBlock (inline_node_test.cc:306)
+    Inline-block appears as an object replacement character \uFFFC and an atomic inline item. -/
+theorem inlineNode_collectInlinesInlineBlock :
+    let tokens := [
+      InlineCollectionToken.text "abc",
+      InlineCollectionToken.atomicInline 10,
+      InlineCollectionToken.text "jkl"
+    ]
+    let res := collectInlines tokens
+    (res.text = "abc\uFFFCjkl") ∧
+    (res.items.length = 3) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 3 }) ∧
+    (res.items[1]! = { itemType := .atomicInline, startOffset := 3, endOffset := 4 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 4, endOffset := 7 }) := by
+  decide
+
+/-- Test: MinMaxTest.Data (inline_node_test.cc:649)
+    Intrinsic min/max size computation under 10px fixed-width Ahem font. -/
+theorem inlineNode_minMaxData :
+    -- "AB CDEF" -> {40, 70}
+    (computeMinMaxSizesAhem [InlineCollectionToken.text "AB CDEF"] = { minSize := 40, maxSize := 70 }) ∧
+    -- "A B<span>C D</span>" -> {20, 60}
+    (computeMinMaxSizesAhem [
+      InlineCollectionToken.text "A B",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "C D",
+      InlineCollectionToken.closeTag
+    ] = { minSize := 20, maxSize := 60 }) ∧
+    -- "Hello <img>." width 1em (10px) -> {50, 80}
+    (computeMinMaxSizesAhem [
+      InlineCollectionToken.text "Hello ",
+      InlineCollectionToken.atomicInline 10,
+      InlineCollectionToken.text "."
+    ] = { minSize := 50, maxSize := 80 }) ∧
+    -- "Hello <img>." width 5em (50px) -> {50, 120}
+    (computeMinMaxSizesAhem [
+      InlineCollectionToken.text "Hello ",
+      InlineCollectionToken.atomicInline 50,
+      InlineCollectionToken.text "."
+    ] = { minSize := 50, maxSize := 120 }) ∧
+    -- "Hello <img>." width 6em (60px) -> {60, 130}
+    (computeMinMaxSizesAhem [
+      InlineCollectionToken.text "Hello ",
+      InlineCollectionToken.atomicInline 60,
+      InlineCollectionToken.text "."
+    ] = { minSize := 60, maxSize := 130 }) := by
+  decide
 
 end ChromiumLayout.TestsInline
