@@ -142,9 +142,9 @@ checks every row against the pinned sources and the Lean modules.
 | relative_utils_test.cc:49 | RelativeUtilsTest.HorizontalTB | geometry | formalized | `TestsBlock.HorizontalTB_vectors`, `BlockRelative.opposing_sum_zero` |
 | absolute_utils_test.cc:150 | AbsoluteUtilsTest.Horizontal | geometry | formalized | `TestsBlock.Horizontal_vectors` |
 | absolute_utils_test.cc:315 | AbsoluteUtilsTest.Vertical | geometry | formalized | `TestsBlock.Vertical_vectors` |
-| absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | blocked | model lacks static position alignment for out-of-flow |
-| absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | blocked | model lacks min/max size clamping in out-of-flow dimension solver |
-| out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | blocked | model lacks out-of-flow fragment positioning inside positioned ancestor |
+| absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | formalized | `TestsBlock.CenterStaticPosition_vectors` |
+| absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `BlockAbsolute.clamp_bounds` |
+| out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | formalized | `TestsBlock.FixedInsideAbs_offsets`, `BlockAbsolute.explicit_inset_overrides_static`, `BlockAbsolute.auto_inset_uses_static` |
 | out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |

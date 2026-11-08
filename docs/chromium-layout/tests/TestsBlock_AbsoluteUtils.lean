@@ -60,4 +60,34 @@ theorem Vertical_vectors :
     (computeOof 300 (.px 5) .auto (.px 7) (.px 15) (.px 260) 60).size = 260 := by
   decide
 
+-- absolute_utils_test.cc:436: CenterStaticPosition
+theorem CenterStaticPosition_vectors :
+    -- Inline LTR
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center).size = 100 ∧
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center).insetStart = 100 ∧
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center).insetEnd = 0 ∧
+    -- Inline RTL
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center none none true).size = 100 ∧
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center none none true).insetStart = 100 ∧
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 100 (some 150) .center none none true).insetEnd = 0 ∧
+    -- Block LTR
+    (computeOofExtended 300 .auto .auto .auto .auto .auto 150 (some 200) .center).size = 150 ∧
+    (computeOofExtended 300 .auto .auto .auto .auto .auto 150 (some 200) .center).insetStart = 125 ∧
+    (computeOofExtended 300 .auto .auto .auto .auto .auto 150 (some 200) .center).insetEnd = 25 := by
+  decide
+
+-- absolute_utils_test.cc:474: MinMax
+theorem MinMax_vectors :
+    -- width < min gets set to min
+    (computeOofExtended 200 .auto .auto .auto .auto (.px 5) 0 none .start (some 70) (some 150)).size = 70 ∧
+    -- width > max gets set to max
+    (computeOofExtended 200 .auto .auto .auto .auto (.px 200) 0 none .start (some 70) (some 150)).size = 150 ∧
+    -- unspecified width clamped to min
+    (computeOofExtended 200 .auto .auto .auto .auto .auto 0 none .start (some 70) (some 150)).size = 70 ∧
+    -- height < min gets set to min
+    (computeOofExtended 300 .auto .auto .auto .auto (.px 5) 0 none .start (some 70) (some 150)).size = 70 ∧
+    -- height > max gets set to max
+    (computeOofExtended 300 .auto .auto .auto .auto (.px 200) 0 none .start (some 70) (some 150)).size = 150 := by
+  decide
+
 end TestsBlock
