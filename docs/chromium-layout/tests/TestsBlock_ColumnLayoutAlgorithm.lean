@@ -1,4 +1,5 @@
 import ColumnLayout
+import ColumnBreak
 
 namespace ChromiumLayout
 namespace TestsBlock
@@ -449,6 +450,57 @@ theorem BreakInsideAvoidTallBlock_vectors :
     res.length = 3 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
     res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.h = 100 ∧
     res[2]!.colIdx = 2 ∧ res[2]!.relY = 0 ∧ res[2]!.h = 70 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1174: NestedBreakInsideAvoid
+theorem NestedBreakInsideAvoid_vectors :
+    let nodes := [
+      BNode.leaf (.px 10) 50 .auto,
+      BNode.box (.px 30) .avoid [
+        BNode.leaf (.px 21) 30 .avoid,
+        BNode.leaf (.px 22) 30 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 10 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 30 ∧ res[1]!.h = 60 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.w = 21 ∧ res[1]!.kids[0]!.h = 30 ∧
+    res[1]!.kids[1]!.w = 22 ∧ res[1]!.kids[1]!.h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1215: NestedBreakInsideAvoidTall
+theorem NestedBreakInsideAvoidTall_vectors :
+    let nodes := [
+      BNode.leaf (.px 10) 50 .auto,
+      BNode.box (.px 30) .avoid [
+        BNode.leaf (.px 21) 30 .auto,
+        BNode.leaf (.px 22) 80 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 30 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 21 ∧ res[1]!.kids[0]!.h = 30 ∧
+    res[2]!.col = 2 ∧ res[2]!.y = 0 ∧ res[2]!.w = 30 ∧ res[2]!.h = 80 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.w = 22 ∧ res[2]!.kids[0]!.h = 80 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1258: BreakInsideAvoidAtColumnBoundary
+theorem BreakInsideAvoidAtColumnBoundary_vectors :
+    let nodes := [
+      BNode.leaf .auto 90 .auto,
+      BNode.box .auto .auto [
+        BNode.leaf (.px 20) 20 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.w = 100 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 20 ∧ res[1]!.kids[0]!.h = 20 := by
   decide
 
 end TestsBlock
