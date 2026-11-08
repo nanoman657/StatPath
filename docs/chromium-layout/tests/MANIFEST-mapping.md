@@ -19,7 +19,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:127 | MapCoordinatesTest.SimpleText | geometry | formalized | `TestsMapping.SimpleText_vectors` |
 | map_coordinates_test.cc:140 | MapCoordinatesTest.SimpleInline | geometry | formalized | `TestsMapping.SimpleInline_vectors` |
 | map_coordinates_test.cc:153 | MapCoordinatesTest.SimpleBlock | geometry | formalized | `TestsMapping.SimpleBlock_vectors` |
-| map_coordinates_test.cc:171 | MapCoordinatesTest.OverflowClip | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:171 | MapCoordinatesTest.OverflowClip | geometry | partly formalized | `TestsMapping.OverflowClip_vectors` covers the scrolled and unscrolled values; the geometry-mapper run reading stale paint properties right after the scroll is not modelled |
 | map_coordinates_test.cc:210 | MapCoordinatesTest.TextInRelPosInline | geometry | formalized | `TestsMapping.TextInRelPosInline_vectors` |
 | map_coordinates_test.cc:225 | MapCoordinatesTest.RelposInline | geometry | formalized | `TestsMapping.RelposInline_vectors` |
 | map_coordinates_test.cc:240 | MapCoordinatesTest.RelposInlineInRelposInline | geometry | formalized | `TestsMapping.RelposInlineInRelposInline_vectors` |
@@ -29,8 +29,8 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:385 | MapCoordinatesTest.FixedPos | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:444 | MapCoordinatesTest.FixedPosAuto | geometry | formalized | `TestsMapping.FixedPosAuto_vectors` |
 | map_coordinates_test.cc:504 | MapCoordinatesTest.FixedPosInFixedPos | geometry | formalized | `TestsMapping.FixedPosInFixedPos_vectors` |
-| map_coordinates_test.cc:573 | MapCoordinatesTest.FixedPosInFixedPosScrollView | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:610 | MapCoordinatesTest.FixedPosInAbsolutePosScrollView | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:573 | MapCoordinatesTest.FixedPosInFixedPosScrollView | geometry | formalized | `TestsMapping.FixedPosInFixedPosScrollView_vectors` |
+| map_coordinates_test.cc:610 | MapCoordinatesTest.FixedPosInAbsolutePosScrollView | geometry | formalized | `TestsMapping.FixedPosInAbsolutePosScrollView_vectors` |
 | map_coordinates_test.cc:647 | MapCoordinatesTest.FixedPosInTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:689 | MapCoordinatesTest.FixedPosInContainPaint | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:732 | MapCoordinatesTest.FixedPosInIFrameWhenMainFrameScrolled | geometry | blocked | not yet modelled (mapping lane, pending) |
@@ -63,13 +63,13 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1693 | MapCoordinatesTest.IgnoreScrollOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1693 | MapCoordinatesTest.IgnoreScrollOffset | geometry | formalized | `TestsMapping.IgnoreScrollOffset_vectors` |
+| map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | geometry | blocked | position:sticky offset (CSS Positioned Layout 3 §3.4) is not modelled |
+| map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | blocked | scroll origin and scrollable-overflow width of a vertical-rl scroller are not modelled |
+| map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | geometry | formalized | `TestsMapping.FixedPositionWithScrollOffset_vectors`, `Mapping.mapRange_oof` |
+| map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | geometry | blocked | scrollbar themes: engine service, parked |
 | map_coordinates_test.cc:1975 | MapCoordinatesTest.ElementCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1996 | MapCoordinatesTest.NestedElementCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:2021 | MapCoordinatesTest.NestedElementCanvasTransformWithOffset | geometry | blocked | not yet modelled (mapping lane, pending) |

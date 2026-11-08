@@ -55,12 +55,13 @@ def oofAxis (cbB st : Int) (inset : BlockAbsolute.InsetVal) (m : BlockAbsolute.M
 /-- The containing block of an out-of-flow box (CSS 2.1 §10.1): a box, whose padding box starts
     inside its border, or an inline box, which a relative offset shifts as a whole. -/
 inductive CB where
-  | box (b : BF)
+  | box (b : BF) (scroll : Pt := ⟨0, 0⟩)
   | inline (rel : Option BlockRelative.Insets := none)
 
-/-- Padding-box origin in the border-box (box) or the relative shift (inline). -/
+/-- Padding-box origin in the border-box (box, moved by the scroll offset of its content: CSSOM View
+    §13 `scrollLeft`/`scrollTop`, CSS Overflow 3 §2.2) or the relative shift (inline). -/
 def CB.origin : CB → Pt
-  | .box b => ⟨b.bl, b.bt⟩
+  | .box b s => ⟨b.bl - s.x, b.bt - s.y⟩
   | .inline r => ⟨(r.map (·.left)).getD 0, (r.map (·.top)).getD 0⟩
 
 /-- Content-box origin of a box inside its border box. -/
@@ -103,6 +104,7 @@ inductive Node where
   | oof (k : Nat) (cb : CB) (static : Pt) (top left : BlockAbsolute.InsetVal)
       (mt ml : BlockAbsolute.MarginVal)
   | inlineIn (container : BF)
+  | scrolled (s : Pt) (n : Node)
   | col (container : BF) (cs : Cols) (flow child : Frag) (rel : Option BlockRelative.Insets := none)
 
 /-- The hop of a node, given the hops of the ancestors above it. -/
@@ -110,12 +112,25 @@ def Node.hop (up : List Hop) : Node → Hop
   | .block p c r => ⟨(offIn p c).x + (r.map (·.left)).getD 0, (offIn p c).y + (r.map (·.top)).getD 0⟩
   | .inline _ => ⟨0, 0⟩
   | .inlineIn c => contentOrigin c
+  | .scrolled s n => ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩
   | .col c cs f ch r =>
       let q := cs.place (offIn f ch).x ch.w (offIn f ch).y
       ⟨(contentOrigin c).x + q.x + (r.map (·.left)).getD 0, (contentOrigin c).y + q.y + (r.map (·.top)).getD 0⟩
   | .oof k b st t l mt ml =>
       let o := mapUp (up.take k) ⟨0, 0⟩
       ⟨oofAxis (b.origin.x - o.x) st.x l ml, oofAxis (b.origin.y - o.y) st.y t mt⟩
+
+/-- The same containing block with its scroll offset ignored (`kIgnoreScrollOffset`). -/
+def CB.ignoreScroll : CB → CB
+  | .box b _ => .box b ⟨0, 0⟩
+  | c => c
+
+/-- The same node with every scroll offset ignored: a scroll container's offset is not
+    subtracted (`MapCoordinatesMode::kIgnoreScrollOffset`). -/
+def Node.ignoreScroll : Node → Node
+  | .scrolled _ n => n.ignoreScroll
+  | .oof k cb st t l mt ml => .oof k cb.ignoreScroll st t l mt ml
+  | n => n
 
 /-- Hops of a leaf-first node chain. -/
 def hops : List Node → List Hop
@@ -183,6 +198,20 @@ theorem inline_ignores_rel (r r' : Option BlockRelative.Insets) (up : List Hop) 
     in-flow offset. -/
 theorem block_rel_offset (p c : Frag) (i : BlockRelative.Insets) (up : List Hop) :
     (Node.block p c (some i)).hop up = ⟨(offIn p c).x + i.left, (offIn p c).y + i.top⟩ := rfl
+
+/-- A scroll container's offset moves everything mapped through it by exactly that offset. -/
+theorem scrolled_hop (s : Pt) (n : Node) (up : List Hop) :
+    (Node.scrolled s n).hop up = ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩ := rfl
+
+/-- Ignoring scroll removes the offset. -/
+theorem ignoreScroll_scrolled (s : Pt) (n : Node) : (Node.scrolled s n).ignoreScroll = n.ignoreScroll := rfl
+
+/-- Ignoring scroll twice is ignoring it once. -/
+theorem ignoreScroll_idem (n : Node) : n.ignoreScroll.ignoreScroll = n.ignoreScroll := by
+  induction n with
+  | scrolled s n ih => simpa [Node.ignoreScroll] using ih
+  | oof k cb st t l mt ml => cases cb <;> simp [Node.ignoreScroll, CB.ignoreScroll]
+  | _ => rfl
 
 /-- A slice `[i, k)` splits at any `j` between. -/
 theorem slice_split {α : Type} (l : List α) (i j k : Nat) (hij : i ≤ j) (hjk : j ≤ k) :
@@ -256,6 +285,20 @@ theorem Cols.place_y_lt (c : Cols) (fx : Int) (cw : Nat) (fy : Int) (h0 : 0 ≤ 
     0 ≤ (c.place fx cw fy).y ∧ (c.place fx cw fy).y < c.h := by
   rw [Cols.place_y c fx cw fy h0 hh]
   exact ⟨Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega)⟩
+
+/-- An out-of-flow box whose containing block is `k` steps up lands at the containing block's
+    padding-box origin plus inset plus margin, whatever the scroll offsets of the ancestors on the
+    way (a fixed box under a scrolled page stays where it is). -/
+theorem mapRange_oof (k : Nat) (cb : CB) (st : Pt) (t l : Int) (mt ml : BlockAbsolute.MarginVal)
+    (rest : List Node) (p : Pt) :
+    mapRange (Node.oof k cb st (.px t) (.px l) mt ml :: rest) 0 (k + 1) p
+      = ⟨p.x + cb.origin.x + l + (match ml with | .auto => 0 | .px v => v),
+         p.y + cb.origin.y + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
+  unfold mapRange
+  have : ((hops (Node.oof k cb st (.px t) (.px l) mt ml :: rest)).take (k + 1))
+      = Node.hop (hops rest) (.oof k cb st (.px t) (.px l) mt ml) :: (hops rest).take k := rfl
+  rw [this, List.drop_zero]
+  exact oof_to_cb k cb st t l mt ml (hops rest) p
 
 end Mapping
 end ChromiumLayout

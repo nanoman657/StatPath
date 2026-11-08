@@ -253,5 +253,72 @@ theorem MulticolWithAbsPosNotContained_vectors :
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨6, 6⟩ ∧ mapRange ns 1 2 ⟨6, 6⟩ = ⟨16, 16⟩ ∧
     mapRangeDown ns 1 2 ⟨16, 16⟩ = ⟨6, 6⟩ ∧ mapRangeDown ns 0 1 ⟨6, 6⟩ = ⟨0, 0⟩ := by decide
 
+/-! ### OverflowClip (171): `#overflow{height:100px; width:100px; border:8px; padding:7px;
+    overflow:scroll}` > [`div{height:200px}`, `#target{margin:10px; padding:666px}`]; scrolled to
+    (32, 54). The geometry-mapper run still reads the previous paint properties right after
+    `ScrollToAbsolutePositionForTest` (125,325); that stale state is not modelled, so the row is
+    `partly formalized`: these are the values of the updated state and of the unscrolled one. -/
+def overflowClip : BF :=
+  bp 8 7 { width := .px 100, height := some 100,
+           children := [{ height := some 200 }, mg 10 (bp 0 666 { id := 1 })] }
+
+theorem OverflowClip_vectors :
+    let f := layoutRoot 800 overflowClip
+    let ns (s : Pt) := [Node.scrolled s (.block f (f.kid 1))]
+    mapRange (ns ⟨0, 0⟩) 0 1 ⟨100, 100⟩ = ⟨125, 325⟩ ∧
+    mapRangeDown (ns ⟨0, 0⟩) 0 1 ⟨125, 325⟩ = ⟨100, 100⟩ ∧
+    mapRange (ns ⟨32, 54⟩) 0 1 ⟨100, 100⟩ = ⟨93, 271⟩ ∧
+    mapRangeDown (ns ⟨32, 54⟩) 0 1 ⟨93, 271⟩ = ⟨100, 100⟩ := by decide
+
+/-! ### Shared page for the scrolled-viewport tests: `body` (margin 8px) with the page scrolled by
+    `s`; the `html > view` step carries the viewport's scroll offset. -/
+def pageNodes (h body : Frag) (s : Pt) : List Node := [.block h body, .scrolled s (.block view h)]
+
+/-! ### FixedPosInFixedPosScrollView (573): `#container{position:fixed; top:100px; left:100px}` >
+    `#target{position:fixed; top:200px; left:200px}`, viewport scrolled by (0, 50). -/
+theorem FixedPosInFixedPosScrollView_vectors :
+    let h := layoutRoot 800 (htmlBody [{ id := 5 }])
+    let body := h.kid 0
+    let ns := [Node.oof 3 (.box {}) ⟨0, 0⟩ (.px 200) (.px 200) (.px 0) (.px 0),
+               .oof 2 (.box {}) (offIn body (body.kid 0)) (.px 100) (.px 100) (.px 0) (.px 0)]
+              ++ pageNodes h body ⟨0, 50⟩
+    mapRange ns 0 4 ⟨0, 0⟩ = ⟨200, 200⟩ ∧ mapRangeDown ns 0 4 ⟨200, 200⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨100, 100⟩ ∧ mapRangeDown ns 0 1 ⟨100, 100⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### FixedPosInAbsolutePosScrollView (610): `#container{position:absolute; top:100px; left:100px}`
+    (its containing block, the initial one, scrolls with the page) > fixed `#target{top:200px;
+    left:200px}`; viewport scrolled by (0, 50). -/
+theorem FixedPosInAbsolutePosScrollView_vectors :
+    let h := layoutRoot 800 (htmlBody [{ id := 5 }])
+    let body := h.kid 0
+    let ns := [Node.oof 3 (.box {}) ⟨0, 0⟩ (.px 200) (.px 200) (.px 0) (.px 0),
+               .oof 2 (.box {} ⟨0, 50⟩) (offIn body (body.kid 0)) (.px 100) (.px 100) (.px 0) (.px 0)]
+              ++ pageNodes h body ⟨0, 50⟩
+    mapRange ns 0 4 ⟨0, 0⟩ = ⟨200, 200⟩ ∧ mapRangeDown ns 0 4 ⟨200, 200⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨100, 150⟩ ∧ mapRangeDown ns 0 1 ⟨100, 150⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### IgnoreScrollOffset (1693): `#scroller{position:absolute; top:100px; overflow:scroll;
+    100×100}` > `#box{position:absolute; top:10px; 10×10}`; scrolled to (0, 50). -/
+def ignoreScrollNodes (s : Pt) : List Node :=
+  [Node.oof 0 (.box { width := .px 100, height := some 100 } s) ⟨0, 0⟩ (.px 10) .auto (.px 0) (.px 0)]
+
+theorem IgnoreScrollOffset_vectors :
+    mapRange (ignoreScrollNodes ⟨0, 0⟩) 0 1 ⟨0, 0⟩ = ⟨0, 10⟩ ∧
+    mapRange ((ignoreScrollNodes ⟨0, 0⟩).map Node.ignoreScroll) 0 1 ⟨0, 0⟩ = ⟨0, 10⟩ ∧
+    mapRange (ignoreScrollNodes ⟨0, 50⟩) 0 1 ⟨0, 0⟩ = ⟨0, -40⟩ ∧
+    mapRange ((ignoreScrollNodes ⟨0, 50⟩).map Node.ignoreScroll) 0 1 ⟨0, 0⟩ = ⟨0, 10⟩ := by decide
+
+/-! ### FixedPositionWithScrollOffset (1818): `#target{position:fixed;
+    top:200px; left:100px}` in `body`; whatever the scroll offset of the page, with or without
+    ignoring it, the target is mapped to the viewport at (100, 200). -/
+theorem FixedPositionWithScrollOffset_vectors (s : Pt) :
+    let h := layoutRoot 800 (htmlBody [{ id := 5 }])
+    let body := h.kid 0
+    let ns := Node.oof 2 (.box {}) ⟨0, 0⟩ (.px 200) (.px 100) (.px 0) (.px 0) :: pageNodes h body s
+    mapRange ns 0 3 ⟨0, 0⟩ = ⟨100, 200⟩ ∧ mapRange (ns.map Node.ignoreScroll) 0 3 ⟨0, 0⟩ = ⟨100, 200⟩ := by
+  intro h body ns
+  have key := fun rest => mapRange_oof 2 (.box {}) ⟨0, 0⟩ 200 100 (.px 0) (.px 0) rest ⟨0, 0⟩
+  exact ⟨key (pageNodes h body s), key ((pageNodes h body s).map Node.ignoreScroll)⟩
+
 end TestsMapping
 end ChromiumLayout
