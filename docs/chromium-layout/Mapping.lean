@@ -664,10 +664,10 @@ def layoutBox? : Display → BF → Option BF
   | .block, b => some b
 
 /-- An element with `display: none` has no layout object, whatever it contains. -/
-theorem layoutBox?_none (b : BF) : layoutBox? .none b = none := rfl
+theorem noBox_of_none (b : BF) : layoutBox? .none b = none := rfl
 
 /-- A displayed element keeps its box unchanged. -/
-theorem layoutBox?_block (b : BF) : layoutBox? .block b = some b := rfl
+theorem box_of_block (b : BF) : layoutBox? .block b = some b := rfl
 
 end Mapping
 end ChromiumLayout
