@@ -224,12 +224,12 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:1327 | ColumnLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomPastEndOfFragmentainer_vectors` |
 | column_layout_algorithm_test.cc:1362 | ColumnLayoutAlgorithmTest.MarginTopAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginTopAtEndOfFragmentainer_vectors` |
 | column_layout_algorithm_test.cc:1396 | ColumnLayoutAlgorithmTest.MarginBottomAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomAtEndOfFragmentainer_vectors` |
-| column_layout_algorithm_test.cc:1430 | ColumnLayoutAlgorithmTest.LinesInMulticolExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:1470 | ColumnLayoutAlgorithmTest.LinesInMulticolExactFit | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:1510 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:1552 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExactFit | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:1594 | ColumnLayoutAlgorithmTest.LinesInMulticolChildNoSpaceForFirst | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:1637 | ColumnLayoutAlgorithmTest.LinesInMulticolChildInsufficientSpaceForFirst | geometry | blocked | needs inline line box fragmentation in multicolumn |
+| column_layout_algorithm_test.cc:1430 | ColumnLayoutAlgorithmTest.LinesInMulticolExtraSpace | geometry | formalized | `TestsBlock.LinesInMulticolExtraSpace_vectors`, `ColumnLayout.line_moves_next_col` |
+| column_layout_algorithm_test.cc:1470 | ColumnLayoutAlgorithmTest.LinesInMulticolExactFit | geometry | formalized | `TestsBlock.LinesInMulticolExactFit_vectors`, `ColumnLayout.line_moves_next_col` |
+| column_layout_algorithm_test.cc:1510 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExtraSpace | geometry | formalized | `TestsBlock.LinesInMulticolChildExtraSpace_vectors`, `ColumnLayout.line_moves_next_col` |
+| column_layout_algorithm_test.cc:1552 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExactFit | geometry | formalized | `TestsBlock.LinesInMulticolChildExactFit_vectors`, `ColumnLayout.line_moves_next_col` |
+| column_layout_algorithm_test.cc:1594 | ColumnLayoutAlgorithmTest.LinesInMulticolChildNoSpaceForFirst | geometry | formalized | `TestsBlock.LinesInMulticolChildNoSpaceForFirst_vectors`, `ColumnLayout.line_moves_next_col` |
+| column_layout_algorithm_test.cc:1637 | ColumnLayoutAlgorithmTest.LinesInMulticolChildInsufficientSpaceForFirst | geometry | formalized | `TestsBlock.LinesInMulticolChildInsufficientSpaceForFirst_vectors`, `ColumnLayout.line_moves_next_col` |
 | column_layout_algorithm_test.cc:1681 | ColumnLayoutAlgorithmTest.LineAtColumnBoundaryInFirstBlock | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
 | column_layout_algorithm_test.cc:1725 | ColumnLayoutAlgorithmTest.LinesAndFloatsMulticol | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1774 | ColumnLayoutAlgorithmTest.FloatBelowLastLineInColumn | geometry | blocked | needs float fragmentation in multicolumn |

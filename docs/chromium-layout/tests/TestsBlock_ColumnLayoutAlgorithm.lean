@@ -369,6 +369,110 @@ theorem UnbreakableFloatBeforeBreakable_vectors :
     res[2]!.col = 1 ∧ res[2]!.x = 22 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 50 := by
   decide
 
+-- column_layout_algorithm_test.cc:1430: LinesInMulticolExtraSpace
+theorem LinesInMulticolExtraSpace_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 50 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1470: LinesInMulticolExactFit
+theorem LinesInMulticolExactFit_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 40 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 40 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1510: LinesInMulticolChildExtraSpace
+theorem LinesInMulticolChildExtraSpace_vectors :
+    let nodes := [
+      BNode.box (.px 77) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 77 ∧ res[0]!.h = 50 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1552: LinesInMulticolChildExactFit
+theorem LinesInMulticolChildExactFit_vectors :
+    let nodes := [
+      BNode.box (.px 77) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 40 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 77 ∧ res[0]!.h = 40 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1594: LinesInMulticolChildNoSpaceForFirst
+theorem LinesInMulticolChildNoSpaceForFirst_vectors :
+    let nodes := [
+      BNode.leaf (.px 100) 50,
+      BNode.box (.px 77) .auto (List.replicate 3 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[2]!.col = 2 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 77 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 2 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1637: LinesInMulticolChildInsufficientSpaceForFirst
+theorem LinesInMulticolChildInsufficientSpaceForFirst_vectors :
+    let nodes := [
+      BNode.leaf (.px 100) 40,
+      BNode.box (.px 77) .auto (List.replicate 3 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 40 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[2]!.col = 2 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 77 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 2 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
 -- column_layout_algorithm_test.cc:2391: BreakInsideWithBorder
 theorem BreakInsideWithBorder_vectors :
     let nodes := [

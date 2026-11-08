@@ -399,5 +399,16 @@ theorem float_avoid_push_col (fragH fc0 fy0 h mTop : Nat)
   have h1 : fragH - (fy0 + mTop) < h := h_fit
   simp [h1]
 
+/-- Law: An unbreakable line box that does not fit in remaining fragmentainer height moves to the next column.
+    CSS Fragmentation Level 3 §3.2, §4.1; CSS 2.1 §9.2.1.1. -/
+theorem line_moves_next_col (fragH c y lineH : Nat)
+    (hy : y > 0) (h_fit : fragH < y + lineH) :
+    let (c0, y0) := nodeStart fragH c y false true 0 lineH
+    c0 = c + 1 ∧ y0 = 0 := by
+  dsimp [nodeStart]
+  have h1 : y > 0 := hy
+  have h2 : fragH < y + lineH := h_fit
+  simp [h1, h2]
+
 end ColumnLayout
 end ChromiumLayout
