@@ -66,6 +66,20 @@ def resolveBoxCaret (fragId : Nat) (isAfter : Bool) : InlineCaretPosition :=
   else
     { fragmentId := fragId, positionType := .beforeBox, textOffset := none }
 
+/-- Caret resolution at text offset within a single fragment
+    (`inline/inline_caret_position.cc:280-340`). -/
+def resolveTextCaret (fragId : Nat) (offset : Nat) : InlineCaretPosition :=
+  { fragmentId := fragId, positionType := .atTextOffset, textOffset := some offset }
+
+/-- Caret resolution after an element node:
+    - If box is non-culled (generates box fragment), returns afterBox on that box fragment.
+    - If box is culled, returns atTextOffset at the text node length. -/
+def resolveAfterNodeCaret (isCulled : Bool) (boxFragId textFragId : Nat) (textLen : Nat) : InlineCaretPosition :=
+  if isCulled then
+    { fragmentId := textFragId, positionType := .atTextOffset, textOffset := some textLen }
+  else
+    { fragmentId := boxFragId, positionType := .afterBox, textOffset := none }
+
 /-! ## 3. General Laws for Inline Caret Position -/
 
 /-- Theorem: Upstream and downstream caret positions at a wrap boundary between distinct
@@ -81,5 +95,40 @@ theorem caret_wrap_affinity_targets_distinct (frag1 frag2 : Nat) (offset : Nat)
 theorem hyphen_horizontal_always_regular (isUpright : Bool) :
     hyphenGlyphRotation false isUpright = .regular := by
   dsimp [hyphenGlyphRotation]
+
+/-- General Law: Text caret position type is always atTextOffset for all fragment IDs and offsets. -/
+theorem resolveTextCaret_type (fragId offset : Nat) :
+    (resolveTextCaret fragId offset).positionType = .atTextOffset := by
+  rfl
+
+/-- General Law: Text caret offset is always the specified offset for all inputs. -/
+theorem resolveTextCaret_offset (fragId offset : Nat) :
+    (resolveTextCaret fragId offset).textOffset = some offset := by
+  rfl
+
+/-- General Law: Text caret fragment ID is always the specified fragment ID for all inputs. -/
+theorem resolveTextCaret_frag (fragId offset : Nat) :
+    (resolveTextCaret fragId offset).fragmentId = fragId := by
+  rfl
+
+/-- General Law: Culled span after-node caret resolves to atTextOffset on text fragment. -/
+theorem resolveAfterNodeCaret_culled (bf tf len : Nat) :
+    resolveAfterNodeCaret true bf tf len = { fragmentId := tf, positionType := .atTextOffset, textOffset := some len } := by
+  rfl
+
+/-- General Law: Non-culled span after-node caret resolves to afterBox on box fragment. -/
+theorem resolveAfterNodeCaret_non_culled (bf tf len : Nat) :
+    resolveAfterNodeCaret false bf tf len = { fragmentId := bf, positionType := .afterBox, textOffset := none } := by
+  rfl
+
+/-- General Law: Box caret before resolves to beforeBox for all fragment IDs. -/
+theorem resolveBoxCaret_before (fragId : Nat) :
+    resolveBoxCaret fragId false = { fragmentId := fragId, positionType := .beforeBox, textOffset := none } := by
+  rfl
+
+/-- General Law: Box caret after resolves to afterBox for all fragment IDs. -/
+theorem resolveBoxCaret_after (fragId : Nat) :
+    resolveBoxCaret fragId true = { fragmentId := fragId, positionType := .afterBox, textOffset := none } := by
+  rfl
 
 end ChromiumLayout
