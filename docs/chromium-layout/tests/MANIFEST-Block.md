@@ -1441,6 +1441,63 @@ checks every row against the pinned sources and the Lean modules.
 | exclusions/exclusion_space_test.cc:1083 | ExclusionSpaceTest.CopyOnWriteNoAllocationOnCopy | internal | internal | Blink ExclusionSpace copy-on-write memory allocation check |
 | exclusions/exclusion_space_test.cc:1162 | ExclusionSpaceTest.CopyOnWriteDisabledFallback | internal | internal | Blink ExclusionSpace copy-on-write memory allocation check |
 
+| forms/fieldset_layout_algorithm_test.cc:59 | FieldsetLayoutAlgorithmTest.Empty | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:78 | FieldsetLayoutAlgorithmTest.NoLegend | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:100 | FieldsetLayoutAlgorithmTest.Legend | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:124 | FieldsetLayoutAlgorithmTest.SmallLegendLargeBorder | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:150 | FieldsetLayoutAlgorithmTest.LegendOrthogonalWritingMode | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:176 | FieldsetLayoutAlgorithmTest.VerticalLr | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:202 | FieldsetLayoutAlgorithmTest.VerticalRl | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:228 | FieldsetLayoutAlgorithmTest.LegendAutoSize | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:257 | FieldsetLayoutAlgorithmTest.PercentageHeightChild | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:283 | FieldsetLayoutAlgorithmTest.AbsposChild | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:312 | FieldsetLayoutAlgorithmTest.ZeroHeight | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:340 | FieldsetLayoutAlgorithmTest.ZeroMaxHeight | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:372 | FieldsetLayoutAlgorithmTest.PercentHeightQuirks | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:404 | FieldsetLayoutAlgorithmTest.LegendPercentHeightQuirks | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:433 | FieldsetLayoutAlgorithmTest.FieldsetPaddingWithLegend | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:472 | FieldsetLayoutAlgorithmTest.MinMax | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:540 | FieldsetLayoutAlgorithmTest.NoFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:567 | FieldsetLayoutAlgorithmTest.SimpleFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:604 | FieldsetLayoutAlgorithmTest.FragmentationNoPadding | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:645 | FieldsetLayoutAlgorithmTest.FieldsetContentFragmentationAutoHeight | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:708 | FieldsetLayoutAlgorithmTest.FieldsetContentFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:771 | FieldsetLayoutAlgorithmTest.LegendFragmentationAutoHeight | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:821 | FieldsetLayoutAlgorithmTest.LegendFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:871 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationAutoHeight | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:937 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1001 | FieldsetLayoutAlgorithmTest.LegendFragmentationWithOverflow | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1052 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationNegativeMargin | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1107 | FieldsetLayoutAlgorithmTest.OverflowedLegend | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1151 | FieldsetLayoutAlgorithmTest.OverflowedFieldsetContent | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1224 | FieldsetLayoutAlgorithmTest.BreakInsideAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1271 | FieldsetLayoutAlgorithmTest.BreakInsideAvoidTallBlock | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1334 | FieldsetLayoutAlgorithmTest.LegendBreakInsideAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1387 | FieldsetLayoutAlgorithmTest.BreakBeforeAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1442 | FieldsetLayoutAlgorithmTest.LegendBreakBeforeAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1494 | FieldsetLayoutAlgorithmTest.BreakAfterAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1540 | FieldsetLayoutAlgorithmTest.LegendBreakAfterAvoid | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1594 | FieldsetLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1650 | FieldsetLayoutAlgorithmTest.SmallLegendLargeBorderFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1707 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderFragmentation | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1766 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderFragmentation2 | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/fieldset_layout_algorithm_test.cc:1818 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderWithBreak | geometry | blocked | model lacks fieldset layout algorithm (legend positioning and anonymous box) |
+| forms/layout_fieldset_test.cc:14 | LayoutFieldsetTest.AddChildWhitespaceCrash | internal | internal | Blink crash regression test |
+| forms/layout_fieldset_test.cc:31 | LayoutFieldsetTest.AddChildAnonymousInlineCrash | internal | internal | Blink crash regression test |
+| forms/layout_text_control_inner_editor_test.cc:12 | LayoutTextControlInnerEditorTest.AddChildWithoutTrailingLf | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_inner_editor_test.cc:43 | LayoutTextControlInnerEditorTest.AddChildWithTrailingLf | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_inner_editor_test.cc:85 | LayoutTextControlInnerEditorTest.RemoveChildWithoutTrailingLf | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_inner_editor_test.cc:114 | LayoutTextControlInnerEditorTest.AddChildBeforeTestRenderingHolder | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_inner_editor_test.cc:126 | LayoutTextControlInnerEditorTest.EnableDynamic | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_single_line_test.cc:13 | LayoutTextControlSingleLineTest.VisualOverflowCleared | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:56 | LayoutTextControlTest.ChangingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:74 | LayoutTextControlTest.ChangingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:92 | LayoutTextControlTest.AddingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:109 | LayoutTextControlTest.AddingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:126 | LayoutTextControlTest.RemovingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:142 | LayoutTextControlTest.RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | model lacks form text control layout |
+| forms/layout_text_control_test.cc:158 | LayoutTextControlTest.HitTestSearchInput | behaviour | blocked | model lacks form text control layout |
+
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
