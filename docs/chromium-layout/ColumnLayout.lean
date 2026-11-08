@@ -377,6 +377,17 @@ theorem spanner_margin_collapsing (m1 m2 : Nat) :
   · apply Nat.le_max_left
   · apply Nat.le_max_right
 
+/-- `break-inside` values. CSS Fragmentation Level 3 §3.2 (`break-inside`). -/
+inductive BreakInside where
+  | auto | avoid | avoidColumn | avoidPage
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Whether a `break-inside` value forbids a break inside the box in a column fragmentainer;
+    `avoid-page` only applies to page breaks. CSS Fragmentation Level 3 §3.2. -/
+def BreakInside.avoidsColumn : BreakInside → Bool
+  | .avoid | .avoidColumn => true
+  | _ => false
+
 /-- A child block with top and bottom margins inside a multicol container.
     CSS Fragmentation Level 3 §5.2 Adjoining Margins at Breaks. -/
 structure ColChildWithMargin where
@@ -385,6 +396,7 @@ structure ColChildWithMargin where
   height : Nat := 0
   marginTop : Nat := 0
   marginBottom : Nat := 0
+  breakInside : BreakInside := .auto
   deriving Inhabited, DecidableEq, Repr
 
 /-- Fragment slice of a child placed in a specific column fragmentainer.
@@ -426,7 +438,9 @@ def layoutFragmentedBlocks (fragH : Nat) (colW : Nat) (children : List ColChildW
       let w := resolveLen colW c.width
       let margin := Nat.max prevMarginBottom c.marginTop
       let candY := curY + margin
-      if curY > 0 && candY >= fragH then
+      -- CSS Fragmentation 3 §3.2: a box avoiding breaks inside that does not fit in the
+      -- remaining space moves to the next fragmentainer start (even if it is too tall there).
+      if curY > 0 && (candY >= fragH || (c.breakInside.avoidsColumn && candY + c.height > fragH)) then
         let (slices, nextCol, nextY) := placeChildSlices fragH w (c.height + 1) c.id c.height (colIdx + 1) 0
         slices ++ loop cs nextCol nextY c.marginBottom
       else
@@ -449,6 +463,25 @@ theorem single_child_slice_col_zero (fragH colW : Nat) (c : ColChildWithMargin) 
       exact Nat.min_eq_left h_fit
     · have h_min : Nat.min c.height fragH = c.height := Nat.min_eq_left h_fit
       omega
+
+/-- Law: a box avoiding column breaks that does not fit after its predecessor starts at the top of
+    the next column. CSS Fragmentation Level 3 §3.2 (`break-inside: avoid`). -/
+theorem avoid_moves_to_next_column (fragH colW : Nat) (c1 c2 : ColChildWithMargin)
+    (h1 : 0 < c1.height) (h1f : c1.height < fragH) (m1 : c1.marginBottom = 0) (m2 : c2.marginTop = 0)
+    (ha : c2.breakInside.avoidsColumn = true) (hf : fragH < c1.height + c2.height) (h2 : 0 < c2.height) :
+    ∃ s1 s2 rest, layoutFragmentedBlocks fragH colW [c1, c2] = s1 :: s2 :: rest ∧
+      s1.colIdx = 0 ∧ s2.colIdx = 1 ∧ s2.relY = 0 := by
+  have e1 : Nat.min c1.height fragH = c1.height := Nat.min_eq_left (by omega)
+  have e2 : c1.height - c1.height = 0 := Nat.sub_self _
+  have e3 : c1.height + 1 = (c1.height).succ := rfl
+  have e4 : ¬ (c1.height = 0) := by omega
+  have e5 : fragH - 0 = fragH := rfl
+  have e6 : 0 < fragH - c1.height := by omega
+  have e7 : ¬ (fragH ≤ c1.height + 0) := by omega
+  have hc : 0 < c1.height ∧ (fragH ≤ c1.height ∨ fragH < c1.height + c2.height) := by omega
+  have e8 : c2.height ≠ 0 := by omega
+  simp [layoutFragmentedBlocks, layoutFragmentedBlocks.loop, placeChildSlices, m1, m2, ha, e1, e2, e4, hc, e8]
+  split <;> exact ⟨_, _, ⟨rfl, _, rfl⟩, rfl, rfl, rfl⟩
 
 end ColumnLayout
 end ChromiumLayout

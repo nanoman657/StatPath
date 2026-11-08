@@ -426,5 +426,30 @@ theorem MarginBottomAtEndOfFragmentainer_vectors :
     res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
   decide
 
+-- column_layout_algorithm_test.cc:1042/1073/1137: break-inside on a 70px (170px) block after a
+-- 50px block in a 100px column.
+def breakInside_input (bi : BreakInside) (h : Nat) : List ColChildWithMargin :=
+  [{ id := 1, width := .px 10, height := 50 },
+   { id := 2, width := .px 20, height := h, breakInside := bi }]
+
+theorem BreakInsideAvoid_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoid 70)
+    res.length = 2 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 70 := by
+  decide
+
+theorem BreakInsideAvoidColumn_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoidColumn 70)
+    res.length = 2 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 70 := by
+  decide
+
+theorem BreakInsideAvoidTallBlock_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoid 170)
+    res.length = 3 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.h = 100 ∧
+    res[2]!.colIdx = 2 ∧ res[2]!.relY = 0 ∧ res[2]!.h = 70 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
