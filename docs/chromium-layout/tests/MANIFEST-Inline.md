@@ -627,6 +627,55 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_ruby_base_test.cc:52 | AddSpecialWithTableInternalDisplayNoBlockChildren | internal | internal | - | Ruby base table child insertion |
 | layout_ruby_base_test.cc:73 | ChangeToRubyNoBlockChildren | internal | internal | - | Ruby base display style mutation |
 | layout_ruby_as_block_test.cc:14 | TextCombineCrash | internal | internal | - | Crash regression test for ruby block with text combine |
+| list/layout_inline_list_item_test.cc:15 | GetOffsetMappingNoCrash | internal | internal | - | Crash regression test for layout inline list item offset mapping |
+| list/layout_inline_list_item_test.cc:41 | OffsetMappingBuilderNoCrash | internal | internal | - | Crash regression test for offset mapping builder |
+| list/layout_list_item_test.cc:18 | FindSymbolMarkerLayoutTextWithTextCombine | internal | internal | - | Traversal check for symbol marker text inside text combine |
+| list/layout_list_item_test.cc:37 | InsideWithFirstLine | behaviour | blocked | - | Blocked: model lacks inside list marker layout with ::first-line |
+| list/list_marker_test.cc:51 | FallbackToTextWhenImagesDisable | behaviour | blocked | - | Blocked: model lacks image list marker fallback |
+| list/list_marker_test.cc:71 | AddCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:105 | RemoveCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:135 | OverridePredefinedCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:160 | RemoveOverrideOfPredefinedCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:190 | OverrideSameScopeCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:220 | RemoveOverrideOfSameScopeCounterStyle | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:256 | ModifyShadowDOMWithOwnCounterStyles | behaviour | blocked | - | Blocked: model lacks @counter-style resolution |
+| list/list_marker_test.cc:335 | WidthOfSymbolForFontSizeZero | geometry | blocked | - | Blocked: model lacks ListMarker::WidthOfSymbol |
+| list/list_marker_test.cc:349 | InlineMarginsForOutside | geometry | blocked | - | Blocked: model lacks ListMarker::InlineMarginsForOutside |
+| geometry/axis_test.cc:14 | StreamOperators | internal | internal | - | Stream operator debugging output |
+| geometry/axis_test.cc:72 | LogicalAxesOperators | geometry | blocked | - | Blocked: model lacks bitwise enum operators for LogicalAxes |
+| geometry/axis_test.cc:138 | PhysicalAxesOperators | geometry | blocked | - | Blocked: model lacks bitwise enum operators for PhysicalAxes |
+| geometry/axis_test.cc:213 | ToPhysicalAxes | geometry | formalized | `axis_toPhysicalAxes` | Converts logical axes to physical axes under horizontal and vertical writing modes |
+| geometry/axis_test.cc:239 | ToLogicalAxes | geometry | formalized | `axis_toLogicalAxes` | Converts physical axes to logical axes under horizontal and vertical writing modes |
+| geometry/box_edge_test.cc:10 | Construction | geometry | formalized | `boxEdge_properties` | Constructs BoxEdge with offset and size |
+| geometry/box_edge_test.cc:16 | End | geometry | formalized | `boxEdge_properties` | Computes BoxEdge end offset as offset + size |
+| geometry/box_edge_test.cc:21 | IsEmpty | geometry | formalized | `boxEdge_properties` | Tests whether BoxEdge size is non-positive |
+| geometry/box_edge_test.cc:27 | Move | geometry | formalized | `boxEdge_properties` | Shifts BoxEdge offset by positive or negative delta |
+| geometry/box_edge_test.cc:38 | Equality | geometry | formalized | `boxEdge_properties` | Tests BoxEdge equality comparison |
+| geometry/box_edge_test.cc:46 | MathOperators | geometry | formalized | `boxEdge_properties` | Tests BoxEdge offset addition and subtraction |
+| geometry/box_sides_test.cc:14 | LogicalBoxSidesToLineLogical | geometry | formalized | `boxSides_logicalToLineLogical` | Converts logical box sides to line-logical box sides under LTR and RTL |
+| geometry/box_sides_test.cc:33 | PhysicalBoxSidesToLogical | geometry | formalized | `boxSides_physicalToLogical` | Converts physical box sides to logical box sides across writing modes and directions |
+| geometry/box_strut_test.cc:17 | ConvertPhysicalStrutToLogical | geometry | formalized | `boxStrut_convertPhysicalToLogical` | Converts physical box strut to logical box strut across writing modes and directions |
+| geometry/box_strut_test.cc:52 | ConvertLogicalStrutToPhysical | geometry | formalized | `boxStrut_convertLogicalToPhysical` | Roundtrip conversion between logical and physical box struts |
+| geometry/box_strut_test.cc:89 | Constructors | geometry | blocked | - | Blocked: model lacks 64-bit saturated LayoutUnit arithmetic |
+| geometry/box_strut_test.cc:99 | Enclosing | geometry | blocked | - | Blocked: model lacks floating point OutsetsF conversions |
+| geometry/box_strut_test.cc:114 | Unite | geometry | formalized | `boxStrut_unite` | Unites two physical box struts taking maximum along each edge |
+| geometry/layout_unit_diffuser_test.cc:17 | ThreeBuckets | geometry | blocked | - | Blocked: model lacks fractional LayoutUnit division remainder |
+| geometry/layout_unit_diffuser_test.cc:35 | FourBuckets | geometry | formalized | `layoutUnitDiffuser_buckets` | Diffuses fractional epsilon across 4 buckets using Bresenham stepping |
+| geometry/layout_unit_diffuser_test.cc:64 | SevenBuckets | geometry | formalized | `layoutUnitDiffuser_buckets` | Diffuses fractional epsilon across 7 buckets using Bresenham stepping |
+| geometry/logical_rect_test.cc:15 | AddOffset | geometry | formalized | `logicalRect_addOffsetAndUnite` | Translates LogicalRect by LogicalOffset |
+| geometry/logical_rect_test.cc:56 | Data | geometry | formalized | `logicalRect_addOffsetAndUnite` | Unites logical rectangles computing bounding box |
+| geometry/physical_rect_test.cc:17 | AddOffset | geometry | formalized | `physicalRect_operations` | Translates PhysicalRect by offset coordinates |
+| geometry/physical_rect_test.cc:58 | Data | geometry | formalized | `physicalRect_operations` | Unites physical rectangles computing bounding box |
+| geometry/physical_rect_test.cc:78 | SquaredDistanceTo | geometry | formalized | `physicalRect_operations` | Computes squared Euclidean distance from point to PhysicalRect |
+| geometry/physical_rect_test.cc:127 | InclusiveIntersect | geometry | formalized | `physicalRect_operations` | Computes inclusive intersection rectangle of two physical rects |
+| geometry/physical_rect_test.cc:146 | IntersectsInclusively | geometry | formalized | `physicalRect_operations` | Tests whether two physical rectangles intersect inclusively |
+| geometry/physical_rect_test.cc:191 | ToEnclosingRect | geometry | blocked | - | Blocked: model lacks floating point EnclosingRect |
+| geometry/physical_rect_test.cc:243 | EdgesOnPixelBoundaries | geometry | blocked | - | Blocked: model lacks pixel boundary checks |
+| geometry/physical_rect_test.cc:281 | ExpandEdgesToPixelBoundaries | geometry | blocked | - | Blocked: model lacks pixel boundary checks |
+| geometry/physical_rect_test.cc:335 | InfiniteIntRect | geometry | blocked | - | Blocked: model lacks InfiniteIntRect |
+| geometry/static_position_test.cc:331 | Convert | geometry | blocked | - | Blocked: model lacks StaticPosition::Convert |
+| geometry/writing_mode_converter_test.cc:15 | ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `writingModeConverter_toPhysical` | Converts logical offset to physical offset across writing modes and directions |
+| geometry/writing_mode_converter_test.cc:73 | ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `writingModeConverter_toLogical` | Converts physical offset to logical offset across writing modes and directions |
 ---
 
 ## Merge Notes
