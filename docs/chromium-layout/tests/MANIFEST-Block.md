@@ -1498,6 +1498,570 @@ checks every row against the pinned sources and the Lean modules.
 | forms/layout_text_control_test.cc:142 | LayoutTextControlTest.RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | model lacks form text control layout |
 | forms/layout_text_control_test.cc:158 | LayoutTextControlTest.HitTestSearchInput | behaviour | blocked | model lacks form text control layout |
 
+| shapes/box_shape_test.cc:82 | BoxShapeTest.zeroRadii | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/box_shape_test.cc:143 | BoxShapeTest.getIntervals | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:32 | EllipseShapeTest.ZeroRadii | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:41 | EllipseShapeTest.ZeroRadiusX | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:50 | EllipseShapeTest.ZeroRadiusY | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:59 | EllipseShapeTest.ZeroRadiiWithMargin | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:87 | EllipseShapeTest.NonZeroRadiiWithMargin | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+| shapes/ellipse_shape_test.cc:115 | EllipseShapeTest.ShapeMarginLogicalBoundingBoxWithFloatValues | geometry | blocked | model lacks CSS Shapes (shape-outside box/ellipse geometry) |
+
+| geometry/axis_test.cc:14 | AxisTest.StreamOperators | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/axis_test.cc:72 | AxisTest.LogicalAxesOperators | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/axis_test.cc:138 | AxisTest.PhysicalAxesOperators | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/axis_test.cc:213 | AxisTest.ToPhysicalAxes | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/axis_test.cc:239 | AxisTest.ToLogicalAxes | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_edge_test.cc:11 | BoxEdgeTest.Construction | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/box_edge_test.cc:17 | BoxEdgeTest.End | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_edge_test.cc:22 | BoxEdgeTest.IsEmpty | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_edge_test.cc:28 | BoxEdgeTest.Move | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_edge_test.cc:39 | BoxEdgeTest.Equality | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/box_edge_test.cc:47 | BoxEdgeTest.MathOperators | internal | internal | Blink C++ geometry operator/construction plumbing check |
+| geometry/box_sides_test.cc:13 | GeometryUnitsTest.LogicalBoxSidesToLineLogical | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_sides_test.cc:35 | GeometryUnitsTest.PhysicalBoxSidesToLogical | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/box_strut_test.cc:16 | GeometryUnitsTest.ConvertPhysicalStrutToLogical | geometry | formalized | `TestsBlock.ConvertPhysicalStrutToLogical_vectors` |
+| geometry/box_strut_test.cc:52 | GeometryUnitsTest.ConvertLogicalStrutToPhysical | geometry | formalized | `TestsBlock.ConvertLogicalStrutToPhysical_roundtrip`, `BlockWritingMode.toLogical_toPhysical` |
+| geometry/box_strut_test.cc:100 | PhysicalBoxStrutTest.Constructors | internal | internal | Blink LayoutUnit float rounding and saturation check |
+| geometry/box_strut_test.cc:111 | PhysicalBoxStrutTest.Enclosing | internal | internal | Blink LayoutUnit float rounding and saturation check |
+| geometry/box_strut_test.cc:126 | PhysicalBoxStrutTest.Unite | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/layout_unit_diffuser_test.cc:15 | LayoutUnitDiffuserTest.ThreeBuckets | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/layout_unit_diffuser_test.cc:35 | LayoutUnitDiffuserTest.FourBuckets | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/layout_unit_diffuser_test.cc:64 | LayoutUnitDiffuserTest.SevenBuckets | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/logical_rect_test.cc:15 | LogicalRectTest.AddOffset | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/logical_rect_test.cc:55 | LogicalRectUniteTest.Data | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:17 | PhysicalRectTest.AddOffset | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:58 | PhysicalRectUniteTest.Data | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:78 | PhysicalRectTest.SquaredDistanceTo | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:127 | PhysicalRectTest.InclusiveIntersect | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:146 | PhysicalRectTest.IntersectsInclusively | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:191 | PhysicalRectTest.ToEnclosingRect | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:243 | PhysicalRectTest.EdgesOnPixelBoundaries | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:281 | PhysicalRectTest.ExpandEdgesToPixelBoundaries | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/physical_rect_test.cc:335 | PhysicalRectTest.InfiniteIntRect | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/static_position_test.cc:331 | StaticPositionTest.Convert | geometry | blocked | model lacks 2D rectangle geometry manipulation operations |
+| geometry/writing_mode_converter_test.cc:15 | WritingModeConverterTest.ConvertLogicalOffsetToPhysicalOffset | geometry | blocked | model lacks WritingModeConverter 2D offset conversion |
+| geometry/writing_mode_converter_test.cc:73 | WritingModeConverterTest.ConvertPhysicalOffsetToLogicalOffset | geometry | blocked | model lacks WritingModeConverter 2D offset conversion |
+
+| list/layout_inline_list_item_test.cc:15 | LayoutInlineListItemTest.GetOffsetMappingNoCrash | internal | internal | Blink crash regression test |
+| list/layout_inline_list_item_test.cc:41 | LayoutInlineListItemTest.OffsetMappingBuilderNoCrash | internal | internal | Blink crash regression test |
+| list/layout_list_item_test.cc:18 | LayoutListItemTest.FindSymbolMarkerLayoutTextWithTextCombine | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/layout_list_item_test.cc:37 | LayoutListItemTest.InsideWithFirstLine | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:51 | ListMarkerTest.FallbackToTextWhenImagesDisable | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:71 | ListMarkerTest.AddCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:105 | ListMarkerTest.RemoveCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:135 | ListMarkerTest.OverridePredefinedCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:160 | ListMarkerTest.RemoveOverrideOfPredefinedCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:190 | ListMarkerTest.OverrideSameScopeCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:220 | ListMarkerTest.RemoveOverrideOfSameScopeCounterStyle | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:256 | ListMarkerTest.ModifyShadowDOMWithOwnCounterStyles | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:335 | ListMarkerTest.WidthOfSymbolForFontSizeZero | behaviour | blocked | model lacks list item marker formatting and layout |
+| list/list_marker_test.cc:349 | ListMarkerTest.InlineMarginsForOutside | behaviour | blocked | model lacks list item marker formatting and layout |
+| svg/layout_svg_container_test.cc:19 | LayoutSVGContainerTest.TransformAffectsVectorEffect | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_container_test.cc:70 | LayoutSVGContainerTest.TransformAffectsVectorEffectNestedSVG | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_container_test.cc:100 | LayoutSVGContainerTest.TransformAffectsVectorEffectHiddenContainerAndUse | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_container_test.cc:127 | LayoutSVGContainerTest.PatternWithContentVisibility | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_container_test.cc:161 | LayoutSVGContainerTest.BoundingBoxesWith3DTransformedChild | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_container_test.cc:180 | LayoutSVGContainerTest.MaskCacheClearedOnLastClientRemovedBeforeGCAndDisplayLock | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:18 | LayoutSVGForeignObjectTest.DivInForeignObject | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:76 | LayoutSVGForeignObjectTest.IframeInForeignObject | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:149 | LayoutSVGForeignObjectTest.HitTestZoomedForeignObject | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:216 | LayoutSVGForeignObjectTest.HitTestViewBoxForeignObject | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:247 | LayoutSVGForeignObjectTest.HitTestUnderClipPath | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:283 | LayoutSVGForeignObjectTest.HitTestUnderClippedPositionedForeignObjectDescendant | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:317 | LayoutSVGForeignObjectTest.HitTestUnderTransformedForeignObjectDescendant | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:351 | LayoutSVGForeignObjectTest.HitTestUnderScrollingAncestor | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:389 | LayoutSVGForeignObjectTest.BBoxPropagationZoomed | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:411 | LayoutSVGForeignObjectTest.SetNeedsCollectInlines | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:424 | LayoutSVGForeignObjectTest.SubtreeLayoutCrash | internal | internal | Blink crash regression test |
+| svg/layout_svg_foreign_object_test.cc:451 | LayoutSVGForeignObjectTest.ZoomChangesInvalidatePaintProperties | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:489 | LayoutSVGForeignObjectTest.DisplayLocked | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:507 | LayoutSVGForeignObjectTest.LocalToAncestorPoint | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:525 | LayoutSVGForeignObjectTest.GetBBoxUseCounterForZeroHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:545 | LayoutSVGForeignObjectTest.GetBBoxUseCounterForZeroWidth | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:565 | LayoutSVGForeignObjectTest.GetBBoxUseCounterForZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_foreign_object_test.cc:585 | LayoutSVGForeignObjectTest.GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_image_test.cc:16 | LayoutSVGImageTest.GetBBoxUseCounterForZeroHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_image_test.cc:34 | LayoutSVGImageTest.GetBBoxUseCounterForZeroWidth | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_image_test.cc:52 | LayoutSVGImageTest.GetBBoxUseCounterForZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_image_test.cc:70 | LayoutSVGImageTest.GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_inline_test.cc:13 | LayoutSVGInlineTest.IsChildAllowed | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_inline_test.cc:25 | LayoutSVGInlineTest.LocalToAncestorPoint | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_rect_test.cc:16 | LayoutSVGRectTest.GetBBoxUseCounterForZeroHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_rect_test.cc:34 | LayoutSVGRectTest.GetBBoxUseCounterForZeroWidth | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_rect_test.cc:52 | LayoutSVGRectTest.GetBBoxUseCounterForZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_rect_test.cc:70 | LayoutSVGRectTest.GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:27 | LayoutSVGRootTest.VisualRectMappingWithoutViewportClipWithBorder | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:54 | LayoutSVGRootTest.VisualOverflowExpandsLayer | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:74 | LayoutSVGRootTest.VisualRectMappingWithViewportClipAndBorder | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:101 | LayoutSVGRootTest.RectBasedHitTestPartialOverlap | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:132 | LayoutSVGRootTest.PaintLayerType | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_root_test.cc:155 | LayoutSVGRootTest.VisualRectMappingWithReferenceFilter | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_shape_test.cc:12 | LayoutSVGShapeTest.StrokeBoundingBoxOnEmptyShape | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_shape_test.cc:23 | LayoutSVGShapeTest.RectBasedHitTest_CircleEllipse | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_shape_test.cc:77 | LayoutSVGShapeTest.RectBasedHitTest_Rect | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_shape_test.cc:137 | LayoutSVGShapeTest.RectBasedHitTest_Path | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:13 | LayoutSVGTextTest.RectBasedHitTest | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:38 | LayoutSVGTextTest.RectBasedHitTest_RotatedText | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:67 | LayoutSVGTextTest.TransformAffectsVectorEffect | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:96 | LayoutSVGTextTest.AbsoluteQuads | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:115 | LayoutSVGTextTest.ObjectBoundingBox | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:136 | LayoutSVGTextTest.SubtreeLayout | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_text_test.cc:161 | LayoutSVGTextTest.WillBeRemovedFromTree | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_viewport_container_test.cc:16 | LayoutSVGViewportContainerTest.GetBBoxUseCounterForZeroHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_viewport_container_test.cc:36 | LayoutSVGViewportContainerTest.GetBBoxUseCounterForZeroWidth | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_viewport_container_test.cc:56 | LayoutSVGViewportContainerTest.GetBBoxUseCounterForZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/layout_svg_viewport_container_test.cc:76 | LayoutSVGViewportContainerTest.GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_layout_support_test.cc:14 | SVGLayoutSupportTest.FindClosestLayoutSVGText | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_layout_support_test.cc:35 | SVGLayoutSupportTest.VisualRectInAncestorSpaceContainerWithFilter | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_layout_support_test.cc:64 | SVGLayoutSupport3DTransformTest.VisualRectInDocumentWith3DTransform | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_layout_support_test.cc:80 | SVGLayoutSupport3DTransformTest.VisualRectInDocumentUnderSVGRootPerspective | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_layout_support_test.cc:95 | SVGLayoutSupport3DTransformTest.AbsoluteBoundingBoxUnderSVGRootPerspective | behaviour | blocked | model lacks SVG layout engine |
+| svg/svg_text_layout_algorithm_test.cc:12 | SvgTextLayoutAlgorithmTest.PositionOnPathCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_algorithm_test.cc:27 | SvgTextLayoutAlgorithmTest.EmptyTextLengthCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_algorithm_test.cc:38 | SvgTextLayoutAlgorithmTest.EmptyTextLengthSpacingAndGlyphsCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_algorithm_test.cc:47 | SvgTextLayoutAlgorithmTest.HugeScaleCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_algorithm_test.cc:62 | SvgTextLayoutAlgorithmTest.ControlCharCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_algorithm_test.cc:70 | SvgTextLayoutAlgorithmTest.FirstLineTextTransformCrash | internal | internal | Blink crash regression test |
+| svg/svg_text_layout_attributes_builder_test.cc:13 | SvgTextLayoutAttributesBuilderTest.TextPathCrash | internal | internal | Blink crash regression test |
+
+| inline/fragment_item_test.cc:67 | FragmentItemTest.CopyMove | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:126 | FragmentItemTest.BasicText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:173 | FragmentItemTest.RtlText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:235 | FragmentItemTest.BasicInlineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:291 | FragmentItemTest.CulledInlineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:328 | FragmentItemTest.SelfPaintingInlineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:357 | FragmentItemTest.StartOffsetInContainer | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:383 | FragmentItemTest.EllipsizedAtomicInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:417 | FragmentItemTest.LineFragmentId | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:451 | FragmentItemTest.Outline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:526 | FragmentItemInsertTest.MarkLineBoxesDirtyOnInsert | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:543 | FragmentItemInsertTest.MarkLineBoxesDirtyOnAppend | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:560 | FragmentItemInsertTest.MarkLineBoxesDirtyOnAppend2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:578 | FragmentItemInsertTest.MarkLineBoxesDirtyOnAppendAfterBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:596 | FragmentItemTest.MarkLineBoxesDirtyOnRemove | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:609 | FragmentItemRemoveTest.MarkLineBoxesDirtyOnRemoveFirst | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:624 | FragmentItemTest.MarkLineBoxesDirtyOnRemove2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:638 | FragmentItemRemoveTest.MarkLineBoxesDirtyOnRemoveAfterBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:654 | FragmentItemTest.MarkLineBoxesDirtyOnEndSpaceCollapsed | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:685 | FragmentItemTest.MarkLineBoxesDirtyOnNeedsLayoutFirst | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:699 | FragmentItemTest.MarkLineBoxesDirtyOnNeedsLayoutFirstWithBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:712 | FragmentItemTest.MarkLineBoxesDirtyOnNeedsLayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:727 | FragmentItemTest.MarkLineBoxesDirtyOnNeedsLayoutWithBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:743 | FragmentItemTest.MarkLineBoxesDirtyOnChildOfWrappedBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:760 | FragmentItemTest.MarkLineBoxesDirtyInInlineBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:773 | FragmentItemTest.MarkLineBoxesDirtyByRemoveChildAfterForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:787 | FragmentItemTest.MarkLineBoxesDirtyByRemoveForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:801 | FragmentItemTest.MarkLineBoxesDirtyByRemoveSpanWithForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:816 | FragmentItemTest.MarkLineBoxesDirtyByInsertAtStart | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:832 | FragmentItemTest.MarkLineBoxesDirtyByInsertAtLast | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:846 | FragmentItemTest.MarkLineBoxesDirtyByInsertAtMiddle | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:862 | FragmentItemTest.MarkLineBoxesDirtyByTextSetData | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:876 | FragmentItemTest.MarkLineBoxesDirtyWrappedLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:895 | FragmentItemTest.MarkLineBoxesDirtyInsideInlineBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:910 | FragmentItemTest.Disabled_DebugVisualizers | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:931 | FragmentItemTest.CaretInlinePositionForOffset_TextFit | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_item_test.cc:952 | FragmentItemTest.IsRubyAnnotationLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_items_builder_test.cc:23 | FragmentItemsBuilderTest.MultipleLogicalLineItems | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_items_test.cc:20 | FragmentItemsTest.DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/fragment_items_test.cc:46 | FragmentItemsTest.IsContainerForCulledInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/hyphen_result_test.cc:37 | HyphenResultTest.Horizontal | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/hyphen_result_test.cc:53 | HyphenResultTest.VerticalUpright | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/hyphen_result_test.cc:70 | HyphenResultTest.VerticalMixed | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:69 | InlineCaretPositionTest.AfterSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:79 | InlineCaretPositionTest.AfterSpanCulled | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:89 | InlineCaretPositionTest.InlineCaretPositionInOneLineOfText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:115 | InlineCaretPositionTest.InlineCaretPositionAtSoftHyphen | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:130 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrap | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:146 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapWithSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:169 | InlineCaretPositionTest.InlineCaretPositionAtForcedLineBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:190 | InlineCaretPositionTest.InlineCaretPositionAtEmptyLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:203 | InlineCaretPositionTest.InlineCaretPositionInOneLineOfImage | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:221 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapBetweenImages | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:238 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodes | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:263 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapBetweenMultipleTextNodesRtl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:288 | InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapBetweenDeepTextNodes | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:315 | InlineCaretPositionTest.GeneratedZeroWidthSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:345 | InlineCaretPositionTest.MultiColumnSingleText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:452 | InlineCaretPositionTest.SoftLineWrap | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:481 | InlineCaretPositionTest.ZeroWidthSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:509 | InlineCaretPositionTest.InlineBlockBeforeContent | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:528 | InlineCaretPositionTest.InlineBoxesLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:559 | InlineCaretPositionTest.InlineBoxesRTL | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_caret_position_test.cc:591 | InlineCaretPositionTest.BeforeOrAfterInlineAreaElement | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:125 | InlineCursorTest.BidiLevelInlineBoxLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:135 | InlineCursorTest.BidiLevelInlineBoxRTL | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:145 | InlineCursorTest.BidiLevelSimpleLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:155 | InlineCursorTest.BidiLevelSimpleRTL | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:166 | InlineCursorTest.BidiLevelFirstLineTextTransform | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:175 | InlineCursorTest.BidiLevelFirstLineTextTransformBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:184 | InlineCursorTest.GetLayoutBlockFlowWithScopedCursor | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:191 | InlineCursorTest.Parent | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:226 | InlineCursorTest.ContainingLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:257 | InlineCursorTest.CulledInlineWithAtomicInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:271 | InlineCursorTest.CulledInlineWithFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:281 | InlineCursorTest.CulledInlineWithOOF | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:292 | InlineCursorTest.CulledInlineNested | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:303 | InlineCursorTest.CulledInlineBlockChild | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:318 | InlineCursorTest.CulledInlineWithRoot | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:328 | InlineCursorTest.CulledInlineWithoutRoot | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:339 | InlineCursorTest.CursorForMovingAcrossFragmentainer | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:365 | InlineCursorTest.FirstChild | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:375 | InlineCursorTest.FirstChild2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:388 | InlineCursorTest.FirstLastLogicalLeafInSimpleText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:403 | InlineCursorTest.FirstLastLogicalLeafInRtlText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:420 | InlineCursorTest.FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:439 | InlineCursorTest.MoveToEndOfLineWithNoCharsLtr | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:470 | InlineCursorTest.MoveToEndOfLineWithNoCharsRtl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:502 | InlineCursorTest.FirstLastLogicalLeafWithInlineBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:520 | InlineCursorTest.FirstLastLogicalLeafWithImages | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:534 | InlineCursorTest.FirstNonPseudoLeafWithBlockImage | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:554 | InlineCursorTest.IsEmptyLineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:565 | InlineCursorTest.LastChild | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:575 | InlineCursorTest.LastChild2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:588 | InlineCursorTest.Next | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:614 | InlineCursorTest.NextIncludingFragmentainer | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:635 | InlineCursorTest.NextWithEllipsis | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:650 | InlineCursorTest.NextWithEllipsisInlineBoxOnly | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:665 | InlineCursorTest.NextWithListItem | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:675 | InlineCursorTest.NextWithSoftHyphens | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:685 | InlineCursorTest.NextInlineLeaf | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:698 | InlineCursorTest.NextInlineLeafOnLineFromLayoutInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:716 | InlineCursorTest.NextInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:738 | InlineCursorTest.NextInlineLeafOnLineFromLayoutText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:756 | InlineCursorTest.NextInlineLeafWithEllipsis | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:776 | InlineCursorTest.NextInlineLeafWithSoftHyphens | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:788 | InlineCursorTest.NextInlineLeafIgnoringLineBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:800 | InlineCursorTest.NextLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:821 | InlineCursorTest.NextWithImage | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:827 | InlineCursorTest.NextWithInlineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:839 | InlineCursorTest.NextForSameLayoutObject | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:847 | InlineCursorTest.NextForSameLayoutObjectWithRange | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:882 | InlineCursorTest.Sibling | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:893 | InlineCursorTest.Sibling2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:905 | InlineCursorTest.NextSkippingChildren | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:938 | InlineCursorTest.EmptyOutOfFlow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:952 | InlineCursorTest.PositionForPointInChildHorizontalLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:988 | InlineCursorTest.PositionForPointInChildHorizontalRTL | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1025 | InlineCursorTest.PositionForPointInChildVerticalLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1061 | InlineCursorTest.PositionForPointInChildVerticalRTL | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1099 | InlineCursorTest.PositionForPointInChildBlockChildren | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1110 | InlineCursorTest.Previous | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1124 | InlineCursorTest.PreviousIncludingFragmentainer | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1145 | InlineCursorTest.PreviousInlineLeaf | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1158 | InlineCursorTest.PreviousInlineLeafIgnoringLineBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1171 | InlineCursorTest.PreviousInlineLeafOnLineFromLayoutInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1189 | InlineCursorTest.PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1211 | InlineCursorTest.PreviousInlineLeafOnLineFromLayoutText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1229 | InlineCursorTest.PreviousLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1250 | InlineCursorTest.CursorForDescendants | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1292 | InlineCursorTest.MoveToVisualFirstOrLast | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1318 | InlineCursorBlockFragmentationTest.MoveToLayoutObject | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1455 | InlineCursorBlockFragmentationTest.CulledInlineBlockInInlineOverflow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_cursor_test.cc:1473 | InlineCursorTest.CulledInlineWithNonIFCChild | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:206 | InlineItemsBuilderTest.CollapseSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:216 | InlineItemsBuilderTest.CollapseTabs | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:226 | InlineItemsBuilderTest.CollapseNewLines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:236 | InlineItemsBuilderTest.CollapseNewlinesAsSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:243 | InlineItemsBuilderTest.CollapseAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:248 | InlineItemsBuilderTest.CollapseLeadingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:254 | InlineItemsBuilderTest.CollapseTrailingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:260 | InlineItemsBuilderTest.CollapseAllSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:267 | InlineItemsBuilderTest.CollapseLeadingNewlines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:281 | InlineItemsBuilderTest.CollapseTrailingNewlines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:289 | InlineItemsBuilderTest.CollapseNewlineAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:295 | InlineItemsBuilderTest.CollapseBeforeAndAfterNewline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:301 | InlineItemsBuilderTest.CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:309 | InlineItemsBuilderTest.CollapseZeroWidthSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:334 | InlineItemsBuilderTest.CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:340 | InlineItemsBuilderTest.CollapseEastAsianWidth | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:357 | InlineItemsBuilderTest.OpaqueToSpaceCollapsing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:367 | InlineItemsBuilderTest.CollapseAroundReplacedElement | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:375 | InlineItemsBuilderTest.CollapseNewlineAfterObject | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:387 | InlineItemsBuilderTest.AppendEmptyString | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:393 | InlineItemsBuilderTest.NewLines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:405 | InlineItemsBuilderTest.IgnorablePre | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:426 | InlineItemsBuilderTest.Empty | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:446 | CollapsibleSpaceTest.CollapsedSpaceAfterNoWrap | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:455 | InlineItemsBuilderTest.GenerateBreakOpportunityAfterLeadingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:469 | InlineItemsBuilderTest.BidiBlockOverride | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:501 | InlineItemsBuilderTest.BidiIsolate | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:526 | InlineItemsBuilderTest.BidiIsolateOverride | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:551 | InlineItemsBuilderTest.BlockInInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:561 | InlineItemsBuilderTest.OpenCloseRubyColumns | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_items_builder_test.cc:638 | InlineItemsBuilderTest.OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:97 | InlineLayoutAlgorithmTest.Types | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:113 | InlineLayoutAlgorithmTest.TypesForFirstLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:137 | InlineLayoutAlgorithmTest.TypesForBlockInInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:192 | InlineLayoutAlgorithmTest.BreakToken | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:245 | InlineLayoutAlgorithmTest.EmptyLineWithOutOfFlowInInlineContainingBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:291 | InlineLayoutAlgorithmTest.BoxForEndMargin | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:333 | InlineLayoutAlgorithmTest.InlineBoxBorderPadding | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:397 | InlineLayoutAlgorithmTest.ContainerBorderPadding | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:431 | InlineLayoutAlgorithmTest.MAYBE_VerticalAlignBottomReplaced | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:454 | InlineLayoutAlgorithmTest.TextFloatsAroundFloatsBefore | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:519 | InlineLayoutAlgorithmTest.TextFloatsAroundInlineFloatThatFitsOnLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:565 | InlineLayoutAlgorithmTest.TextFloatsAroundInlineFloatThatDoesNotFitOnLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:596 | InlineLayoutAlgorithmTest.FloatsArePositionedWithRespectToTopEdgeAlignmentRule | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:635 | InlineLayoutAlgorithmTest.BlockInInlineAppend | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:670 | InlineLayoutAlgorithmTest.PositionFloatsWithMargins | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:694 | InlineLayoutAlgorithmTest.InkOverflow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:718 | InlineLayoutAlgorithmTest.TextCombineBasic | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:745 | InlineLayoutAlgorithmTest.TextCombineFake | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:775 | InlineLayoutAlgorithmTest.InitialLetterEmpty | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:790 | InlineLayoutAlgorithmTest.InitialLetterWithEmptyInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:806 | InlineLayoutAlgorithmTest.LineBoxWithHangingWidthRTLRightAligned | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:839 | InlineLayoutAlgorithmTest.LineBoxWithHangingWidthRTLCenterAligned | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:888 | InlineLayoutAlgorithmTest.TextBoxTrimConstraintSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:944 | InlineLayoutAlgorithmTest.TextBoxTrimConstraintSpaceSingle | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:967 | InlineLayoutAlgorithmTest.TextBoxTrimConstraintSpaceEmptyOnly | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:984 | InlineLayoutAlgorithmTest.TextBoxTrimConstraintSpaceNone | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:999 | InlineLayoutAlgorithmTest.TextFitDivisionByZero | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1008 | InlineLayoutAlgorithmTest.BoxFragmentInRubyCrash | internal | internal | Blink crash regression test |
+| inline/inline_layout_algorithm_test.cc:1026 | InlineLayoutAlgorithmTest.BidiControlsInLineClampedLines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1044 | InlineLayoutAlgorithmTest.LineClampAndMaxContent | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1086 | InlineLayoutAlgorithmTest.EllipsisFallbackToDots | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1129 | InlineLayoutAlgorithmTest.EllipsisFallbackToDotsFirstLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1175 | InlineLayoutAlgorithmTest.TextEmphasisAsRuby | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1272 | InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsVerticalLr | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1276 | InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsVerticalRl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1280 | InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsHorizontal | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1373 | InlineLayoutAlgorithmTest.RubyTextEmphasisHeight | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_layout_algorithm_test.cc:1406 | InlineLayoutAlgorithmTest.TextBoxTrimOnInlineBox | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:51 | InlineNodeShapeCacheTest.ShapeCacheMultipleItems | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:58 | InlineNodeShapeCacheTest.ShapeCacheOpenAndCloseTags | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:65 | InlineNodeShapeCacheTest.ShapeCacheSpacingRequired | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:73 | InlineNodeShapeCacheTest.ShapeCacheNewLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:79 | InlineNodeShapeCacheTest.ShapeCacheBreakLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:85 | InlineNodeShapeCacheTest.ShapeCacheBreakWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:91 | InlineNodeShapeCacheTest.ShapeResultPointerEqualNewLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:105 | InlineNodeShapeCacheTest.ShapeCacheFloating | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:111 | InlineNodeShapeCacheTest.ShapeCacheOutOfFlowPositioned | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:118 | InlineNodeShapeCacheTest.ShapeCacheFontFeatures | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:126 | InlineNodeShapeCacheTest.ShapeCacheSpacing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:135 | InlineNodeShapeCacheTest.ShapeResultPointerEqualFloatsAndOutOfFlow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_shape_cache_test.cc:152 | InlineNodeShapeCacheTest.ShapeResultPointerEqualInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:192 | InlineNodeTest.CollectInlinesText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:206 | InlineNodeTest.CollectInlinesBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:245 | InlineNodeTest.ShareInlineTextContentSingleSource | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:256 | InlineNodeTest.ShareInlineTextContentLargeNotSharedWhenCollapsed | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:274 | InlineNodeTest.ShareInlineTextContentLargeNotSharedSameLength | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:284 | InlineNodeTest.CollectInlinesFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:306 | InlineNodeTest.CollectInlinesInlineBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:322 | InlineNodeTest.CollectInlinesUTF16 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:331 | InlineNodeTest.CollectInlinesMaybeRtl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:344 | InlineNodeTest.CollectInlinesRtl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:353 | InlineNodeTest.CollectInlinesRtlWithSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:369 | InlineNodeTest.CollectInlinesMixedText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:385 | InlineNodeTest.CollectInlinesMixedTextEndWithON | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:402 | InlineNodeTest.CollectInlinesTextCombineBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:418 | InlineNodeTest.CollectInlinesTextCombineListItemMarker | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:438 | InlineNodeTest.CollectInlinesTextCombineNewline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:453 | InlineNodeTest.CollectInlinesTextCombineWBR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:468 | InlineNodeTest.SegmentASCII | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:477 | InlineNodeTest.SegmentHebrew | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:487 | InlineNodeTest.SegmentSplit1To2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:497 | InlineNodeTest.SegmentSplit3To4 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:511 | InlineNodeTest.SegmentBidiOverride | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:541 | InlineNodeTest.SegmentBidiIsolate | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:649 | MinMaxTest.Data | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:675 | InlineNodeTest.MinMaxSizesSaturated | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:698 | InlineNodeTest.MinMaxSizesNeedsLayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:716 | InlineNodeTest.AssociatedItemsWithControlItem | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:734 | InlineNodeTest.NeedsCollectInlinesOnSetText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:767 | InlineNodeTest.SetTextWithOffsetWithTextTransform | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:960 | InlineNodeTest.NeedsCollectInlinesOnInsertToOutOfFlowButton | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1034 | InlineNodeTest.CollectInlinesShouldNotClearFirstInlineFragment | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1058 | InlineNodeTest.SegmentBidiChangeSetsNeedsLayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1082 | InlineNodeTest.InvalidateAddSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1097 | InlineNodeTest.InvalidateRemoveSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1107 | InlineNodeTest.InvalidateAddInnerSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1123 | InlineNodeTest.InvalidateRemoveInnerSpan | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1133 | InlineNodeTest.InvalidateSetText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1142 | InlineNodeTest.InvalidateAddAbsolute | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1159 | InlineNodeTest.InvalidateRemoveAbsolute | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1171 | InlineNodeTest.InvalidateChangeToAbsolute | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1189 | InlineNodeTest.InvalidateChangeFromAbsolute | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1207 | InlineNodeTest.InvalidateAddFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1224 | InlineNodeTest.InvalidateRemoveFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1236 | InlineNodeTest.SpaceRestoredByInsertingWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1251 | InlineNodeTest.RemoveInlineNodeDataIfBlockBecomesEmpty1 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1262 | InlineNodeTest.RemoveInlineNodeDataIfBlockBecomesEmpty2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1272 | InlineNodeTest.RemoveInlineNodeDataIfBlockObtainsBlockChild | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1285 | InlineNodeTest.ClearFirstInlineFragmentOnSplitFlow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1336 | InlineNodeTest.AddChildToSVGRoot | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1353 | InlineNodeTest.PreservedNewlineWithBidiAndRelayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1367 | InlineNodeTest.PreservedNewlineWithRemovedBidiAndRelayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1379 | InlineNodeTest.PreservedNewlineWithRemovedLtrDirAndRelayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1392 | InlineNodeTest.InsertedWBRWithLineBreakInRelayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1405 | InlineNodeTest.CollapsibleSpaceFollowingBRWithNoWrapStyle | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1414 | InlineNodeTest.CollapsibleSpaceFollowingNewlineWithPreStyle | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1425 | InlineNodeTest.RemoveSegmentBreakFromJapaneseInRelayout | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1442 | InlineNodeTest.RemoveSegmentBreakFromJapaneseInRelayout2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1459 | InlineNodeTest.SegmentRanges | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1504 | InlineNodeTest.ReusingWithPreservedCase1 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1518 | InlineNodeTest.ReusingWithPreservedCase2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1532 | InlineNodeTest.ReusingWithPreservedCase3 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1550 | InlineNodeTest.ReusingWithCollapsed | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1564 | InlineNodeTest.ReusingRTLAsLTR | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1590 | InlineNodeTest.ReuseFirstNonSafe | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1617 | InlineNodeTest.ReuseFirstNonSafeRtl | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1643 | InlineNodeTest.ShouldNotResueLigature | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1671 | InlineNodeTest.InitialLetter | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1692 | InlineNodeTest.TextCombineUsesScalingX | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1713 | InlineNodeTest.TextCombineWordSpacing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/inline_node_test.cc:1733 | InlineNodeTest.FindSvgTextChunksCrash1 | internal | internal | Blink crash regression test |
+| inline/inline_node_test.cc:1749 | InlineNodeTest.FindSvgTextChunksCrash2 | internal | internal | Blink crash regression test |
+| inline/inline_node_test.cc:1765 | InlineNodeTest.FindSvgTextChunksCrash3 | internal | internal | Blink crash regression test |
+| inline/inline_node_test.cc:1786 | InlineNodeTest.NestedRubyMinMaxCrash | internal | internal | Blink crash regression test |
+| inline/justification_utils_test.cc:14 | JustificationUtilsTest.SetupItemJustificationOpportunityCrash | internal | internal | Blink crash regression test |
+| inline/line_break_candidate_test.cc:50 | LineBreakCandidateTest.Text | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:76 | LineBreakCandidateTest.SoftHyphen | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:104 | LineBreakCandidateTest.SoftHyphenDisabled | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:130 | LineBreakCandidateTest.Span | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:157 | LineBreakCandidateTest.SpanMidWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:183 | LineBreakCandidateTest.SpanCloseAfterSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:210 | LineBreakCandidateTest.TrailingSpacesCollapsed | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:247 | LineBreakCandidateTest.AtomicInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:276 | LineBreakCandidateTest.AtomicInlineBr | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:307 | LineBreakCandidateTest.AtomicInlineTrailingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:339 | LineBreakCandidateTest.ForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_break_candidate_test.cc:368 | LineBreakCandidateTest.OutOfFlowPositioned | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:144 | LineBreakerTest.FitWithEpsilon | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:171 | LineBreakerTest.SingleNode | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:197 | LineBreakerTest.TextCombineCloseTag | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:223 | LineBreakerTest.TextCombineBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:241 | LineBreakerTest.TextCombineNoBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:258 | LineBreakerTest.TextCombineNoBreakWithSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:275 | LineBreakerTest.OverflowWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:301 | LineBreakerTest.OverflowTab | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:323 | LineBreakerTest.OverflowTabBreakWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:346 | LineBreakerTest.OverflowAtomicInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:387 | LineBreakerTest.OverflowMargin | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:423 | LineBreakerTest.OverflowAfterSpacesAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:447 | LineBreakerTest.WrapLastWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:466 | LineBreakerTest.WrapLetterSpacing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:486 | LineBreakerTest.BoundaryInWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:516 | LineBreakerTest.BoundaryInFirstWord | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:548 | LineBreakerTest.IdeographicTrailingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:706 | LineBreakerTest.FullyCollapsedSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:732 | LineBreakerTest.TrailingCollapsedSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:762 | LineBreakerTest.SplitTextZero | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:789 | LineBreakerTest.ForcedBreakFollowedByCloseTag | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:821 | LineBreakerTest.TableCellWidthCalculationQuirkOutOfFlow | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:842 | LineBreakerTest.BoxDecorationBreakCloneWithoutBoxDecorations | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:849 | LineBreakerTest.RewindPositionedFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:864 | LineBreakerTest.RewindRubyColumn | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:887 | LineBreakerTest.SplitTextIntoSegements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:913 | LineBreakerTest.SplitTextIntoSegementsCrash | internal | internal | Blink crash regression test |
+| inline/line_breaker_test.cc:940 | LineBreakerTest.GetOverhangCrash | internal | internal | Blink crash regression test |
+| inline/line_breaker_test.cc:965 | LineBreakerTest.IdeographicSpaceBeforeEndBracket | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1002 | LineBreakerTest.BreakAt | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1044 | LineBreakerTest.BreakAtTrailingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1079 | LineBreakerTest.BreakAtTrailingSpacesAfterAtomicInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1117 | LineBreakerTest.WideContentInRuby | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1144 | LineBreakerTest.SetInputRange | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1169 | LineBreakerTest.CreateSubLineInfoAvailableWidth | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1193 | LineBreakerTest.OverflowingContinuationRuby | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1208 | LineBreakerTest.OverflowingContinuationRuby2 | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1220 | LineBreakerTest.MinMaxWithAtomicInlineInRuby | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1229 | LineBreakerTest.RemoveTrailingCollapsibleSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1241 | LineBreakerTest.MinMaxWithEmptyRubyBase | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_breaker_test.cc:1323 | LineBreakerTest.SplitTrailingBidiCrCrash | internal | internal | Blink crash regression test |
+| inline/line_breaker_test.cc:1331 | LineBreakerTest.BidiControlEnterFlag | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_info_list_test.cc:15 | LineInfoListTest.Get | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_info_test.cc:23 | LineInfoTest.InflowEndOffset | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_info_test.cc:42 | LineInfoTest.TrailingSpaceWidthInitialEmptyItem | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:213 | OffsetMappingTest.CollapseSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:224 | OffsetMappingTest.CollapseTabs | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:235 | OffsetMappingTest.CollapseNewLines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:246 | OffsetMappingTest.CollapseNewlinesAsSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:253 | OffsetMappingTest.CollapseAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:258 | OffsetMappingTest.CollapseLeadingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:266 | OffsetMappingTest.CollapseTrailingSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:276 | OffsetMappingTest.DISABLED_CollapseAllSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:283 | OffsetMappingTest.CollapseLeadingNewlines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:299 | OffsetMappingTest.CollapseTrailingNewlines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:309 | OffsetMappingTest.CollapseNewlineAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:315 | OffsetMappingTest.CollapseBeforeAndAfterNewline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:321 | OffsetMappingTest.CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:333 | OffsetMappingTest.CollapseZeroWidthSpaces | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:358 | OffsetMappingTest.CollapseEastAsianWidth | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:389 | OffsetMappingTest.StoredResult | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:396 | OffsetMappingTest.NGInlineFormattingContextOf | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:429 | OffsetMappingTest.OneTextNode | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:492 | OffsetMappingTest.TwoTextNodes | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:558 | OffsetMappingTest.BRBetweenTextNodes | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:613 | OffsetMappingTest.OneTextNodeWithCollapsedSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:686 | OffsetMappingTest.FullyCollapsedWhiteSpaceNode | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:748 | OffsetMappingTest.ReplacedElement | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:805 | OffsetMappingTest.FirstLetter | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:835 | OffsetMappingTest.FirstLetterWithLeadingSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:871 | OffsetMappingTest.FirstLetterWithoutRemainingText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:902 | OffsetMappingTest.FirstLetterInDifferentBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:967 | OffsetMappingTest.WhiteSpaceTextNodeWithoutLayoutText | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:976 | OffsetMappingTest.ContainerWithGeneratedContent | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1006 | OffsetMappingTest.ContainerWithGeneratedContentWithCollapsedWhitespace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1046 | OffsetMappingTest.Table | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1070 | OffsetMappingTest.GetMappingForInlineBlock | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1098 | OffsetMappingTest.NoWrapSpaceAndCollapsibleSpace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1128 | OffsetMappingTest.PreLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1152 | OffsetMappingTest.BiDiAroundForcedBreakInPreLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1176 | OffsetMappingTest.BiDiAroundForcedBreakInPreWrap | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1200 | OffsetMappingTest.BiDiAroundForcedBreakInPre | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1224 | OffsetMappingTest.SoftHyphen | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1241 | OffsetMappingTest.PreWrapAndReusing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1266 | OffsetMappingTest.RestoreTrailingCollapsibleSpaceReplace | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1295 | OffsetMappingTest.RestoreTrailingCollapsibleSpaceReplaceKeep | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1324 | OffsetMappingTest.RestoreTrailingCollapsibleSpaceNone | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1349 | OffsetMappingTest.RestoreTrailingCollapsibleSpaceSplit | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1378 | OffsetMappingTest.RestoreTrailingCollapsibleSpaceSplitKeep | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1409 | OffsetMappingTest.TextOverflowEllipsis | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1426 | OffsetMappingTest.StartOfNextNonCollapsedContentWithPseudo | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1444 | OffsetMappingTest.EndOfLastNonCollapsedContentWithPseudo | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1461 | OffsetMappingTest.WordBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1481 | OffsetMappingTest.NoCrashByListStyleTypeChange | internal | internal | Blink crash regression test |
+| inline/offset_mapping_test.cc:1497 | OffsetMappingGetterTest.Get | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/offset_mapping_test.cc:1515 | OffsetMappingTest.LayoutObjectConverter | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:27 | ParagraphLineBreakerTest.IsDisabledByBlockInInline | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:52 | ParagraphLineBreakerTest.IsDisabledByFirstLine | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:75 | ParagraphLineBreakerTest.IsDisabledByFloatLeading | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:97 | ParagraphLineBreakerTest.IsDisabledByFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:119 | ParagraphLineBreakerTest.IsDisabledByForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:140 | ParagraphLineBreakerTest.IsDisabledByForcedBreakReusing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:163 | ParagraphLineBreakerTest.IsDisabledByInitialLetter | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/paragraph_line_breaker_test.cc:186 | ParagraphLineBreakerTest.IsDisabledByTabulationCharacters | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/physical_line_box_fragment_test.cc:44 | PhysicalLineBoxFragmentTest.HasPropagatedDescendantsFloat | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/physical_line_box_fragment_test.cc:62 | PhysicalLineBoxFragmentTest.HasPropagatedDescendantsOOF | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:25 | RubyBlockPositionCalculatorTest.GroupLinesEmpty | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:32 | RubyBlockPositionCalculatorTest.GroupLinesOneAnnotationLevel | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:49 | RubyBlockPositionCalculatorTest.GroupLinesNested | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:67 | RubyBlockPositionCalculatorTest.GroupLinesBothSides | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:106 | RubyBlockPositionCalculatorTest.GroupLinesAnnotationForAnnotation | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:129 | RubyBlockPositionCalculatorTest.PlaceLinesTreePlacement | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/ruby_utils_test.cc:146 | RubyBlockPositionCalculatorTest.PlaceLinesNestedRubyWithTextEmphasis | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:78 | ScoreLineBreakerTest.LastLines | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:136 | ScoreLineBreakerTest.BalanceMaxLinesExceeded | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:237 | ScoreLineBreakerTest.ForcedBreak | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:370 | DisabledByLineBreakerTest.Data | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:408 | ScoreLineBreakerTest.FloatRetry | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:433 | ScoreLineBreakerTest.Ruby | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:453 | ScoreLineBreakerTest.Zoom | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/score_line_breaker_test.cc:490 | ScoreLineBreakerTest.UseCountNotCountedForWrap | internal | internal | Blink use counter check |
+| inline/score_line_breaker_test.cc:498 | ScoreLineBreakerTest.UseCountNotCountedForBalance | internal | internal | Blink use counter check |
+| inline/score_line_breaker_test.cc:506 | ScoreLineBreakerTest.LineCountMismatchFallback | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/text_auto_space_test.cc:95 | TextAutoSpaceTest.InsertSpacing | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+| inline/text_auto_space_test.cc:173 | HtmlTest.Apply | behaviour | blocked | inline lane (model lacks inline layout algorithm and inline formatting context) |
+
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
