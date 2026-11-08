@@ -86,7 +86,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | formalized | `TestsMapping.RegressionTest_SkipAncestorClipExpansion_vectors` |
 | visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | geometry | formalized | `TestsMapping.LayoutView_vectors` |
 | visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
-| visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | blocked | display:none on an iframe destroys its layout objects; object lifecycle, not coordinate mapping |
+| visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | formalized | `TestsMapping.LayoutViewDisplayNone_vectors` |
 | visual_rect_mapping_test.cc:658 | VisualRectMappingTest.SelfFlippedWritingMode | geometry | formalized | `TestsMapping.SelfFlippedWritingMode_vectors` |
 | visual_rect_mapping_test.cc:681 | VisualRectMappingTest.ContainerFlippedWritingMode | geometry | formalized | `TestsMapping.ContainerFlippedWritingMode_vectors` |
 | visual_rect_mapping_test.cc:722 | VisualRectMappingTest.ContainerOverflowScroll | geometry | formalized | `TestsMapping.ContainerOverflowScroll_vectors` |

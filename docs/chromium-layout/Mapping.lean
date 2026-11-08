@@ -578,5 +578,22 @@ def shrinkWrap (b : BF) : BF :=
   | .auto => { b with width := .px (maxContent fuel b - b.hpad) }
   | _ => b
 
+/-- `display` of an element, reduced to what box generation depends on. -/
+inductive Display where
+  | none
+  | block
+
+/-- Box generation (CSS Display 3 §2.5): `display: none` generates no boxes, so neither the element
+    nor its descendants have a layout object. -/
+def layoutBox? : Display → BF → Option BF
+  | .none, _ => none
+  | .block, b => some b
+
+/-- An element with `display: none` has no layout object, whatever it contains. -/
+theorem layoutBox?_none (b : BF) : layoutBox? .none b = none := rfl
+
+/-- A displayed element keeps its box unchanged. -/
+theorem layoutBox?_block (b : BF) : layoutBox? .block b = some b := rfl
+
 end Mapping
 end ChromiumLayout

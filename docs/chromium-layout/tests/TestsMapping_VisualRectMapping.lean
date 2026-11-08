@@ -405,5 +405,20 @@ theorem SVGTransformsFastVsSlowPath_vectors :
     enclose (A.corners ⟨0, 0, 20, 20⟩) = ⟨10, -5, 20, 10⟩ ∧
     (enclose (A.corners ⟨0, 0, 20, 20⟩)).inter ⟨0, 0, 100, 100⟩ = ⟨10, 0, 20, 5⟩ := by decide
 
+/-- LayoutViewDisplayNone (619): the frame's `div{100×100}` maps as in LayoutView (scrolled by
+    (0, 47), clipped to the 50×50 iframe) to `(4,13,20,37)`; with `display:none` on the iframe the
+    frame's body has no layout object. -/
+theorem LayoutViewDisplayNone_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [{ id := 3, children := [BF.ofPhys .horizontalTb (some 50) (some 50) { id := 4 }] }])
+    let mb := mp.kid 0
+    let fc := mb.kid 0
+    let ifr := fc.kid 0
+    let cp := layoutRoot 800 (bodyPage 0 [{ id := 7, width := .px 100, height := some 100 }])
+    let os := vchain [Node.block (cp.kid 0) ((cp.kid 0).kid 0), .block cp (cp.kid 0), .block view cp, .inline, .block fc ifr]
+                     [{}, {}, {}, { scroll := ⟨0, 47⟩, clip := some (physBox .horizontalTb ifr) }, {}]
+    mapV false z os ⟨4, 60, 20, 80⟩ = ⟨4, 13, 20, 37⟩ ∧
+    (layoutBox? .none (BF.ofPhys .horizontalTb (some 50) (some 50) {})).isNone = true ∧
+    (layoutBox? .block (BF.ofPhys .horizontalTb (some 50) (some 50) {})).isSome = true := by decide
+
 end TestsMapping
 end ChromiumLayout
