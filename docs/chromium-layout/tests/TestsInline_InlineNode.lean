@@ -7,6 +7,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineShaping
+import InlineTextCombine
 
 namespace ChromiumLayout.TestsInline
 
@@ -93,6 +94,18 @@ theorem inlineNode_minMaxData :
       InlineCollectionToken.atomicInline 60,
       InlineCollectionToken.text "."
     ] = { minSize := 60, maxSize := 130 }) := by
+  decide
+
+/-- Test: TextCombineWordSpacing (`inline/inline_node_test.cc:1713`).
+    CSS Writing Modes 3 §5.1.4 & CSS Text 3 §7.1, §7.2:
+    Inside text-combine-upright, letter-spacing and word-spacing are suppressed to 0. -/
+theorem inlineNode_textCombineWordSpacing :
+    let active := isTextCombineActive .verticalRl .all
+    let effLetterSpacing := effectiveLetterSpacing active 1
+    let effWordSpacing := effectiveWordSpacing active 1
+    (active = true) ∧
+    (effLetterSpacing = 0) ∧
+    (effWordSpacing = 0) := by
   decide
 
 end ChromiumLayout.TestsInline

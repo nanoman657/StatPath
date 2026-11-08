@@ -224,4 +224,46 @@ theorem breakLinesWithTextCombine_no_break (p c s : String) (avail w : Nat)
   unfold breakLinesWithTextCombine
   simp [hfit, hnb]
 
+/-! ## 5. Font Spacing Suppression in Text Combine (CSS Writing Modes 3 §5.1.4 & CSS Text 3 §7.1, §7.2) -/
+
+/-- CSS Writing Modes 3 §5.1.4 & CSS Text 3 §7.2:
+    Inside the combined text run, letter-spacing is treated as 0. -/
+def effectiveLetterSpacing (inCombine : Bool) (specifiedLetterSpacing : Nat) : Nat :=
+  if inCombine then 0 else specifiedLetterSpacing
+
+/-- CSS Writing Modes 3 §5.1.4 & CSS Text 3 §7.1:
+    Inside the combined text run, word-spacing is treated as 0. -/
+def effectiveWordSpacing (inCombine : Bool) (specifiedWordSpacing : Nat) : Nat :=
+  if inCombine then 0 else specifiedWordSpacing
+
+/-- CSS Writing Modes 3 §5.1.4 Law: When text combine is active, letter spacing is always suppressed to 0 for any input. -/
+theorem textCombine_letter_spacing_active (sp : Nat) :
+    effectiveLetterSpacing true sp = 0 := by
+  rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: When text combine is active, word spacing is always suppressed to 0 for any input. -/
+theorem textCombine_word_spacing_active (sp : Nat) :
+    effectiveWordSpacing true sp = 0 := by
+  rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: When text combine is inactive, letter spacing is preserved for any input. -/
+theorem textCombine_letter_spacing_inactive (sp : Nat) :
+    effectiveLetterSpacing false sp = sp := by
+  rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: When text combine is inactive, word spacing is preserved for any input. -/
+theorem textCombine_word_spacing_inactive (sp : Nat) :
+    effectiveWordSpacing false sp = sp := by
+  rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: In horizontal writing mode, text combine is never active, so letter spacing is preserved. -/
+theorem textCombine_horizontal_letter_spacing (tcu : TextCombineUpright) (sp : Nat) :
+    effectiveLetterSpacing (isTextCombineActive .horizontalTb tcu) sp = sp := by
+  cases tcu <;> rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: In horizontal writing mode, text combine is never active, so word spacing is preserved. -/
+theorem textCombine_horizontal_word_spacing (tcu : TextCombineUpright) (sp : Nat) :
+    effectiveWordSpacing (isTextCombineActive .horizontalTb tcu) sp = sp := by
+  cases tcu <;> rfl
+
 end ChromiumLayout
