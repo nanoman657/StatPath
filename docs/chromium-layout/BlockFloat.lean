@@ -313,5 +313,65 @@ theorem float_no_overlap (cW : Nat) (wL wR : Nat) (mlL mrL mlR mrR : Int)
     mlL + (wL : Int) ≤ (cW : Int) - ((wR : Int) + mlR + mrR) + mlR := by
   omega
 
+/-- Display category for descendant boxes in paint order propagation.
+    CSS 2.1 §9.5, §9.7, Appendix E.2. -/
+inductive BoxDisplay where
+  | block
+  | inlineBlock
+  | flowRoot
+  deriving DecidableEq, Repr
+
+/-- A box descendant tree representation for floating descendant propagation.
+    CSS 2.1 §9.5 (floats), Appendix E.2 (paint order step 5: floats). -/
+inductive BoxDescendant where
+  | mk (id : Nat) (display : BoxDisplay) (isFloat : Bool) (children : List BoxDescendant)
+  deriving Repr
+
+instance : Inhabited BoxDescendant := ⟨.mk 0 .block false []⟩
+
+/-- Leaf box constructor. -/
+def BoxDescendant.leaf (id : Nat) (disp : BoxDisplay := .block) (isFloat : Bool := false) : BoxDescendant :=
+  .mk id disp isFloat []
+
+/-- Container box constructor. -/
+def BoxDescendant.node (id : Nat) (disp : BoxDisplay) (kids : List BoxDescendant) : BoxDescendant :=
+  .mk id disp false kids
+
+/-- Whether a box fragment has floating descendants for paint.
+    CSS 2.1 §9.5 (floats), Appendix E.2 (paint order step 5: floats).
+    Floating descendants propagate across block boundaries (including new BFCs and abspos),
+    but do NOT cross inline-block boundaries (which establish independent atomic formatting contexts). -/
+def hasFloatingDescendants : Nat → BoxDescendant → Bool
+  | 0, _ => false
+  | _, .mk _ _ true _ => true
+  | _, .mk _ .inlineBlock false _ => false
+  | fuel + 1, .mk _ _ false kids => kids.any (hasFloatingDescendants fuel)
+
+/-- Whether a list of child boxes contains or propagates floating descendants for paint.
+    CSS 2.1 §9.5, Appendix E.2. -/
+def listHasFloats (fuel : Nat) (kids : List BoxDescendant) : Bool :=
+  kids.any (hasFloatingDescendants fuel)
+
+/-- Law: An inline-block descendant never propagates floating descendants to its parent.
+    CSS 2.1 §9.5, Appendix E.2. -/
+theorem ib_no_float_prop (fuel id : Nat) (kids : List BoxDescendant) :
+    hasFloatingDescendants (fuel + 1) (.mk id .inlineBlock false kids) = false := by
+  rfl
+
+/-- Law: A box marked as a float always has floating descendants true.
+    CSS 2.1 §9.5. -/
+theorem direct_float_has (fuel id : Nat) (disp : BoxDisplay) (kids : List BoxDescendant) :
+    hasFloatingDescendants (fuel + 1) (.mk id disp true kids) = true := by
+  rfl
+
+/-- Law: A new block formatting context propagates floating descendants if its children have floats.
+    CSS 2.1 §9.5. -/
+theorem flow_root_propagates (fuel id : Nat) (c : BoxDescendant) (rest : List BoxDescendant)
+    (h : hasFloatingDescendants fuel c = true) :
+    hasFloatingDescendants (fuel + 1) (.mk id .flowRoot false (c :: rest)) = true := by
+  dsimp [hasFloatingDescendants, List.any]
+  rw [h]
+  rfl
+
 end BlockFloat
 end ChromiumLayout

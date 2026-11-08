@@ -127,10 +127,10 @@ checks every row against the pinned sources and the Lean modules.
 | physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | blocked | model lacks multicolumn target fragment tree dump |
 | physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | blocked | needs table layout with repeated header group across multicol columns; not modelled |
 | physical_fragment_test.cc:295 | PhysicalFragmentTest.CrashInScrollableOverflowCalculator | internal | internal | crash regression in ScrollableOverflowCalculator under fullscreen menulist keyframes |
-| physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
+| physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineChlidren_vectors`, `BlockFloat.direct_float_has` |
 | physical_box_fragment_test.cc:46 | PhysicalBoxFragmentTest.FloatingDescendantsBlockChlidren | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
-| physical_box_fragment_test.cc:65 | PhysicalBoxFragmentTest.FloatingDescendantsInlineBlock | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
-| physical_box_fragment_test.cc:83 | PhysicalBoxFragmentTest.FloatingDescendantsBlockFormattingContext | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
+| physical_box_fragment_test.cc:65 | PhysicalBoxFragmentTest.FloatingDescendantsInlineBlock | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineBlock_vectors`, `BlockFloat.ib_no_float_prop` |
+| physical_box_fragment_test.cc:83 | PhysicalBoxFragmentTest.FloatingDescendantsBlockFormattingContext | behaviour | formalized | `TestsBlock.FloatingDescendantsBlockFormattingContext_vectors`, `BlockFloat.flow_root_propagates` |
 | physical_box_fragment_test.cc:104 | PhysicalBoxFragmentTest.ReplacedBlock | internal | internal | checks C++ Type(), IsAtomicInline() and GetBoxType() flags on replaced block fragment |
 | physical_box_fragment_test.cc:115 | PhysicalBoxFragmentTest.IsFragmentationContextRoot | geometry | formalized | `TestsBlock.IsFragmentationContextRoot_columnCount`, `ColumnLayout.actualColumnCount_at_least_one` |
 | physical_box_fragment_test.cc:135 | PhysicalBoxFragmentTest.IsFragmentationContextRootNested | geometry | formalized | `TestsBlock.IsFragmentationContextRootNested_columnCounts`, `ColumnLayout.actualColumnCount_at_least_one` |
