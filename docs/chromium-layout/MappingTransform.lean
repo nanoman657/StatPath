@@ -278,6 +278,10 @@ def canvasShift : List CN → Pt
   | .drawable t :: _ => t
   | .plain h :: rest => ⟨h.x + (canvasShift rest).x, h.y + (canvasShift rest).y⟩
 
+/-- A rectangle mapped to the canvas: moved by the chain's offset (the visual-rect counterpart of
+    the point map). -/
+def mapCanvas (l : List CN) (r : PRect) : PRect := r.translate (canvasShift l)
+
 theorem canvasShift_drawable (t : Pt) (rest : List CN) : canvasShift (.drawable t :: rest) = t := rfl
 
 /-- Ancestors beyond the first drawable element do not matter. -/

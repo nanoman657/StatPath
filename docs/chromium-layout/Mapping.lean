@@ -417,9 +417,11 @@ def ClipStyle.rect (st : ClipStyle) (pad : PRect) : Option PRect :=
   | a, none => a
   | none, c => c
 
-/-- Padding box of a box with physical borders, inside its physical border box `p`. -/
-def paddingBox (b : BF) (p : PRect) : PRect :=
-  ⟨b.bl, b.bt, p.w - b.bl - b.br, p.h - b.bt - b.bb⟩
+/-- Padding box of a box whose logical border widths are in `BF` (flow-relative), inside its
+    physical border box `p`. -/
+def paddingBox (wm : WM) (b : BF) (p : PRect) : PRect :=
+  let q := BlockWritingMode.toPhysical wm ⟨b.bl, b.br, b.bt, b.bb⟩
+  ⟨q.left, q.top, p.w - q.left - q.right, p.h - q.top - q.bottom⟩
 
 /-- Physical border box of a fragment in its own coordinates, in writing mode `wm`. -/
 def physBox (wm : WM) (f : Frag) : PRect := (LRect.mk 0 0 f.w f.h).toPhys wm f.h
@@ -537,7 +539,31 @@ theorem mapV_empty (skip : Bool) (d : Pt) (os : List (Hop × VP)) (r : PRect) (h
     `ClipStyle` imposes on its descendants, in the box's physical coordinates. -/
 def VP.ofBox (wm : WM) (b : BF) (f : Frag) (st : ClipStyle) (scroll : Pt := ⟨0, 0⟩)
     (origin : Pt := ⟨0, 0⟩) : VP :=
-  { scroll := scroll, origin := origin, clip := st.rect (paddingBox b (physBox wm f)) }
+  { scroll := scroll, origin := origin, clip := st.rect (paddingBox wm b (physBox wm f)) }
+
+/-- A box with physical border widths `p` (top, right, bottom, left) in writing mode `wm`, as the
+    logical box `BlockFlow` lays out (CSS Writing Modes 3 §6.4). -/
+def withBorders (wm : WM) (p : BlockWritingMode.Phys) (b : BF) : BF :=
+  let l := BlockWritingMode.toLogical wm p
+  { b with bt := l.blockStart, bb := l.blockEnd, bl := l.inlineStart, br := l.inlineEnd }
+
+/-- Where the scroll offset is measured from: the scroll origin, zero except in `vertical-rl` where
+    the block axis runs from the right and the contents start at the right edge: the scrollable
+    overflow's block extent minus the client block size (CSS Overflow 3 §2.2, CSSOM View §13). -/
+def scrollOrigin (wm : WM) (b : BF) (f : Frag) : Pt :=
+  match wm with
+  | .verticalRl =>
+      let ext : Int := f.kids.foldl (fun m k => max m ((k.y - f.y) - b.bt - b.pt + k.h)) 0
+      let client : Int := f.h - b.bt - b.bb - b.pt - b.pb
+      ⟨max 0 (ext - client), 0⟩
+  | _ => ⟨0, 0⟩
+
+/-- The data of a scroll container: its scroll position (measured from the document's left/top)
+    minus its scroll origin is the offset applied to what leaves it. -/
+def VP.ofScroller (wm : WM) (b : BF) (f : Frag) (st : ClipStyle) (pos : Pt) : VP :=
+  let o := scrollOrigin wm b f
+  { scroll := ⟨pos.x - o.x, pos.y - o.y⟩, clip := st.rect (paddingBox wm b (physBox wm f)) }
+
 
 /-- Shrink-to-fit inline size of an `auto`-width box (CSS 2.1 §10.3.7 absolutely positioned,
     §10.3.5 floats): its max-content width. -/

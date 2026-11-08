@@ -5,6 +5,7 @@
   The destination's own scroll is not applied (the tests move the rect by it themselves).
 -/
 import Mapping
+import MappingTransform
 
 namespace ChromiumLayout
 namespace TestsMapping
@@ -227,6 +228,120 @@ theorem AbsoluteUnderRelativeInlineVerticalRL_vectors :
     let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
     tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨566, 205, 33, 44⟩ ∧
     mapV false z (os.take 1) tl = ⟨500, 150, 33, 44⟩ := by decide
+
+/-! ### Elements drawn into a canvas (2143 ... 2306): the visual rect of a drawable element in its
+    canvas is the rect moved by its canvas transform alone. -/
+theorem ElementCanvasTransformVisualRectMapping_vectors :
+    mapCanvas [.drawable ⟨50, 60⟩] ⟨0, 0, 100, 100⟩ = ⟨50, 60, 100, 100⟩ := by decide
+
+theorem NestedElementCanvasTransformVisualRectMapping_vectors :
+    mapCanvas [.drawable ⟨0, 100⟩, .drawable ⟨100, 0⟩] ⟨0, 0, 50, 50⟩ = ⟨0, 100, 50, 50⟩ := by decide
+
+theorem NestedElementCanvasTransformWithOffsetVisualRectMapping_vectors :
+    let a := layoutRoot 800 { id := 1, children := [{ id := 2, mt := 20, height := some 50 }] }
+    mapCanvas [.drawable ⟨0, 100⟩, .plain ((Node.block a (a.kid 0)).hop []), .drawable ⟨100, 0⟩] ⟨0, 0, 50, 50⟩
+      = ⟨0, 100, 50, 50⟩ := by decide
+
+theorem NestedElementCanvasTransformChildWithoutCanvasTransformVisualRectMapping_vectors :
+    mapCanvas [.drawable ⟨0, 0⟩, .drawable ⟨100, 0⟩] ⟨0, 0, 50, 50⟩ = ⟨0, 0, 50, 50⟩ := by decide
+
+theorem NestedElementCanvasTransformNonDrawableChildVisualRectMapping_vectors :
+    let a := layoutRoot 800 { id := 1, height := some 100, children := [{ id := 2, height := some 50 }] }
+    mapCanvas [.plain ((Node.block a (a.kid 0)).hop []), .drawable ⟨100, 0⟩] ⟨0, 0, 50, 50⟩
+      = ⟨100, 0, 50, 50⟩ := by decide
+
+theorem NestedElementCanvasTransformInlineVisualRectMapping_vectors :
+    mapCanvas [.drawable ⟨0, 100⟩, .drawable ⟨100, 0⟩] ⟨0, 0, 50, 50⟩ = ⟨0, 100, 50, 50⟩ := by decide
+
+/-! ### Fixed contents (FixedContentsWithScrollOffset 1431, FixedContentsUnderViewWithScrollOffset
+    1464): a `position:fixed; top:0; left:0; 400×300` box. The viewport sits at the page's scroll
+    offset in the view's contents space, so a fixed box does not move with the scroll. -/
+def viewportCB (s : Pt) : CB := .box {} ⟨-s.x, -s.y⟩
+
+theorem FixedContentsWithScrollOffset_vectors :
+    let page := layoutRoot 800 (bodyPage 0 [{ id := 3, height := some 10 }, { id := 4, children := [{ id := 5 }] }])
+    let body := page.kid 0
+    let anc := body.kid 1
+    let os (s : Pt) := vchain [Node.oof 3 (viewportCB s) z (.px 0) (.px 0) (.px 0) (.px 0),
+                                .block body anc, .block page body, .block view page] [{}, {}, {}, {}]
+    mapV false z ((os z).take 1) ⟨0, 0, 400, 300⟩ = ⟨0, -10, 400, 300⟩ ∧
+    mapV false z ((os ⟨0, 50⟩).take 1) ⟨0, 0, 400, 300⟩ = ⟨0, 40, 400, 300⟩ := by decide
+
+theorem FixedContentsUnderViewWithScrollOffset_vectors :
+    let page := layoutRoot 800 (bodyPage 0 [{ id := 3 }])
+    let body := page.kid 0
+    let os (s : Pt) := vchain [Node.oof 2 (viewportCB s) z (.px 0) (.px 0) (.px 0) (.px 0),
+                                .block page body, .block view page] [{}, {}, {}]
+    mapV false z (os z) ⟨0, 0, 400, 300⟩ = ⟨0, 0, 400, 300⟩ ∧
+    mapV false z (os ⟨0, 50⟩) ⟨0, 0, 400, 300⟩ = ⟨0, 50, 400, 300⟩ := by decide
+
+/-- FixedContentsInIframe (1392): a fixed box in a 500×500 iframe: the frame's scroll does not move
+    its mapped rect. -/
+theorem FixedContentsInIframe_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [BF.ofPhys .horizontalTb (some 500) (some 500) {}])
+    let mb := mp.kid 0
+    let ifr := mb.kid 0
+    let cp := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+    let os (s : Pt) := vchain [Node.oof 2 (viewportCB s) z (.px 0) (.px 0) (.px 0) (.px 0),
+                                .block cp (cp.kid 0), .block view cp, .inline, .block mb ifr,
+                                .block mp mb, .block view mp]
+                               [{}, {}, {}, { scroll := s, clip := some (physBox .horizontalTb ifr) }, {}, {}, {}]
+    mapV false z (os z) ⟨0, 0, 400, 300⟩ = ⟨0, 0, 400, 300⟩ ∧
+    mapV false z (os ⟨0, 50⟩) ⟨0, 0, 400, 300⟩ = ⟨0, 0, 400, 300⟩ := by decide
+
+/-- LayoutView (542): a 50×50 iframe in `#frameContainer`; its document is scrolled by (0, 47). A text
+    rect `(4, 60, 20, 80)` of the frame is scrolled and clipped to the frame. -/
+theorem LayoutView_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [{ id := 3, children := [BF.ofPhys .horizontalTb (some 50) (some 50) { id := 4 }] }])
+    let mb := mp.kid 0
+    let fc := mb.kid 0
+    let ifr := fc.kid 0
+    let cp := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+    let os := vchain [Node.inline, .block cp (cp.kid 0), .block view cp, .inline, .block fc ifr,
+                      .block mb fc, .block mp mb, .block view mp]
+                     [{}, {}, {}, { scroll := ⟨0, 47⟩, clip := some (physBox .horizontalTb ifr) }, {}, {}, {}, {}]
+    mapV false z (os.take 5) ⟨4, 60, 20, 80⟩ = ⟨4, 13, 20, 37⟩ ∧
+    mapV false z os ⟨4, 60, 20, 80⟩ = ⟨4, 13, 20, 37⟩ ∧
+    (mapV false z os ⟨0, 0, 0, 0⟩).isEmpty = true ∧
+    mapV false z (os.take 5) ⟨4, 60, 0, 80⟩ = ⟨4, 13, 0, 37⟩ := by decide
+
+/-- MapToVisualRectFastPathMapsToViewport (1561): `#target{position:absolute; left:15px; top:25px;
+    60×40}`; mapped to the viewport (the 800×600 view clips). -/
+theorem MapToVisualRectFastPathMapsToViewport_vectors :
+    let page := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+    let os := vchain [Node.oof 2 (.box {}) z (.px 25) (.px 15) (.px 0) (.px 0), .block page (page.kid 0),
+                      .block view page, .inline] [{}, {}, {}, { clip := some ⟨0, 0, 800, 600⟩ }]
+    mapV false z os ⟨0, 0, 60, 40⟩ = ⟨15, 25, 60, 40⟩ := by decide
+
+/-! ### Flipped scrollers (778, 912): `#container{vertical-rl; position:absolute; top:111px; left:222px;
+    border-width:10px 20px 30px 40px; overflow:scroll; 50×80}` > [`#target{box-shadow:40px 20px;
+    100×90}`, `div{100×100}`], scrolled to (142, 7). The scroll origin is the right edge. -/
+def flipScene (tw : WM) (st : ClipStyle) (pos : Pt) :=
+  let cb := withBorders .verticalRl ⟨10, 20, 30, 40⟩
+    (BF.ofPhys .verticalRl (some 50) (some 80)
+      { children := [BF.ofPhys tw (some 100) (some 90) { id := 1 }, BF.ofPhys .verticalRl (some 100) (some 100) {}] })
+  let cf := layoutRoot 800 cb
+  let page := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+  (cb, cf, vchain ([Node.flow .verticalRl cf (cf.kid 0), .oof 2 (.box {}) z (.px 111) (.px 222) (.px 0) (.px 0)]
+                    ++ upToView page (page.kid 0))
+                  [{}, VP.ofScroller .verticalRl cb cf st pos, {}, {}])
+
+theorem ContainerFlippedWritingModeAndOverflowScroll_vectors :
+    let sc := flipScene .verticalRl { overflow := true } ⟨142, 7⟩
+    let tl := visualOverflow (physBox .verticalRl (sc.2.1.kid 0)) shadow
+    let cl := physBox .verticalRl sc.2.1
+    scrollOrigin .verticalRl sc.1 sc.2.1 = ⟨150, 0⟩ ∧
+    tl = ⟨0, 0, 140, 110⟩ ∧
+    (mapV false z (sc.2.2.take 1) tl).translate ⟨8, -7⟩ = ⟨-2, 3, 140, 110⟩ ∧
+    mapV false z sc.2.2 tl = ⟨262, 121, 50, 80⟩ ∧
+    cl = ⟨0, 0, 110, 120⟩ ∧ mapV false z (sc.2.2.drop 1) cl = ⟨222, 111, 110, 120⟩ := by decide
+
+theorem ContainerAndTargetDifferentFlippedWritingMode_vectors :
+    let sc := flipScene .verticalLr { overflow := true } ⟨142, 7⟩
+    let tl := visualOverflow (physBox .verticalLr (sc.2.1.kid 0)) shadow
+    scrollOrigin .verticalRl sc.1 sc.2.1 = ⟨150, 0⟩ ∧
+    tl = ⟨0, 0, 140, 110⟩ ∧
+    (mapV false z (sc.2.2.take 1) tl).translate ⟨8, -7⟩ = ⟨-2, 3, 140, 110⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout

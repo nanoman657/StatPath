@@ -312,7 +312,7 @@ theorem IgnoreScrollOffset_vectors :
 /-! ### FixedPositionWithScrollOffset (1818): `#target{position:fixed;
     top:200px; left:100px}` in `body`; whatever the scroll offset of the page, with or without
     ignoring it, the target is mapped to the viewport at (100, 200). -/
-theorem FixedPositionWithScrollOffset_vectors (s : Pt) :
+theorem FixedScrollOffset_vectors (s : Pt) :
     let h := layoutRoot 800 (htmlBody [{ id := 5 }])
     let body := h.kid 0
     let ns := Node.oof 2 (.box {}) ⟨0, 0⟩ (.px 200) (.px 100) (.px 0) (.px 0) :: pageNodes h body s
@@ -501,6 +501,21 @@ theorem NestedElementCanvasTransformNonDrawableChild_vectors :
 
 theorem NestedElementCanvasTransformInline_vectors :
     canvasPt [.drawable ⟨0, 100⟩, .drawable ⟨100, 0⟩] = ⟨0, 100⟩ := by decide
+
+/-- FixedPosInIFrameWhenMainFrameScrolled (732): `body{margin:0}` with an 8000px spacer, then a
+    500×500 iframe whose document has `#target{position:fixed; 200×200}`; the main frame is scrolled
+    by (0, 1000). A viewport point maps down into the frame with the iframe's 8000px offset and the
+    scroll (the test then subtracts the scroll again, `AdjustForFrameScroll`). -/
+theorem FixedPosInIFrameWhenMainFrameScrolled_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [{ height := some 8000 }, BF.ofPhys .horizontalTb (some 500) (some 500) { id := 3 }])
+    let mb := mp.kid 0
+    let ifr := mb.kid 1
+    let cp := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+    let ns := [Node.oof 2 (.box {}) z .auto .auto (.px 0) (.px 0), .block cp (cp.kid 0), .block view cp, .inline,
+               .block mb ifr, .block mp mb, .scrolled ⟨0, 1000⟩ (.block view mp)]
+    let affs := affChain ns [none, none, none, none, none, none, none]
+    let q := (mapADown affs 0 7 (RPt.ofPt ⟨10, 70⟩)).toPt
+    q = ⟨10, -6930⟩ ∧ (⟨q.x, q.y - 1000⟩ : Pt) = ⟨10, -7930⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout
