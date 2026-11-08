@@ -2,9 +2,12 @@
   docs/chromium-layout/InlineParagraphBreaker.lean
 
   Formal model for CSS Text 4 §5.3 / §5.4 paragraph line breaking
-  (`text-wrap: balance` and `text-wrap: pretty`) and Blink ParagraphLineBreaker
+  (`text-wrap: balance` and `text-wrap: pretty`), CSS Ruby 1 §3 interaction,
+  and Blink ParagraphLineBreaker & ScoreLineBreaker
   (`third_party/blink/renderer/core/layout/inline/paragraph_line_breaker.h`,
    `paragraph_line_breaker.cc`,
+   `score_line_breaker.h`,
+   `score_line_breaker.cc`,
    `inline_node_data.h`,
    `inline_items_builder.cc`).
 -/
@@ -14,7 +17,7 @@ namespace ChromiumLayout
 
 /-! ## 1. Paragraph Features and Advanced Line Breaking Suitability -/
 
-/-- CSS Text 4 §5.3, §5.4 & Blink InlineNodeData:
+/-- CSS Text 4 §5.3, §5.4, CSS Ruby 1 §3 & Blink InlineNodeData:
     Features of an inline formatting context that determine suitability for
     bisection paragraph line balancing (`text-wrap: balance`) and
     optimal score line breaking (`text-wrap: pretty`). -/
@@ -25,6 +28,7 @@ structure ParagraphFeatures where
   hasInitialLetter : Bool := false
   hasTabulation : Bool := false
   hasFirstLineStyle : Bool := false
+  hasRuby : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
 /-- CSS Text 4 §5.3 & Blink InlineNode::IsBisectLineBreakDisabled:
@@ -37,13 +41,14 @@ structure ParagraphFeatures where
 def isBisectLineBreakDisabled (f : ParagraphFeatures) : Bool :=
   f.hasBlockInInline || f.hasFloat || f.hasForcedBreak || f.hasInitialLetter
 
-/-- CSS Text 4 §5.4 & Blink InlineNode::IsScoreLineBreakDisabled:
+/-- CSS Text 4 §5.4, CSS Ruby 1 §3 & Blink InlineNode::IsScoreLineBreakDisabled:
     Knuth-Plass score line breaking (text-wrap: pretty) is disabled by:
     - Initial letter boxes (intrudes across multiple lines)
     - Tabulation characters (non-uniform tab stop widths)
-    - First-line pseudo-element style changes. -/
+    - First-line pseudo-element style changes
+    - Ruby containers (paired base/annotation formatting). -/
 def isScoreLineBreakDisabled (f : ParagraphFeatures) : Bool :=
-  f.hasInitialLetter || f.hasTabulation || f.hasFirstLineStyle
+  f.hasInitialLetter || f.hasTabulation || f.hasFirstLineStyle || f.hasRuby
 
 /-- CSS Text 4 §5.3 & Blink ParagraphLineBreaker::AttemptParagraphBalancing:
     Attempts binary search balancing for text-wrap: balance.
@@ -51,7 +56,35 @@ def isScoreLineBreakDisabled (f : ParagraphFeatures) : Bool :=
 def attemptParagraphBalancing (f : ParagraphFeatures) : Bool :=
   !isBisectLineBreakDisabled f
 
-/-! ## 2. General Laws for Paragraph Line Breaking Suitability -/
+/-! ## 2. CSS Text 4 §5.3 Paragraph Balancing Line Limits -/
+
+/-- CSS Text 4 §5.3 & Blink ParagraphLineBreaker::kMaxLinesForBalance:
+    UAs may limit line balancing for performance reasons (Blink limit is 6 lines).
+    Paragraphs exceeding this line count fall back to standard greedy line breaking. -/
+def maxLinesForBalance : Nat := 6
+
+/-- CSS Text 4 §5.3: Whether paragraph balancing applies given line count. -/
+def shouldBalanceParagraph (lineCount : Nat) (maxLines : Nat := maxLinesForBalance) : Bool :=
+  lineCount ≤ maxLines
+
+/-! ## 3. Score Line Breaker Runtime Constraints (CSS Text 4 §5.4 & CSS Text 3 §5.2) -/
+
+/-- CSS Text 4 §5.4 & Blink LineBreaker::ShouldDisableScoreLineBreak:
+    Runtime line breaking conditions that disable score line breaking (text-wrap: pretty):
+    - Unresolved line overflow (CSS Text 3 §5.2)
+    - white-space: break-spaces (CSS Text 3 §3)
+    - box-decoration-break: clone (CSS Fragmentation 3 / CSS Inline 3). -/
+structure LineBreakRuntimeFeatures where
+  hasUnresolvedOverflow : Bool := false
+  isBreakSpaces : Bool := false
+  isBoxDecorationBreakClone : Bool := false
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Whether score line breaking is disabled by runtime line conditions. -/
+def isScoreLineBreakDisabledByRuntime (rf : LineBreakRuntimeFeatures) : Bool :=
+  rf.hasUnresolvedOverflow || rf.isBreakSpaces || rf.isBoxDecorationBreakClone
+
+/-! ## 4. General Laws for Paragraph Line Breaking Suitability -/
 
 /-- CSS Text 4 §5.3 & §5.4 Law: Initial letter boxes disable both bisection balancing and score line breaking. -/
 theorem initial_letter_disables_both (f : ParagraphFeatures) (h : f.hasInitialLetter = true) :
@@ -98,6 +131,42 @@ theorem tabulation_preserves_bisect (f : ParagraphFeatures)
 theorem tabulation_disables_score_breaking (f : ParagraphFeatures) (h : f.hasTabulation = true) :
     isScoreLineBreakDisabled f = true := by
   unfold isScoreLineBreakDisabled
+  simp [h]
+
+/-- CSS Ruby 1 §3 Law: Ruby container elements always disable score line breaking for all inputs. -/
+theorem ruby_disables_score_breaking (f : ParagraphFeatures) (h : f.hasRuby = true) :
+    isScoreLineBreakDisabled f = true := by
+  unfold isScoreLineBreakDisabled
+  simp [h]
+
+/-- CSS Text 4 §5.3 Law: Line count exceeding limit always disables balancing for all inputs. -/
+theorem balance_exceeded_law (lines : Nat) (h : ¬ (lines ≤ maxLinesForBalance)) :
+    shouldBalanceParagraph lines = false := by
+  unfold shouldBalanceParagraph
+  simp [h]
+
+/-- CSS Text 4 §5.3 Law: Line count within limit always allows balancing for all inputs. -/
+theorem balance_within_law (lines : Nat) (h : lines ≤ maxLinesForBalance) :
+    shouldBalanceParagraph lines = true := by
+  unfold shouldBalanceParagraph
+  simp [h]
+
+/-- CSS Text 3 §5.2 Law: Unresolved line overflow always disables score line breaking. -/
+theorem runtime_overflow_disables_score_break (rf : LineBreakRuntimeFeatures) (h : rf.hasUnresolvedOverflow = true) :
+    isScoreLineBreakDisabledByRuntime rf = true := by
+  unfold isScoreLineBreakDisabledByRuntime
+  simp [h]
+
+/-- CSS Text 3 §3 Law: break-spaces always disables score line breaking. -/
+theorem runtime_break_spaces_disables_score_break (rf : LineBreakRuntimeFeatures) (h : rf.isBreakSpaces = true) :
+    isScoreLineBreakDisabledByRuntime rf = true := by
+  unfold isScoreLineBreakDisabledByRuntime
+  simp [h]
+
+/-- CSS Fragmentation 3 Law: box-decoration-break: clone always disables score line breaking. -/
+theorem runtime_clone_disables_score_break (rf : LineBreakRuntimeFeatures) (h : rf.isBoxDecorationBreakClone = true) :
+    isScoreLineBreakDisabledByRuntime rf = true := by
+  unfold isScoreLineBreakDisabledByRuntime
   simp [h]
 
 end ChromiumLayout

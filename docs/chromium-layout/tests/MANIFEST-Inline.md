@@ -452,12 +452,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/ruby_utils_test.cc:129 | PlaceLinesTreePlacement | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
 | inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
 | inline/score_line_breaker_test.cc:78 | LastLines | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/score_line_breaker_test.cc:136 | BalanceMaxLinesExceeded | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:136 | BalanceMaxLinesExceeded | behaviour | formalized | `scoreLineBreaker_balanceMaxLinesExceeded` | CSS Text 4 §5.3: Line count exceeding limit falls back from paragraph balancing |
 | inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
 | inline/score_line_breaker_test.cc:237 | ForcedBreak | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/score_line_breaker_test.cc:370 | DisabledByLineBreakerTest.Data | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:370 | DisabledByLineBreakerTest.Data | behaviour | formalized | `scoreLineBreaker_disabledByLineBreakerData` | CSS Text 4 §5.4 & CSS Text 3 §5.2: Unresolved overflow, break-spaces, and clone break disable score breaker |
 | inline/score_line_breaker_test.cc:408 | FloatRetry | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/score_line_breaker_test.cc:433 | Ruby | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:433 | Ruby | geometry | formalized | `scoreLineBreaker_ruby` | CSS Ruby 1 §3: Ruby container disables optimal score line breaking |
 | inline/score_line_breaker_test.cc:453 | Zoom | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
 | inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | internal | internal | - | UseCounter metric check |
 | inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | internal | internal | - | UseCounter metric check |
