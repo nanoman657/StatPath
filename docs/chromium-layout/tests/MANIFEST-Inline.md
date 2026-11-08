@@ -462,9 +462,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | internal | internal | - | UseCounter metric check |
 | inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | internal | internal | - | UseCounter metric check |
 | inline/score_line_breaker_test.cc:506 | LineCountMismatchFallback | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
-| inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
-| inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | blocked | - | Blocked: model lacks TextAutoSpace CJK-Latin spacing |
+| inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | formalized | `textAutoSpace_mayApply` | Early rejection check for East Asian ideograph presence |
+| inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | formalized | `textAutoSpace_insertSpacing` | Inter-script 1/8 em spacing insertion between ideograph and Latin text |
+| inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | formalized | `textAutoSpace_apply` | Auto-space boundary offset detection across scripts |
 | inline_layout_test.cc:32 | BlockWithSingleTextNode | behaviour | formalized | `inlineLayout_blockWithSingleTextNode` | CSS 2.1 §9.4.2: Inline formatting context flattens DOM nodes into text stream |
 | inline_layout_test.cc:59 | BlockWithTextAndAtomicInline | behaviour | formalized | `inlineLayout_blockWithTextAndAtomicInline` | CSS 2.1 §9.4.2 & §10.8: Replaced atomic inline represented by object replacement character |
 | layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | formalized | `layoutInline_physicalLinesBoundingBox` | CSS 2.1 §9.4.2 & CSS Writing Modes 3 §4: Union of line fragment rectangles across LTR, RTL, and vertical-rl |
