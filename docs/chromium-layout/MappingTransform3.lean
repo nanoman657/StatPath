@@ -92,5 +92,36 @@ theorem flatten_plane (A : Mat) (x y : Int) : (Mat.flatten A).apply (Vec.plane x
 /-- Without a transform and perspective a chain is a pure offset. -/
 theorem chain3_nil (acc : Mat) : chain3 [] acc = acc := rfl
 
+/-- Floor and ceiling of a rational point. -/
+def RPt.floor (p : RPt) : Int × Int := (p.x / p.den, p.y / p.den)
+def RPt.ceil (p : RPt) : Int × Int := (-((-p.x) / p.den), -((-p.y) / p.den))
+
+/-- Enclosing integer rect of mapped corners (`PhysicalRect::EnclosingRect` of the bounding box). -/
+def enclose (ps : List RPt) : PRect :=
+  let x0 := (ps.map (·.floor.1)).foldl min ((ps.map (·.floor.1)).headD 0)
+  let y0 := (ps.map (·.floor.2)).foldl min ((ps.map (·.floor.2)).headD 0)
+  let x1 := (ps.map (·.ceil.1)).foldl max ((ps.map (·.ceil.1)).headD 0)
+  let y1 := (ps.map (·.ceil.2)).foldl max ((ps.map (·.ceil.2)).headD 0)
+  ⟨x0, y0, x1 - x0, y1 - y0⟩
+
+/-- Corners of a rect mapped by a 4x4 matrix and projected. -/
+def Mat.corners (M : Mat) (r : PRect) : List RPt :=
+  [(r.x, r.y), (r.x + r.w, r.y), (r.x + r.w, r.y + r.h), (r.x, r.y + r.h)].map
+    (fun p => Vec.project (M.apply (Vec.plane p.1 p.2)))
+
+/-- The enclosing rect of an axis-aligned rect never loses area: it contains every mapped corner. -/
+theorem enclose_floor_le (p : RPt) (hp : 0 < p.den) : p.floor.1 * p.den ≤ p.x := by
+  simp only [RPt.floor]
+  exact Int.ediv_mul_le _ (by omega)
+
+/-- And the ceiling is at least the value. -/
+theorem enclose_ceil_ge (p : RPt) (hp : 0 < p.den) : p.x ≤ p.ceil.1 * p.den := by
+  simp only [RPt.ceil]
+  have h1 := Int.ediv_mul_le (-p.x) (show (p.den : Int) ≠ 0 by omega)
+  have h2 := Int.emod_lt_of_pos (-p.x) (show (0:Int) < p.den by omega)
+  rw [Int.emod_def, Int.mul_comm (p.den : Int) (-p.x / p.den)] at h2
+  rw [Int.neg_mul]
+  omega
+
 end Mapping
 end ChromiumLayout

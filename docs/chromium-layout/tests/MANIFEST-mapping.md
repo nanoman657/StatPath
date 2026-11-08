@@ -83,7 +83,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:281 | VisualRectMappingTest.SkipAncestorAndViewportClipFlag | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipFlag_vectors` |
 | visual_rect_mapping_test.cc:338 | VisualRectMappingTest.SkipAncestorAndViewportClipFlagViewportSpace | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipsInSubframe_vectors` |
-| visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
+| visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | formalized | `TestsMapping.RegressionTest_SkipAncestorClipExpansion_vectors` |
 | visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | geometry | formalized | `TestsMapping.LayoutView_vectors` |
 | visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
 | visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | blocked | display:none on an iframe destroys its layout objects; object lifecycle, not coordinate mapping |
@@ -113,17 +113,17 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1431 | VisualRectMappingTest.FixedContentsWithScrollOffset | geometry | formalized | `TestsMapping.FixedContentsWithScrollOffset_vectors` |
 | visual_rect_mapping_test.cc:1464 | VisualRectMappingTest.FixedContentsUnderViewWithScrollOffset | geometry | formalized | `TestsMapping.FixedContentsUnderViewWithScrollOffset_vectors` |
 | visual_rect_mapping_test.cc:1492 | VisualRectMappingTest.InclusiveIntersect | geometry | blocked | edge-inclusive intersection and the boolean result of MapToVisualRectInAncestorSpace are not modelled |
-| visual_rect_mapping_test.cc:1522 | VisualRectMappingTest.Perspective | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
-| visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
+| visual_rect_mapping_test.cc:1522 | VisualRectMappingTest.Perspective | geometry | formalized | `TestsMapping.Perspective_vectors` |
+| visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | geometry | formalized | `TestsMapping.PerspectiveWithAnonymousTable_vectors` |
 | visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | geometry | formalized | `TestsMapping.MapToVisualRectFastPathMapsToViewport_vectors` |
 | visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | blocked | anchor positioning with scroll snapshots belongs to the anchor lane (CSS Anchor Positioning 1) |
 | visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | blocked | filter blur visual extent (CSS Filter Effects 1) is not modelled |
-| visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
+| visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | blocked | preserveAspectRatio="none" and the enclosing rect of a fractional result are not modelled |
-| visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | the bounding rect of a rotated rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
-| visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | geometry | blocked | the bounding rect of a rotated and scaled rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
-| visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | geometry | blocked | the bounding rect of a rotated and scaled rect and its LayoutUnit (1/64) rounding are not modelled (rotation itself is: MappingTransform.rotation) |
-| visual_rect_mapping_test.cc:1941 | VisualRectMappingTest.FractionalSnapping | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
+| visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | compares the geometry-mapper path with the slow path of the same mapping; the model has one path, so the row has no independent expected value to state |
+| visual_rect_mapping_test.cc:1838 | VisualRectMappingTest.NestedTransformsComposeAngles | geometry | formalized | `TestsMapping.NestedTransformsComposeAngles_vectors` |
+| visual_rect_mapping_test.cc:1891 | VisualRectMappingTest.NestedTransformsFractionalPositionSnapsOnce | geometry | formalized | `TestsMapping.NestedTransformsFractionalPositionSnapsOnce_vectors` |
+| visual_rect_mapping_test.cc:1941 | VisualRectMappingTest.FractionalSnapping | geometry | formalized | `TestsMapping.FractionalSnapping_vectors` |
 | visual_rect_mapping_test.cc:2001 | VisualRectMappingTest.ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | geometry | blocked | visual viewport pinch-zoom transform is not modelled |
 | visual_rect_mapping_test.cc:2054 | VisualRectMappingTest.ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | geometry | blocked | visual viewport pinch-zoom transform is not modelled |
 | visual_rect_mapping_test.cc:2143 | VisualRectMappingTest.ElementCanvasTransformVisualRectMapping | geometry | formalized | `TestsMapping.ElementCanvasTransformVisualRectMapping_vectors` |

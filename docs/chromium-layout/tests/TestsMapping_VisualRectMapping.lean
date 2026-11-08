@@ -6,6 +6,7 @@
 -/
 import Mapping
 import MappingTransform
+import MappingTransform3
 
 namespace ChromiumLayout
 namespace TestsMapping
@@ -342,6 +343,59 @@ theorem ContainerAndTargetDifferentFlippedWritingMode_vectors :
     scrollOrigin .verticalRl sc.1 sc.2.1 = ⟨150, 0⟩ ∧
     tl = ⟨0, 0, 140, 110⟩ ∧
     (mapV false z (sc.2.2.take 1) tl).translate ⟨8, -7⟩ = ⟨-2, 3, 140, 110⟩ := by decide
+
+/-! ### Rotated boxes: Perspective (1522), PerspectiveWithAnonymousTable (1542), NestedTransformsComposeAngles
+    (1838), NestedTransformsFractionalPositionSnapsOnce (1891). The enclosing rect of the mapped
+    corners; `perspective` applies only to the children of its box. -/
+theorem Perspective_vectors :
+    -- `#ancestor{perspective:100px}` > `div` > `#child{10×10; rotateY(45deg)}`: the perspective
+    -- reaches only the plain `div`, which flattens
+    enclose ((chain3 [({ origin := ⟨5, 5⟩, xf := Mat.rotY 45 }, ⟨0, 0⟩), ({}, ⟨0, 0⟩),
+        ({ persp := some (100, ⟨400, 0⟩) }, ⟨0, 0⟩)] Mat.id).corners ⟨0, 0, 10, 10⟩) = ⟨1, 0, 8, 10⟩ := by decide
+
+theorem PerspectiveWithAnonymousTable_vectors :
+    -- `#ancestor{display:table; perspective:100px; 10×10}` > `#child{table-cell; rotateY(45deg)}`
+    enclose ((chain3 [({ origin := ⟨5, 5⟩, xf := Mat.rotY 45 }, ⟨0, 0⟩),
+        ({ persp := some (100, ⟨5, 5⟩) }, ⟨0, 0⟩)] Mat.id).corners ⟨0, 0, 10, 10⟩) = ⟨1, -1, 8, 12⟩ := by decide
+
+/-- NestedTransformsComposeAngles (1838): `#parent{100×50; origin:0 0; rotate(10deg)}` >
+    `#child{100×50; origin:0 0; rotate(35deg)}`: the bounding box of the 45-degree rotation of the
+    child's rect is about `(-35.4, 0)` with size `106.1`, within 1.5. -/
+theorem NestedTransformsComposeAngles_vectors :
+    let f := layoutRoot 800 (bodyPage 0 [{ id := 1, children := [{ id := 2, height := some 50 }] }])
+    let ns := [Node.block (f.kid 0) ((f.kid 0).kid 0), .block f (f.kid 0)]
+    let affs := affChain ns [some (z, rotation 35), some (z, rotation 10)]
+    let b := bboxOf ((composeAll affs).corners ⟨0, 0, 100, 50⟩)
+    b.1.near (-354) 0 10 3 2 = true ∧ b.2.near 1061 1061 10 3 2 = true := by decide
+
+/-- NestedTransformsFractionalPositionSnapsOnce (1891): `#container{rotate(15deg) scale(1.2)}` >
+    `#child{position:absolute; left:10.25px; top:20.75px; 40×30}`: the mapped rect is non-empty and
+    larger than 30 on both axes. -/
+theorem NestedTransformsFractionalPositionSnapsOnce_vectors :
+    let A := (Aff.about ⟨400, 0⟩ ((rotation 15).comp (Aff.scale 6 6 5))).comp ⟨4, 0, 0, 4, 41, 83, 4⟩
+    let b := bboxOf (A.corners ⟨0, 0, 40, 30⟩)
+    30 * (b.2.den : Int) < b.2.x ∧ 30 * (b.2.den : Int) < b.2.y := by decide
+
+/-- RegressionTest_SkipAncestorClipExpansion (488): `#grandparent{position:relative; left:100px;
+    top:100px}` > `#parent{100×100; rotate(45deg); overflow:hidden}` > `#child{20×20; rotate(-45deg)}`,
+    clips skipped: the opposite rotations cancel, so the child's rect keeps its 20×20 size. -/
+theorem RegressionTest_SkipAncestorClipExpansion_vectors :
+    let f := layoutRoot 800 (bodyPage 0 [{ id := 1, children := [{ id := 2, width := .px 100, height := some 100, children := [{ id := 3, width := .px 20, height := some 20 }] }] }])
+    let gp := f.kid 0
+    let par := gp.kid 0
+    let ns := [Node.block par (par.kid 0), .block gp par, .block (f) gp (rp 100 100)]
+    let affs := affChain ns [some (Aff.center (par.kid 0), rotation (-45)), some (Aff.center par, rotation 45), none]
+    let b := bboxOf ((composeAll (affs.take 2)).corners ⟨0, 0, 20, 20⟩)
+    b.2.near 20 20 1 1 10 = true := by decide
+
+/-- FractionalSnapping (1941): `#container{position:relative; transform-origin:0 0; transform:scale(100)}`
+    holding `#a{position:absolute; left:0.25px; 1×1}` and `#b` at `0.75px`: `(25,0,100,100)` and
+    `(75,0,100,100)`. -/
+theorem FractionalSnapping_vectors :
+    let scale100 := Aff.scale 100 100
+    let pt (n : Int) := (scale100.comp ⟨4, 0, 0, 4, n, 0, 4⟩).corners ⟨0, 0, 1, 1⟩
+    (bboxOf (pt 1)).1.lu = (25 * 64, 0) ∧ (bboxOf (pt 1)).2.lu = (100 * 64, 100 * 64) ∧
+    (bboxOf (pt 3)).1.lu = (75 * 64, 0) ∧ (bboxOf (pt 3)).2.lu = (100 * 64, 100 * 64) := by decide
 
 end TestsMapping
 end ChromiumLayout

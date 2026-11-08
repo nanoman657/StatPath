@@ -335,5 +335,23 @@ theorem rotation_period (d : Int) : rotation (d + 360) = rotation d := by
     `trigScale`). -/
 theorem rotation_zero : rotation 0 = Aff.scale trigScale trigScale trigScale.toNat := by decide
 
+/-- Corners of a rect mapped by an affine map. -/
+def Aff.corners (A : Aff) (r : PRect) : List RPt :=
+  [(r.x, r.y), (r.x + r.w, r.y), (r.x + r.w, r.y + r.h), (r.x, r.y + r.h)].map
+    (fun p => A.map (RPt.ofPt ⟨p.1, p.2⟩))
+
+/-- Bounding box of points sharing a denominator: its origin and its size, as rational points. -/
+def bboxOf (ps : List RPt) : RPt × RPt :=
+  let d := (ps.headD ⟨0, 0, 1⟩).den
+  let x0 := (ps.map (·.x)).foldl min ((ps.map (·.x)).headD 0)
+  let y0 := (ps.map (·.y)).foldl min ((ps.map (·.y)).headD 0)
+  let x1 := (ps.map (·.x)).foldl max ((ps.map (·.x)).headD 0)
+  let y1 := (ps.map (·.y)).foldl max ((ps.map (·.y)).headD 0)
+  (⟨x0, y0, d⟩, ⟨x1 - x0, y1 - y0, d⟩)
+
+/-- A rational point rounded to the nearest 1/64, as raw `LayoutUnit` values (`LayoutUnit` has a
+    resolution of 1/64 px). -/
+def RPt.lu (p : RPt) : Int × Int := ((p.x * 64 + p.den / 2) / p.den, (p.y * 64 + p.den / 2) / p.den)
+
 end Mapping
 end ChromiumLayout
