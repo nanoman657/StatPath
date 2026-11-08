@@ -116,7 +116,39 @@ def groupLines (cols : List LogicalRubyColumn) : List RubyLine :=
     ) []
     baseLine :: (topLines ++ subLines)
 
-/-! ## 3. General Laws -/
+/-! ## 3. CSS Ruby 1 §3.1 Primary Line Progression and Inflow End Offset -/
+
+/-- CSS Ruby 1 §3.1: An inline item on a formatted line.
+    Includes regular inflow items (text, control, atomic inline) and ruby columns
+    whose base text participates in primary line progression. -/
+inductive LineResultItem where
+  | text (startOffset endOffset : Nat)
+  | control (startOffset endOffset : Nat)
+  | atomicInline (startOffset endOffset : Nat)
+  | openRubyColumn (startOffset endOffset : Nat)
+  | rubyColumn (baseStartOffset baseEndOffset : Nat) (annotationEndOffset : Nat)
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Scan reversed line items to find the last inflow item's end offset. -/
+def scanInflowEndOffset (startOffset : Nat) : List LineResultItem → Nat
+  | [] => startOffset
+  | item :: rest =>
+    match item with
+    | .text _ endOff => endOff
+    | .control _ endOff => endOff
+    | .atomicInline _ endOff => endOff
+    | .openRubyColumn _ endOff => endOff
+    | .rubyColumn baseStart baseEnd _ =>
+      if baseEnd ≠ baseStart then baseEnd
+      else scanInflowEndOffset startOffset rest
+
+/-- CSS Ruby 1 §3.1 / Blink LineInfo::InflowEndOffset:
+    The end offset of inflow content on the line. For a ruby column, inflow content
+    is determined by the primary line progression in the base line, excluding annotation lines. -/
+def lineInflowEndOffset (startOffset : Nat) (results : List LineResultItem) : Nat :=
+  scanInflowEndOffset startOffset results.reverse
+
+/-! ## 4. General Laws -/
 
 /-- General Law: LogicalRubyColumn end index is the sum of startIndex and size for all inputs. -/
 theorem logicalRubyColumn_endIndex (start sz : Nat) (pos : RubyPosition) (subs : List LogicalRubyColumn) :
@@ -134,5 +166,25 @@ theorem rubyLine_isBaseLevel_iff (line : RubyLine) :
     line.isBaseLevel = true ↔ line.level = [] := by
   dsimp [RubyLine.isBaseLevel]
   cases line.level <;> simp
+
+/-- CSS Ruby 1 §3.1: Inflow end offset of an empty line is its start offset. -/
+theorem lineInflowEndOffset_empty (startOffset : Nat) :
+    lineInflowEndOffset startOffset [] = startOffset := rfl
+
+/-- CSS Ruby 1 §3.1: A ruby column's inflow end offset is determined by its base line. -/
+theorem lineInflowEndOffset_ruby_base (startOffset baseStart baseEnd annoEnd : Nat) (h : baseEnd ≠ baseStart) :
+    lineInflowEndOffset startOffset [.rubyColumn baseStart baseEnd annoEnd] = baseEnd := by
+  dsimp [lineInflowEndOffset, scanInflowEndOffset, List.reverse]
+  split <;> rename_i h2
+  · rfl
+  · contradiction
+
+/-- CSS Ruby 1 §3.1: Inflow end offset of a text item is its end offset. -/
+theorem lineInflowEndOffset_text (startOffset s e : Nat) :
+    lineInflowEndOffset startOffset [.text s e] = e := rfl
+
+/-- CSS Ruby 1 §3.1: Inflow end offset of an open ruby column marker is its end offset. -/
+theorem lineInflowEndOffset_openRubyColumn (startOffset s e : Nat) :
+    lineInflowEndOffset startOffset [.openRubyColumn s e] = e := rfl
 
 end ChromiumLayout

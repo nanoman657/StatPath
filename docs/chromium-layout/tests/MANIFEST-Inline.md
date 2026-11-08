@@ -380,7 +380,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_break_candidate_test.cc:339 | ForcedBreak | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
-| inline/line_info_test.cc:23 | InflowEndOffset | behaviour | blocked | - | Blocked: model lacks ruby column item parsing and LineInfo::InflowEndOffset |
+| inline/line_info_test.cc:23 | InflowEndOffset | behaviour | formalized | `lineInfo_inflowEndOffset` | Ruby base text establishes inflow end offset excluding annotations |
 | inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | internal | internal | - | Crash regression / DCHECK test for zero-length control item in trailing spaces |
 | inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | geometry | blocked | - | Blocked: model lacks LineWidths opportunity precomputation |
 | inline/offset_mapping_test.cc:213 | CollapseSpaces | behaviour | formalized | `test_OffsetMapping_CollapseSpaces` | Whitespace collapsing indices across normal, nowrap, pre, pre-wrap |

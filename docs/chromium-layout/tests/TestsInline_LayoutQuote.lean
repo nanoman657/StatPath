@@ -20,18 +20,15 @@ theorem layoutQuote_locale :
     let q_ja : QuoteNode := { id := "ja", lang := some "ja", parentLang := "en" }
     let q_fr : QuoteNode := { id := "fr", lang := some "fr", parentLang := "ja" }
     let q_nan : QuoteNode := { id := "nan", lang := none, parentLang := "ja" }
-    (quoteElementLocale q_ja = "ja") ∧
+    (quoteContentLocale q_ja = "ja") ∧
     (quoteBeforeLocale q_ja = "en") ∧
     (quoteAfterLocale q_ja = "en") ∧
-    (quoteTextLocale q_ja = "ja") ∧
-    (quoteElementLocale q_fr = "fr") ∧
+    (quoteContentLocale q_fr = "fr") ∧
     (quoteBeforeLocale q_fr = "ja") ∧
     (quoteAfterLocale q_fr = "ja") ∧
-    (quoteTextLocale q_fr = "fr") ∧
-    (quoteElementLocale q_nan = "ja") ∧
+    (quoteContentLocale q_nan = "ja") ∧
     (quoteBeforeLocale q_nan = "ja") ∧
-    (quoteAfterLocale q_nan = "ja") ∧
-    (quoteTextLocale q_nan = "ja") := by
+    (quoteAfterLocale q_nan = "ja") := by
   decide
 
 end ChromiumLayout
