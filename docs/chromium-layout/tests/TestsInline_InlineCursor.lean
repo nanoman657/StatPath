@@ -378,4 +378,260 @@ theorem inlineCursor_nextWithImage :
     collectPreOrder nodes = ["#linebox", "abc", "#img", "xyz"] := by
   decide
 
+/-- Test: NextInlineLeafOnLineFromLayoutInline (inline_cursor_test.cc:698)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: Starting from an inline container on line 0,
+    MoveToNextInlineLeafOnLine skips its descendants and visits subsequent leaves on the same line,
+    stopping before line 1. -/
+theorem inlineCursor_nextInlineLeafOnLineFromLayoutInline :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 0 },
+      { id := "start", name := "#start", descendantsCount := 1, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "def", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 1 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 1 },
+      { name := "ABC", lineIndex := 1 },
+      { name := "DEF", lineIndex := 1 },
+      { name := "", isLineBreak := true, lineIndex := 1 }
+    ]
+    collectInlineLeavesOnLine nodes 1 = ["#start", "def", ""] := by
+  decide
+
+/-- Test: NextInlineLeafOnLineFromNestedLayoutInline (inline_cursor_test.cc:716)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextOnLine from an inline container never visits
+    its own descendant leaves, advancing directly to the sibling subtree on the same line. -/
+theorem inlineCursor_nextInlineLeafOnLineFromNestedLayoutInline :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 6, lineIndex := 0 },
+      { id := "start", name := "#start", descendantsCount := 3, lineIndex := 0 },
+      { name := "Test", lineIndex := 0 },
+      { name := "span", descendantsCount := 1, lineIndex := 0 },
+      { name := "descendant", lineIndex := 0 },
+      { name := "span", descendantsCount := 1, lineIndex := 0 },
+      { name := "next", lineIndex := 0 }
+    ]
+    collectInlineLeavesOnLine nodes 1 = ["#start", "next"] := by
+  decide
+
+/-- Test: NextInlineLeafOnLineFromLayoutText (inline_cursor_test.cc:738)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToNextInlineLeafOnLine from a text leaf
+    traverses subsequent leaves on the same line and halts at the line boundary. -/
+theorem inlineCursor_nextInlineLeafOnLineFromLayoutText :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 0 },
+      { id := "start", name := "#start", descendantsCount := 1, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "def", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 1 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 1 },
+      { name := "ABC", lineIndex := 1 },
+      { name := "DEF", lineIndex := 1 },
+      { name := "", isLineBreak := true, lineIndex := 1 }
+    ]
+    collectInlineLeavesOnLine nodes 2 = ["abc", "def", ""] := by
+  decide
+
+/-- Test: NextForSameLayoutObject (inline_cursor_test.cc:839)
+    CSS 2.1 §9.4.2: InlineCursor collects all fragments corresponding to the same LayoutObject across lines. -/
+theorem inlineCursor_nextForSameLayoutObject :
+    let nodes : List CursorNode := [
+      { id := "pre_text", name := "abc", lineIndex := 0 },
+      { id := "pre_text", name := "", isLineBreak := true, lineIndex := 0 },
+      { id := "pre_text", name := "def", lineIndex := 1 },
+      { id := "pre_text", name := "", isLineBreak := true, lineIndex := 1 },
+      { id := "pre_text", name := "ghi", lineIndex := 2 }
+    ]
+    itemsForLayoutObject nodes "pre_text" = ["abc", "", "def", "", "ghi"] := by
+  decide
+
+/-- Test: NextForSameLayoutObjectWithRange (inline_cursor_test.cc:847)
+    CSS 2.1 §9.4.2: Cursor limited to a line box visits only the fragment on that line for the LayoutObject. -/
+theorem inlineCursor_nextForSameLayoutObjectWithRange :
+    let line2Nodes : List CursorNode := [
+      { id := "span1", name := "#span1", lineIndex := 1, descendantsCount := 1 },
+      { id := "span1_text", name := "2222", lineIndex := 1 }
+    ]
+    itemsForLayoutObject line2Nodes "span1" = ["#span1"] := by
+  decide
+
+/-- Test: Sibling (inline_cursor_test.cc:882)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2: Sibling navigation skips descendants of container siblings. -/
+theorem inlineCursor_sibling :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 6 },
+      { name := "abc" },
+      { name := "LayoutInline A", descendantsCount := 3 },
+      { name := "DEF" },
+      { name := "LayoutInline B", descendantsCount := 1 },
+      { name := "GHI" },
+      { name := "xyz" }
+    ]
+    collectSiblings nodes 1 = ["abc", "LayoutInline A", "xyz"] := by
+  decide
+
+/-- Test: Sibling2 (inline_cursor_test.cc:893)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2: Sibling navigation within an inline box visits its direct children. -/
+theorem inlineCursor_sibling2 :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 5 },
+      { name := "LayoutInline A", descendantsCount := 4 },
+      { name := "abc" },
+      { name := "LayoutInline B", descendantsCount := 1 },
+      { name := "def" },
+      { name := "xyz" }
+    ]
+    collectSiblings nodes 2 = ["abc", "LayoutInline B", "xyz"] := by
+  decide
+
+/-- Test: NextSkippingChildren (inline_cursor_test.cc:905)
+    CSS 2.1 §9.4.2: MoveToNextSkippingChildren skips all descendants of the current container. -/
+theorem inlineCursor_nextSkippingChildren :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 7 },
+      { name := "text1" },
+      { id := "span1", name := "#span1", descendantsCount := 4 },
+      { name := "text2" },
+      { id := "span2", name := "#span2", descendantsCount := 1 },
+      { name := "text3" },
+      { name := "text4" },
+      { name := "text5" }
+    ]
+    (nextSkippingChildren nodes 3,
+     nextSkippingChildren nodes 4,
+     nextSkippingChildren nodes 6,
+     nextSkippingChildren nodes 7) =
+      (some 4, some 6, some 7, none) := by
+  decide
+
+/-- Test: EmptyOutOfFlow (inline_cursor_test.cc:938)
+    CSS 2.1 §9.3 & §9.5: Out-of-flow positioned elements do not participate in inline flow,
+    producing zero in-flow inline cursor items. -/
+theorem inlineCursor_emptyOutOfFlow :
+    let nodes : List CursorNode := [
+      { id := "abs", name := "#abs", isOutOfFlow := true }
+    ]
+    culledInFlowNames nodes = [] := by
+  decide
+
+/-- Test: Previous (inline_cursor_test.cc:1110)
+    CSS 2.1 §9.4.2: MoveToPrevious visits all items in reverse pre-order sequence. -/
+theorem inlineCursor_previous :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 0 },
+      { name := "DEF", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1, lineIndex := 1 },
+      { name := "xyz", lineIndex := 1 }
+    ]
+    collectPrevious nodes 6 = ["xyz", "#linebox", "", "DEF", "LayoutInline B", "abc", "#linebox"] := by
+  decide
+
+/-- Test: PreviousInlineLeaf (inline_cursor_test.cc:1145)
+    CSS Inline 3 §2: MoveToPreviousInlineLeaf visits leaf items in reverse order including line breaks. -/
+theorem inlineCursor_previousInlineLeaf :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 0 },
+      { name := "DEF", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1, lineIndex := 1 },
+      { name := "xyz", lineIndex := 1 }
+    ]
+    collectPreviousInlineLeaves nodes 6 false = ["xyz", "", "DEF", "abc"] := by
+  decide
+
+/-- Test: PreviousInlineLeafIgnoringLineBreak (inline_cursor_test.cc:1158)
+    CSS Inline 3 §2: MoveToPreviousInlineLeafIgnoringLineBreak visits reverse leaves skipping line breaks. -/
+theorem inlineCursor_previousInlineLeafIgnoringLineBreak :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 4, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 0 },
+      { name := "DEF", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1, lineIndex := 1 },
+      { name := "xyz", lineIndex := 1 }
+    ]
+    collectPreviousInlineLeaves nodes 6 true = ["xyz", "DEF", "abc"] := by
+  decide
+
+/-- Test: PreviousInlineLeafOnLineFromLayoutInline (inline_cursor_test.cc:1171)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from an inline container
+    visits preceding leaves on the same line, stopping before entering the previous line. -/
+theorem inlineCursor_previousInlineLeafOnLineFromLayoutInline :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 3, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "def", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 5, lineIndex := 1 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 1 },
+      { name := "ABC", lineIndex := 1 },
+      { name := "", isLineBreak := true, lineIndex := 1 },
+      { id := "start", name := "#start", descendantsCount := 1, lineIndex := 1 },
+      { name := "DEF", lineIndex := 1 }
+    ]
+    collectPreviousInlineLeavesOnLine nodes 8 = ["#start", "", "ABC"] := by
+  decide
+
+/-- Test: PreviousInlineLeafOnLineFromLayoutText (inline_cursor_test.cc:1211)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from text leaf
+    traverses backward on the line and stops at line start. -/
+theorem inlineCursor_previousInlineLeafOnLineFromLayoutText :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 3, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "def", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 5, lineIndex := 1 },
+      { name := "LayoutInline B", descendantsCount := 1, lineIndex := 1 },
+      { name := "ABC", lineIndex := 1 },
+      { name := "", isLineBreak := true, lineIndex := 1 },
+      { id := "start", name := "#start", descendantsCount := 1, lineIndex := 1 },
+      { name := "DEF", lineIndex := 1 }
+    ]
+    collectPreviousInlineLeavesOnLine nodes 9 = ["DEF", "", "ABC"] := by
+  decide
+
+/-- Test: PreviousLine (inline_cursor_test.cc:1229)
+    CSS 2.1 §9.4.2: MoveToPreviousLine moves to previous line box fragment, or null from first line. -/
+theorem inlineCursor_previousLine :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 2, lineIndex := 0 },
+      { name := "abc", lineIndex := 0 },
+      { name := "", isLineBreak := true, lineIndex := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1, lineIndex := 1 },
+      { name := "xyz", lineIndex := 1 }
+    ]
+    findPreviousLine nodes 0 = none ∧
+    findPreviousLine nodes 3 = some 0 := by
+  decide
+
+/-- Test: CursorForDescendants (inline_cursor_test.cc:1250)
+    CSS Inline 3 §2: CursorForDescendants limits cursor to subtree descending from current container. -/
+theorem inlineCursor_cursorForDescendants :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 10 },
+      { name := "text1" },
+      { id := "span1", name := "#span1", descendantsCount := 4 },
+      { name := "text2" },
+      { id := "span2", name := "#span2", descendantsCount := 1 },
+      { name := "text3" },
+      { name := "text4" },
+      { name := "text5" },
+      { id := "span3", name := "#span3", descendantsCount := 1 },
+      { name := "text6" },
+      { name := "text7" }
+    ]
+    descendantNames nodes 1 = [] ∧
+    descendantNames nodes 2 = ["text2", "#span2", "text3", "text4"] ∧
+    descendantNames nodes 3 = [] ∧
+    descendantNames nodes 4 = ["text3"] := by
+  decide
+
 end ChromiumLayout.TestsInline

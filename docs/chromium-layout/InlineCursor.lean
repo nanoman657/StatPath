@@ -123,7 +123,7 @@ structure CursorNode where
   isEmptyLine : Bool := false
   isFloat : Bool := false
   isOutOfFlow : Bool := false
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Inhabited
 
 /-- Find parent index in pre-order flat tree: innermost ancestor whose descendants span over target. -/
 def findParentAux (nodes : List CursorNode) (target : Nat) : Nat → Option Nat
@@ -279,6 +279,176 @@ def culledInFlowNames (items : List CursorNode) : List String :=
 def collectPreOrder (nodes : List CursorNode) : List String :=
   nodes.map CursorNode.name
 
+/-- CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: Move to next inline leaf on the same line box.
+    If current node is a container box, skips its descendants and moves to the first leaf in following siblings on the same line.
+    If current node is a leaf, moves to next leaf on the same line. -/
+def nextInlineLeafOnLine (nodes : List CursorNode) (idx : Nat) : Option Nat :=
+  match nodes[idx]? with
+  | some cur =>
+    let startIdx :=
+      if cur.descendantsCount > 0 ∧ ¬cur.isAtomic then
+        idx + 1 + cur.descendantsCount
+      else
+        idx + 1
+    let rec findNext (k : Nat) (fuel : Nat) : Option Nat :=
+      match fuel with
+      | 0 => none
+      | fuel + 1 =>
+        match nodes[k]? with
+        | some n =>
+          if n.lineIndex == cur.lineIndex then
+            if isInlineLeaf n then some k
+            else findNext (k + 1) fuel
+          else none
+        | none => none
+    findNext startIdx nodes.length
+  | none => none
+
+/-- Collect leaf names on line using nextInlineLeafOnLine. -/
+def collectInlineLeavesOnLine (nodes : List CursorNode) (startIdx : Nat) : List String :=
+  let rec loop (cur : Nat) (fuel : Nat) : List String :=
+    match fuel with
+    | 0 => []
+    | fuel + 1 =>
+      match nodes[cur]? with
+      | some n =>
+        let name := n.name
+        match nextInlineLeafOnLine nodes cur with
+        | some nextIdx => name :: loop nextIdx fuel
+        | none => [name]
+      | none => []
+  loop startIdx nodes.length
+
+/-- CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: Move to previous inline leaf on the same line box.
+    If current node is a container box, looks backward among previous siblings/leaves on the same line. -/
+def previousInlineLeafOnLine (nodes : List CursorNode) (idx : Nat) : Option Nat :=
+  match nodes[idx]? with
+  | some cur =>
+    let rec findPrev : Nat → Option Nat
+      | 0 => none
+      | k + 1 =>
+        match nodes[k]? with
+        | some n =>
+          if n.lineIndex == cur.lineIndex then
+            if isInlineLeaf n then some k
+            else findPrev k
+          else none
+        | none => none
+    findPrev idx
+  | none => none
+
+/-- Collect leaf names backward on line using previousInlineLeafOnLine. -/
+def collectPreviousInlineLeavesOnLine (nodes : List CursorNode) (startIdx : Nat) : List String :=
+  let rec loop (cur : Nat) (fuel : Nat) : List String :=
+    match fuel with
+    | 0 => []
+    | fuel + 1 =>
+      match nodes[cur]? with
+      | some n =>
+        let name := n.name
+        match previousInlineLeafOnLine nodes cur with
+        | some prevIdx => name :: loop prevIdx fuel
+        | none => [name]
+      | none => []
+  loop startIdx nodes.length
+
+/-- CSS 2.1 §9.4.2: Move to previous item in pre-order traversal. -/
+def previousCursor (idx : Nat) : Option Nat :=
+  if idx > 0 then some (idx - 1) else none
+
+/-- Collect backward pre-order traversal names. -/
+def collectPrevious (nodes : List CursorNode) (startIdx : Nat) : List String :=
+  let rec loop (cur : Nat) (fuel : Nat) : List String :=
+    match fuel with
+    | 0 => []
+    | fuel + 1 =>
+      match nodes[cur]? with
+      | some n =>
+        let name := n.name
+        match previousCursor cur with
+        | some prevIdx => name :: loop prevIdx fuel
+        | none => [name]
+      | none => []
+  loop startIdx nodes.length
+
+/-- CSS Inline 3 §2: Move to previous inline leaf in IFC traversal. -/
+def previousInlineLeaf (nodes : List CursorNode) (idx : Nat) (ignoreLineBreak : Bool := false) : Option Nat :=
+  let rec findPrev : Nat → Option Nat
+    | 0 => none
+    | k + 1 =>
+      match nodes[k]? with
+      | some n =>
+        if isInlineLeaf n ignoreLineBreak then some k
+        else findPrev k
+      | none => none
+  findPrev idx
+
+/-- Collect backward inline leaf names. -/
+def collectPreviousInlineLeaves (nodes : List CursorNode) (startIdx : Nat) (ignoreLineBreak : Bool := false) : List String :=
+  let rec loop (cur : Nat) (fuel : Nat) : List String :=
+    match fuel with
+    | 0 => []
+    | fuel + 1 =>
+      match nodes[cur]? with
+      | some n =>
+        let name := n.name
+        match previousInlineLeaf nodes cur ignoreLineBreak with
+        | some prevIdx => name :: loop prevIdx fuel
+        | none => [name]
+      | none => []
+  loop startIdx nodes.length
+
+/-- CSS 2.1 §9.4.2: Move to previous line box. -/
+def findPreviousLine (nodes : List CursorNode) (idx : Nat) : Option Nat :=
+  let rec findPrev : Nat → Option Nat
+    | 0 => none
+    | k + 1 =>
+      match nodes[k]? with
+      | some n =>
+        if n.type == .line ∨ n.name == "#linebox" then some k
+        else findPrev k
+      | none => none
+  findPrev idx
+
+/-- CSS 2.1 §9.4.2: Find next direct sibling in fragment tree (skipping children of current node). -/
+def nextSibling (nodes : List CursorNode) (idx : Nat) : Option Nat :=
+  match nextSkippingChildren nodes idx with
+  | some nextIdx =>
+    if findParent nodes nextIdx == findParent nodes idx then some nextIdx
+    else none
+  | none => none
+
+/-- Collect names of siblings starting from current node. -/
+def collectSiblings (nodes : List CursorNode) (startIdx : Nat) : List String :=
+  let rec loop (cur : Nat) (fuel : Nat) : List String :=
+    match fuel with
+    | 0 => []
+    | fuel + 1 =>
+      match nodes[cur]? with
+      | some n =>
+        let name := n.name
+        match nextSibling nodes cur with
+        | some nextIdx => name :: loop nextIdx fuel
+        | none => [name]
+      | none => []
+  loop startIdx nodes.length
+
+/-- CSS Inline 3 §2: Items strictly descending from a given container in the fragment tree. -/
+def descendantNodes (nodes : List CursorNode) (idx : Nat) : List CursorNode :=
+  match nodes[idx]? with
+  | some n =>
+    if n.descendantsCount > 0 ∧ ¬n.isAtomic then
+      nodes.take (idx + 1 + n.descendantsCount) |>.drop (idx + 1)
+    else []
+  | none => []
+
+def descendantNames (nodes : List CursorNode) (idx : Nat) : List String :=
+  (descendantNodes nodes idx).map CursorNode.name
+
+/-- Collect items with matching object identifier (fragments of the same LayoutObject). -/
+def itemsForLayoutObject (nodes : List CursorNode) (objId : String) : List String :=
+  nodes.filter (fun n => n.id == objId) |>.map CursorNode.name
+
 /-! ## 4. Cursor Tree Navigation Laws -/
 
 /-- CSS 2.1 §9.4.2 & CSS Inline 3 §2: The parent of the first child of any node with descendants is the node itself. -/
@@ -318,5 +488,46 @@ theorem atomic_inline_has_no_children (nodes : List CursorNode) (idx : Nat) (n :
   dsimp [findFirstChild]
   rw [hNode]
   simp [hAtomic]
+
+/-- CSS Inline 3 §2: A leaf fragment (0 descendants) has no descendant items. -/
+theorem descendantNodes_empty_of_leaf (nodes : List CursorNode) (idx : Nat) (n : CursorNode)
+    (hNode : nodes[idx]? = some n) (hDesc : n.descendantsCount = 0) :
+    descendantNodes nodes idx = [] := by
+  dsimp [descendantNodes]
+  rw [hNode]
+  simp [hDesc]
+
+/-- CSS 2.1 §9.4.2: MoveToPrevious strictly decreases index in pre-order traversal. -/
+theorem previousCursor_strictly_decreases (idx : Nat) (hPos : idx > 0) :
+    ∃ prev, previousCursor idx = some prev ∧ prev < idx := by
+  dsimp [previousCursor]
+  simp [hPos]
+  omega
+
+/-- CSS 2.1 §9.4.2: Next sibling shares the same parent fragment in the formatting context tree. -/
+theorem nextSibling_preserves_parent (nodes : List CursorNode) (idx nextIdx : Nat)
+    (hSib : nextSibling nodes idx = some nextIdx) :
+    findParent nodes nextIdx = findParent nodes idx := by
+  dsimp [nextSibling] at hSib
+  split at hSib
+  · rename_i hNext
+    split at hSib
+    · rename_i hEq
+      injection hSib with hId
+      subst hId
+      simp only [beq_iff_eq] at hEq
+      exact hEq
+    · contradiction
+  · contradiction
+
+/-- CSS 2.1 §9.3 & §9.5: When all elements are out-of-flow positioned, the inline flow has no in-flow items. -/
+theorem empty_out_of_flow_no_inflow (items : List CursorNode)
+    (hOOF : ∀ n ∈ items, n.isOutOfFlow = true) :
+    culledInFlowItems items = [] := by
+  dsimp [culledInFlowItems]
+  rw [List.filter_eq_nil_iff]
+  intro n hn
+  have := hOOF n hn
+  simp [this]
 
 end ChromiumLayout

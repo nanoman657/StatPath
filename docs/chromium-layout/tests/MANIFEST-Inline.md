@@ -250,35 +250,35 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | formalized | `inlineCursor_nextInlineLeaf` | CSS Inline 3 §2: MoveToNextInlineLeaf visits only text and break leaves |
-| inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextInlineLeafOnLine from container visits subsequent leaves on same line and halts |
+| inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromNestedLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextOnLine from container skips descendants to sibling subtree on same line |
+| inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromLayoutText` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextInlineLeafOnLine traverses text and break leaves on line, stopping at line boundary |
 | inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:788 | NextInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_nextInlineLeafIgnoringLineBreak` | CSS Inline 3 §2: MoveToNextInlineLeafIgnoringLineBreak skips line breaks |
 | inline/inline_cursor_test.cc:800 | NextLine | behaviour | formalized | `inlineCursor_nextLine` | CSS 2.1 §9.4.2: MoveToNextLine advances between consecutive line boxes |
 | inline/inline_cursor_test.cc:821 | NextWithImage | behaviour | formalized | `inlineCursor_nextWithImage` | CSS 2.1 §9.2.2: Atomic image elements participate in inline cursor pre-order traversal |
 | inline/inline_cursor_test.cc:827 | NextWithInlineBox | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:839 | NextForSameLayoutObject | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:847 | NextForSameLayoutObjectWithRange | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:882 | Sibling | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:839 | NextForSameLayoutObject | behaviour | formalized | `inlineCursor_nextForSameLayoutObject` | CSS 2.1 §9.4.2: InlineCursor collects all fragments corresponding to the same LayoutObject across lines |
+| inline/inline_cursor_test.cc:847 | NextForSameLayoutObjectWithRange | behaviour | formalized | `inlineCursor_nextForSameLayoutObjectWithRange` | CSS 2.1 §9.4.2: Descendant cursor limited to line box visits only the fragment for LayoutObject on that line |
+| inline/inline_cursor_test.cc:882 | Sibling | behaviour | formalized | `inlineCursor_sibling` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Sibling navigation skips descendants of container siblings |
+| inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | formalized | `inlineCursor_sibling2` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Sibling navigation within an inline box visits its direct children |
+| inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | formalized | `inlineCursor_nextSkippingChildren` | CSS 2.1 §9.4.2: MoveToNextSkippingChildren skips all descendants of current container |
+| inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | formalized | `inlineCursor_emptyOutOfFlow` | CSS 2.1 §9.3 & §9.5: Out-of-flow positioned elements do not participate in inline flow, yielding 0 in-flow cursor items |
 | inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | internal | - | Hit testing on inline-block with block children |
-| inline/inline_cursor_test.cc:1110 | Previous | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previous` | CSS 2.1 §9.4.2: MoveToPrevious visits all items in reverse pre-order sequence |
 | inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
-| inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_previousInlineLeaf` | CSS Inline 3 §2: MoveToPreviousInlineLeaf visits leaf items in reverse order including line breaks |
+| inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_previousInlineLeafIgnoringLineBreak` | CSS Inline 3 §2: MoveToPreviousInlineLeafIgnoringLineBreak visits reverse leaves skipping line breaks |
+| inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_previousInlineLeafOnLineFromLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from container visits preceding leaves on same line |
 | inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_previousInlineLeafOnLineFromLayoutText` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from text leaf traverses backward on line and stops at line start |
+| inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | formalized | `inlineCursor_previousLine` | CSS 2.1 §9.4.2: MoveToPreviousLine moves to previous line box fragment, or null from first line |
+| inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | formalized | `inlineCursor_cursorForDescendants` | CSS Inline 3 §2: CursorForDescendants limits cursor to subtree descending from current container |
 | inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
