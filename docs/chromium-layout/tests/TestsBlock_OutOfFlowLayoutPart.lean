@@ -22,4 +22,18 @@ theorem FixedInsideAbs_offsets :
     (resolveOofOffset 49 0 fixedInsideAbs_fixed2).1 = 7 := by
   decide
 
+-- out_of_flow_layout_part_test.cc:359: OutOfFlowLayoutPartTest.BreakBeforeColumn
+theorem BreakBeforeColumn_vectors :
+    let desc : OofDescendant := { posType := .absolute, width := .px 40, height := .px 30 }
+    let slices := fragmentOof 40 492 desc true false 0 0 30 40 30
+    slices = [⟨0, 0, 30, 40, 10⟩, ⟨1, 0, 0, 40, 20⟩] := by
+  decide
+
+-- out_of_flow_layout_part_test.cc:398: OutOfFlowLayoutPartTest.BreakAfterColumn
+theorem BreakAfterColumn_vectors :
+    let desc : OofDescendant := { posType := .absolute, width := .px 40, height := .px 30 }
+    let slices := fragmentOof 40 492 desc false true 0 0 30 40 30
+    slices = [⟨0, 0, 30, 40, 10⟩, ⟨1, 0, 0, 40, 20⟩] := by
+  decide
+
 end TestsBlock

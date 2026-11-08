@@ -151,8 +151,8 @@ checks every row against the pinned sources and the Lean modules.
 | out_of_flow_layout_part_test.cc:238 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:279 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewEmptyColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:320 | OutOfFlowLayoutPartTest.BreakInsideAvoid | behaviour | blocked | needs break-inside: avoid on out-of-flow node in multicol; not modelled |
-| out_of_flow_layout_part_test.cc:359 | OutOfFlowLayoutPartTest.BreakBeforeColumn | behaviour | blocked | needs break-before: column on out-of-flow node in multicol; not modelled |
-| out_of_flow_layout_part_test.cc:398 | OutOfFlowLayoutPartTest.BreakAfterColumn | behaviour | blocked | needs break-after: column on out-of-flow node in multicol; not modelled |
+| out_of_flow_layout_part_test.cc:359 | OutOfFlowLayoutPartTest.BreakBeforeColumn | behaviour | formalized | `TestsBlock.BreakBeforeColumn_vectors`, `BlockAbsolute.abspos_ignores_bb` |
+| out_of_flow_layout_part_test.cc:398 | OutOfFlowLayoutPartTest.BreakAfterColumn | behaviour | formalized | `TestsBlock.BreakAfterColumn_vectors`, `BlockAbsolute.abspos_ignores_ba` |
 | out_of_flow_layout_part_test.cc:437 | OutOfFlowLayoutPartTest.ChildBreakInsideAvoid | behaviour | blocked | needs break-inside: avoid on descendant in multicol; not modelled |
 | out_of_flow_layout_part_test.cc:479 | OutOfFlowLayoutPartTest.ChildBreakBeforeAvoid | behaviour | blocked | needs break-before: avoid on descendant in multicol; not modelled |
 | out_of_flow_layout_part_test.cc:523 | OutOfFlowLayoutPartTest.ChildBreakAfterAvoid | behaviour | blocked | needs break-after: avoid on descendant in multicol; not modelled |
