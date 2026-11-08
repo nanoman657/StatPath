@@ -176,6 +176,82 @@ theorem ZeroHeightWithContent_vectors :
     (c4.slices[0]!).w = 20 ∧ (c4.slices[0]!).h = 1 := by
   decide
 
+-- column_layout_algorithm_test.cc:429: OverflowedBlock
+theorem OverflowedBlock_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [
+        BNode.leaf (.px 50) 120,
+        BNode.leaf (.px 40) 20
+      ] (some 60),
+      BNode.leaf (.pct 85) 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 60 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 60 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 75 ∧ res[2]!.h = 0 ∧
+    res[2]!.kids.length = 2 ∧
+    res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 50 ∧ res[2]!.kids[0]!.h = 20 ∧
+    res[2]!.kids[1]!.y = 20 ∧ res[2]!.kids[1]!.w = 40 ∧ res[2]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:467: OverflowedBlock2
+theorem OverflowedBlock2_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [BNode.leaf (.px 50) 220] (some 10),
+      BNode.leaf (.pct 85) 10,
+      BNode.box (.pct 65) .auto [BNode.leaf (.px 51) 220] (some 10)
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 7 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 10 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 10 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 0 ∧ res[2]!.y = 20 ∧ res[2]!.w = 65 ∧ res[2]!.h = 10 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 51 ∧ res[2]!.kids[0]!.h = 80 ∧
+    res[3]!.col = 1 ∧ res[3]!.y = 0 ∧ res[3]!.w = 75 ∧ res[3]!.h = 0 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 50 ∧ res[3]!.kids[0]!.h = 100 ∧
+    res[4]!.col = 1 ∧ res[4]!.y = 0 ∧ res[4]!.w = 65 ∧ res[4]!.h = 0 ∧
+    res[4]!.kids.length = 1 ∧ res[4]!.kids[0]!.y = 0 ∧ res[4]!.kids[0]!.w = 51 ∧ res[4]!.kids[0]!.h = 100 ∧
+    res[5]!.col = 2 ∧ res[5]!.y = 0 ∧ res[5]!.w = 75 ∧ res[5]!.h = 0 ∧
+    res[5]!.kids.length = 1 ∧ res[5]!.kids[0]!.y = 0 ∧ res[5]!.kids[0]!.w = 50 ∧ res[5]!.kids[0]!.h = 20 ∧
+    res[6]!.col = 2 ∧ res[6]!.y = 0 ∧ res[6]!.w = 65 ∧ res[6]!.h = 0 ∧
+    res[6]!.kids.length = 1 ∧ res[6]!.kids[0]!.y = 0 ∧ res[6]!.kids[0]!.w = 51 ∧ res[6]!.kids[0]!.h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:515: OverflowedBlock3
+theorem OverflowedBlock3_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [BNode.leaf (.px 50) 220] (some 60),
+      BNode.leaf (.pct 85) 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 60 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 60 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 75 ∧ res[2]!.h = 0 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 50 ∧ res[2]!.kids[0]!.h = 100 ∧
+    res[3]!.col = 2 ∧ res[3]!.y = 0 ∧ res[3]!.w = 75 ∧ res[3]!.h = 0 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 50 ∧ res[3]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:554: UnusedSpaceInBlock
+theorem UnusedSpaceInBlock_vectors :
+    let nodes := [
+      BNode.box .auto .auto [BNode.leaf (.px 20) 20] (some 300)
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 20 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.isEmpty = true ∧
+    res[2]!.col = 2 ∧ res[2]!.y = 0 ∧ res[2]!.w = 100 ∧ res[2]!.h = 100 ∧
+    res[2]!.kids.isEmpty = true := by
+  decide
+
 -- column_layout_algorithm_test.cc:4415: Spanner
 def spanner_input : MulticolWithSpanners := {
   cols := 3, gap := 10, width := 320, border := 1,

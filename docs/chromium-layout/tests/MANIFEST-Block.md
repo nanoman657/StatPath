@@ -196,10 +196,10 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:336 | ColumnLayoutAlgorithmTest.TwoBlocksInTwoColumns | geometry | formalized | `TestsBlock.TwoBlocksInTwoColumns_vectors` |
 | column_layout_algorithm_test.cc:368 | ColumnLayoutAlgorithmTest.ZeroHeight | geometry | formalized | `TestsBlock.ZeroHeight_vectors` |
 | column_layout_algorithm_test.cc:393 | ColumnLayoutAlgorithmTest.ZeroHeightWithContent | geometry | formalized | `TestsBlock.ZeroHeightWithContent_vectors` |
-| column_layout_algorithm_test.cc:429 | ColumnLayoutAlgorithmTest.OverflowedBlock | geometry | blocked | needs nested block overflow fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:467 | ColumnLayoutAlgorithmTest.OverflowedBlock2 | geometry | blocked | needs nested block overflow fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:515 | ColumnLayoutAlgorithmTest.OverflowedBlock3 | geometry | blocked | needs nested block overflow fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:554 | ColumnLayoutAlgorithmTest.UnusedSpaceInBlock | geometry | blocked | needs nested block with grandchild fragmentation in multicolumn |
+| column_layout_algorithm_test.cc:429 | ColumnLayoutAlgorithmTest.OverflowedBlock | geometry | formalized | `TestsBlock.OverflowedBlock_vectors`, `ColumnLayout.box_fit_end_pos` |
+| column_layout_algorithm_test.cc:467 | ColumnLayoutAlgorithmTest.OverflowedBlock2 | geometry | formalized | `TestsBlock.OverflowedBlock2_vectors`, `ColumnLayout.box_fit_end_pos` |
+| column_layout_algorithm_test.cc:515 | ColumnLayoutAlgorithmTest.OverflowedBlock3 | geometry | formalized | `TestsBlock.OverflowedBlock3_vectors`, `ColumnLayout.box_fit_end_pos` |
+| column_layout_algorithm_test.cc:554 | ColumnLayoutAlgorithmTest.UnusedSpaceInBlock | geometry | formalized | `TestsBlock.UnusedSpaceInBlock_vectors`, `ColumnLayout.box_fit_end_pos` |
 | column_layout_algorithm_test.cc:589 | ColumnLayoutAlgorithmTest.FloatInOneColumn | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:617 | ColumnLayoutAlgorithmTest.TwoFloatsInOneColumn | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:647 | ColumnLayoutAlgorithmTest.TwoFloatsInTwoColumns | geometry | blocked | needs float fragmentation in multicolumn |
