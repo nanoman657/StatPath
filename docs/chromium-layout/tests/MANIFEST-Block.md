@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -451,23 +451,23 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:1159 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
 | grid/grid_layout_algorithm_test.cc:1216 | GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:1273 | GridLayoutAlgorithmTest.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks | geometry | blocked | needs CSS grid track sizing and range building algorithm |
-| grid/grid_layout_algorithm_test.cc:1356 | GridLayoutAlgorithmTest.FixedSizePositioning | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
-| grid/grid_layout_algorithm_test.cc:1405 | GridLayoutAlgorithmTest.FixedSizePositioningAutoRows | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
-| grid/grid_layout_algorithm_test.cc:1462 | GridLayoutAlgorithmTest.SpecifiedPositionsOutOfOrder | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
-| grid/grid_layout_algorithm_test.cc:1536 | GridLayoutAlgorithmTest.GridWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1356 | GridLayoutAlgorithmTest.FixedSizePositioning | geometry | formalized | `TestsBlock.FixedSizePositioning_vectors`, `GridLayout.track_offset_zero` |
+| grid/grid_layout_algorithm_test.cc:1405 | GridLayoutAlgorithmTest.FixedSizePositioningAutoRows | geometry | formalized | `TestsBlock.FixedSizePositioningAutoRows_vectors` |
+| grid/grid_layout_algorithm_test.cc:1462 | GridLayoutAlgorithmTest.SpecifiedPositionsOutOfOrder | geometry | formalized | `TestsBlock.SpecifiedPositionsOutOfOrder_vectors` |
+| grid/grid_layout_algorithm_test.cc:1536 | GridLayoutAlgorithmTest.GridWithGap | geometry | formalized | `TestsBlock.GridWithGap_vectors`, `GridLayout.grid_gap_positive` |
 | grid/grid_layout_algorithm_test.cc:1586 | GridLayoutAlgorithmTest.GridWithPercentGap | geometry | blocked | needs CSS grid gap geometry calculation |
-| grid/grid_layout_algorithm_test.cc:1640 | GridLayoutAlgorithmTest.AutoSizedGridWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1640 | GridLayoutAlgorithmTest.AutoSizedGridWithGap | geometry | formalized | `TestsBlock.AutoSizedGridWithGap_vectors` |
 | grid/grid_layout_algorithm_test.cc:1694 | GridLayoutAlgorithmTest.AutoSizedGridWithPercentageGap | geometry | blocked | needs CSS grid gap geometry calculation |
-| grid/grid_layout_algorithm_test.cc:1739 | GridLayoutAlgorithmTest.ItemsSizeWithGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1739 | GridLayoutAlgorithmTest.ItemsSizeWithGap | geometry | formalized | `TestsBlock.ItemsSizeWithGap_vectors` |
 | grid/grid_layout_algorithm_test.cc:1800 | GridLayoutAlgorithmTest.PositionedOutOfFlowItems | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
 | grid/grid_layout_algorithm_test.cc:1940 | GridLayoutAlgorithmTest.NGGridAxisType | geometry | blocked | needs CSS grid layout algorithm |
 | grid/grid_layout_algorithm_test.cc:1973 | GridLayoutAlgorithmTest.SubgridLineNameList | geometry | blocked | needs CSS subgrid line names and track alignment |
 | grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | blocked | needs CSS subgrid line names and track alignment |
 | grid/grid_layout_algorithm_test.cc:2090 | GridLayoutAlgorithmTest.SingleAxisScrollerAutoMinSizeUseCount | internal | internal | checks UseCounter for SingleAxisScrollerAutoMinSize feature |
 | grid/grid_layout_algorithm_test.cc:2136 | GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice | geometry | blocked | needs fragmented out-of-flow grid items placement |
-| grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | formalized | `TestsBlock.TestRangeIndexFromGridLine_vectors`, `GridLayout.range_index_first_track` |
 | grid/grid_track_collection_test.cc:119 | GridTrackCollectionTest.TestGridTrackList | geometry | blocked | needs CSS grid track collection sizing and range normalization |
-| grid/grid_track_collection_test.cc:171 | GridTrackCollectionTest.TestGridRangeBuilder | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:171 | GridTrackCollectionTest.TestGridRangeBuilder | geometry | formalized | `TestsBlock.TestGridRangeBuilder_vectors` |
 | grid/grid_track_collection_test.cc:188 | GridTrackCollectionTest.TestGridRangeBuilderCollapsed | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:208 | GridTrackCollectionTest.TestGridRangeBuilderImplicit | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:248 | GridTrackCollectionTest.TestGridSetTrackSizeNormalization | geometry | blocked | needs CSS grid track collection sizing and range normalization |
