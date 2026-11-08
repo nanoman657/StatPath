@@ -382,7 +382,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
 | inline/line_info_test.cc:23 | InflowEndOffset | behaviour | formalized | `lineInfo_inflowEndOffset` | Ruby base text establishes inflow end offset excluding annotations |
 | inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | internal | internal | - | Crash regression / DCHECK test for zero-length control item in trailing spaces |
-| inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | geometry | blocked | - | Blocked: model lacks LineWidths opportunity precomputation |
+| inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | geometry | formalized | `lineWidthsDataTest_data` | CSS 2.1 §9.5, §10.8 & CSS Inline 3 §3: Precomputed line widths with float exclusions |
 | inline/offset_mapping_test.cc:213 | CollapseSpaces | behaviour | formalized | `test_OffsetMapping_CollapseSpaces` | Whitespace collapsing indices across normal, nowrap, pre, pre-wrap |
 | inline/offset_mapping_test.cc:224 | CollapseTabs | behaviour | formalized | `test_OffsetMapping_CollapseTabs` | Tab character collapsing indices |
 | inline/offset_mapping_test.cc:235 | CollapseNewLines | behaviour | formalized | `test_OffsetMapping_CollapseNewLines` | Newline character collapsing indices |
