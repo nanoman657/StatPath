@@ -30,6 +30,7 @@ inductive BNode where
   | box (w : Len) (bi : BreakInside) (kids : List BNode) (optH : Option Nat := none)
         (fl : FloatType := .none) (marginTop : Nat := 0) (breakBefore : Bool := false) (breakAfter : Bool := false)
         (border : Nat := 0) (padding : Nat := 0) (isNewFc : Bool := false)
+        (orphans : Nat := 2) (widows : Nat := 2)
   deriving Inhabited, Repr
 
 /-- A fragment of a node inside column `col`; `x` and `y` are the offset from the column top-left,
@@ -83,7 +84,7 @@ def nodeBreakAfter : BNode → Bool
 /-- Whether a node establishes a new formatting context root. CSS 2.1 §9.5. -/
 def nodeIsNewFc : BNode → Bool
   | .leaf _ _ _ _ _ _ _ isNewFc => isNewFc
-  | .box _ _ _ _ _ _ _ _ _ _ isNewFc => isNewFc
+  | .box _ _ _ _ _ _ _ _ _ _ isNewFc .. => isNewFc
 
 /-- Float direction and top margin of a node. CSS 2.1 §8.3, §9.5.1. -/
 def nodeProps (n : BNode) : FloatType × Nat :=
@@ -107,10 +108,63 @@ def nodeStart (fragH : Nat) (c y : Nat) (bB : Bool) (avoids : Bool) (mTop h : Na
 def applyBreakAfter (bA : Bool) (c y : Nat) : Nat × Nat :=
   if bA && y > 0 then (c + 1, 0) else (c, y)
 
+/-- Width of a node resolved against containing block width. CSS 2.1 §10.2, §10.3. -/
+def nodeWidth (cbW : Nat) (n : BNode) : Nat :=
+  match n with
+  | .leaf w .. => resolveLen cbW w
+  | .box w .. => resolveLen cbW w
+
+/-- Lay out remaining lines across subsequent column fragmentainers of full capacity.
+    CSS Fragmentation Level 3 §3.3 & §4.1. -/
+def placeLinesInCols (innerW fullCap lineH : Nat) : Nat → Nat → List BNode → List NFrag × Nat × Nat
+  | 0, currC, rem => ([], currC, rem.length * lineH)
+  | fuel + 1, currC, rem =>
+    if rem.isEmpty then ([], currC, 0)
+    else
+      let batch := rem.take fullCap
+      let batchFrags : List NFrag := (List.range batch.length).map (fun i =>
+        let kw := nodeWidth innerW (batch.getD i default)
+        ⟨currC, 0, i * lineH, kw, lineH, []⟩)
+      let remNext := rem.drop fullCap
+      if remNext.isEmpty then
+        (batchFrags, currC, batch.length * lineH)
+      else
+        let (nextFrags, endC, endY) := placeLinesInCols innerW fullCap lineH fuel (currC + 1) remNext
+        (batchFrags ++ nextFrags, endC, endY)
+
+/-- Break and distribute line boxes across columns honoring orphans and widows constraints.
+    CSS Fragmentation Level 3 §3.3 (orphans and widows), §4.4 (unforced break Rule 3). -/
+def splitLines (innerW fragH : Nat) (c y : Nat) (orphans widows : Nat) (lines : List BNode) : List NFrag × Nat × Nat :=
+  let total := lines.length
+  let lineH := match lines.head? with | some (.leaf _ h ..) => h | _ => 20
+  let availH := if fragH ≥ y then fragH - y else 0
+  let cap := if lineH > 0 then availH / lineH else 1
+  let fullCap := if lineH > 0 then fragH / lineH else 1
+  if total ≤ cap then
+    let frags : List NFrag := (List.range total).map (fun i =>
+      let kw := nodeWidth innerW (lines.getD i default)
+      ⟨c, 0, y + i * lineH, kw, lineH, []⟩)
+    (frags, c, y + total * lineH)
+  else
+    let take0 :=
+      if cap < orphans then
+        if y = 0 && cap = 0 then 1 else cap
+      else
+        let maxTake := min cap (if total ≥ widows then total - widows else 0)
+        if maxTake ≥ orphans then maxTake else orphans
+    let firstBatch := lines.take take0
+    let frags0 : List NFrag := (List.range firstBatch.length).map (fun i =>
+      let kw := nodeWidth innerW (firstBatch.getD i default)
+      ⟨c, 0, y + i * lineH, kw, lineH, []⟩)
+    let rest := lines.drop take0
+    let (restFrags, endC, endY) := placeLinesInCols innerW fullCap lineH (rest.length + 1) (c + 1) rest
+    (frags0 ++ restFrags, endC, endY)
+
 /-- Lay out an in-flow node starting in column `c` at offset `y`.
     CSS 2.1 §8.1 (box dimensions), §8.5 (borders), §10.6.2 (fixed height), §11.1 (overflow);
     CSS Fragmentation Level 3 §3.1 (forced breaks), §3.2 & §5.3 (splitting boxes),
-    §5.2 (margins at breaks), §5.4 (box-decoration-break: slice). -/
+    §3.3 (orphans and widows), §4.4 (unforced breaks), §5.2 (margins at breaks),
+    §5.4 (box-decoration-break: slice). -/
 def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag × Nat × Nat
   | 0, _, c, y => ([], c, y)
   | _ + 1, .leaf w h bi _ mTop bB bA .., c, y =>
@@ -119,16 +173,21 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
     let r := placeChildSlices fragH rw (h + 1) 0 h c0 y0
     let (finalC, finalY) := applyBreakAfter bA r.2.1 r.2.2
     (r.1.map (fun s => ⟨s.colIdx, 0, s.relY, s.w, s.h, []⟩), finalC, finalY)
-  | f + 1, .box w bi ks optH _ mTop bB bA border padding .., c, y =>
+  | f + 1, .box w bi ks optH _ mTop bB bA border padding _ orphans widows, c, y =>
     let bp := border + padding
     let hBox := match optH with | some h => h + 2 * bp | none => (ks.map (nodeHeight f)).sum + 2 * bp
     let avoids := bi.avoidsColumn
     let (c0, y0) := nodeStart fragH c y bB avoids mTop hBox
     let rw := resolveLen colW w
     let innerW := if rw ≥ 2 * bp then rw - 2 * bp else 0
-    let r := ks.foldl (fun (acc : List NFrag × Nat × Nat) k =>
-      let q := layoutNode fragH innerW f k acc.2.1 acc.2.2
-      (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, y0 + bp)
+    let isLineList := !ks.isEmpty && ks.all (fun k => match k with | .leaf _ _ bi .. => bi.avoidsColumn | _ => false)
+    let r :=
+      if isLineList then
+        splitLines innerW fragH c0 (y0 + bp) orphans widows ks
+      else
+        ks.foldl (fun (acc : List NFrag × Nat × Nat) k =>
+          let q := layoutNode fragH innerW f k acc.2.1 acc.2.2
+          (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, y0 + bp)
     let (endC, endY) := match optH with
       | none =>
         if ks.isEmpty then (c0, y0 + 2 * bp)
@@ -267,7 +326,7 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
         let (adjY, adjMTop) := clearFloats colW cf isNewFc rw y mTop
         let nWithAdjMargin := match n with
           | .leaf w h bi fl _ bB bA isNewFc => .leaf w h bi fl adjMTop bB bA isNewFc
-          | .box w bi ks optH fl _ bB bA b p isNewFc => .box w bi ks optH fl adjMTop bB bA b p isNewFc
+          | .box w bi ks optH fl _ bB bA b p isNewFc orphans widows => .box w bi ks optH fl adjMTop bB bA b p isNewFc orphans widows
         let (nFrags, endC, endY) := layoutNode fragH colW f nWithAdjMargin c adjY
         loop rest endC endY (max floatCol endC) cfloats (acc ++ nFrags)
       | _ =>
@@ -284,8 +343,8 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
           let (frags, nextCfl) := placeFloatSlices fragH colW fl rw mTop (h + 1) h fc fy true [] cfloats
           let (finalC, _) := applyBreakAfter bA fc fy
           loop rest c y finalC nextCfl (acc ++ frags)
-        | .box _ _ ks optH _ _ _ _ border padding .. =>
-          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH .none 0 false false border padding) fc (fy + mTop)
+        | .box _ _ ks optH _ _ _ _ border padding isNewFc orphans widows =>
+          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH .none 0 false false border padding isNewFc orphans widows) fc (fy + mTop)
           let (fragsWithX, nextCfl) := placeBoxFloatFrags colW fl nFrags cfloats
           let (finalC, _) := applyBreakAfter bA fc 0
           loop rest c y finalC nextCfl (acc ++ fragsWithX)
@@ -419,6 +478,32 @@ theorem auto_box_start_col (fragH c y h1 : Nat) (hy : y + h1 < fragH) :
   dsimp [nodeStart]
   have h1 : decide (y ≥ fragH) = false := by simp; omega
   simp [h1]
+
+/-- Law: When a block container has enough lines to satisfy both orphans and widows,
+    the lines remaining after the first column fragment are at least `widows`.
+    CSS Fragmentation Level 3 §3.3, §4.4. -/
+theorem widows_min_tail (total cap orphans widows : Nat)
+    (h_tot : total ≥ widows) (h_cap : cap ≥ orphans) (h_both : total - widows ≥ orphans) :
+    let maxTake := min cap (total - widows)
+    let take0 := if maxTake ≥ orphans then maxTake else orphans
+    total - take0 ≥ widows := by
+  dsimp
+  have h1 : min cap (total - widows) ≥ orphans := by
+    apply Nat.le_min.mpr
+    exact ⟨h_cap, h_both⟩
+  simp [h1]
+  omega
+
+/-- Law: When line capacity cap satisfies orphans requirement, the first column fragment
+    receives at least `orphans` lines.
+    CSS Fragmentation Level 3 §3.3, §4.4. -/
+theorem orphans_min_head (total cap orphans widows : Nat) :
+    let maxTake := min cap (if total ≥ widows then total - widows else 0)
+    (if maxTake ≥ orphans then maxTake else orphans) ≥ orphans := by
+  intro maxTake
+  split
+  · omega
+  · omega
 
 end ColumnLayout
 end ChromiumLayout

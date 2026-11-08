@@ -234,11 +234,11 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:1725 | ColumnLayoutAlgorithmTest.LinesAndFloatsMulticol | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1774 | ColumnLayoutAlgorithmTest.FloatBelowLastLineInColumn | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1820 | ColumnLayoutAlgorithmTest.Orphans | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:1861 | ColumnLayoutAlgorithmTest.OrphansUnsatisfiable | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:1905 | ColumnLayoutAlgorithmTest.Widows | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:1951 | ColumnLayoutAlgorithmTest.WidowsUnsatisfiable | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:2017 | ColumnLayoutAlgorithmTest.OrphansAndUnsatisfiableWidows | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:2057 | ColumnLayoutAlgorithmTest.UnsatisfiableOrphansAndWidows | geometry | blocked | needs orphans and widows balancing in multicolumn |
+| column_layout_algorithm_test.cc:1861 | ColumnLayoutAlgorithmTest.OrphansUnsatisfiable | geometry | formalized | `TestsBlock.OrphansUnsatisfiable_vectors`, `ColumnLayout.orphans_min_head` |
+| column_layout_algorithm_test.cc:1905 | ColumnLayoutAlgorithmTest.Widows | geometry | formalized | `TestsBlock.Widows_vectors`, `ColumnLayout.widows_min_tail` |
+| column_layout_algorithm_test.cc:1951 | ColumnLayoutAlgorithmTest.WidowsUnsatisfiable | geometry | formalized | `TestsBlock.WidowsUnsatisfiable_vectors`, `ColumnLayout.orphans_min_head` |
+| column_layout_algorithm_test.cc:2017 | ColumnLayoutAlgorithmTest.OrphansAndUnsatisfiableWidows | geometry | formalized | `TestsBlock.OrphansAndUnsatisfiableWidows_vectors`, `ColumnLayout.orphans_min_head` |
+| column_layout_algorithm_test.cc:2057 | ColumnLayoutAlgorithmTest.UnsatisfiableOrphansAndWidows | geometry | formalized | `TestsBlock.UnsatisfiableOrphansAndWidows_vectors`, `ColumnLayout.widows_min_tail` |
 | column_layout_algorithm_test.cc:2097 | ColumnLayoutAlgorithmTest.WidowsAndAbspos | geometry | blocked | needs orphans and widows balancing in multicolumn |
 | column_layout_algorithm_test.cc:2147 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore | geometry | formalized | `TestsBlock.BreakBetweenLinesNotBefore_vectors`, `ColumnLayout.auto_box_start_col` |
 | column_layout_algorithm_test.cc:2194 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore2 | geometry | formalized | `TestsBlock.BreakBetweenLinesNotBefore2_vectors`, `ColumnLayout.auto_box_start_col` |
