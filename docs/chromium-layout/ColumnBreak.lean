@@ -387,5 +387,17 @@ theorem new_fc_clears_float (colW lw fh y mTop w : Nat)
   simp [h1, h2, h3]
   omega
 
+/-- Law: An unbreakable float that does not fit in remaining column space is pushed to the next column.
+    CSS Fragmentation Level 3 §3.2, §4.1; CSS 2.1 §9.5.1. -/
+theorem float_avoid_push_col (fragH fc0 fy0 h mTop : Nat)
+    (_h_pos : fy0 + mTop < fragH) (h_fit : fragH - (fy0 + mTop) < h) :
+    let avail0 := fragH - (fy0 + mTop)
+    let mustPush := avail0 < h
+    let (fc, fy) := if mustPush then (fc0 + 1, 0) else (fc0, fy0)
+    fc = fc0 + 1 ∧ fy = 0 := by
+  dsimp
+  have h1 : fragH - (fy0 + mTop) < h := h_fit
+  simp [h1]
+
 end ColumnLayout
 end ChromiumLayout

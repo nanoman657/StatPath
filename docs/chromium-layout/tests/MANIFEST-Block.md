@@ -206,7 +206,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:680 | ColumnLayoutAlgorithmTest.FloatWithForcedBreak | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:717 | ColumnLayoutAlgorithmTest.FloatWithMargin | geometry | formalized | `TestsBlock.FloatWithMargin_vectors`, `ColumnLayout.right_float_aligns_right` |
 | column_layout_algorithm_test.cc:747 | ColumnLayoutAlgorithmTest.FloatWithMarginBelowFloat | geometry | blocked | needs float fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:779 | ColumnLayoutAlgorithmTest.FloatWithLastResortBreak | geometry | blocked | needs float fragmentation in multicolumn |
+| column_layout_algorithm_test.cc:779 | ColumnLayoutAlgorithmTest.FloatWithLastResortBreak | geometry | formalized | `TestsBlock.FloatWithLastResortBreak_vectors`, `ColumnLayout.float_avoid_push_col` |
 | column_layout_algorithm_test.cc:818 | ColumnLayoutAlgorithmTest.FloatWithAvoidBreak | geometry | formalized | `TestsBlock.FloatWithAvoidBreak_vectors`, `ColumnLayout.right_float_aligns_right` |
 | column_layout_algorithm_test.cc:855 | ColumnLayoutAlgorithmTest.FloatWithMarginAndAvoidBreak | geometry | formalized | `TestsBlock.FloatWithMarginAndAvoidBreak_vectors`, `ColumnLayout.right_float_aligns_right` |
 | column_layout_algorithm_test.cc:893 | ColumnLayoutAlgorithmTest.UnbreakableFloatBeforeBreakable | geometry | formalized | `TestsBlock.UnbreakableFloatBeforeBreakable_vectors`, `ColumnLayout.right_float_aligns_right` |

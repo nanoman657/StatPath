@@ -315,6 +315,19 @@ theorem FloatWithMargin_vectors :
     res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 := by
   decide
 
+-- column_layout_algorithm_test.cc:779: FloatWithLastResortBreak
+theorem FloatWithLastResortBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .avoid [BNode.leaf (.px 0) 20] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
 -- column_layout_algorithm_test.cc:818: FloatWithAvoidBreak
 theorem FloatWithAvoidBreak_vectors :
     let nodes := [
