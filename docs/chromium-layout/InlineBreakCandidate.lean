@@ -153,4 +153,125 @@ theorem empty_context_initial_candidate (hyphens : HyphensMode) (w : Nat) :
          posNoBreak := 0, posIfBreak := 0 }] := by
   rfl
 
+/-! ## 4. Line Breaking Opportunities and Break Inside Predicate (CSS Text 3 §5.2) -/
+
+/-- Inflow item classification for determining line breaking opportunities. -/
+inductive InflowBreakItem where
+  | text (content : String) (hasSpace : Bool := false)
+  | atomicInline
+  | outOfFlow
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text 3 §5.2 / Blink LineBreaker::CanBreakInside:
+    Whether an inline sequence has a break opportunity inside.
+    A line can break inside if autoWrap is true (not nowrap) and there is either:
+    1. A text item containing internal word-breaking spaces, or
+    2. A break opportunity between two adjacent in-flow items (e.g. text and atomic inline,
+       two atomic inlines, or text separated by in-flow whitespace). -/
+def canBreakInside (autoWrap : Bool) (items : List InflowBreakItem) : Bool :=
+  if !autoWrap then false
+  else
+    let inFlow := items.filter (fun it => it ≠ .outOfFlow)
+    let hasInternalBreak := inFlow.any (fun it => match it with | .text _ hasSpace => hasSpace | _ => false)
+    let rec checkAdjacent : List InflowBreakItem → Bool
+      | [] | [_] => false
+      | x :: y :: rest =>
+        match x, y with
+        | .atomicInline, .atomicInline => true
+        | .atomicInline, .text _ _ => true
+        | .text _ _, .atomicInline => true
+        | _, _ => checkAdjacent (y :: rest)
+    hasInternalBreak || checkAdjacent inFlow
+
+/-- CSS Text 3 §5.2: nowrap never permits breaking inside. -/
+theorem canBreakInside_nowrap (items : List InflowBreakItem) :
+    canBreakInside false items = false := rfl
+
+/-- CSS Text 3 §5.2: Empty item stream cannot break inside. -/
+theorem canBreakInside_empty (autoWrap : Bool) :
+    canBreakInside autoWrap [] = false := by
+  cases autoWrap <;> rfl
+
+/-- CSS Text 3 §5.2: Single text without space cannot break inside. -/
+theorem canBreakInside_single_text_no_space (s : String) :
+    canBreakInside true [.text s false] = false := rfl
+
+/-- CSS Text 3 §5.2: Single text containing space can break inside. -/
+theorem canBreakInside_single_text_with_space (s : String) :
+    canBreakInside true [.text s true] = true := rfl
+
+/-- CSS Text 3 §5.2: Boundary between two atomic inlines can break inside. -/
+theorem canBreakInside_adjacent_atomic_inlines :
+    canBreakInside true [.atomicInline, .atomicInline] = true := rfl
+
+/-- CSS Text 3 §5.2: Boundary between text and atomic inline can break inside. -/
+theorem canBreakInside_text_and_atomic (s : String) (hasSpace : Bool) :
+    canBreakInside true [.text s hasSpace, .atomicInline] = true := by
+  cases hasSpace <;> rfl
+
+/-- CSS Text 3 §5.2: Boundary between atomic inline and text can break inside. -/
+theorem canBreakInside_atomic_and_text (s : String) (hasSpace : Bool) :
+    canBreakInside true [.atomicInline, .text s hasSpace] = true := by
+  cases hasSpace <;> rfl
+
+/-! ## 5. Trailing Whitespace State (CSS Text 3 §4.1, §5.1) -/
+
+/-- CSS Text 3 §4.1 / Blink LineBreaker::WhitespaceState:
+    Trailing whitespace state of a line after line breaking. -/
+inductive LineBreakerWhitespaceState where
+  | none
+  | leading
+  | collapsed
+  | preserved
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Line break end scenario for determining trailing whitespace state. -/
+inductive LineBreakEndReason where
+  | emptyLine
+  | textEnd
+  | atomicEnd
+  | softWrapBreak (collapses : Bool)
+  | preservedSpaceEnd
+  | blockEndSpace (collapses : Bool)
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text 3 §4.1, §5.1 / Blink LineBreaker::ComputeTrailingWhitespace:
+    Compute trailing whitespace state from the line break end scenario. -/
+def computeWhitespaceState (reason : LineBreakEndReason) : LineBreakerWhitespaceState :=
+  match reason with
+  | .emptyLine => .leading
+  | .textEnd => .none
+  | .atomicEnd => .none
+  | .softWrapBreak collapses => if collapses then .collapsed else .preserved
+  | .preservedSpaceEnd => .preserved
+  | .blockEndSpace collapses => if collapses then .none else .preserved
+
+/-- CSS Text 3 §5.1: Empty line whitespace state is leading. -/
+theorem whitespaceState_empty :
+    computeWhitespaceState .emptyLine = .leading := rfl
+
+/-- CSS Text 3 §5.1: Line ending in text has whitespace state none. -/
+theorem whitespaceState_textEnd :
+    computeWhitespaceState .textEnd = .none := rfl
+
+/-- CSS Text 3 §5.1: Line ending in atomic inline has whitespace state none. -/
+theorem whitespaceState_atomicEnd :
+    computeWhitespaceState .atomicEnd = .none := rfl
+
+/-- CSS Text 3 §5.1: Soft wrap break with collapsing space has state collapsed. -/
+theorem whitespaceState_softWrap_collapsed :
+    computeWhitespaceState (.softWrapBreak true) = .collapsed := rfl
+
+/-- CSS Text 3 §5.1: Soft wrap break with preserved space has state preserved. -/
+theorem whitespaceState_softWrap_preserved :
+    computeWhitespaceState (.softWrapBreak false) = .preserved := rfl
+
+/-- CSS Text 3 §4.1: Block end with collapsing space has state none (stripped by builder). -/
+theorem whitespaceState_blockEnd_collapsed :
+    computeWhitespaceState (.blockEndSpace true) = .none := rfl
+
+/-- CSS Text 3 §4.1: Block end with preserved space has state preserved. -/
+theorem whitespaceState_blockEnd_preserved :
+    computeWhitespaceState (.blockEndSpace false) = .preserved := rfl
+
 end ChromiumLayout

@@ -7,6 +7,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineShaping
+import InlineBreakCandidate
 
 namespace ChromiumLayout.TestsInline
 
@@ -170,6 +171,49 @@ theorem lineBreaker_splitTextIntoSegments :
     let lens := clusterUtf16Lengths chars
     (lens.length = 8) ∧
     (lens = [1, 1, 2, 2, 1, 2, 1, 1]) := by
+  decide
+
+/-! ### Test 18: WhitespaceState (line_breaker_test.cc:624) -/
+/-- Test `WhitespaceStateTest, WhitespaceState` (`inline/line_breaker_test.cc:624`).
+    Verifies trailing whitespace state across test configurations. -/
+theorem lineBreaker_whitespaceState :
+    (computeWhitespaceState .textEnd = .none) ∧
+    (computeWhitespaceState (.softWrapBreak true) = .collapsed) ∧
+    (computeWhitespaceState (.blockEndSpace true) = .none) ∧
+    (computeWhitespaceState (.softWrapBreak false) = .preserved) ∧
+    (computeWhitespaceState (.blockEndSpace false) = .preserved) ∧
+    (computeWhitespaceState .emptyLine = .leading) ∧
+    (computeWhitespaceState .atomicEnd = .none) := by
+  decide
+
+/-! ### Test 43: CanBreakInside (line_breaker_test.cc:1288) -/
+/-- Test `CanBreakInsideTest, Data` (`inline/line_breaker_test.cc:1288`).
+    Verifies CanBreakInside predicate across all 24 test configurations. -/
+theorem lineBreaker_canBreakInside :
+    (canBreakInside true [.text "a" false] = false) ∧
+    (canBreakInside true [.text "a b" true] = true) ∧
+    (canBreakInside false [.text "a b" true] = false) ∧
+    (canBreakInside true [.text "a" false, .text "a b" true] = true) ∧
+    (canBreakInside true [.text "a" false, .text " b" true] = true) ∧
+    (canBreakInside true [.text "a " true, .text "b" false] = true) ∧
+    (canBreakInside true [.text "a" false, .text " " true, .text "b" false] = true) ∧
+    (canBreakInside true [.text "a" false, .text "b" false] = false) ∧
+    (canBreakInside true [.outOfFlow] = false) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow] = false) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow, .text "b" false] = false) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow, .outOfFlow, .text "b" false] = false) ∧
+    (canBreakInside true [.outOfFlow, .text "a b" true] = true) ∧
+    (canBreakInside true [.text "a " true, .outOfFlow, .text "b" false] = true) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow, .text " b" true] = true) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow, .outOfFlow] = false) ∧
+    (canBreakInside true [.text "ab c" true, .outOfFlow] = true) ∧
+    (canBreakInside true [.text "ab" false, .outOfFlow, .outOfFlow, .outOfFlow] = false) ∧
+    (canBreakInside true [.text "a" false, .outOfFlow, .text "b" false] = false) ∧
+    (canBreakInside true [.text "a " true, .outOfFlow, .text "b" false] = true) ∧
+    (canBreakInside true [.atomicInline] = false) ∧
+    (canBreakInside true [.atomicInline, .atomicInline] = true) ∧
+    (canBreakInside true [.text "a" false, .atomicInline] = true) ∧
+    (canBreakInside true [.atomicInline, .text "a" false] = true) := by
   decide
 
 /-! ### General Line Breaker Progress Law -/

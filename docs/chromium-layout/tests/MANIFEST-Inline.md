@@ -45,7 +45,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:486 | BoundaryInWord | geometry | blocked | - | Blocked: model lacks BoundaryInWord layout support |
 | inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | blocked | - | Blocked: model lacks first-word break prevention |
 | inline/line_breaker_test.cc:548 | IdeographicTrailingSpaces | geometry | formalized | `lineBreaker_ideographicTrailingSpaces` | Ideographic spaces (U+3000) are preserved as non-collapsible text |
-| inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | blocked | - | Blocked: model lacks WhitespaceState tracking in LineBreaker |
+| inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | formalized | `lineBreaker_whitespaceState` | Line breaker trailing whitespace state across line wrapping conditions |
 | inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | blocked | - | Blocked: model lacks trailing space hanging width computation in LineBreaker |
 | inline/line_breaker_test.cc:706 | FullyCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:732 | TrailingCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
@@ -70,7 +70,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1220 | MinMaxWithAtomicInlineInRuby | internal | internal | - | Crash regression test for atomic inline in ruby |
 | inline/line_breaker_test.cc:1229 | RemoveTrailingCollapsibleSpace | internal | internal | - | Crash regression test (division by zero) |
 | inline/line_breaker_test.cc:1241 | MinMaxWithEmptyRubyBase | internal | internal | - | Crash regression test for empty ruby base |
-| inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | blocked | - | Blocked: model lacks CanBreakInside predicate |
+| inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | formalized | `lineBreaker_canBreakInside` | CanBreakInside predicate for line breaking opportunities |
 | inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
 | inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectInlinesText` | Flattening inline tokens into text and open/close tag items with offsets |
