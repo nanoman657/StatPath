@@ -1416,6 +1416,31 @@ checks every row against the pinned sources and the Lean modules.
 | layout_text_test.cc:1707 | LayoutTextTest.TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
 | layout_text_test.cc:1727 | LayoutTextTest.OriginalTextNullWhenTransformedTextIsNonNull | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
 | layout_text_test.cc:1755 | LayoutTextTest.OriginalTextEmptyWhenTransformedTextIsNonEmpty | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| exclusions/exclusion_space_test.cc:92 | ExclusionSpaceTest.Empty | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:122 | ExclusionSpaceTest.LineLayoutOpportunityClampsNonDominantSide | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:169 | ExclusionSpaceTest.SingleExclusion | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:232 | ExclusionSpaceTest.TwoExclusions | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:273 | ExclusionSpaceTest.SolidEdges | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:325 | ExclusionSpaceTest.OverlappingWithShelf | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:373 | ExclusionSpaceTest.InsertBetweenShelves | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:408 | ExclusionSpaceTest.InitialLetterBasic | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:451 | ExclusionSpaceTest.InitialLetterDirectionRight | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:507 | ExclusionSpaceTest.InitialLetterFloatLeft1 | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:560 | ExclusionSpaceTest.InitialLetterFloatLeft2 | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:615 | ExclusionSpaceTest.InitialLetterFloatLeft2ClearLeft | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:672 | ExclusionSpaceTest.InitialLetterFloatLeftAndRight | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:738 | ExclusionSpaceTest.InitialLetterFloatLeftAfterBreak | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:796 | ExclusionSpaceTest.InitialLetterFloatRight2 | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:857 | ExclusionSpaceTest.ZeroInlineSizeOpportunity | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:877 | ExclusionSpaceTest.NegativeInlineSizeOpportunityLeft | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:907 | ExclusionSpaceTest.NegativeInlineSizeOpportunityRight | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:937 | ExclusionSpaceTest.PreInitialization | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:992 | ExclusionSpaceTest.MergeExclusionSpacesNoPreviousExclusions | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:1020 | ExclusionSpaceTest.MergeExclusionSpacesPreviousExclusions | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:1060 | ExclusionSpaceTest.MergeExclusionSpacesNoOutputExclusions | geometry | blocked | model lacks float exclusion space layout opportunities |
+| exclusions/exclusion_space_test.cc:1083 | ExclusionSpaceTest.CopyOnWriteNoAllocationOnCopy | internal | internal | Blink ExclusionSpace copy-on-write memory allocation check |
+| exclusions/exclusion_space_test.cc:1162 | ExclusionSpaceTest.CopyOnWriteDisabledFallback | internal | internal | Blink ExclusionSpace copy-on-write memory allocation check |
+
 ## Laws proved
 
 - `BlockFlow.consumedBlockSize_step`: consumed block size increases by fragmentainer size with each fragment.
