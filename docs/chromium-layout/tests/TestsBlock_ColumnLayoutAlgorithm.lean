@@ -456,6 +456,19 @@ theorem NewFcWithMargin_vectors :
     res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 30 := by
   decide
 
+-- column_layout_algorithm_test.cc:2665: NewFcBelowFloat
+theorem NewFcBelowFloat_vectors :
+    let nodes := [
+      BNode.leaf (.px 22) 50 .auto .left,
+      BNode.leaf (.px 88) 70 .auto .none 40 false false true
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 22 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 50 ∧ res[1]!.w = 88 ∧ res[1]!.h = 50 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 88 ∧ res[2]!.h = 20 := by
+  decide
+
 -- column_layout_algorithm_test.cc:2697: NewFcWithMarginPastColumnBoundary
 theorem NewFcWithMarginPastColumnBoundary_vectors :
     let nodes := [

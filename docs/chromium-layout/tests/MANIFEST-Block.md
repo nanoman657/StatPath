@@ -253,7 +253,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2568 | ColumnLayoutAlgorithmTest.ResumeInsideFormattingContextRoot | geometry | formalized | `TestsBlock.ResumeInsideFormattingContextRoot_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2602 | ColumnLayoutAlgorithmTest.NewFcAtColumnBoundary | geometry | formalized | `TestsBlock.NewFcAtColumnBoundary_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2633 | ColumnLayoutAlgorithmTest.NewFcWithMargin | geometry | formalized | `TestsBlock.NewFcWithMargin_vectors`, `ColumnLayout.forced_break_col` |
-| column_layout_algorithm_test.cc:2665 | ColumnLayoutAlgorithmTest.NewFcBelowFloat | geometry | blocked | needs float fragmentation in multicolumn |
+| column_layout_algorithm_test.cc:2665 | ColumnLayoutAlgorithmTest.NewFcBelowFloat | geometry | formalized | `TestsBlock.NewFcBelowFloat_vectors`, `ColumnLayout.new_fc_clears_float` |
 | column_layout_algorithm_test.cc:2697 | ColumnLayoutAlgorithmTest.NewFcWithMarginPastColumnBoundary | geometry | formalized | `TestsBlock.NewFcWithMarginPastColumnBoundary_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2728 | ColumnLayoutAlgorithmTest.MinMax | geometry | blocked | needs multicolumn min/max-content intrinsic size resolution |
 | column_layout_algorithm_test.cc:2799 | ColumnLayoutAlgorithmTest.ColumnBalancing | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
