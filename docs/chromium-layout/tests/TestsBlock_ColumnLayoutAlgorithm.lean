@@ -364,5 +364,67 @@ theorem FixedSizeMulticolWithSpanner_vectors :
     (res.fragments[6]!).relX = 220 ∧ (res.fragments[6]!).relY = 150 ∧ (res.fragments[6]!).w = 100 ∧ (res.fragments[6]!).h = 150 := by
   decide
 
+-- column_layout_algorithm_test.cc:939: BlockWithTopMarginInThreeColumns
+theorem BlockWithTopMarginInThreeColumns_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .px 50, height := 70 },
+      { id := 2, width := .px 60, height := 150, marginTop := 10 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 50 ∧ res[0]!.h = 70 ∧
+    res[1]!.colIdx = 0 ∧ res[1]!.relY = 80 ∧ res[1]!.w = 60 ∧ res[1]!.h = 20 ∧
+    res[2]!.colIdx = 1 ∧ res[2]!.relY = 0 ∧ res[2]!.w = 60 ∧ res[2]!.h = 100 ∧
+    res[3]!.colIdx = 2 ∧ res[3]!.relY = 0 ∧ res[3]!.w = 60 ∧ res[3]!.h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:973: BlockStartAtColumnBoundary
+theorem BlockStartAtColumnBoundary_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .px 50, height := 100 },
+      { id := 2, width := .px 60, height := 100 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 50 ∧ res[0]!.h = 100 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 60 ∧ res[1]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1292: MarginTopPastEndOfFragmentainer
+theorem MarginTopPastEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90 },
+      { id := 2, width := .px 20, height := 20, marginTop := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1327: MarginBottomPastEndOfFragmentainer
+theorem MarginBottomPastEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90, marginBottom := 20 },
+      { id := 2, width := .px 20, height := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1362: MarginTopAtEndOfFragmentainer
+theorem MarginTopAtEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90 },
+      { id := 2, width := .px 20, height := 20, marginTop := 10 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1396: MarginBottomAtEndOfFragmentainer
+theorem MarginBottomAtEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90, marginBottom := 10 },
+      { id := 2, width := .px 20, height := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

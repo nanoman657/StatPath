@@ -377,5 +377,78 @@ theorem spanner_margin_collapsing (m1 m2 : Nat) :
   · apply Nat.le_max_left
   · apply Nat.le_max_right
 
+/-- A child block with top and bottom margins inside a multicol container.
+    CSS Fragmentation Level 3 §5.2 Adjoining Margins at Breaks. -/
+structure ColChildWithMargin where
+  id : Nat := 0
+  width : Len := .auto
+  height : Nat := 0
+  marginTop : Nat := 0
+  marginBottom : Nat := 0
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Fragment slice of a child placed in a specific column fragmentainer.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+structure PlacedSlice where
+  colIdx : Nat := 0
+  id : Nat := 0
+  relX : Nat := 0
+  relY : Nat := 0
+  w : Nat := 0
+  h : Nat := 0
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Slice a child box across columns.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+def placeChildSlices (fragH w fuel cId remH colIdx curY : Nat) : List PlacedSlice × Nat × Nat :=
+  match fuel with
+  | 0 => ([], colIdx, curY)
+  | fuel + 1 =>
+    if remH = 0 then ([], colIdx, curY)
+    else
+      let avail := fragH - curY
+      let sliceH := Nat.min remH avail
+      let s : PlacedSlice := ⟨colIdx, cId, 0, curY, w, sliceH⟩
+      let newRem := remH - sliceH
+      if newRem = 0 then
+        ([s], colIdx, curY + sliceH)
+      else
+        let (more, finalCol, finalY) := placeChildSlices fragH w fuel cId newRem (colIdx + 1) 0
+        (s :: more, finalCol, finalY)
+
+/-- Layout block children with margins across fragmentainers (columns), truncating margins at breaks.
+    CSS Fragmentation Level 3 §5.2 & CSS Multi-column Layout Level 1 §4. -/
+def layoutFragmentedBlocks (fragH : Nat) (colW : Nat) (children : List ColChildWithMargin) : List PlacedSlice :=
+  let rec loop (chs : List ColChildWithMargin) (colIdx curY prevMarginBottom : Nat) : List PlacedSlice :=
+    match chs with
+    | [] => []
+    | c :: cs =>
+      let w := resolveLen colW c.width
+      let margin := Nat.max prevMarginBottom c.marginTop
+      let candY := curY + margin
+      if curY > 0 && candY >= fragH then
+        let (slices, nextCol, nextY) := placeChildSlices fragH w (c.height + 1) c.id c.height (colIdx + 1) 0
+        slices ++ loop cs nextCol nextY c.marginBottom
+      else
+        let startY := if curY = 0 then 0 else candY
+        let (slices, nextCol, nextY) := placeChildSlices fragH w (c.height + 1) c.id c.height colIdx startY
+        slices ++ loop cs nextCol nextY c.marginBottom
+
+  loop children 0 0 0
+
+/-- Law: A single in-flow child that fits within fragmentainer height is placed in column 0 with relY = 0.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+theorem single_child_slice_col_zero (fragH colW : Nat) (c : ColChildWithMargin) (h : c.height > 0) (h_fit : c.height ≤ fragH) :
+    let res := layoutFragmentedBlocks fragH colW [c]
+    ∃ s, res = [s] ∧ s.colIdx = 0 ∧ s.relY = 0 ∧ s.h = c.height := by
+  dsimp [layoutFragmentedBlocks, layoutFragmentedBlocks.loop, placeChildSlices]
+  split
+  · omega
+  · split
+    · refine ⟨_, rfl, rfl, rfl, ?_⟩
+      exact Nat.min_eq_left h_fit
+    · have h_min : Nat.min c.height fragH = c.height := Nat.min_eq_left h_fit
+      omega
+
 end ColumnLayout
 end ChromiumLayout

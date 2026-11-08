@@ -210,8 +210,8 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:818 | ColumnLayoutAlgorithmTest.FloatWithAvoidBreak | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:855 | ColumnLayoutAlgorithmTest.FloatWithMarginAndAvoidBreak | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:893 | ColumnLayoutAlgorithmTest.UnbreakableFloatBeforeBreakable | geometry | blocked | needs float fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:939 | ColumnLayoutAlgorithmTest.BlockWithTopMarginInThreeColumns | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:973 | ColumnLayoutAlgorithmTest.BlockStartAtColumnBoundary | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
+| column_layout_algorithm_test.cc:939 | ColumnLayoutAlgorithmTest.BlockWithTopMarginInThreeColumns | geometry | formalized | `TestsBlock.BlockWithTopMarginInThreeColumns_vectors` |
+| column_layout_algorithm_test.cc:973 | ColumnLayoutAlgorithmTest.BlockStartAtColumnBoundary | geometry | formalized | `TestsBlock.BlockStartAtColumnBoundary_vectors` |
 | column_layout_algorithm_test.cc:1004 | ColumnLayoutAlgorithmTest.NestedBlockAfterBlock | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
 | column_layout_algorithm_test.cc:1042 | ColumnLayoutAlgorithmTest.BreakInsideAvoid | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:1073 | ColumnLayoutAlgorithmTest.BreakInsideAvoidColumn | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
@@ -220,10 +220,10 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:1174 | ColumnLayoutAlgorithmTest.NestedBreakInsideAvoid | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:1215 | ColumnLayoutAlgorithmTest.NestedBreakInsideAvoidTall | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:1258 | ColumnLayoutAlgorithmTest.BreakInsideAvoidAtColumnBoundary | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:1292 | ColumnLayoutAlgorithmTest.MarginTopPastEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1327 | ColumnLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1362 | ColumnLayoutAlgorithmTest.MarginTopAtEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1396 | ColumnLayoutAlgorithmTest.MarginBottomAtEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
+| column_layout_algorithm_test.cc:1292 | ColumnLayoutAlgorithmTest.MarginTopPastEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginTopPastEndOfFragmentainer_vectors` |
+| column_layout_algorithm_test.cc:1327 | ColumnLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomPastEndOfFragmentainer_vectors` |
+| column_layout_algorithm_test.cc:1362 | ColumnLayoutAlgorithmTest.MarginTopAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginTopAtEndOfFragmentainer_vectors` |
+| column_layout_algorithm_test.cc:1396 | ColumnLayoutAlgorithmTest.MarginBottomAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomAtEndOfFragmentainer_vectors` |
 | column_layout_algorithm_test.cc:1430 | ColumnLayoutAlgorithmTest.LinesInMulticolExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1470 | ColumnLayoutAlgorithmTest.LinesInMulticolExactFit | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1510 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
