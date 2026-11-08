@@ -676,6 +676,293 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/static_position_test.cc:331 | Convert | geometry | blocked | - | Blocked: model lacks StaticPosition::Convert |
 | geometry/writing_mode_converter_test.cc:15 | ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `writingModeConverter_toPhysical` | Converts logical offset to physical offset across writing modes and directions |
 | geometry/writing_mode_converter_test.cc:73 | ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `writingModeConverter_toLogical` | Converts physical offset to logical offset across writing modes and directions |
+| svg/layout_svg_container_test.cc:19 | TransformAffectsVectorEffect | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:70 | TransformAffectsVectorEffectNestedSVG | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:100 | TransformAffectsVectorEffectHiddenContainerAndUse | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:127 | PatternWithContentVisibility | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:161 | BoundingBoxesWith3DTransformedChild | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_container_test.cc:180 | MaskCacheClearedOnLastClientRemovedBeforeGCAndDisplayLock | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:18 | DivInForeignObject | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:76 | IframeInForeignObject | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:149 | HitTestZoomedForeignObject | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:216 | HitTestViewBoxForeignObject | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:247 | HitTestUnderClipPath | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:283 | HitTestUnderClippedPositionedForeignObjectDescendant | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:317 | HitTestUnderTransformedForeignObjectDescendant | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:351 | HitTestUnderScrollingAncestor | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_foreign_object_test.cc:389 | BBoxPropagationZoomed | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_foreign_object_test.cc:411 | SetNeedsCollectInlines | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:424 | SubtreeLayoutCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_foreign_object_test.cc:451 | ZoomChangesInvalidatePaintProperties | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:489 | DisplayLocked | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:507 | LocalToAncestorPoint | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:525 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_foreign_object_test.cc:545 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_foreign_object_test.cc:565 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_foreign_object_test.cc:585 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_image_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_image_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_image_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_image_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_inline_test.cc:13 | IsChildAllowed | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_inline_test.cc:25 | LocalToAncestorPoint | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_rect_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_rect_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_rect_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_rect_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_root_test.cc:27 | VisualRectMappingWithoutViewportClipWithBorder | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_root_test.cc:54 | VisualOverflowExpandsLayer | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_root_test.cc:74 | VisualRectMappingWithViewportClipAndBorder | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_root_test.cc:101 | RectBasedHitTestPartialOverlap | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_root_test.cc:132 | PaintLayerType | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_root_test.cc:155 | VisualRectMappingWithReferenceFilter | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_shape_test.cc:12 | StrokeBoundingBoxOnEmptyShape | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_shape_test.cc:23 | RectBasedHitTest_CircleEllipse | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_shape_test.cc:77 | RectBasedHitTest_Rect | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_shape_test.cc:137 | RectBasedHitTest_Path | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_text_test.cc:13 | RectBasedHitTest | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_text_test.cc:38 | RectBasedHitTest_RotatedText | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_text_test.cc:67 | TransformAffectsVectorEffect | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_text_test.cc:96 | AbsoluteQuads | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_text_test.cc:115 | ObjectBoundingBox | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_text_test.cc:136 | SubtreeLayout | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_text_test.cc:161 | WillBeRemovedFromTree | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_viewport_container_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_viewport_container_test.cc:36 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_viewport_container_test.cc:56 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_viewport_container_test.cc:76 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_hit_test_perftest.cc:84 | HandleMouseMoveEvent | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/svg_hit_test_perftest.cc:105 | IntersectsClipPath | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/svg_layout_support_test.cc:14 | FindClosestLayoutSVGText | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/svg_layout_support_test.cc:35 | VisualRectInAncestorSpaceContainerWithFilter | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/svg_layout_support_test.cc:64 | VisualRectInDocumentWith3DTransform | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/svg_layout_support_test.cc:80 | VisualRectInDocumentUnderSVGRootPerspective | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/svg_layout_support_test.cc:95 | AbsoluteBoundingBoxUnderSVGRootPerspective | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/svg_text_layout_algorithm_test.cc:12 | PositionOnPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:27 | EmptyTextLengthCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:38 | EmptyTextLengthSpacingAndGlyphsCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:47 | HugeScaleCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:62 | ControlCharCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:70 | FirstLineTextTransformCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_attributes_builder_test.cc:13 | TextPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| forms/fieldset_layout_algorithm_test.cc:59 | Empty | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:78 | NoLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:100 | Legend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:124 | SmallLegendLargeBorder | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:150 | LegendOrthogonalWritingMode | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:176 | VerticalLr | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:202 | VerticalRl | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:228 | LegendAutoSize | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:257 | PercentageHeightChild | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:283 | AbsposChild | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:312 | ZeroHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:340 | ZeroMaxHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:372 | PercentHeightQuirks | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:404 | LegendPercentHeightQuirks | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:433 | FieldsetPaddingWithLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:472 | MinMax | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:540 | NoFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:567 | SimpleFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:604 | FragmentationNoPadding | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:645 | FieldsetContentFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:708 | FieldsetContentFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:771 | LegendFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:821 | LegendFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:871 | LegendAndContentFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:937 | LegendAndContentFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1001 | LegendFragmentationWithOverflow | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1052 | LegendAndContentFragmentationNegativeMargin | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1107 | OverflowedLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1151 | OverflowedFieldsetContent | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1224 | BreakInsideAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1271 | BreakInsideAvoidTallBlock | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1334 | LegendBreakInsideAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1387 | BreakBeforeAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1442 | LegendBreakBeforeAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1494 | BreakAfterAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1540 | LegendBreakAfterAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1594 | MarginBottomPastEndOfFragmentainer | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1650 | SmallLegendLargeBorderFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1707 | SmallerLegendLargeBorderFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1766 | SmallerLegendLargeBorderFragmentation2 | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1818 | SmallerLegendLargeBorderWithBreak | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/layout_fieldset_test.cc:14 | AddChildWhitespaceCrash | internal | internal | - | Crash regression test |
+| forms/layout_fieldset_test.cc:31 | AddChildAnonymousInlineCrash | internal | internal | - | Crash regression test |
+| forms/layout_text_control_inner_editor_test.cc:12 | AddChildWithoutTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_inner_editor_test.cc:43 | AddChildWithTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_inner_editor_test.cc:85 | RemoveChildWithoutTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_inner_editor_test.cc:114 | AddChildBeforeTestRenderingHolder | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_inner_editor_test.cc:126 | EnableDynamic | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_single_line_test.cc:13 | VisualOverflowCleared | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:56 | ChangingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:74 | ChangingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:92 | AddingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:109 | AddingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:126 | RemovingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:142 | RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_test.cc:158 | HitTestSearchInput | behaviour | blocked | - | Blocked: model lacks text control layout |
+| shapes/box_shape_test.cc:82 | zeroRadii | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/box_shape_test.cc:143 | getIntervals | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:32 | ZeroRadii | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:41 | ZeroRadiusX | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:50 | ZeroRadiusY | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:59 | ZeroRadiiWithMargin | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:87 | NonZeroRadiiWithMargin | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:115 | ShapeMarginLogicalBoundingBoxWithFloatValues | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| exclusions/exclusion_space_test.cc:92 | Empty | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:122 | LineLayoutOpportunityClampsNonDominantSide | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:169 | SingleExclusion | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:232 | TwoExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:273 | SolidEdges | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:325 | OverlappingWithShelf | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:373 | InsertBetweenShelves | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:408 | InitialLetterBasic | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:451 | InitialLetterDirectionRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:507 | InitialLetterFloatLeft1 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:560 | InitialLetterFloatLeft2 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:615 | InitialLetterFloatLeft2ClearLeft | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:672 | InitialLetterFloatLeftAndRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:738 | InitialLetterFloatLeftAfterBreak | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:796 | InitialLetterFloatRight2 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:857 | ZeroInlineSizeOpportunity | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:877 | NegativeInlineSizeOpportunityLeft | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:907 | NegativeInlineSizeOpportunityRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:937 | PreInitialization | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:992 | MergeExclusionSpacesNoPreviousExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:1020 | MergeExclusionSpacesPreviousExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:1060 | MergeExclusionSpacesNoOutputExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:1083 | CopyOnWriteNoAllocationOnCopy | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
+| exclusions/exclusion_space_test.cc:1162 | CopyOnWriteDisabledFallback | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
+| layout_quote_test.cc:40 | Locale | behaviour | blocked | - | Blocked: model lacks <q> quote delimiter language resolution |
+| hit_testing_test.cc:87 | OcclusionHitTest | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:111 | OcclusionHitTestSVGTextWithFilterCrash | internal | internal | - | Crash regression test |
+| hit_testing_test.cc:136 | HitTestWithCallback | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:205 | OcclusionHitTestWithClipPath | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:253 | OcclusionHitTestWithBorderShapeStrokeMode | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:319 | OcclusionHitTestWithBorderShapeFillMode | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:384 | ScrolledInline | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:421 | ReferenceFilter | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:457 | OcclusionHitTestWith3DTransform | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:495 | OcclusionHitTestWithFlattenedPreserve3DOccluder | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:549 | ShapeWithPerspectiveFunction | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:574 | ShapeUnderSVGRootPerspective | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:592 | ContainerUnderSVGRootPerspective | behaviour | blocked | - | Blocked: model lacks hit testing |
+| map_coordinates_test.cc:127 | SimpleText | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:140 | SimpleInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:153 | SimpleBlock | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:171 | OverflowClip | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:210 | TextInRelPosInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:225 | RelposInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:240 | RelposInlineInRelposInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:274 | RelPosBlock | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:311 | AbsPos | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:348 | AbsPosAuto | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:385 | FixedPos | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:444 | FixedPosAuto | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:504 | FixedPosInFixedPos | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:573 | FixedPosInFixedPosScrollView | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:610 | FixedPosInAbsolutePosScrollView | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:647 | FixedPosInTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:689 | FixedPosInContainPaint | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:732 | FixedPosInIFrameWhenMainFrameScrolled | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:763 | IFrameTransformed | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:797 | FixedPosInScrolledIFrameWithTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:828 | MulticolWithText | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:849 | MulticolWithInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:868 | MulticolWithBlock | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:889 | MulticolWithBlockAbove | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:907 | NestedMulticolWithBlock | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:945 | MulticolWithAbsPosInRelPos | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:981 | MulticolWithAbsPosInInlineRelPos | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1019 | MulticolWithAbsPosNotContained | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1060 | MulticolRtl | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1079 | MulticolWithLargeBorder | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1099 | FlippedBlocksWritingModeWithText | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1131 | FlippedBlocksWritingModeWithInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1183 | FlippedBlocksWritingModeWithBlock | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1217 | Table | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1318 | Transforms | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1378 | SVGShape | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1397 | SVGShapeScale | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1417 | SVGShapeWithViewBoxWithoutScale | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1436 | SVGShapeWithViewBoxWithScale | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1455 | SVGShapeWithViewBoxWithNonZeroOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1475 | SVGShapeWithViewBoxWithNonZeroOffsetAndScale | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1495 | SVGForeignObject | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1532 | LocalToAbsoluteTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1555 | LocalToAncestorTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1600 | LocalToAbsoluteTransformFlattens | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1645 | Transform3DWithOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1668 | Transform3DWithOffset2 | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1693 | IgnoreScrollOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1732 | IgnoreScrollOffsetForInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1770 | IgnoreScrollOffsetWithWritingModes | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1818 | FixedPositionWithScrollOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1853 | FixedPositionWithScrollOffsetVerticalRL | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1889 | FixedPositionUnderTransformWithScrollOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1931 | IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1975 | ElementCanvasTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:1996 | NestedElementCanvasTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:2021 | NestedElementCanvasTransformWithOffset | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:2046 | NestedElementCanvasTransformChildWithoutCanvasTransform | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:2069 | NestedElementCanvasTransformNonDrawableChild | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| map_coordinates_test.cc:2093 | NestedElementCanvasTransformInline | behaviour | blocked | - | Blocked: model lacks MapLocalToAncestor / MapAncestorToLocal |
+| visual_rect_mapping_test.cc:126 | LayoutText | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:165 | LayoutTextContainerFlippedWritingMode | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:202 | LayoutInline | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:240 | LayoutInlineContainerFlippedWritingMode | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:281 | SkipAncestorAndViewportClipFlag | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:338 | SkipAncestorAndViewportClipFlagViewportSpace | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:419 | SkipAncestorAndViewportClipsInSubframe | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:488 | RegressionTest_SkipAncestorClipExpansion | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:542 | LayoutView | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:588 | LayoutViewSubpixelRounding | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:619 | LayoutViewDisplayNone | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:658 | SelfFlippedWritingMode | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:681 | ContainerFlippedWritingMode | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:722 | ContainerOverflowScroll | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:778 | ContainerFlippedWritingModeAndOverflowScroll | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:842 | ContainerOverflowHidden | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:873 | ContainerFlippedWritingModeAndOverflowHidden | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:912 | ContainerAndTargetDifferentFlippedWritingMode | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:955 | DifferentPaintInvalidaitionContainerForAbsolutePosition | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:996 | ContainerOfAbsoluteAbovePaintInvalidationContainer | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1031 | CSSClip | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1046 | ContainPaint | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1061 | FloatUnderInline | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1089 | FloatUnderInlineVerticalRL | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1120 | InlineBlock | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1145 | InlineBlockVerticalRL | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1174 | AbsoluteUnderRelativeInline | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1199 | AbsoluteUnderRelativeInlineVerticalRL | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1228 | ShouldAccountForPreserve3d | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1258 | ShouldAccountForPreserve3dNested | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1287 | ShouldAccountForPerspective | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1320 | ShouldAccountForPerspectiveNested | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1352 | PerspectivePlusScroll | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1392 | FixedContentsInIframe | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1431 | FixedContentsWithScrollOffset | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1464 | FixedContentsUnderViewWithScrollOffset | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1492 | InclusiveIntersect | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1522 | Perspective | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1542 | PerspectiveWithAnonymousTable | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1561 | MapToVisualRectFastPathMapsToViewport | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1592 | AnchorPositionScroll | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1656 | IgnoreFilters | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1688 | NestedTransformsFastVsSlowPath | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1741 | SVGTransformsFastVsSlowPath | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1787 | NestedTransformsGeometryMapperFlag | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1838 | NestedTransformsComposeAngles | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1891 | NestedTransformsFractionalPositionSnapsOnce | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:1941 | FractionalSnapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2001 | ViewportMappingIsConsistentWithAndWithoutGeometryMapperUnderPinchZoom | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2054 | ViewportMappingAppliesVisualViewportTransformButClipsToLayoutViewport | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2143 | ElementCanvasTransformVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2172 | NestedElementCanvasTransformVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2205 | NestedElementCanvasTransformWithOffsetVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2239 | NestedElementCanvasTransformChildWithoutCanvasTransformVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2273 | NestedElementCanvasTransformNonDrawableChildVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
+| visual_rect_mapping_test.cc:2306 | NestedElementCanvasTransformInlineVisualRectMapping | behaviour | blocked | - | Blocked: model lacks VisualRectMapping |
 ---
 
 ## Merge Notes
