@@ -28,6 +28,7 @@ inductive BNode where
          (marginTop : Nat := 0) (breakBefore : Bool := false) (breakAfter : Bool := false)
   | box (w : Len) (bi : BreakInside) (kids : List BNode) (optH : Option Nat := none)
         (fl : FloatType := .none) (marginTop : Nat := 0) (breakBefore : Bool := false) (breakAfter : Bool := false)
+        (border : Nat := 0) (padding : Nat := 0)
   deriving Inhabited, Repr
 
 /-- A fragment of a node inside column `col`; `x` and `y` are the offset from the column top-left,
@@ -42,40 +43,41 @@ structure NFrag where
   kids : List NFrag
   deriving Inhabited, Repr
 
-/-- Unfragmented block size of a node. CSS 2.1 §10.6.2 fixed height, §10.6.3 auto height. -/
+/-- Unfragmented block size of a node. CSS 2.1 §8.1 (border/padding), §10.6.2 (fixed height), §10.6.3 (auto height). -/
 def nodeHeight : Nat → BNode → Nat
   | 0, _ => 0
   | _ + 1, .leaf _ h _ _ _ _ _ => h
-  | f + 1, .box _ _ ks optH _ _ _ _ =>
+  | f + 1, .box _ _ ks optH _ _ _ _ border padding =>
+    let bp := border + padding
     match optH with
-    | some h => h
-    | none => (ks.map (nodeHeight f)).sum
+    | some h => h + 2 * bp
+    | none => (ks.map (nodeHeight f)).sum + 2 * bp
 
 /-- Whether any part of a node avoids breaking inside. CSS Fragmentation Level 3 §3.2. -/
 def nodeAvoids : Nat → BNode → Bool
   | 0, _ => false
   | _ + 1, .leaf _ _ bi _ _ _ _ => bi.avoidsColumn
-  | f + 1, .box _ bi ks _ _ _ _ _ => bi.avoidsColumn || ks.any (nodeAvoids f)
+  | f + 1, .box _ bi ks _ _ _ _ _ _ _ => bi.avoidsColumn || ks.any (nodeAvoids f)
 
 /-- Margin top of a node. CSS 2.1 §8.3. -/
 def nodeMarginTop : BNode → Nat
   | .leaf _ _ _ _ m _ _ => m
-  | .box _ _ _ _ _ m _ _ => m
+  | .box _ _ _ _ _ m _ _ _ _ => m
 
 /-- Float direction of a node. CSS 2.1 §9.5.1. -/
 def nodeFloat : BNode → FloatType
   | .leaf _ _ _ fl _ _ _ => fl
-  | .box _ _ _ _ fl _ _ _ => fl
+  | .box _ _ _ _ fl _ _ _ _ _ => fl
 
 /-- Whether a node has forced break-before. CSS Fragmentation Level 3 §3.1. -/
 def nodeBreakBefore : BNode → Bool
   | .leaf _ _ _ _ _ bB _ => bB
-  | .box _ _ _ _ _ _ bB _ => bB
+  | .box _ _ _ _ _ _ bB _ _ _ => bB
 
 /-- Whether a node has forced break-after. CSS Fragmentation Level 3 §3.1. -/
 def nodeBreakAfter : BNode → Bool
   | .leaf _ _ _ _ _ _ bA => bA
-  | .box _ _ _ _ _ _ _ bA => bA
+  | .box _ _ _ _ _ _ _ bA _ _ => bA
 
 /-- Float direction and top margin of a node. CSS 2.1 §8.3, §9.5.1. -/
 def nodeProps (n : BNode) : FloatType × Nat :=
@@ -100,8 +102,9 @@ def applyBreakAfter (bA : Bool) (c y : Nat) : Nat × Nat :=
   if bA && y > 0 then (c + 1, 0) else (c, y)
 
 /-- Lay out an in-flow node starting in column `c` at offset `y`.
-    CSS 2.1 §10.6.2 (fixed height), §11.1 (overflow), CSS Fragmentation Level 3
-    §3.1 (forced breaks), §3.2 & §5.3 (splitting boxes), §5.2 (margins at breaks). -/
+    CSS 2.1 §8.1 (box dimensions), §8.5 (borders), §10.6.2 (fixed height), §11.1 (overflow);
+    CSS Fragmentation Level 3 §3.1 (forced breaks), §3.2 & §5.3 (splitting boxes),
+    §5.2 (margins at breaks), §5.4 (box-decoration-break: slice). -/
 def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag × Nat × Nat
   | 0, _, c, y => ([], c, y)
   | _ + 1, .leaf w h bi _ mTop bB bA, c, y =>
@@ -110,45 +113,49 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
     let r := placeChildSlices fragH rw (h + 1) 0 h c0 y0
     let (finalC, finalY) := applyBreakAfter bA r.2.1 r.2.2
     (r.1.map (fun s => ⟨s.colIdx, 0, s.relY, s.w, s.h, []⟩), finalC, finalY)
-  | f + 1, .box w bi ks optH _ mTop bB bA, c, y =>
-    let hBox := match optH with | some h => h | none => (ks.map (nodeHeight f)).sum
+  | f + 1, .box w bi ks optH _ mTop bB bA border padding, c, y =>
+    let bp := border + padding
+    let hBox := match optH with | some h => h + 2 * bp | none => (ks.map (nodeHeight f)).sum + 2 * bp
     let avoids := bi.avoidsColumn || ks.any (nodeAvoids f)
     let (c0, y0) := nodeStart fragH c y bB avoids mTop hBox
     let rw := resolveLen colW w
+    let innerW := if rw ≥ 2 * bp then rw - 2 * bp else 0
     let r := ks.foldl (fun (acc : List NFrag × Nat × Nat) k =>
-      let q := layoutNode fragH colW f k acc.2.1 acc.2.2
-      (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, y0)
+      let q := layoutNode fragH innerW f k acc.2.1 acc.2.2
+      (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, y0 + bp)
     let (endC, endY) := match optH with
-      | none => (r.2.1, r.2.2)
+      | none =>
+        if ks.isEmpty then (c0, y0 + 2 * bp)
+        else if r.2.2 + bp ≤ fragH then (r.2.1, r.2.2 + bp)
+        else (r.2.1 + 1, bp)
       | some h =>
-        if y0 + h ≤ fragH then (c0, y0 + h)
+        let totalH := h + 2 * bp
+        if y0 + totalH ≤ fragH then (c0, y0 + totalH)
         else
-          let rem := h - (fragH - y0)
+          let rem := totalH - (fragH - y0)
           (c0 + 1 + rem / fragH, rem % fragH)
     let maxCol := match optH with
-      | none => r.2.1
-      | some _ => max (if endY > 0 then endC else endC - 1) r.2.1
+      | none => max (if endY > 0 then endC else if endC > 0 then endC - 1 else 0) (max c0 r.2.1)
+      | some _ => max (if endY > 0 then endC else if endC > 0 then endC - 1 else 0) (max c0 r.2.1)
     let numCols := if maxCol ≥ c0 then maxCol - c0 + 1 else 0
     let pieces := (List.range numCols).filterMap (fun i =>
       let colIdx := c0 + i
       let colKids := r.1.filter (fun k => k.col = colIdx)
       let boxFragY := if colIdx = c0 then y0 else 0
+      let colKidsRel := colKids.map (fun k => { k with x := k.x + bp, y := k.y - boxFragY })
       match optH with
       | none =>
-        if colKids.isEmpty then none
-        else
-          let b := if colIdx = r.2.1 then r.2.2 else fragH
-          let colKidsRel := colKids.map (fun k => { k with y := k.y - boxFragY })
-          some ⟨colIdx, 0, boxFragY, rw, b - boxFragY, colKidsRel⟩
+        let boxFragH := if colIdx = endC then endY - boxFragY else if colIdx < endC then fragH - boxFragY else 0
+        if boxFragH = 0 && colKids.isEmpty then none
+        else some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩
       | some h =>
+        let totalH := h + 2 * bp
         let consumedBefore := if colIdx = c0 then 0 else (fragH - y0) + (colIdx - c0 - 1) * fragH
         let availInCol := if colIdx = c0 then fragH - y0 else fragH
-        let remH := if h > consumedBefore then h - consumedBefore else 0
+        let remH := if totalH > consumedBefore then totalH - consumedBefore else 0
         let boxFragH := min availInCol remH
         if boxFragH = 0 && colKids.isEmpty then none
-        else
-          let colKidsRel := colKids.map (fun k => { k with y := k.y - boxFragY })
-          some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩)
+        else some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩)
     let (finalC, finalY) := applyBreakAfter bA endC endY
     (pieces, finalC, finalY)
 
@@ -236,7 +243,7 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
       | _ =>
         let h := nodeHeight f n
         let avoids := nodeAvoids f n
-        let rw := resolveLen colW (match n with | .leaf w _ _ _ _ _ _ => w | .box w _ _ _ _ _ _ _ => w)
+        let rw := resolveLen colW (match n with | .leaf w .. => w | .box w .. => w)
         let fc0 := max c floatCol
         let fy0 := if fc0 = c then y else 0
         let avail0 := if fy0 + mTop < fragH then fragH - (fy0 + mTop) else 0
@@ -247,8 +254,8 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
           let (frags, nextCfl) := placeFloatSlices fragH colW fl rw mTop (h + 1) h fc fy true [] cfloats
           let (finalC, _) := applyBreakAfter bA fc fy
           loop rest c y finalC nextCfl (acc ++ frags)
-        | .box _ _ ks optH _ _ _ _ =>
-          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH) fc (fy + mTop)
+        | .box _ _ ks optH _ _ _ _ border padding =>
+          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH .none 0 false false border padding) fc (fy + mTop)
           let (fragsWithX, nextCfl) := placeBoxFloatFrags colW fl nFrags cfloats
           let (finalC, _) := applyBreakAfter bA fc 0
           loop rest c y finalC nextCfl (acc ++ fragsWithX)
@@ -302,13 +309,32 @@ theorem box_fit_end_pos (fragH colW f c y h : Nat) (w : Len) (bi : BreakInside) 
   dsimp [layoutNode]
   have hp : nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h = (c, y) := by
     dsimp [nodeStart]
-    have h1 : ¬(y ≥ fragH) := by omega
-    have h2 : ¬(y + h > fragH) := by omega
+    have h1 : decide (y ≥ fragH) = false := by simp; omega
+    have h2 : decide (y + h > fragH) = false := by simp; omega
     simp [h1, h2]
-  rw [hp]
-  dsimp [applyBreakAfter]
-  have : y + h ≤ fragH := h_fit
-  simp [this]
+  have hpc : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h).fst = c := by rw [hp]
+  have hpy : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h).snd = y := by rw [hp]
+  have hle : y + h ≤ fragH := h_fit
+  simp [hpc, hpy, hle, applyBreakAfter]
+
+/-- Law: Under default `box-decoration-break: slice`, a box with border `b`
+    that fits within the fragmentainer has total block size `h + 2 * b`.
+    CSS 2.1 §8.1 & CSS Fragmentation Level 3 §5.4. -/
+theorem box_border_size (fragH colW f c y h b : Nat) (w : Len) (bi : BreakInside) (ks : List BNode)
+    (h_fit : y + h + 2 * b ≤ fragH) (h_pos : 0 < h) :
+    let (_, endC, endY) := layoutNode fragH colW (f + 1) (.box w bi ks (some h) .none 0 false false b 0) c y
+    endC = c ∧ endY = y + h + 2 * b := by
+  dsimp [layoutNode]
+  have hp : nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b) = (c, y) := by
+    dsimp [nodeStart]
+    have h1 : decide (y ≥ fragH) = false := by simp; omega
+    have h2 : decide (y + (h + 2 * b) > fragH) = false := by simp; omega
+    simp [h1, h2]
+  have hpc : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b)).fst = c := by rw [hp]
+  have hpy : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b)).snd = y := by rw [hp]
+  have hle : y + (h + 2 * b) ≤ fragH := by omega
+  simp [hpc, hpy, hle, applyBreakAfter]
+  omega
 
 /-- Law: A right float placed in an empty column aligns with the column's right edge.
     CSS 2.1 §9.5.1. -/

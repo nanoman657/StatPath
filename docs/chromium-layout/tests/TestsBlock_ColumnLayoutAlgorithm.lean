@@ -356,6 +356,23 @@ theorem UnbreakableFloatBeforeBreakable_vectors :
     res[2]!.col = 1 ∧ res[2]!.x = 22 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 50 := by
   decide
 
+-- column_layout_algorithm_test.cc:2391: BreakInsideWithBorder
+theorem BreakInsideWithBorder_vectors :
+    let nodes := [
+      BNode.leaf .auto 85,
+      BNode.box .auto .auto [
+        BNode.leaf .auto 10
+      ] none .none 0 false false 10 0
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 85 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 85 ∧ res[1]!.w = 100 ∧ res[1]!.h = 15 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 10 ∧ res[1]!.kids[0]!.y = 10 ∧ res[1]!.kids[0]!.w = 80 ∧ res[1]!.kids[0]!.h = 5 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 100 ∧ res[2]!.h = 15 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.x = 10 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 80 ∧ res[2]!.kids[0]!.h = 5 := by
+  decide
+
 -- column_layout_algorithm_test.cc:2480: ForcedBreakInSecondChild
 theorem ForcedBreakInSecondChild_vectors :
     let nodes := [

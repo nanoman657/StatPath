@@ -246,7 +246,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2278 | ColumnLayoutAlgorithmTest.FloatInBlockMovedByOrphans | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:2318 | ColumnLayoutAlgorithmTest.FloatMovedWithWidows | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:2361 | ColumnLayoutAlgorithmTest.BorderAndPadding | geometry | formalized | `TestsBlock.BorderAndPadding_vectors`, `ColumnLayout.multicol_bp_size` |
-| column_layout_algorithm_test.cc:2391 | ColumnLayoutAlgorithmTest.BreakInsideWithBorder | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
+| column_layout_algorithm_test.cc:2391 | ColumnLayoutAlgorithmTest.BreakInsideWithBorder | geometry | formalized | `TestsBlock.BreakInsideWithBorder_vectors`, `ColumnBreak.box_border_size` |
 | column_layout_algorithm_test.cc:2427 | ColumnLayoutAlgorithmTest.ForcedBreaks | geometry | blocked | needs forced breaks (break-before/after: column/page) in multicolumn |
 | column_layout_algorithm_test.cc:2480 | ColumnLayoutAlgorithmTest.ForcedBreakInSecondChild | geometry | formalized | `TestsBlock.ForcedBreakInSecondChild_vectors`, `ColumnLayout.forced_break_col` |
 | column_layout_algorithm_test.cc:2517 | ColumnLayoutAlgorithmTest.ForcedAndUnforcedBreaksAtSameBoundary | geometry | formalized | `TestsBlock.ForcedAndUnforcedBreaksAtSameBoundary_vectors`, `ColumnLayout.forced_break_col` |
