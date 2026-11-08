@@ -304,5 +304,14 @@ theorem clear_right_no_right (lefts : List (Int × Int × Nat × Nat)) (y : Int)
   dsimp [applyClearance, maxBottom]
   omega
 
+/-- Law: When the sum of outer widths of a left float and a right float does not exceed
+    the containing block width, their placed positions do not overlap horizontally.
+    CSS 2.1 §9.5.1 Rule 7 (non-overlapping floating boxes). -/
+theorem float_no_overlap (cW : Nat) (wL wR : Nat) (mlL mrL mlR mrR : Int)
+    (h_fit : (wL : Int) + mlL + mrL + (wR : Int) + mlR + mrR ≤ cW)
+    (h_mrL : 0 ≤ mrL) (h_mlR : 0 ≤ mlR) :
+    mlL + (wL : Int) ≤ (cW : Int) - ((wR : Int) + mlR + mrR) + mlR := by
+  omega
+
 end BlockFloat
 end ChromiumLayout

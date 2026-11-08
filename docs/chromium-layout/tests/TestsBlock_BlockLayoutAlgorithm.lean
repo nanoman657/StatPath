@@ -364,6 +364,19 @@ theorem CollapsingMarginsCase7_vectors :
     res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 200 ∧ res[1]!.h = 20 := by
   decide
 
+/-- `PositionFloatInsideEmptyBlocks` (line 1180): left and right floats placed inside nested empty blocks. -/
+theorem PositionFloatInsideEmptyBlocks_vectors :
+    let empty2_contentW : Nat := 160
+    let res := BlockFloat.layoutBlockWithFloats empty2_contentW [
+      { id := 1, w := 25, h := 25, marginLeft := 10, marginRight := 10, marginTop := 10, marginBottom := 10, float := .left },
+      { id := 2, w := 15, h := 15, marginLeft := 10, marginRight := 10, marginTop := 15, marginBottom := 15, float := .right }
+    ]
+    let empty2_paddingLeft : Int := 15
+    res.length = 2 ∧
+    empty2_paddingLeft + res[0]!.x = 25 ∧ res[0]!.y = 10 ∧
+    empty2_paddingLeft + res[1]!.x = 150 ∧ res[1]!.y = 15 := by
+  decide
+
 /-- `PositionBlocksWithClearanceAndIntrudingFloats` (line 1705): clearance and intruding floats into descendant block. -/
 theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
     let bodyItems : List BlockFloat.FloatItem := [

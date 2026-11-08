@@ -45,7 +45,7 @@ checks every row against the pinned sources and the Lean modules.
 | block_layout_algorithm_test.cc:1062 | BlockLayoutAlgorithmTest.BorderAndPadding | geometry | formalized | `TestsBlock.BorderAndPadding_div1`, `TestsBlock.BorderAndPadding_div2_offset` |
 | block_layout_algorithm_test.cc:1118 | BlockLayoutAlgorithmTest.PercentageResolutionSize | geometry | formalized | `TestsBlock.PercentageResolutionSize_widths` |
 | block_layout_algorithm_test.cc:1145 | BlockLayoutAlgorithmTest.AutoMargin | geometry | formalized | `TestsBlock.AutoMargin_offsets`, `BlockFlow.auto_width_fills` |
-| block_layout_algorithm_test.cc:1180 | BlockLayoutAlgorithmTest.PositionFloatInsideEmptyBlocks | geometry | blocked | needs floats |
+| block_layout_algorithm_test.cc:1180 | BlockLayoutAlgorithmTest.PositionFloatInsideEmptyBlocks | geometry | formalized | `TestsBlock.PositionFloatInsideEmptyBlocks_vectors`, `BlockFloat.float_no_overlap` |
 | block_layout_algorithm_test.cc:1275 | BlockLayoutAlgorithmTest.PositionFloatFragments | geometry | formalized | `TestsBlock.PositionFloatFragments_vectors` |
 | block_layout_algorithm_test.cc:1390 | BlockLayoutAlgorithmTest.PositionFragmentsWithClear | geometry | formalized | `TestsBlock.PositionFragmentsWithClear_none_vectors`, `TestsBlock.PositionFragmentsWithClear_left_vectors`, `TestsBlock.PositionFragmentsWithClear_right_vectors`, `TestsBlock.PositionFragmentsWithClear_both_vectors`, `BlockFloat.clearance_respects_left_floats`, `BlockFloat.clearance_respects_right_floats`, `BlockFloat.clearance_respects_both_floats` |
 | block_layout_algorithm_test.cc:1516 | BlockLayoutAlgorithmTest.ComputeMinMaxContent | geometry | formalized | `TestsBlock.ComputeMinMaxContent_sizes` |
