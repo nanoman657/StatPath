@@ -434,14 +434,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:1481 | NoCrashByListStyleTypeChange | internal | internal | - | Crash regression test for list-style-type change |
 | inline/offset_mapping_test.cc:1497 | OffsetMappingGetterTest.Get | internal | internal | - | Checks OffsetMapping getter caching plumbing |
 | inline/offset_mapping_test.cc:1515 | LayoutObjectConverter | internal | internal | - | Checks LayoutObject converter internal plumbing |
-| inline/paragraph_line_breaker_test.cc:27 | IsDisabledByBlockInInline | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:27 | IsDisabledByBlockInInline | behaviour | formalized | `paragraphLineBreaker_isDisabledByBlockInInline` | CSS Text 4 §5.3: Block-in-inline disables bisection paragraph line balancing |
 | inline/paragraph_line_breaker_test.cc:52 | IsDisabledByFirstLine | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:75 | IsDisabledByFloatLeading | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:97 | IsDisabledByFloat | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:119 | IsDisabledByForcedBreak | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:140 | IsDisabledByForcedBreakReusing | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:163 | IsDisabledByInitialLetter | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
-| inline/paragraph_line_breaker_test.cc:186 | IsDisabledByTabulationCharacters | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
+| inline/paragraph_line_breaker_test.cc:75 | IsDisabledByFloatLeading | behaviour | formalized | `paragraphLineBreaker_isDisabledByFloatLeading` | CSS Text 4 §5.3: Leading float disables bisection paragraph line balancing |
+| inline/paragraph_line_breaker_test.cc:97 | IsDisabledByFloat | behaviour | formalized | `paragraphLineBreaker_isDisabledByFloat` | CSS Text 4 §5.3: Internal float disables bisection paragraph line balancing |
+| inline/paragraph_line_breaker_test.cc:119 | IsDisabledByForcedBreak | behaviour | formalized | `paragraphLineBreaker_isDisabledByForcedBreak` | CSS Text 4 §5.3: Forced line break (<br>) disables bisection paragraph balancing |
+| inline/paragraph_line_breaker_test.cc:140 | IsDisabledByForcedBreakReusing | behaviour | formalized | `paragraphLineBreaker_isDisabledByForcedBreakReusing` | CSS Text 4 §5.3: Preserved newline disables bisection paragraph balancing |
+| inline/paragraph_line_breaker_test.cc:163 | IsDisabledByInitialLetter | behaviour | formalized | `paragraphLineBreaker_isDisabledByInitialLetter` | CSS Text 4 §5.3 & §5.4: Initial letter disables bisection balancing and score line breaking |
+| inline/paragraph_line_breaker_test.cc:186 | IsDisabledByTabulationCharacters | behaviour | formalized | `paragraphLineBreaker_isDisabledByTabulationCharacters` | CSS Text 4 §5.4: Tabulation character disables score line breaking but allows bisection balancing |
 | inline/physical_line_box_fragment_test.cc:44 | HasPropagatedDescendantsFloat | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
 | inline/physical_line_box_fragment_test.cc:62 | HasPropagatedDescendantsOOF | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
 | inline/ruby_utils_test.cc:25 | GroupLinesEmpty | geometry | formalized | `rubyBlockPositionCalculator_groupLinesEmpty` | Empty ruby column list produces exactly one base-level ruby line |
