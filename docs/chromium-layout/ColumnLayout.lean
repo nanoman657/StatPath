@@ -29,13 +29,15 @@ structure ColChild where
   height : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
-/-- Multicolumn container specification. -/
+/-- Multicolumn container specification. CSS Multi-column Layout Level 1 §3 & CSS 2.1 §8.1. -/
 structure Multicol where
   cols : Nat
   gap : Nat
   width : Nat
   height : Nat
   children : List ColChild := []
+  border : Nat := 0
+  padding : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- Fragment of a child inside a column fragmentainer. -/
@@ -125,17 +127,29 @@ def sliceChildren (k : Nat) (fragH : Nat) (colW : Nat) (children : List ColChild
               rest
     sliceAt children 0
 
-/-- Multicolumn layout algorithm for `column-fill: auto`. -/
+/-- Multicolumn layout algorithm for `column-fill: auto`.
+    CSS Multi-column Layout Level 1 §3 & §4, CSS 2.1 §8.1. -/
 def layoutMulticol (mc : Multicol) : MulticolResult :=
   let colW := usedWidth mc.cols 0 mc.gap mc.width
   let contentH := totalContentHeight mc.children
   let numCols := actualColumnCount mc.height contentH
+  let bp := mc.border + mc.padding
   let cols := (List.range numCols).map (fun k =>
-    let x := columnInlineOffset k colW mc.gap
-    let y := 0
+    let x := bp + columnInlineOffset k colW mc.gap
+    let y := bp
     let slices := sliceChildren k mc.height colW mc.children
     ⟨k, x, y, colW, mc.height, slices⟩)
-  ⟨mc.width, mc.height, colW, cols⟩
+  ⟨mc.width + 2 * bp, mc.height + 2 * bp, colW, cols⟩
+
+/-- Law: The outer dimensions of a multicolumn container account for left/right
+    and top/bottom border and padding.
+    CSS 2.1 §8.1 & CSS Multi-column Layout Level 1 §3. -/
+theorem multicol_bp_size (mc : Multicol) :
+    let res := layoutMulticol mc
+    res.w = mc.width + 2 * (mc.border + mc.padding) ∧
+    res.h = mc.height + 2 * (mc.border + mc.padding) := by
+  dsimp [layoutMulticol]
+  omega
 
 /-- Column stride is strictly positive when column width is positive. -/
 theorem colStride_pos (colWidth gap : Nat) (h : 0 < colWidth) :

@@ -176,6 +176,32 @@ theorem ZeroHeightWithContent_vectors :
     (c4.slices[0]!).w = 20 ∧ (c4.slices[0]!).h = 1 := by
   decide
 
+-- column_layout_algorithm_test.cc:2361: BorderAndPadding
+def borderAndPadding_input : Multicol := {
+  cols := 3,
+  gap := 10,
+  width := 320,
+  height := 100,
+  border := 3,
+  padding := 2,
+  children := [{ id := 0, width := .px 30, height := 150 }]
+}
+
+theorem BorderAndPadding_vectors :
+    let res := layoutMulticol borderAndPadding_input
+    res.w = 330 ∧ res.h = 110 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).colIdx = 0 ∧ (res.columns[0]!).relX = 5 ∧ (res.columns[0]!).relY = 5 ∧
+    (res.columns[0]!).w = 100 ∧ (res.columns[0]!).h = 100 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).relX = 0 ∧ ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    ((res.columns[0]!).slices[0]!).w = 30 ∧ ((res.columns[0]!).slices[0]!).h = 100 ∧
+    (res.columns[1]!).colIdx = 1 ∧ (res.columns[1]!).relX = 115 ∧ (res.columns[1]!).relY = 5 ∧
+    (res.columns[1]!).w = 100 ∧ (res.columns[1]!).h = 100 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).relX = 0 ∧ ((res.columns[1]!).slices[0]!).relY = 0 ∧
+    ((res.columns[1]!).slices[0]!).w = 30 ∧ ((res.columns[1]!).slices[0]!).h = 50 := by
+  decide
+
 -- column_layout_algorithm_test.cc:429: OverflowedBlock
 theorem OverflowedBlock_vectors :
     let nodes := [
