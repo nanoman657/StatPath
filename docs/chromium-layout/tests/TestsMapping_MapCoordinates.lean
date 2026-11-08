@@ -5,6 +5,7 @@
   except where a row says otherwise.
 -/
 import Mapping
+import MappingTransform
 
 namespace ChromiumLayout
 namespace TestsMapping
@@ -361,6 +362,145 @@ theorem FlippedBlocksWritingModeWithBlock_vectors :
     mapRange ns 0 2 ⟨0, 0⟩ = ⟨153, 22⟩ ∧ mapRangeDown ns 0 2 ⟨153, 22⟩ = ⟨0, 0⟩ ∧
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨7, 7⟩ ∧ mapRangeDown ns 0 1 ⟨7, 7⟩ = ⟨0, 0⟩ ∧
     mapRange ns 1 2 ⟨7, 7⟩ = ⟨153, 22⟩ ∧ mapRangeDown ns 1 2 ⟨153, 22⟩ = ⟨7, 7⟩ := by decide
+
+/-! ### Transforms and containing blocks of fixed boxes (CSS Transforms 1 §2, §6; CSS Containment 2
+    §3.3). The page is scrolled by `(0, 50)`; mapping to the view is mapping into its border box. -/
+def z : Pt := ⟨0, 0⟩
+
+/-- A page: `html` (a new formatting context) > `body` with margin `m` > `kids`. -/
+def bodyPage (m : Int) (kids : List BF) : BF :=
+  { newBfc := true, children := [{ mt := m, mb := m, ml := .px m, mr := .px m, children := kids }] }
+
+def page0 (kids : List BF) := layoutRoot 800 (htmlBody kids)
+
+/-- FixedPosInTransform (647): `#container{transform:translateY(100px); position:absolute; left:0;
+    top:100px}` > `.fixed{position:fixed; top:0}`. -/
+theorem FixedPosInTransform_vectors :
+    let h := page0 [{ id := 5 }]
+    let body := h.kid 0
+    let s : Pt := ⟨0, 50⟩
+    let cont : BF := { id := 1, children := [{ id := 2 }] }
+    let ns := [Node.oof (cbSteps [{ transform := true }, {}, {}]) (.box cont) z (.px 0) .auto (.px 0) (.px 0),
+               .oof 2 (.box {} s) z (.px 100) (.px 0) (.px 0) (.px 0), .block h body, .scrolled s (.block view h)]
+    let affs := affChain ns [none, some (z, Aff.translate ⟨0, 100⟩), none, none]
+    cbSteps [{ transform := true }, {}, {}] = 0 ∧
+    (mapA affs 0 4 (RPt.ofPt z)).toPt = ⟨0, 150⟩ ∧ (mapADown affs 0 4 (RPt.ofPt ⟨0, 150⟩)).toPt = z ∧
+    (mapA affs 0 1 (RPt.ofPt z)).toPt = z ∧ (mapADown affs 0 1 (RPt.ofPt z)).toPt = z ∧
+    (mapA affs 1 4 (RPt.ofPt z)).toPt = ⟨0, 150⟩ ∧ (mapADown affs 1 4 (RPt.ofPt ⟨0, 150⟩)).toPt = z := by
+  decide
+
+/-- FixedPosInContainPaint (689): `#container{contain:paint; position:absolute; left:0;
+    top:100px}` > `.fixed{position:fixed; top:0}`. -/
+theorem FixedPosInContainPaint_vectors :
+    let h := page0 [{ id := 5 }]
+    let body := h.kid 0
+    let s : Pt := ⟨0, 50⟩
+    let cont : BF := { id := 1, children := [{ id := 2 }] }
+    let ns := [Node.oof (cbSteps [{ containPaint := true }, {}, {}]) (.box cont) z (.px 0) .auto (.px 0) (.px 0),
+               .oof 2 (.box {} s) z (.px 100) (.px 0) (.px 0) (.px 0), .block h body, .scrolled s (.block view h)]
+    let affs := affChain ns [none, none, none, none]
+    cbSteps [{ containPaint := true }, {}, {}] = 0 ∧
+    (mapA affs 0 4 (RPt.ofPt z)).toPt = ⟨0, 50⟩ ∧ (mapADown affs 0 4 (RPt.ofPt ⟨0, 50⟩)).toPt = z ∧
+    (mapA affs 0 1 (RPt.ofPt z)).toPt = z ∧ (mapADown affs 0 1 (RPt.ofPt z)).toPt = z ∧
+    (mapA affs 1 4 (RPt.ofPt z)).toPt = ⟨0, 50⟩ ∧ (mapADown affs 1 4 (RPt.ofPt ⟨0, 50⟩)).toPt = z := by
+  decide
+
+/-- LocalToAbsoluteTransform (1532): `#container{position:absolute; left:0; top:0}` >
+    `#scale{transform:scale(2); transform-origin:left top}` > `#child`. -/
+theorem LocalToAbsoluteTransform_vectors :
+    let page := layoutRoot 800 (htmlBody [{ id := 5 }])
+    let body := page.kid 0
+    let cb : BF := { id := 1, children := [{ id := 2, children := [{ id := 3 }] }] }
+    let cf := layoutRoot 800 cb
+    let sd := cf.kid 0
+    let ns := [Node.block sd (sd.kid 0), .block cf sd, .oof 2 (.box {}) z (.px 0) (.px 0) (.px 0) (.px 0),
+               .block page body, .block view page]
+    let affs := affChain ns [none, some (z, Aff.scale 2 2), none, none, none]
+    (composeAll (affs.drop 2)).isId = true ∧
+    (composeAll affs).isTranslation = false ∧
+    ((composeAll affs).map (RPt.ofPt z)).toPt = z ∧
+    ((composeAll affs).map (RPt.ofPt ⟨10, 20⟩)).toPt = ⟨20, 40⟩ := by decide
+
+/-- IFrameTransformed (763): `iframe{width:500px; height:500px; transform:scale(2)}` (origin at its
+    centre) holds a document scrolled by (0, 1000); a point of the viewport maps down into the
+    frame's `#target` with the scale undone around the centre and the scroll added back. -/
+theorem IFrameTransformed_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [BF.ofPhys .horizontalTb (some 500) (some 500) {}])
+    let mb := mp.kid 0
+    let ifr := mb.kid 0
+    let cp := layoutRoot 800 (bodyPage 0 [BF.ofPhys .horizontalTb (some 200) (some 8000) {}])
+    let cbody := cp.kid 0
+    let ns := [Node.block cbody (cbody.kid 0), .block cp cbody, .scrolled ⟨0, 1000⟩ (.block view cp), .inline,
+               .block mb ifr, .block mp mb, .block view mp]
+    let affs := affChain ns [none, none, none, none, some (Aff.center ifr, Aff.scale 2 2), none, none]
+    (mapADown affs 0 7 (RPt.ofPt ⟨200, 200⟩)).toPt = ⟨225, 1225⟩ := by decide
+
+/-! ### SVG (SVG 2 §8.2 viewBox, §8.5 `transform`): a chain of translations and scales from the
+    shape up to the `<svg>` box, the last step being the viewBox transform. -/
+def tr (x y : Int) : Aff := Aff.translate ⟨x, y⟩
+
+/-- Round trip through steps `i..j` of a chain at the origin. -/
+def svgAt (affs : List Aff) (j : Nat) : Pt := (mapA affs 0 j (RPt.ofPt z)).toPt
+
+theorem SVGShape_vectors :
+    let affs := [tr 100 200]
+    svgAt affs 1 = ⟨100, 200⟩ ∧ (mapADown affs 0 1 (RPt.ofPt ⟨100, 200⟩)).toPt = z := by decide
+
+theorem SVGShapeScale_vectors :
+    let affs := [tr 50 80, (Aff.scale 2 2).comp (tr 50 40)]
+    svgAt affs 2 = ⟨200, 240⟩ ∧ (mapADown affs 0 2 (RPt.ofPt ⟨200, 240⟩)).toPt = z := by decide
+
+theorem SVGShapeWithViewBoxWithoutScale_vectors :
+    let affs := [tr 100 50, viewBoxAff 0 0 200 200 400 200]
+    svgAt affs 2 = ⟨200, 50⟩ ∧ (mapADown affs 0 2 (RPt.ofPt ⟨200, 50⟩)).toPt = z := by decide
+
+theorem SVGShapeWithViewBoxWithScale_vectors :
+    let affs := [tr 50 50, viewBoxAff 0 0 100 100 400 200]
+    svgAt affs 2 = ⟨200, 100⟩ ∧ (mapADown affs 0 2 (RPt.ofPt ⟨200, 100⟩)).toPt = z := by decide
+
+theorem SVGShapeWithViewBoxWithNonZeroOffset_vectors :
+    let affs := [tr 100 100, tr 100 50, viewBoxAff 100 100 200 200 400 200]
+    svgAt affs 3 = ⟨200, 50⟩ ∧ (mapADown affs 0 3 (RPt.ofPt ⟨200, 50⟩)).toPt = z := by decide
+
+theorem SVGShapeWithViewBoxWithNonZeroOffsetAndScale_vectors :
+    let affs := [tr 100 100, tr 50 50, viewBoxAff 100 100 100 100 400 200]
+    svgAt affs 3 = ⟨200, 100⟩ ∧ (mapADown affs 0 3 (RPt.ofPt ⟨200, 100⟩)).toPt = z := by decide
+
+/-- SVGForeignObject (1495): `<g transform='translate(50 50)'><foreignObject transform='translate(-25
+    -25)'><div id=target style='margin-left:50px; padding:84px; 50×50'>` under `viewBox='0 0 100
+    100'` in a 400×200 `<svg>`. -/
+theorem SVGForeignObject_vectors :
+    let fo := layoutRoot 800 { id := 1, children :=
+      [{ id := 2, ml := .px 50, pl := 84, pr := 84, pt := 84, pb := 84, width := .px 50, height := some 50 }] }
+    let affs := affChain [Node.block fo (fo.kid 0)] [none] ++ [tr (-25) (-25), tr 50 50, viewBoxAff 0 0 100 100 400 200]
+    svgAt affs 4 = ⟨250, 50⟩ ∧ (mapADown affs 0 4 (RPt.ofPt ⟨250, 50⟩)).toPt = z ∧
+    (mapADown affs 4 4 (RPt.ofPt ⟨250, 50⟩)).toPt = ⟨250, 50⟩ ∧
+    (mapADown affs 2 4 (RPt.ofPt ⟨250, 50⟩)).toPt = ⟨25, -25⟩ ∧
+    (mapADown affs 1 4 (RPt.ofPt ⟨250, 50⟩)).toPt = ⟨50, 0⟩ := by decide
+
+/-! ### Elements drawn into a canvas (ElementCanvasTransform 1975 and the nested rows): a drawable
+    element is mapped to the canvas by its own canvas transform alone. -/
+def canvasPt (l : List CN) : Pt := canvasShift l
+
+theorem ElementCanvasTransform_vectors :
+    canvasPt [.drawable ⟨50, 60⟩] = ⟨50, 60⟩ := by decide
+
+theorem NestedElementCanvasTransform_vectors :
+    canvasPt [.drawable ⟨0, 100⟩, .drawable ⟨100, 0⟩] = ⟨0, 100⟩ := by decide
+
+theorem NestedElementCanvasTransformWithOffset_vectors :
+    let a := layoutRoot 800 { id := 1, children := [{ id := 2, mt := 20 }] }
+    canvasPt [.drawable ⟨0, 100⟩, .plain ((Node.block a (a.kid 0)).hop []), .drawable ⟨100, 0⟩] = ⟨0, 100⟩ := by decide
+
+theorem NestedElementCanvasTransformChildWithoutCanvasTransform_vectors :
+    canvasPt [.drawable ⟨0, 0⟩, .drawable ⟨100, 0⟩] = ⟨0, 0⟩ := by decide
+
+theorem NestedElementCanvasTransformNonDrawableChild_vectors :
+    let a := layoutRoot 800 { id := 1, height := some 100, children := [{ id := 2, height := some 50 }] }
+    canvasPt [.plain ((Node.block a (a.kid 0)).hop []), .drawable ⟨100, 0⟩] = ⟨100, 0⟩ := by decide
+
+theorem NestedElementCanvasTransformInline_vectors :
+    canvasPt [.drawable ⟨0, 100⟩, .drawable ⟨100, 0⟩] = ⟨0, 100⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout

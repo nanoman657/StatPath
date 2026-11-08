@@ -31,11 +31,11 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:504 | MapCoordinatesTest.FixedPosInFixedPos | geometry | formalized | `TestsMapping.FixedPosInFixedPos_vectors` |
 | map_coordinates_test.cc:573 | MapCoordinatesTest.FixedPosInFixedPosScrollView | geometry | formalized | `TestsMapping.FixedPosInFixedPosScrollView_vectors` |
 | map_coordinates_test.cc:610 | MapCoordinatesTest.FixedPosInAbsolutePosScrollView | geometry | formalized | `TestsMapping.FixedPosInAbsolutePosScrollView_vectors` |
-| map_coordinates_test.cc:647 | MapCoordinatesTest.FixedPosInTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:689 | MapCoordinatesTest.FixedPosInContainPaint | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:647 | MapCoordinatesTest.FixedPosInTransform | geometry | formalized | `TestsMapping.FixedPosInTransform_vectors` |
+| map_coordinates_test.cc:689 | MapCoordinatesTest.FixedPosInContainPaint | geometry | formalized | `TestsMapping.FixedPosInContainPaint_vectors` |
 | map_coordinates_test.cc:732 | MapCoordinatesTest.FixedPosInIFrameWhenMainFrameScrolled | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:763 | MapCoordinatesTest.IFrameTransformed | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:797 | MapCoordinatesTest.FixedPosInScrolledIFrameWithTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:763 | MapCoordinatesTest.IFrameTransformed | geometry | formalized | `TestsMapping.IFrameTransformed_vectors` |
+| map_coordinates_test.cc:797 | MapCoordinatesTest.FixedPosInScrolledIFrameWithTransform | geometry | blocked | a fixed box with auto offsets keeps its layout-time viewport position under a scrolled frame; static position of a fixed box under scroll is not modelled |
 | map_coordinates_test.cc:828 | MapCoordinatesTest.MulticolWithText | geometry | formalized | `TestsMapping.MulticolWithText_vectors` |
 | map_coordinates_test.cc:849 | MapCoordinatesTest.MulticolWithInline | geometry | formalized | `TestsMapping.MulticolWithInline_vectors` |
 | map_coordinates_test.cc:868 | MapCoordinatesTest.MulticolWithBlock | geometry | formalized | `TestsMapping.MulticolWithBlock_vectors` |
@@ -51,14 +51,14 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithBlock_vectors` |
 | map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1397 | MapCoordinatesTest.SVGShapeScale | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1417 | MapCoordinatesTest.SVGShapeWithViewBoxWithoutScale | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1436 | MapCoordinatesTest.SVGShapeWithViewBoxWithScale | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1455 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1475 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffsetAndScale | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1495 | MapCoordinatesTest.SVGForeignObject | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1532 | MapCoordinatesTest.LocalToAbsoluteTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | geometry | formalized | `TestsMapping.SVGShape_vectors` |
+| map_coordinates_test.cc:1397 | MapCoordinatesTest.SVGShapeScale | geometry | formalized | `TestsMapping.SVGShapeScale_vectors` |
+| map_coordinates_test.cc:1417 | MapCoordinatesTest.SVGShapeWithViewBoxWithoutScale | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithoutScale_vectors` |
+| map_coordinates_test.cc:1436 | MapCoordinatesTest.SVGShapeWithViewBoxWithScale | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithScale_vectors` |
+| map_coordinates_test.cc:1455 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffset | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithNonZeroOffset_vectors` |
+| map_coordinates_test.cc:1475 | MapCoordinatesTest.SVGShapeWithViewBoxWithNonZeroOffsetAndScale | geometry | formalized | `TestsMapping.SVGShapeWithViewBoxWithNonZeroOffsetAndScale_vectors` |
+| map_coordinates_test.cc:1495 | MapCoordinatesTest.SVGForeignObject | geometry | formalized | `TestsMapping.SVGForeignObject_vectors` |
+| map_coordinates_test.cc:1532 | MapCoordinatesTest.LocalToAbsoluteTransform | geometry | formalized | `TestsMapping.LocalToAbsoluteTransform_vectors` |
 | map_coordinates_test.cc:1555 | MapCoordinatesTest.LocalToAncestorTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
@@ -68,14 +68,14 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | blocked | scroll origin and scrollable-overflow width of a vertical-rl scroller are not modelled |
 | map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | geometry | formalized | `TestsMapping.FixedPositionWithScrollOffset_vectors`, `Mapping.mapRange_oof` |
 | map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
-| map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | geometry | blocked | scrollbar themes: engine service, parked |
-| map_coordinates_test.cc:1975 | MapCoordinatesTest.ElementCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1996 | MapCoordinatesTest.NestedElementCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:2021 | MapCoordinatesTest.NestedElementCanvasTransformWithOffset | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:2046 | MapCoordinatesTest.NestedElementCanvasTransformChildWithoutCanvasTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:2069 | MapCoordinatesTest.NestedElementCanvasTransformNonDrawableChild | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:2093 | MapCoordinatesTest.NestedElementCanvasTransformInline | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:1975 | MapCoordinatesTest.ElementCanvasTransform | geometry | formalized | `TestsMapping.ElementCanvasTransform_vectors` |
+| map_coordinates_test.cc:1996 | MapCoordinatesTest.NestedElementCanvasTransform | geometry | formalized | `TestsMapping.NestedElementCanvasTransform_vectors` |
+| map_coordinates_test.cc:2021 | MapCoordinatesTest.NestedElementCanvasTransformWithOffset | geometry | formalized | `TestsMapping.NestedElementCanvasTransformWithOffset_vectors` |
+| map_coordinates_test.cc:2046 | MapCoordinatesTest.NestedElementCanvasTransformChildWithoutCanvasTransform | geometry | formalized | `TestsMapping.NestedElementCanvasTransformChildWithoutCanvasTransform_vectors` |
+| map_coordinates_test.cc:2069 | MapCoordinatesTest.NestedElementCanvasTransformNonDrawableChild | geometry | formalized | `TestsMapping.NestedElementCanvasTransformNonDrawableChild_vectors` |
+| map_coordinates_test.cc:2093 | MapCoordinatesTest.NestedElementCanvasTransformInline | geometry | formalized | `TestsMapping.NestedElementCanvasTransformInline_vectors` |
 | visual_rect_mapping_test.cc:126 | VisualRectMappingTest.LayoutText | geometry | formalized | `TestsMapping.LayoutText_vectors` |
 | visual_rect_mapping_test.cc:165 | VisualRectMappingTest.LayoutTextContainerFlippedWritingMode | geometry | formalized | `TestsMapping.LayoutTextContainerFlippedWritingMode_vectors` |
 | visual_rect_mapping_test.cc:202 | VisualRectMappingTest.LayoutInline | geometry | formalized | `TestsMapping.LayoutInline_vectors` |
