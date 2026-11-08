@@ -274,4 +274,76 @@ theorem whitespaceState_blockEnd_collapsed :
 theorem whitespaceState_blockEnd_preserved :
     computeWhitespaceState (.blockEndSpace false) = .preserved := rfl
 
+/-! ## 6. Word Segmentation and Greedy Line Breaking (CSS Text 3 §4.1, §5.1, §5.2 & CSS 2.1 §9.5) -/
+
+/-- An unbreakable segment of inline text and margins between soft wrap opportunities. -/
+structure UnbreakableSegment where
+  text : String
+  width : Nat
+  followedBySpace : Bool := false
+  isForcedBreak : Bool := false
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Pack unbreakable segments onto a single line up to availableWidth. -/
+def packSegmentLine (availableWidth : Nat) (spaceWidth : Nat) (lineText : String) (curW : Nat) (canAdd : Bool) :
+    List UnbreakableSegment → String × List UnbreakableSegment
+  | [] => (lineText, [])
+  | next :: more =>
+    if ¬ canAdd then
+      (lineText, next :: more)
+    else if next.isForcedBreak then
+      (lineText, next :: more)
+    else
+      let newW := curW + spaceWidth + next.width
+      if newW ≤ availableWidth then
+        packSegmentLine availableWidth spaceWidth (lineText ++ next.text) newW next.followedBySpace more
+      else
+        (lineText, next :: more)
+
+/-- Fuel-bounded line-breaking loop packing unbreakable segments into lines. -/
+def breakSegmentsFuel (availableWidth : Nat) (spaceWidth : Nat) :
+    Nat → List UnbreakableSegment → List String
+  | 0, _ => []
+  | _ + 1, [] => []
+  | fuel + 1, seg0 :: rest =>
+    if seg0.isForcedBreak then
+      let nonForced := rest.filter (fun s => ¬ s.isForcedBreak ∧ s.text ≠ "")
+      if nonForced.isEmpty then []
+      else breakSegmentsFuel availableWidth spaceWidth fuel rest
+    else
+      let (lineStr, remaining) := packSegmentLine availableWidth spaceWidth seg0.text seg0.width seg0.followedBySpace rest
+      lineStr :: breakSegmentsFuel availableWidth spaceWidth fuel remaining
+
+/-- CSS Text 3 §4.1, §5.1, §5.2 & CSS 2.1 §9.5:
+    Greedy line breaking over unbreakable segments.
+    - Each line consumes at least one segment (even if it overflows available width).
+    - If followedBySpace is true, subsequent segments may be packed on the same line if they fit.
+    - Forced breaks terminate the line immediately; trailing whitespace at block end does not create an extra line.
+    - Returns the list of line text strings. -/
+def breakSegmentLines (availableWidth : Nat) (segments : List UnbreakableSegment) (spaceWidth : Nat := 10) : List String :=
+  breakSegmentsFuel availableWidth spaceWidth (segments.length + 1) segments
+
+/-- CSS Text 3 §5.1: Empty segment stream produces no lines. -/
+theorem breakSegmentLines_empty (w : Nat) :
+    breakSegmentLines w [] = [] := by
+  rfl
+
+/-- CSS Text 3 §5.2: A single unbreakable segment always produces exactly one line. -/
+theorem breakSegmentLines_single (w : Nat) (txt : String) (width : Nat) (sp : Bool) :
+    breakSegmentLines w [{ text := txt, width := width, followedBySpace := sp, isForcedBreak := false }] = [txt] := by
+  cases sp <;> rfl
+
+/-- CSS Text 3 §4.1.2 & §5.1: Terminal forced break with collapsed trailing whitespace produces a single line. -/
+theorem breakSegmentLines_forced_break_terminal (w : Nat) (txt : String) (width : Nat) (sp : Bool) :
+    breakSegmentLines w [{ text := txt, width := width, followedBySpace := sp }, { text := "", width := 0, isForcedBreak := true }] = [txt] := by
+  cases sp <;> rfl
+
+/-- CSS Text 3 §5.2: When two segments overflow available width, breaking occurs after the first segment. -/
+theorem breakSegmentLines_two_overflow (w : Nat) (txt1 txt2 : String) (w1 w2 : Nat) (sp : Nat)
+    (h : ¬ (w1 + sp + w2 ≤ w)) :
+    breakSegmentLines w [{ text := txt1, width := w1, followedBySpace := true }, { text := txt2, width := w2 }] sp = [txt1, txt2] := by
+  unfold breakSegmentLines breakSegmentsFuel packSegmentLine
+  simp [h]
+  rfl
+
 end ChromiumLayout

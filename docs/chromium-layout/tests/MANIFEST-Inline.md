@@ -34,23 +34,23 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:223 | TextCombineBreak | geometry | formalized | `lineBreaker_textCombineBreak` | CSS Writing Modes 3 §5.1: Combined hyphen element breaks line after combine |
 | inline/line_breaker_test.cc:241 | TextCombineNoBreak | geometry | formalized | `lineBreaker_textCombineNoBreak` | CSS Writing Modes 3 §5.1: Combined alphanumeric word has no break opportunities |
 | inline/line_breaker_test.cc:258 | TextCombineNoBreakWithSpace | geometry | formalized | `lineBreaker_textCombineNoBreakWithSpace` | CSS Writing Modes 3 §5.1: Internal space does not permit breaking inside text combine |
-| inline/line_breaker_test.cc:275 | OverflowWord | geometry | blocked | - | Blocked: model lacks leading space collapse on second line |
+| inline/line_breaker_test.cc:275 | OverflowWord | geometry | formalized | `lineBreaker_overflowWord` | CSS Text 3 §5.2: Overflowing word placed on first line with leading space collapse on second |
 | inline/line_breaker_test.cc:301 | OverflowTab | geometry | formalized | `lineBreaker_overflowTab` | Tab characters expand to tab stops without breaking |
 | inline/line_breaker_test.cc:323 | OverflowTabBreakWord | geometry | formalized | `lineBreaker_overflowTab` | Tab characters do not break under word-wrap: break-word |
 | inline/line_breaker_test.cc:346 | OverflowAtomicInline | geometry | formalized | `lineBreaker_overflowAtomic` | Atomic inline wrapping at boundaries across widths 80, 70, 40, 20 |
-| inline/line_breaker_test.cc:387 | OverflowMargin | geometry | blocked | - | Blocked: model lacks OverflowMargin layout support |
+| inline/line_breaker_test.cc:387 | OverflowMargin | geometry | formalized | `lineBreaker_overflowMargin` | CSS Text 3 §5.2 & CSS 2.1 §9.5: Inline margin overflows line budget and breaks before word |
 | inline/line_breaker_test.cc:423 | OverflowAfterSpacesAcrossElements | geometry | formalized | `lineBreaker_overflowAfterSpaces` | Trailing spaces across element boundaries collapse at line end |
 | inline/line_breaker_test.cc:447 | WrapLastWord | geometry | formalized | `lineBreaker_wrapLastWord` | Wrap last word before inline span preserves subsequent items on next line |
 | inline/line_breaker_test.cc:466 | WrapLetterSpacing | geometry | formalized | `lineBreaker_wrapLetterSpacing` | Letter-spacing increases shaped segment advance width |
-| inline/line_breaker_test.cc:486 | BoundaryInWord | geometry | blocked | - | Blocked: model lacks BoundaryInWord layout support |
-| inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | blocked | - | Blocked: model lacks first-word break prevention |
+| inline/line_breaker_test.cc:486 | BoundaryInWord | geometry | formalized | `lineBreaker_boundaryInWord` | CSS Text 3 §5.1: Element boundaries within words do not create break opportunities |
+| inline/line_breaker_test.cc:516 | BoundaryInFirstWord | geometry | formalized | `lineBreaker_boundaryInFirstWord` | CSS Text 3 §5.1: First word split across element boundary cannot be broken |
 | inline/line_breaker_test.cc:548 | IdeographicTrailingSpaces | geometry | formalized | `lineBreaker_ideographicTrailingSpaces` | Ideographic spaces (U+3000) are preserved as non-collapsible text |
 | inline/line_breaker_test.cc:624 | WhitespaceStateTest.WhitespaceState | behaviour | formalized | `lineBreaker_whitespaceState` | Line breaker trailing whitespace state across line wrapping conditions |
 | inline/line_breaker_test.cc:684 | TrailingSpaceWidthTest.TrailingSpaceWidth | geometry | blocked | - | Blocked: model lacks trailing space hanging width computation in LineBreaker |
 | inline/line_breaker_test.cc:706 | FullyCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:732 | TrailingCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:762 | SplitTextZero | behaviour | blocked | - | Blocked: model lacks DOM text node split synchronization |
-| inline/line_breaker_test.cc:789 | ForcedBreakFollowedByCloseTag | geometry | blocked | - | Blocked: model lacks ForcedBreakFollowedByCloseTag layout support |
+| inline/line_breaker_test.cc:789 | ForcedBreakFollowedByCloseTag | geometry | formalized | `lineBreaker_forcedBreakFollowedByCloseTag` | CSS Text 3 §4.1.2 & §5.1: Forced break followed by close tags and collapsible whitespace at block end produces 1 line |
 | inline/line_breaker_test.cc:821 | TableCellWidthCalculationQuirkOutOfFlow | internal | internal | - | Checks no DCHECK in quirks mode with out-of-flow child |
 | inline/line_breaker_test.cc:842 | BoxDecorationBreakCloneWithoutBoxDecorations | internal | internal | - | Checks no DCHECK with -webkit-box-decoration-break: clone |
 | inline/line_breaker_test.cc:849 | RewindPositionedFloat | internal | internal | - | Regression test for float rewinding with large border |

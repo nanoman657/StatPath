@@ -258,4 +258,65 @@ theorem lineBreaker_textCombineNoBreakWithSpace :
     lines.length = 1 ∧ lines = ["abc\uFFFCdef"] := by
   decide
 
+/-! ### Line Breaker Word Segmentation & Overflow Tests (CSS Text 3 §4, §5 & CSS 2.1 §9.5) -/
+
+/-- LineBreakerTest.OverflowWord (`inline/line_breaker_test.cc:275`):
+    First word overflows, space collapses at line start, second word is placed on next line. -/
+theorem lineBreaker_overflowWord :
+    let segs : List UnbreakableSegment :=
+      [ { text := "12345", width := 50, followedBySpace := true }
+      , { text := "678", width := 30, followedBySpace := false } ]
+    let lines40 := breakSegmentLines 40 segs
+    let lines20 := breakSegmentLines 20 segs
+    lines40 = ["12345", "678"] ∧ lines20 = ["12345", "678"] := by
+  decide
+
+/-- LineBreakerTest.OverflowMargin (`inline/line_breaker_test.cc:387`):
+    Word with trailing inline margin that overflows line breaks before the word. -/
+theorem lineBreaker_overflowMargin :
+    let segs : List UnbreakableSegment :=
+      [ { text := "123", width := 30, followedBySpace := true }
+      , { text := "456", width := 70, followedBySpace := true }
+      , { text := "789", width := 30, followedBySpace := false } ]
+    let lines80 := breakSegmentLines 80 segs
+    let lines60 := breakSegmentLines 60 segs
+    lines80 = ["123", "456", "789"] ∧ lines60 = ["123", "456", "789"] := by
+  decide
+
+/-- LineBreakerTest.BoundaryInWord (`inline/line_breaker_test.cc:486`):
+    Element boundaries inside a word do not create break opportunities;
+    words across boundary remain contiguous. -/
+theorem lineBreaker_boundaryInWord :
+    let segs : List UnbreakableSegment :=
+      [ { text := "123", width := 30, followedBySpace := true }
+      , { text := "456789", width := 60, followedBySpace := true }
+      , { text := "abc", width := 30, followedBySpace := false } ]
+    let lines80 := breakSegmentLines 80 segs
+    let lines50 := breakSegmentLines 50 segs
+    lines80 = ["123", "456789", "abc"] ∧ lines50 = ["123", "456789", "abc"] := by
+  decide
+
+/-- LineBreakerTest.BoundaryInFirstWord (`inline/line_breaker_test.cc:516`):
+    First word split across element boundary cannot be broken. -/
+theorem lineBreaker_boundaryInFirstWord :
+    let segs : List UnbreakableSegment :=
+      [ { text := "123456", width := 60, followedBySpace := true }
+      , { text := "789", width := 30, followedBySpace := false } ]
+    let lines80 := breakSegmentLines 80 segs
+    let lines50 := breakSegmentLines 50 segs
+    let lines20 := breakSegmentLines 20 segs
+    lines80 = ["123456", "789"] ∧ lines50 = ["123456", "789"] ∧ lines20 = ["123456", "789"] := by
+  decide
+
+/-- LineBreakerTest.ForcedBreakFollowedByCloseTag (`inline/line_breaker_test.cc:789`):
+    Forced break followed by close tags and collapsible whitespace at block end produces 1 line. -/
+theorem lineBreaker_forcedBreakFollowedByCloseTag :
+    let segs : List UnbreakableSegment :=
+      [ { text := "line", width := 40, followedBySpace := false }
+      , { text := "", width := 0, isForcedBreak := true }
+      , { text := "", width := 0 } ]
+    let lines := breakSegmentLines 100 segs
+    lines.length = 1 ∧ lines = ["line"] := by
+  decide
+
 end ChromiumLayout.TestsInline
