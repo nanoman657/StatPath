@@ -153,4 +153,43 @@ theorem physicalRect_union_encloses_right (r1 r2 : PhysicalRect)
       · rw [Nat.add_sub_of_le hMinYLeMax]
         exact hMaxYGe
 
+/-! ## 3. Fragment Sequence Flags (CSS 2.1 §9.4.2 & CSS Inline 3 §2) -/
+
+/-- CSS 2.1 §9.4.2: First fragment for an inline node in a sequence. -/
+def isFirstFragmentForNode (fragIndex : Nat) : Bool :=
+  fragIndex == 0
+
+/-- CSS 2.1 §9.4.2: Last fragment for an inline node in a sequence of totalFragments. -/
+def isLastFragmentForNode (fragIndex : Nat) (totalFragments : Nat) : Bool :=
+  fragIndex + 1 == totalFragments
+
+/-- CSS 2.1 §9.4.2 Law: Fragment index 0 is always first for any sequence length. -/
+theorem firstFragment_zero : isFirstFragmentForNode 0 = true := by
+  rfl
+
+/-- CSS 2.1 §9.4.2 Law: Fragment index > 0 is never first. -/
+theorem firstFragment_pos (idx : Nat) : isFirstFragmentForNode (idx + 1) = false := by
+  rfl
+
+/-- CSS 2.1 §9.4.2 Law: Fragment at terminal index is always last. -/
+theorem lastFragment_terminal (idx : Nat) : isLastFragmentForNode idx (idx + 1) = true := by
+  unfold isLastFragmentForNode
+  simp
+
+/-- CSS 2.1 §9.4.2 Law: Single fragment is simultaneously first and last. -/
+theorem single_fragment_first_and_last :
+    isFirstFragmentForNode 0 = true ∧ isLastFragmentForNode 0 1 = true := by
+  exact ⟨rfl, rfl⟩
+
+/-- CSS Text 4 §5 Law: Caret position at offset 0 is always 0. -/
+theorem caret_position_zero_offset (textLen avail : Nat) :
+    caretInlinePositionForOffset textLen avail 0 = 0 := by
+  unfold caretInlinePositionForOffset
+  split <;> simp
+
+/-- CSS Inline 3 §2 Law: Empty item list produces empty culled bounding box. -/
+theorem culledInlineBoundingBox_empty (target : Nat) :
+    culledInlineBoundingBox [] target = {} := by
+  rfl
+
 end ChromiumLayout

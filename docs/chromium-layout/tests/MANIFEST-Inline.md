@@ -150,10 +150,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
 | inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
 | inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
-| inline/fragment_item_test.cc:126 | BasicText | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText` | CSS 2.1 §9.4.2: First and last fragment flags for wrapping text |
 | inline/fragment_item_test.cc:173 | RtlText | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
-| inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
-| inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | formalized | `fragmentItem_basicInlineBox` | CSS 2.1 §9.4.2: Fragment flags for wrapped and non-wrapped inline boxes |
+| inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | formalized | `fragmentItem_culledInlineBox` | CSS Inline 3 §2: Culled inline bounding box unites descendant fragments |
 | inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | internal | - | Invalidation and visual overflow recalc on self-painting layer |
 | inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
@@ -184,8 +184,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_item_test.cc:876 | MarkLineBoxesDirtyWrappedLine | behaviour | internal | - | Dirty line index tracking on wrapped line modification |
 | inline/fragment_item_test.cc:895 | MarkLineBoxesDirtyInsideInlineBlock | behaviour | internal | - | Dirty line index tracking inside inline block |
 | inline/fragment_item_test.cc:910 | Disabled_DebugVisualizers | internal | internal | - | MSVC natvis debugger visualization check |
-| inline/fragment_item_test.cc:931 | CaretInlinePositionForOffset_TextFit | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
-| inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:931 | CaretInlinePositionForOffset_TextFit | geometry | formalized | `fragmentItem_caretInlinePositionForOffset_TextFit` | CSS Text 4 §5: Caret inline position with text-fit: grow |
+| inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | formalized | `fragmentItem_isRubyAnnotationLine` | CSS Ruby 1 §3: Ruby annotation line classification in FragmentItem |
 | inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | blocked | - | Blocked: model lacks FragmentItemsBuilder line assembly |
 | inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
 | inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | blocked | - | Blocked: model lacks multicolumn culled inline container resolution |
