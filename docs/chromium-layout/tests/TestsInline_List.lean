@@ -27,6 +27,18 @@ def upperRomanOverride : CounterStyle :=
 def fooOverride : CounterStyle :=
   { name := "foo", system := .fixed 1, symbols := ["A", "B", "C"] }
 
+def shadowFoo1Style : CounterStyle :=
+  { name := "foo", system := .fixed 1, symbols := ["A", "B", "C"] }
+
+def shadowFoo2Style : CounterStyle :=
+  { name := "foo", system := .fixed 1, symbols := ["D", "E", "F"] }
+
+/-! ### Test 0: FallbackToTextWhenImagesDisable (`list_marker_test.cc:51`) -/
+theorem listMarker_fallbackToTextWhenImagesDisable :
+    computeMarkerContent false (some "data:image/gif;base64,R0lGODdhCQAJAKEAAO6C7v8A/6Ag8AAAACwAAAAACQAJAAACFISPaWLhLhh4UNIQG81zswiGIlgAADs=")
+      [] "decimal" 1 = .text "1. " := by
+  rfl
+
 /-! ### Test 1: AddCounterStyle (`list_marker_test.cc:71`) -/
 theorem listMarker_addCounterStyle :
     formatCounterValue [fooStyle] "decimal" 1 = "1. " ∧
@@ -81,5 +93,33 @@ theorem listMarker_removeOverrideOfSameScopeCounterStyle :
 theorem listMarker_widthOfSymbolForFontSizeZero :
     markerSymbolWidth 0 "disc" = 0 := by
   rfl
+
+/-! ### Test 8: ModifyShadowDOMWithOwnCounterStyles (`list_marker_test.cc:256`) -/
+theorem listMarker_modifyShadowDOMWithOwnCounterStyles :
+    -- Document root initial state
+    formatScopedCounterValue [[fooStyle]] "decimal" 1 = "1. " ∧
+    formatScopedCounterValue [[fooStyle]] "foo" 2 = "X. " ∧
+    -- Attach shadow1: does not affect document root
+    formatScopedCounterValue [[fooStyle]] "decimal" 1 = "1. " ∧
+    formatScopedCounterValue [[fooStyle]] "foo" 2 = "X. " ∧
+    formatScopedCounterValue [[shadowFoo1Style], [fooStyle]] "foo" 1 = "A. " ∧
+    -- Attach shadow2: does not affect document root or shadow1
+    formatScopedCounterValue [[fooStyle]] "decimal" 1 = "1. " ∧
+    formatScopedCounterValue [[fooStyle]] "foo" 2 = "X. " ∧
+    formatScopedCounterValue [[shadowFoo1Style], [fooStyle]] "foo" 1 = "A. " ∧
+    formatScopedCounterValue [[shadowFoo2Style], [fooStyle]] "foo" 1 = "D. " ∧
+    -- Remove shadow1: document root and shadow2 remain consistent
+    formatScopedCounterValue [[fooStyle]] "decimal" 1 = "1. " ∧
+    formatScopedCounterValue [[fooStyle]] "foo" 2 = "X. " ∧
+    formatScopedCounterValue [[shadowFoo2Style], [fooStyle]] "foo" 1 = "D. " := by
+  decide
+
+/-! ### Test 9: InsideWithFirstLine (`layout_list_item_test.cc:37`) -/
+theorem layoutListItem_insideWithFirstLine :
+    let marker := buildListMarkerBox .inside (.text "• ")
+    marker.position = .inside ∧
+    marker.childCount = 1 ∧
+    marker.children = [.text "• "] := by
+  decide
 
 end ChromiumLayout.TestsInline
