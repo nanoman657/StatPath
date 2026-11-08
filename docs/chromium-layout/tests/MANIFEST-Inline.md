@@ -833,7 +833,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | exclusions/exclusion_space_test.cc:1060 | MergeExclusionSpacesNoOutputExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
 | exclusions/exclusion_space_test.cc:1083 | CopyOnWriteNoAllocationOnCopy | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | exclusions/exclusion_space_test.cc:1162 | CopyOnWriteDisabledFallback | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
-| layout_quote_test.cc:40 | Locale | behaviour | blocked | - | Blocked: model lacks <q> quote delimiter language resolution |
+| layout_quote_test.cc:40 | Locale | behaviour | formalized | `layoutQuote_locale` | `<q>` element delimiters use language from parent, while quote text uses element language |
 | hit_testing_test.cc:87 | OcclusionHitTest | behaviour | blocked | - | Blocked: model lacks hit testing |
 | hit_testing_test.cc:111 | OcclusionHitTestSVGTextWithFilterCrash | internal | internal | - | Crash regression test |
 | hit_testing_test.cc:136 | HitTestWithCallback | behaviour | blocked | - | Blocked: model lacks hit testing |
