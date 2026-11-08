@@ -444,11 +444,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/paragraph_line_breaker_test.cc:186 | IsDisabledByTabulationCharacters | behaviour | blocked | - | Blocked: model lacks ParagraphLineBreaker |
 | inline/physical_line_box_fragment_test.cc:44 | HasPropagatedDescendantsFloat | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
 | inline/physical_line_box_fragment_test.cc:62 | HasPropagatedDescendantsOOF | behaviour | blocked | - | Blocked: model lacks LineBoxFragment descendant flag propagation |
-| inline/ruby_utils_test.cc:25 | GroupLinesEmpty | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
-| inline/ruby_utils_test.cc:32 | GroupLinesOneAnnotationLevel | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
-| inline/ruby_utils_test.cc:49 | GroupLinesNested | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
-| inline/ruby_utils_test.cc:67 | GroupLinesBothSides | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
-| inline/ruby_utils_test.cc:106 | GroupLinesAnnotationForAnnotation | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:25 | GroupLinesEmpty | geometry | formalized | `rubyBlockPositionCalculator_groupLinesEmpty` | Empty ruby column list produces exactly one base-level ruby line |
+| inline/ruby_utils_test.cc:32 | GroupLinesOneAnnotationLevel | geometry | formalized | `rubyBlockPositionCalculator_groupLinesOneAnnotationLevel` | Non-overlapping columns form a single annotation level [1] on the base |
+| inline/ruby_utils_test.cc:49 | GroupLinesNested | geometry | formalized | `rubyBlockPositionCalculator_groupLinesNested` | Nested ruby columns form tiered annotation levels [1] and [2] |
+| inline/ruby_utils_test.cc:67 | GroupLinesBothSides | geometry | formalized | `rubyBlockPositionCalculator_groupLinesBothSides` | Over and under annotations group into separate lines with negative and positive depths |
+| inline/ruby_utils_test.cc:106 | GroupLinesAnnotationForAnnotation | geometry | formalized | `rubyBlockPositionCalculator_groupLinesAnnotationForAnnotation` | Sub-columns of an annotation column form sub-levels such as [1, -1] |
 | inline/ruby_utils_test.cc:129 | PlaceLinesTreePlacement | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
 | inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
 | inline/score_line_breaker_test.cc:78 | LastLines | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
