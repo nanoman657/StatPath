@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -422,20 +422,20 @@ checks every row against the pinned sources and the Lean modules.
 | table/layout_table_test.cc:88 | LayoutTableTest.CollapsedBorders | geometry | blocked | needs table collapsed borders layout model |
 | table/layout_table_test.cc:143 | LayoutTableTest.CollapsedBordersWithCol | geometry | blocked | needs table collapsed borders layout model |
 | table/layout_table_test.cc:207 | LayoutTableTest.WidthPercentagesExceedHundred | geometry | blocked | needs table column percentage and max width resolution |
-| table/layout_table_test.cc:230 | LayoutTableTest.CloseToMaxWidth | geometry | blocked | needs table column percentage and max width resolution |
-| table/layout_table_test.cc:250 | LayoutTableTest.PaddingWithCollapsedBorder | geometry | blocked | needs table padding with collapsed borders |
-| table/layout_table_test.cc:260 | LayoutTableTest.OutOfOrderHeadAndBody | geometry | blocked | needs table section fragment tree ordering |
-| table/layout_table_test.cc:279 | LayoutTableTest.OutOfOrderFootAndBody | geometry | blocked | needs table section fragment tree ordering |
-| table/layout_table_test.cc:298 | LayoutTableTest.OutOfOrderHeadFootAndBody | geometry | blocked | needs table section fragment tree ordering |
+| table/layout_table_test.cc:230 | LayoutTableTest.CloseToMaxWidth | geometry | formalized | `TestsBlock.CloseToMaxWidth_vectors` |
+| table/layout_table_test.cc:250 | LayoutTableTest.PaddingWithCollapsedBorder | geometry | formalized | `TestsBlock.PaddingWithCollapsedBorder_vectors`, `TableLayout.collapsed_border_padding_zero` |
+| table/layout_table_test.cc:260 | LayoutTableTest.OutOfOrderHeadAndBody | geometry | formalized | `TestsBlock.OutOfOrderHeadAndBody_vectors` |
+| table/layout_table_test.cc:279 | LayoutTableTest.OutOfOrderFootAndBody | geometry | formalized | `TestsBlock.OutOfOrderFootAndBody_vectors` |
+| table/layout_table_test.cc:298 | LayoutTableTest.OutOfOrderHeadFootAndBody | geometry | formalized | `TestsBlock.OutOfOrderHeadFootAndBody_vectors` |
 | table/layout_table_test.cc:330 | LayoutTableTest.VisualOverflowCleared | geometry | blocked | needs table visual overflow rect calculation |
-| table/table_layout_utils_test.cc:55 | TableLayoutUtilsTest.DistributeColspanAutoPercent | geometry | blocked | needs table colspan column width distribution algorithm |
-| table/table_layout_utils_test.cc:93 | TableLayoutUtilsTest.DistributeColspanAutoSizeUnconstrained | geometry | blocked | needs table colspan column width distribution algorithm |
-| table/table_layout_utils_test.cc:121 | TableLayoutUtilsTest.DistributeColspanAutoSizeConstrained | geometry | blocked | needs table colspan column width distribution algorithm |
+| table/table_layout_utils_test.cc:55 | TableLayoutUtilsTest.DistributeColspanAutoPercent | geometry | formalized | `TestsBlock.DistributeColspanAutoPercent_vectors` |
+| table/table_layout_utils_test.cc:93 | TableLayoutUtilsTest.DistributeColspanAutoSizeUnconstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeUnconstrained_vectors` |
+| table/table_layout_utils_test.cc:121 | TableLayoutUtilsTest.DistributeColspanAutoSizeConstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeConstrained_vectors` |
 | table/table_layout_utils_test.cc:149 | TableLayoutUtilsTest.DistributeColspanAutoExactMaxSize | geometry | blocked | needs table colspan column width distribution algorithm |
 | table/table_layout_utils_test.cc:187 | TableLayoutUtilsTest.ComputeGridInlineMinMax | geometry | blocked | needs table grid inline min/max sizes algorithm |
 | table/table_layout_utils_test.cc:246 | TableLayoutUtilsTest.DistributeRowspanCellToRows | geometry | blocked | needs table rowspan row height distribution algorithm |
-| table/table_layout_utils_test.cc:280 | TableLayoutUtilsTest.DistributeSectionFixedBlockSizeToRows | geometry | blocked | needs table and section block size distribution to rows |
-| table/table_layout_utils_test.cc:294 | TableLayoutUtilsTest.DistributeTableBlockSizeToSections | geometry | blocked | needs table and section block size distribution to rows |
+| table/table_layout_utils_test.cc:280 | TableLayoutUtilsTest.DistributeSectionFixedBlockSizeToRows | geometry | formalized | `TestsBlock.DistributeSectionFixedBlockSizeToRows_vectors` |
+| table/table_layout_utils_test.cc:294 | TableLayoutUtilsTest.DistributeTableBlockSizeToSections | geometry | formalized | `TestsBlock.DistributeTableBlockSizeToSections_vectors` |
 | grid/grid_layout_algorithm_test.cc:171 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAvailableRowSizes | geometry | blocked | needs CSS grid layout algorithm |
 | grid/grid_layout_algorithm_test.cc:209 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGapGeometry | geometry | blocked | needs CSS grid gap geometry calculation |
 | grid/grid_layout_algorithm_test.cc:290 | GridLayoutAlgorithmTest.GapGeomoetryWithSpanningItems | geometry | blocked | needs CSS grid gap geometry calculation |
