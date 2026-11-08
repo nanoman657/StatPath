@@ -24,11 +24,11 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:225 | MapCoordinatesTest.RelposInline | geometry | formalized | `TestsMapping.RelposInline_vectors` |
 | map_coordinates_test.cc:240 | MapCoordinatesTest.RelposInlineInRelposInline | geometry | formalized | `TestsMapping.RelposInlineInRelposInline_vectors` |
 | map_coordinates_test.cc:274 | MapCoordinatesTest.RelPosBlock | geometry | formalized | `TestsMapping.RelPosBlock_vectors` |
-| map_coordinates_test.cc:311 | MapCoordinatesTest.AbsPos | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:348 | MapCoordinatesTest.AbsPosAuto | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:385 | MapCoordinatesTest.FixedPos | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:444 | MapCoordinatesTest.FixedPosAuto | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:504 | MapCoordinatesTest.FixedPosInFixedPos | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:311 | MapCoordinatesTest.AbsPos | geometry | formalized | `TestsMapping.AbsPos_vectors` |
+| map_coordinates_test.cc:348 | MapCoordinatesTest.AbsPosAuto | geometry | formalized | `TestsMapping.AbsPosAuto_vectors` |
+| map_coordinates_test.cc:385 | MapCoordinatesTest.FixedPos | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
+| map_coordinates_test.cc:444 | MapCoordinatesTest.FixedPosAuto | geometry | formalized | `TestsMapping.FixedPosAuto_vectors` |
+| map_coordinates_test.cc:504 | MapCoordinatesTest.FixedPosInFixedPos | geometry | formalized | `TestsMapping.FixedPosInFixedPos_vectors` |
 | map_coordinates_test.cc:573 | MapCoordinatesTest.FixedPosInFixedPosScrollView | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:610 | MapCoordinatesTest.FixedPosInAbsolutePosScrollView | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:647 | MapCoordinatesTest.FixedPosInTransform | geometry | blocked | not yet modelled (mapping lane, pending) |

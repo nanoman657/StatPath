@@ -10,6 +10,7 @@
 -/
 import BlockFlow
 import BlockRelative
+import BlockAbsolute
 
 namespace ChromiumLayout
 namespace Mapping
@@ -38,20 +39,49 @@ def mapUp (hs : List Hop) (p : Pt) : Pt := hs.foldl (fun q h => h.up q) p
 /-- Map from the ancestor down the same chain (`AncestorToLocalPoint`). -/
 def mapDown (hs : List Hop) (p : Pt) : Pt := hs.foldr (fun h q => h.down q) p
 
-/-- A step of the containing-block chain. A block contributes its fragment offset in its parent
-    plus its relative-position insets (CSS 2.1 §9.4.3: the box is shifted by `left`/`top` after
-    normal flow). An inline-level object (text, inline box) holds its geometry in the coordinate
-    space of its container and contributes no offset, whatever its relative offset. -/
+/-- Position of a child fragment's origin in its parent fragment (both in the one coordinate
+    system `layoutRoot` uses). -/
+def offIn (p c : Frag) : Pt := ⟨c.x - p.x, c.y - p.y⟩
+
+/-- Offset of an out-of-flow box on one axis, in its DOM parent's border-box coordinates
+    (CSS 2.1 §10.3.7, §10.6.4; CSS Position 3 §3): a given inset is measured from the containing
+    block's padding-box start (`cbB` is that start in the parent's coordinates), an `auto` inset
+    keeps the static position `st`; the start margin is added either way. -/
+def oofAxis (cbB st : Int) (inset : BlockAbsolute.InsetVal) (m : BlockAbsolute.MarginVal) : Int :=
+  (BlockAbsolute.computeOof 0 inset .auto m .auto .auto 0).insetStart +
+    match inset with | .px _ => cbB | .auto => st
+
+/-- A step of the DOM-parent chain. A block contributes its fragment offset in its parent plus
+    its relative-position insets (CSS 2.1 §9.4.3: the box is shifted by `left`/`top` after normal
+    flow). An inline-level object (text, inline box) holds its geometry in the coordinate space
+    of its container and contributes no offset, whatever its relative offset. An out-of-flow box
+    (`position:absolute` or `fixed`) sits in the padding box of its containing block, `k` steps
+    above its DOM parent (`cb` is its box: the border widths locate the padding box); `static` is where it would sit in
+    flow (the offset of a zero-size marker laid out in its place). -/
 inductive Node where
   | block (parent child : Frag) (rel : Option BlockRelative.Insets := none)
   | inline (rel : Option BlockRelative.Insets := none)
+  | oof (k : Nat) (cb : BF) (static : Pt) (top left : BlockAbsolute.InsetVal)
+      (mt ml : BlockAbsolute.MarginVal)
 
-def Node.hop : Node → Hop
-  | .block p c r => ⟨c.x - p.x + (r.map (·.left)).getD 0, c.y - p.y + (r.map (·.top)).getD 0⟩
+/-- The hop of a node, given the hops of the ancestors above it. -/
+def Node.hop (up : List Hop) : Node → Hop
+  | .block p c r => ⟨(offIn p c).x + (r.map (·.left)).getD 0, (offIn p c).y + (r.map (·.top)).getD 0⟩
   | .inline _ => ⟨0, 0⟩
+  | .oof k b st t l mt ml =>
+      let o := mapUp (up.take k) ⟨0, 0⟩
+      ⟨oofAxis (b.bl - o.x) st.x l ml, oofAxis (b.bt - o.y) st.y t mt⟩
 
-/-- The chain of a node list. -/
-def chain (ns : List Node) : List Hop := ns.map Node.hop
+/-- Hops of a leaf-first node chain. -/
+def hops : List Node → List Hop
+  | [] => []
+  | n :: rest => n.hop (hops rest) :: hops rest
+
+/-- Map from step `i` to step `j` of a chain (step 0 is the leaf): `LocalToAncestorPoint`. -/
+def mapRange (ns : List Node) (i j : Nat) (p : Pt) : Pt := mapUp (((hops ns).take j).drop i) p
+
+/-- The inverse direction: `AncestorToLocalPoint`. -/
+def mapRangeDown (ns : List Node) (i j : Nat) (p : Pt) : Pt := mapDown (((hops ns).take j).drop i) p
 
 /-! ## General laws -/
 
@@ -101,13 +131,63 @@ theorem mapUp_eq_add (hs : List Hop) (p : Pt) :
 
 /-- An inline-level node ignores its relative offset (the offset is already part of the
     container-space geometry it carries). -/
-theorem inline_ignores_rel (r r' : Option BlockRelative.Insets) :
-    (Node.inline r).hop = (Node.inline r').hop := rfl
+theorem inline_ignores_rel (r r' : Option BlockRelative.Insets) (up : List Hop) :
+    (Node.inline r).hop up = (Node.inline r').hop up := rfl
 
 /-- A relatively positioned block moves by exactly its resolved `left`/`top` on top of its
     in-flow offset. -/
-theorem block_rel_offset (p c : Frag) (i : BlockRelative.Insets) :
-    (Node.block p c (some i)).hop = ⟨c.x - p.x + i.left, c.y - p.y + i.top⟩ := rfl
+theorem block_rel_offset (p c : Frag) (i : BlockRelative.Insets) (up : List Hop) :
+    (Node.block p c (some i)).hop up = ⟨(offIn p c).x + i.left, (offIn p c).y + i.top⟩ := rfl
+
+/-- A slice `[i, k)` splits at any `j` between. -/
+theorem slice_split {α : Type} (l : List α) (i j k : Nat) (hij : i ≤ j) (hjk : j ≤ k) :
+    (l.take k).drop i = (l.take j).drop i ++ (l.take k).drop j := by
+  conv => lhs; rw [← List.take_append_drop (j - i) ((l.take k).drop i)]
+  rw [List.take_drop, List.drop_drop, List.take_take]
+  have h1 : i + (j - i) = j := by omega
+  have h2 : min j k = j := by omega
+  rw [h1, h2]
+
+/-- Mapping the range `[i, j)` and then `[j, k)` equals mapping `[i, k)` directly. -/
+theorem mapRange_trans (ns : List Node) (i j k : Nat) (hij : i ≤ j) (hjk : j ≤ k) (p : Pt) :
+    mapRange ns j k (mapRange ns i j p) = mapRange ns i k p := by
+  unfold mapRange
+  rw [← mapUp_append, ← slice_split _ i j k hij hjk]
+
+/-- Mapping a range down undoes mapping it up. -/
+theorem mapRangeDown_mapRange (ns : List Node) (i j : Nat) (p : Pt) :
+    mapRangeDown ns i j (mapRange ns i j p) = p := mapDown_mapUp _ _
+
+/-- An axis of an out-of-flow box with a given inset lands at the containing block's padding-box
+    start plus the inset plus the start margin. -/
+theorem oofAxis_px (cbB st a : Int) (m : BlockAbsolute.MarginVal) :
+    oofAxis cbB st (.px a) m
+      = cbB + a + (match m with | .auto => 0 | .px v => v) := by
+  cases m <;> simp [oofAxis, BlockAbsolute.computeOof] <;> omega
+
+/-- With an `auto` inset the box keeps its static position plus its start margin, whatever the
+    containing block. -/
+theorem oofAxis_auto (cbB cbB' st : Int) (m : BlockAbsolute.MarginVal) :
+    oofAxis cbB st .auto m = oofAxis cbB' st .auto m := rfl
+
+/-- An out-of-flow box with given insets, mapped through its DOM parent chain to its containing
+    block, lands at the containing block's border origin plus padding offset: the position in the
+    containing block does not depend on the intermediate ancestors. -/
+theorem oof_to_cb (k : Nat) (b : BF) (st : Pt) (t l : Int) (mt ml : BlockAbsolute.MarginVal)
+    (up : List Hop) (p : Pt) :
+    mapUp (Node.hop up (.oof k b st (.px t) (.px l) mt ml) :: up.take k) p
+      = ⟨p.x + b.bl + l + (match ml with | .auto => 0 | .px v => v),
+         p.y + b.bt + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
+  have h : Node.hop up (.oof k b st (.px t) (.px l) mt ml)
+      = ⟨((b.bl : Int) - (mapUp (up.take k) ⟨0, 0⟩).x) + l + (match ml with | .auto => 0 | .px v => v),
+         ((b.bt : Int) - (mapUp (up.take k) ⟨0, 0⟩).y) + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
+    simp only [Node.hop, oofAxis_px]
+  rw [h]
+  show mapUp (up.take k) _ = _
+  rw [mapUp_eq_add]
+  rw [mapUp_eq_add (up.take k) ⟨0, 0⟩]
+  simp only [Pt.up, Pt.mk.injEq]
+  constructor <;> omega
 
 end Mapping
 end ChromiumLayout
