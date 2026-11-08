@@ -5,6 +5,7 @@
 import BlockFlow
 import BlockFragmentation
 import BlockFloat
+import BlockWritingMode
 
 namespace ChromiumLayout
 namespace TestsBlock
@@ -283,6 +284,33 @@ theorem CollapsingMarginsCase1WithFloats_vectors :
       { id := 3, w := 200, h := 10, marginTop := 20 }
     ]
     res[2]!.y = 0 := by
+  decide
+
+/-! ### Writing Mode and Orthogonal Flow Tests -/
+
+/-- `LayoutBlockChildrenWithWritingMode` (line 380): child in vertical-lr container with horizontal-tb writing mode. -/
+theorem LayoutBlockChildrenWithWritingMode_vectors :
+    let div2 : BlockWritingMode.BlockItem := { id := 2, wm := .horizontalTb, width := 50, height := 50, margins := ⟨0, 0, 0, 100⟩ }
+    let res : List BlockWritingMode.PlacedItem := BlockWritingMode.layoutWritingModeBlock .verticalLr 500 [div2]
+    res[0]!.height = 50 ∧ res[0]!.y = 0 ∧ res[0]!.x = 100 := by
+  decide
+
+/-- `CollapsingMarginsCase5` (line 680): vertical-lr container with adjoining vertical and horizontal-tb children. -/
+theorem CollapsingMarginsCase5_vectors :
+    let vert : BlockWritingMode.BlockItem := { id := 1, wm := .verticalLr, width := 30, height := 70, margins := ⟨0, 90, 0, 0⟩ }
+    let horiz : BlockWritingMode.BlockItem := { id := 2, wm := .horizontalTb, width := 30, height := 60, margins := ⟨0, 0, 0, 100⟩ }
+    let res : List BlockWritingMode.PlacedItem := BlockWritingMode.layoutWritingModeBlock .verticalLr 0 [vert, horiz]
+    res[0]!.y = 0 ∧ res[0]!.x = 0 ∧
+    res[1]!.y = 0 ∧ res[1]!.x = 130 := by
+  decide
+
+/-- `CollapsingMarginsCase6` (line 772): horizontal-tb container with vertical-rl orthogonal child and adjacent block. -/
+theorem CollapsingMarginsCase6_vectors :
+    let div1 : BlockWritingMode.BlockItem := { id := 1, wm := .verticalRl, width := 10, height := 60, margins := ⟨0, 0, 10, 0⟩ }
+    let div3 : BlockWritingMode.BlockItem := { id := 3, wm := .horizontalTb, width := 0, height := 60, margins := ⟨40, 0, 0, 0⟩ }
+    let res : List BlockWritingMode.PlacedItem := BlockWritingMode.layoutWritingModeBlock .horizontalTb 500 [div1, div3]
+    res[0]!.y = 0 ∧ res[0]!.height = 60 ∧
+    res[1]!.y = 100 := by
   decide
 
 end TestsBlock
