@@ -387,22 +387,22 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:224 | CollapseTabs | behaviour | formalized | `test_OffsetMapping_CollapseTabs` | Tab character collapsing indices |
 | inline/offset_mapping_test.cc:235 | CollapseNewLines | behaviour | formalized | `test_OffsetMapping_CollapseNewLines` | Newline character collapsing indices |
 | inline/offset_mapping_test.cc:246 | CollapseNewlinesAsSpaces | behaviour | formalized | `test_OffsetMapping_CollapseNewlinesAsSpaces` | Consecutive newline character collapsing indices |
-| inline/offset_mapping_test.cc:253 | CollapseAcrossElements | behaviour | blocked | - | Blocked: model lacks multi-element offset mapping |
+| inline/offset_mapping_test.cc:253 | CollapseAcrossElements | behaviour | formalized | `test_OffsetMapping_CollapseAcrossElements` | Spaces collapsed across element boundaries |
 | inline/offset_mapping_test.cc:258 | CollapseLeadingSpaces | behaviour | formalized | `test_OffsetMapping_CollapseLeadingSpaces` | Leading space character collapsing indices |
-| inline/offset_mapping_test.cc:266 | CollapseTrailingSpaces | behaviour | blocked | - | Blocked: model lacks trailing space offset mapping |
+| inline/offset_mapping_test.cc:266 | CollapseTrailingSpaces | behaviour | formalized | `test_OffsetMapping_CollapseTrailingSpaces` | Trailing spaces collapsed at element and block ends |
 | inline/offset_mapping_test.cc:276 | DISABLED_CollapseAllSpaces | internal | internal | - | Disabled upstream unit test |
-| inline/offset_mapping_test.cc:283 | CollapseLeadingNewlines | behaviour | blocked | - | Blocked: model lacks multi-newline offset mapping |
-| inline/offset_mapping_test.cc:299 | CollapseTrailingNewlines | behaviour | blocked | - | Blocked: model lacks trailing newline offset mapping |
-| inline/offset_mapping_test.cc:309 | CollapseNewlineAcrossElements | behaviour | blocked | - | Blocked: model lacks multi-element newline offset mapping |
-| inline/offset_mapping_test.cc:315 | CollapseBeforeAndAfterNewline | behaviour | blocked | - | Blocked: model lacks pre-line newline offset mapping |
-| inline/offset_mapping_test.cc:321 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | - | Blocked: model lacks pre-wrap offset mapping |
+| inline/offset_mapping_test.cc:283 | CollapseLeadingNewlines | behaviour | formalized | `test_OffsetMapping_CollapseLeadingNewlines` | Leading newlines collapsed at block start |
+| inline/offset_mapping_test.cc:299 | CollapseTrailingNewlines | behaviour | formalized | `test_OffsetMapping_CollapseTrailingNewlines` | Trailing newlines collapsed at block end |
+| inline/offset_mapping_test.cc:309 | CollapseNewlineAcrossElements | behaviour | formalized | `test_OffsetMapping_CollapseNewlineAcrossElements` | Newlines collapsed across element boundaries |
+| inline/offset_mapping_test.cc:315 | CollapseBeforeAndAfterNewline | behaviour | formalized | `test_OffsetMapping_CollapseBeforeAndAfterNewline` | Spaces collapsed before and after newlines in pre-line |
+| inline/offset_mapping_test.cc:321 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | formalized | `test_OffsetMapping_CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements` | Collapsible space preserved after non-collapsible pre-wrap element |
 | inline/offset_mapping_test.cc:333 | CollapseZeroWidthSpaces | behaviour | blocked | - | Blocked: model lacks zero-width space offset mapping |
 | inline/offset_mapping_test.cc:358 | CollapseEastAsianWidth | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/offset_mapping_test.cc:389 | StoredResult | internal | internal | - | Checks offset_mapping pointer storage on LayoutBlockFlow |
 | inline/offset_mapping_test.cc:396 | NGInlineFormattingContextOf | internal | internal | - | Checks formatting context container lookup pointer equality |
 | inline/offset_mapping_test.cc:429 | OneTextNode | behaviour | formalized | `test_OffsetMapping_OneTextNode` | OffsetMappingUnit for single text node |
-| inline/offset_mapping_test.cc:492 | TwoTextNodes | behaviour | blocked | - | Blocked: model lacks multi-node offset mapping |
-| inline/offset_mapping_test.cc:558 | BRBetweenTextNodes | behaviour | blocked | - | Blocked: model lacks forced break offset mapping |
+| inline/offset_mapping_test.cc:492 | TwoTextNodes | behaviour | formalized | `test_OffsetMapping_TwoTextNodes` | Offset mapping and positions across two sibling text nodes |
+| inline/offset_mapping_test.cc:558 | BRBetweenTextNodes | behaviour | formalized | `test_OffsetMapping_BRBetweenTextNodes` | Offset mapping units across text nodes separated by BR element |
 | inline/offset_mapping_test.cc:613 | OneTextNodeWithCollapsedSpace | behaviour | formalized | `test_OffsetMapping_OneTextNodeWithCollapsedSpace` | OffsetMappingUnits partitioning into identity and collapsed runs |
 | inline/offset_mapping_test.cc:686 | FullyCollapsedWhiteSpaceNode | behaviour | blocked | - | Blocked: model lacks empty whitespace node offset mapping |
 | inline/offset_mapping_test.cc:748 | ReplacedElement | behaviour | blocked | - | Blocked: model lacks replaced element offset mapping |
@@ -416,7 +416,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:1046 | Table | behaviour | blocked | - | Blocked: model lacks table offset mapping |
 | inline/offset_mapping_test.cc:1070 | GetMappingForInlineBlock | behaviour | blocked | - | Blocked: model lacks inline block offset mapping |
 | inline/offset_mapping_test.cc:1098 | NoWrapSpaceAndCollapsibleSpace | behaviour | blocked | - | Blocked: model lacks nowrap offset mapping |
-| inline/offset_mapping_test.cc:1128 | PreLine | behaviour | blocked | - | Blocked: model lacks pre-line offset mapping |
+| inline/offset_mapping_test.cc:1128 | PreLine | behaviour | formalized | `test_OffsetMapping_PreLine` | OffsetMappingUnits partitioning with preserved newlines in pre-line |
 | inline/offset_mapping_test.cc:1152 | BiDiAroundForcedBreakInPreLine | behaviour | blocked | - | Blocked: model lacks bidi pre-line offset mapping |
 | inline/offset_mapping_test.cc:1176 | BiDiAroundForcedBreakInPreWrap | behaviour | blocked | - | Blocked: model lacks bidi pre-wrap offset mapping |
 | inline/offset_mapping_test.cc:1200 | BiDiAroundForcedBreakInPre | behaviour | blocked | - | Blocked: model lacks bidi pre offset mapping |
@@ -494,10 +494,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:344 | ResolvedTextLength | behaviour | formalized | `layoutText_resolvedTextLength` | Resolved non-collapsed text length for normal whitespace |
 | layout_text_test.cc:358 | ContainsCaretOffset | behaviour | formalized | `layoutText_containsCaretOffset` | Caret snap codes at all offsets of whitespace-collapsed text |
 | layout_text_test.cc:383 | ContainsCaretOffsetInPre | behaviour | formalized | `layoutText_containsCaretOffsetInPre` | Caret snap codes under white-space: pre preserving whitespace and newline barriers |
-| layout_text_test.cc:420 | ContainsCaretOffsetInPreLine | behaviour | blocked | - | Blocked: model lacks pre-line newline-preserving whitespace collapsing |
-| layout_text_test.cc:525 | ContainsCaretOffsetWithTrailingSpace | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
-| layout_text_test.cc:541 | ContainsCaretOffsetWithTrailingSpace1 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
-| layout_text_test.cc:568 | ContainsCaretOffsetWithTrailingSpace2 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
+| layout_text_test.cc:420 | ContainsCaretOffsetInPreLine | behaviour | formalized | `layoutText_containsCaretOffsetInPreLine` | Caret snap codes in pre-line text preserving newline identity unit |
+| layout_text_test.cc:525 | ContainsCaretOffsetWithTrailingSpace | behaviour | formalized | `layoutText_containsCaretOffsetWithTrailingSpace` | Caret snap codes across text nodes with intermediate BR element |
+| layout_text_test.cc:541 | ContainsCaretOffsetWithTrailingSpace1 | behaviour | formalized | `layoutText_containsCaretOffsetWithTrailingSpace1` | Caret snap codes with collapsed trailing and leading spaces around BR |
+| layout_text_test.cc:568 | ContainsCaretOffsetWithTrailingSpace2 | behaviour | formalized | `layoutText_containsCaretOffsetWithTrailingSpace2` | Caret snap codes with multiple collapsed spaces around BR |
 | layout_text_test.cc:599 | ContainsCaretOffsetWithTrailingSpace3 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
 | layout_text_test.cc:625 | GetTextBoxInfoWithCollapsedWhiteSpace | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
 | layout_text_test.cc:654 | GetTextBoxInfoWithGeneratedContent | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |

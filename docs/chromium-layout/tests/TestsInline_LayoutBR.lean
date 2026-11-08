@@ -16,14 +16,14 @@ namespace ChromiumLayout
 /-! ## 1. TextMethods (`layout_br_test.cc:14`) -/
 
 /-- Test `LayoutBRTest, TextMethods` (`layout_br_test.cc:14`).
-    A `<br>` layout object has a single non-collapsed line-break unit with resolved length 1. -/
+    A `<br>` layout object has a single non-collapsed line-break unit with resolved length 1,
+    derived from the DOM input `[DomNode.br 0]`. -/
 theorem layoutBR_textMethods :
-    let units := layoutBRUnits
-    (units.length = 1) ∧
-    ((units.headD {}).unitType = .identity) ∧
-    ((units.headD {}).textEnd - (units.headD {}).textStart = 1) ∧
-    (getSnapCodeWithUnits units ['\n'] 0 = "BC-") ∧
-    (getSnapCodeWithUnits units ['\n'] 1 = "--A") := by
+    let nodes := [DomNode.br 0]
+    let units := buildDomOffsetMapping nodes
+    (units = [{ nodeId := 0, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }]) ∧
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "--A") := by
   decide
 
 end ChromiumLayout

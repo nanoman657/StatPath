@@ -89,8 +89,10 @@ theorem layoutText_containsCaretOffsetInPre :
 /-- Test `LayoutTextTest, IsBeforeAfterNonCollapsedCharacterBR` (`layout_text_test.cc:972`).
     Line break character `<br>` emits newline: offset 0 is before, offset 1 is after. -/
 theorem layoutText_isBeforeAfterNonCollapsedCharacterBR :
-    (getSnapCodeWithUnits layoutBRUnits ['\n'] 0 = "BC-") ∧
-    (getSnapCodeWithUnits layoutBRUnits ['\n'] 1 = "--A") := by
+    let nodes := [DomNode.br 0]
+    let units := buildDomOffsetMapping nodes
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "--A") := by
   decide
 
 /-! ## 6. WordBreakElement (`layout_text_test.cc:1134`) -/
@@ -120,6 +122,79 @@ theorem layoutText_isBeforeAfterNonCollapsedCharacterNoLineWrap :
     (getSnapCode .normal "  foo" 1 = "---") ∧
     (getSnapCode .normal "  foo" 2 = "BC-") ∧
     (getSnapCode .normal "  foo" 3 = "BCA") := by
+  decide
+
+/-! ## 8. ContainsCaretOffsetInPreLine (`layout_text_test.cc:420`) -/
+
+/-- Test `LayoutTextTest, ContainsCaretOffsetInPreLine` (`layout_text_test.cc:420`).
+    In pre-line mode, spaces collapse around newlines, but the newline character is preserved
+    as an identity unit and serves as a caret positioning target. -/
+theorem layoutText_containsCaretOffsetInPreLine :
+    let nodes := [DomNode.text 0 "ab \n cd" .preLine]
+    let units := buildDomOffsetMapping nodes
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "BCA") ∧
+    (domNodeSnapCode units nodes[0]! 2 = "-CA") ∧
+    (domNodeSnapCode units nodes[0]! 3 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 4 = "--A") ∧
+    (domNodeSnapCode units nodes[0]! 5 = "BC-") := by
+  decide
+
+/-! ## 9. ContainsCaretOffsetWithTrailingSpace (`layout_text_test.cc:525`) -/
+
+/-- Test `LayoutTextTest, ContainsCaretOffsetWithTrailingSpace` (`layout_text_test.cc:525`).
+    `<div id=target>ab<br>cd</div>` caret snap codes across text and `<br>`. -/
+theorem layoutText_containsCaretOffsetWithTrailingSpace :
+    let nodes := [DomNode.text 0 "ab", DomNode.br 1, DomNode.text 2 "cd"]
+    let units := buildDomOffsetMapping nodes
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "BCA") ∧
+    (domNodeSnapCode units nodes[0]! 2 = "-CA") ∧
+    (domNodeSnapCode units nodes[1]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[1]! 1 = "--A") ∧
+    (domNodeSnapCode units nodes[2]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[2]! 1 = "BCA") ∧
+    (domNodeSnapCode units nodes[2]! 2 = "-CA") := by
+  decide
+
+/-! ## 10. ContainsCaretOffsetWithTrailingSpace1 (`layout_text_test.cc:541`) -/
+
+/-- Test `LayoutTextTest, ContainsCaretOffsetWithTrailingSpace1` (`layout_text_test.cc:541`).
+    `<div id=target>ab <br> cd</div>` trailing space before `<br>` and leading space after `<br>` collapse. -/
+theorem layoutText_containsCaretOffsetWithTrailingSpace1 :
+    let nodes := [DomNode.text 0 "ab ", DomNode.br 1, DomNode.text 2 " cd"]
+    let units := buildDomOffsetMapping nodes
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "BCA") ∧
+    (domNodeSnapCode units nodes[0]! 2 = "-CA") ∧
+    (domNodeSnapCode units nodes[0]! 3 = "---") ∧
+    (domNodeSnapCode units nodes[1]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[1]! 1 = "--A") ∧
+    (domNodeSnapCode units nodes[2]! 0 = "---") ∧
+    (domNodeSnapCode units nodes[2]! 1 = "BC-") ∧
+    (domNodeSnapCode units nodes[2]! 2 = "BCA") ∧
+    (domNodeSnapCode units nodes[2]! 3 = "-CA") := by
+  decide
+
+/-! ## 11. ContainsCaretOffsetWithTrailingSpace2 (`layout_text_test.cc:568`) -/
+
+/-- Test `LayoutTextTest, ContainsCaretOffsetWithTrailingSpace2` (`layout_text_test.cc:568`).
+    `<div id=target>ab  <br>  cd</div>` multiple spaces collapse before and after `<br>`. -/
+theorem layoutText_containsCaretOffsetWithTrailingSpace2 :
+    let nodes := [DomNode.text 0 "ab  ", DomNode.br 1, DomNode.text 2 "  cd"]
+    let units := buildDomOffsetMapping nodes
+    (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[0]! 1 = "BCA") ∧
+    (domNodeSnapCode units nodes[0]! 2 = "-CA") ∧
+    (domNodeSnapCode units nodes[0]! 3 = "---") ∧
+    (domNodeSnapCode units nodes[0]! 4 = "---") ∧
+    (domNodeSnapCode units nodes[1]! 0 = "BC-") ∧
+    (domNodeSnapCode units nodes[1]! 1 = "--A") ∧
+    (domNodeSnapCode units nodes[2]! 0 = "---") ∧
+    (domNodeSnapCode units nodes[2]! 1 = "---") ∧
+    (domNodeSnapCode units nodes[2]! 2 = "BC-") ∧
+    (domNodeSnapCode units nodes[2]! 3 = "BCA") ∧
+    (domNodeSnapCode units nodes[2]! 4 = "-CA") := by
   decide
 
 end ChromiumLayout

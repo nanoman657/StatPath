@@ -23,6 +23,7 @@ inductive OffsetMappingUnitType where
   deriving DecidableEq, Repr, Inhabited
 
 structure OffsetMappingUnit where
+  nodeId : Nat := 0
   unitType : OffsetMappingUnitType := .identity
   domStart : Nat := 0
   domEnd : Nat := 0
@@ -151,10 +152,6 @@ def isAfterNonCollapsed (units : List OffsetMappingUnit) (offset : Nat) : Bool :
   if offset == 0 then false
   else units.any (fun u => u.unitType == .identity && (offset - 1) ≥ u.domStart && (offset - 1) < u.domEnd)
 
-/-- Mapping units generated for a `<br>` break element (`LayoutBR::UpdateOffsetMapping`). -/
-def layoutBRUnits : List OffsetMappingUnit :=
-  [{ unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }]
-
 /-- Check if an offset contains a caret position for given units and characters (`LayoutText::ContainsCaretOffset`). -/
 def containsCaretOffsetWithUnits (units : List OffsetMappingUnit) (chars : List Char) (offset : Nat) : Bool :=
   let maxOff := match (units.filter (fun u => u.unitType == .identity)).reverse with
@@ -182,5 +179,191 @@ def containsCaretOffset (mode : WhiteSpaceMode) (s : String) (offset : Nat) : Bo
 /-- Compute the 3-character caret snap code under whitespace mode (`GetSnapCode`). -/
 def getSnapCode (mode : WhiteSpaceMode) (s : String) (offset : Nat) : String :=
   getSnapCodeWithUnits (computeOffsetMappingUnits mode s) s.toList offset
+
+/-! ## 5. Multi-Node DOM Whitespace & Offset Mapping (`OffsetMappingBuilder`) -/
+
+/-- DOM node representation for inline whitespace collapse and offset mapping. -/
+inductive DomNode where
+  | text (id : Nat) (content : String) (mode : WhiteSpaceMode := .normal)
+  | br (id : Nat)
+  deriving DecidableEq, Repr, Inhabited
+
+structure ProcessedChar where
+  nodeId : Nat
+  domIdx : Nat
+  isCollapsed : Bool
+  textChar : Option Char
+  deriving DecidableEq, Repr
+
+structure BuilderScanState where
+  atBlockStart : Bool := true
+  inSpace : Bool := false
+  tokens : List ProcessedChar := []
+
+def scanTextChar (mode : WhiteSpaceMode) (nodeId domIdx : Nat) (c : Char) (st : BuilderScanState) : BuilderScanState :=
+  if mode.collapsesSpaces then
+    if isCssWhitespace c then
+      if mode == .preLine && c == '\n' then
+        { atBlockStart := true, inSpace := false, tokens := { nodeId := nodeId, domIdx := domIdx, isCollapsed := false, textChar := some '\n' } :: st.tokens }
+      else
+        if st.atBlockStart || st.inSpace then
+          { st with tokens := { nodeId := nodeId, domIdx := domIdx, isCollapsed := true, textChar := none } :: st.tokens }
+        else
+          { atBlockStart := false, inSpace := true, tokens := { nodeId := nodeId, domIdx := domIdx, isCollapsed := false, textChar := some ' ' } :: st.tokens }
+    else
+      { atBlockStart := false, inSpace := false, tokens := { nodeId := nodeId, domIdx := domIdx, isCollapsed := false, textChar := some c } :: st.tokens }
+  else
+    { atBlockStart := false, inSpace := false, tokens := { nodeId := nodeId, domIdx := domIdx, isCollapsed := false, textChar := some c } :: st.tokens }
+
+def scanChars (mode : WhiteSpaceMode) (nodeId : Nat) : List Char → Nat → BuilderScanState → BuilderScanState
+  | [], _, st => st
+  | c :: rest, domIdx, st =>
+    scanChars mode nodeId rest (domIdx + 1) (scanTextChar mode nodeId domIdx c st)
+
+def scanNode (st : BuilderScanState) : DomNode → BuilderScanState
+  | .text id content mode =>
+    scanChars mode id content.toList 0 st
+  | .br id =>
+    { atBlockStart := true, inSpace := false, tokens := { nodeId := id, domIdx := 0, isCollapsed := false, textChar := some '\n' } :: st.tokens }
+
+def collapseTrailingAtBlockEnd : List ProcessedChar → List ProcessedChar
+  | [] => []
+  | tok :: rest =>
+    if tok.isCollapsed then
+      tok :: collapseTrailingAtBlockEnd rest
+    else
+      match tok.textChar with
+      | some ' ' =>
+        { tok with isCollapsed := true, textChar := none } :: collapseTrailingAtBlockEnd rest
+      | _ =>
+        tok :: rest
+
+def collapseSpacesBeforeNewline : List ProcessedChar → Bool → List ProcessedChar
+  | [], _ => []
+  | tok :: rest, afterNl =>
+    if tok.textChar == some '\n' then
+      tok :: collapseSpacesBeforeNewline rest true
+    else if tok.isCollapsed then
+      tok :: collapseSpacesBeforeNewline rest afterNl
+    else if afterNl && tok.textChar == some ' ' then
+      { tok with isCollapsed := true, textChar := none } :: collapseSpacesBeforeNewline rest true
+    else
+      tok :: collapseSpacesBeforeNewline rest false
+
+def loopTokens : List ProcessedChar → Nat → List OffsetMappingUnit → List OffsetMappingUnit
+  | [], _, acc => acc.reverse
+  | tok :: rest, textOffset, acc =>
+    let isCol := tok.isCollapsed
+    let nextText := if isCol then textOffset else textOffset + 1
+    let uType : OffsetMappingUnitType := if isCol then .collapsed else .identity
+    match acc with
+    | prev :: prevRest =>
+      if prev.nodeId == tok.nodeId && prev.unitType == uType && prev.domEnd == tok.domIdx then
+        let extended := { prev with domEnd := tok.domIdx + 1, textEnd := nextText }
+        loopTokens rest nextText (extended :: prevRest)
+      else
+        let newUnit : OffsetMappingUnit := {
+          nodeId := tok.nodeId,
+          unitType := uType,
+          domStart := tok.domIdx,
+          domEnd := tok.domIdx + 1,
+          textStart := textOffset,
+          textEnd := nextText
+        }
+        loopTokens rest nextText (newUnit :: acc)
+    | [] =>
+      let newUnit : OffsetMappingUnit := {
+        nodeId := tok.nodeId,
+        unitType := uType,
+        domStart := tok.domIdx,
+        domEnd := tok.domIdx + 1,
+        textStart := textOffset,
+        textEnd := nextText
+      }
+      loopTokens rest nextText [newUnit]
+
+/-- Build offset mapping units for a sequence of DOM nodes under CSS whitespace rules. -/
+def buildDomOffsetMapping (nodes : List DomNode) : List OffsetMappingUnit :=
+  let scanSt := nodes.foldl scanNode {}
+  let tokens := scanSt.tokens.reverse
+  let rev := tokens.reverse
+  let revBlock := collapseTrailingAtBlockEnd rev
+  let withNl := collapseSpacesBeforeNewline revBlock false
+  loopTokens withNl.reverse 0 []
+
+/-- Filter mapping units belonging to a specific DOM node. -/
+def unitsForNode (units : List OffsetMappingUnit) (nodeId : Nat) : List OffsetMappingUnit :=
+  units.filter (fun u => u.nodeId == nodeId)
+
+/-- Extract underlying DOM characters for a DOM node. -/
+def nodeChars : DomNode → List Char
+  | .text _ content _ => content.toList
+  | .br _ => ['\n']
+
+/-- Compute caret snap code for a specific DOM node within a multi-node mapping. -/
+def domNodeSnapCode (units : List OffsetMappingUnit) (node : DomNode) (offset : Nat) : String :=
+  let nId := match node with | .text id _ _ => id | .br id => id
+  let nUnits := unitsForNode units nId
+  getSnapCodeWithUnits nUnits (nodeChars node) offset
+
+/-- Find minimum non-collapsed caret offset for a DOM node. -/
+def domNodeCaretMinOffset (units : List OffsetMappingUnit) (nodeId : Nat) : Nat :=
+  let nUnits := unitsForNode units nodeId
+  match nUnits.find? (fun u => u.unitType == .identity) with
+  | some u => u.domStart
+  | none => 0
+
+/-- Find maximum non-collapsed caret offset for a DOM node. -/
+def domNodeCaretMaxOffset (units : List OffsetMappingUnit) (nodeId : Nat) : Nat :=
+  let nUnits := unitsForNode units nodeId
+  match (nUnits.filter (fun u => u.unitType == .identity)).reverse with
+  | [] => 0
+  | last :: _ => last.domEnd
+
+/-- Calculate resolved non-collapsed text length for a DOM node. -/
+def domNodeResolvedTextLength (units : List OffsetMappingUnit) (nodeId : Nat) : Nat :=
+  let nUnits := unitsForNode units nodeId
+  (nUnits.filter (fun u => u.unitType == .identity)).foldl (fun acc u => acc + (u.textEnd - u.textStart)) 0
+
+/-- Extract collapsed character offsets within a specific DOM node. -/
+def collapsedIndicesForNode (units : List OffsetMappingUnit) (nodeId : Nat) : List Nat :=
+  let nodeUnits := units.filter (fun u => u.nodeId == nodeId && u.unitType == .collapsed)
+  nodeUnits.flatMap (fun u => List.range (u.domEnd - u.domStart) |>.map (fun i => u.domStart + i))
+
+/-- Format collapsed character indices for a DOM node as `{i, j, ...}`. -/
+def formatCollapsedNode (units : List OffsetMappingUnit) (nodeId : Nat) : String :=
+  let idxs := collapsedIndicesForNode units nodeId
+  "{" ++ String.intercalate ", " (idxs.map toString) ++ "}"
+
+/-- Format collapsed indices across all text nodes as `{...}{...}`. -/
+def formatAllCollapsed (units : List OffsetMappingUnit) (nodeIds : List Nat) : String :=
+  String.join (nodeIds.map (formatCollapsedNode units))
+
+/-- Compute rendered collapsed index representation for given DOM nodes (`TestCollapsing`). -/
+def testCollapsing (nodes : List DomNode) : String :=
+  let units := buildDomOffsetMapping nodes
+  let nodeIds := nodes.filterMap (fun n => match n with | .text id _ _ => some id | .br _ => none)
+  formatAllCollapsed units nodeIds
+
+/-- Map a DOM position (node ID and character offset) to rendered text content offset. -/
+def domToTextContentOffset (units : List OffsetMappingUnit) (nodeId : Nat) (domOffset : Nat) : Nat :=
+  let nodeUnits := units.filter (fun u => u.nodeId == nodeId)
+  match nodeUnits.find? (fun u => domOffset ≥ u.domStart && domOffset ≤ u.domEnd) with
+  | some u =>
+    if u.unitType == .collapsed then u.textStart
+    else u.textStart + (domOffset - u.domStart)
+  | none =>
+    match nodeUnits.reverse with
+    | last :: _ => last.textEnd
+    | [] => 0
+
+/-- Compute full rendered text content from scanned nodes. -/
+def renderedTextContent (nodes : List DomNode) : String :=
+  let scanSt := nodes.foldl scanNode {}
+  let tokens := scanSt.tokens.reverse
+  let rev := tokens.reverse
+  let revBlock := collapseTrailingAtBlockEnd rev
+  let withNl := collapseSpacesBeforeNewline revBlock false
+  String.ofList (withNl.reverse.filterMap (fun t => t.textChar))
 
 end ChromiumLayout
