@@ -340,6 +340,30 @@ theorem CollapsingMarginsCase1WithFloats_vectors :
     res[2]!.y = 0 := by
   decide
 
+/-- `CollapsingMarginsCase2WithFloats` (line 487): float between non-empty blocks starts at preceding block's bottom margin edge. -/
+theorem CollapsingMarginsCase2WithFloats_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 200, h := 50, marginBottom := 20 },
+      { id := 2, w := 40, h := 40, float := .left },
+      { id := 3, w := 200, h := 50, marginTop := 10 }
+    ]
+    res.length = 3 ∧
+    res[0]!.y = 0 ∧
+    res[1]!.x = 0 ∧ res[1]!.y = 70 ∧
+    res[2]!.x = 0 ∧ res[2]!.y = 70 := by
+  decide
+
+/-- `CollapsingMarginsCase7` (line 815): right float inside zero-height block and clear:left in-flow child. -/
+theorem CollapsingMarginsCase7_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 20, h := 20, float := .right },
+      { id := 2, w := 200, h := 20, marginTop := 20, clear := .left }
+    ]
+    res.length = 2 ∧
+    res[0]!.x = 180 ∧ res[0]!.y = 0 ∧ res[0]!.w = 20 ∧ res[0]!.h = 20 ∧
+    res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 200 ∧ res[1]!.h = 20 := by
+  decide
+
 /-- `PositionBlocksWithClearanceAndIntrudingFloats` (line 1705): clearance and intruding floats into descendant block. -/
 theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
     let bodyItems : List BlockFloat.FloatItem := [

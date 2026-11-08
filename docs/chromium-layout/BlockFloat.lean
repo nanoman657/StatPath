@@ -93,7 +93,7 @@ def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem)
         let outerH : Int := (item.h : Int) + item.marginTop + item.marginBottom
         match item.float with
         | .left =>
-            let startY := flowY
+            let startY := if isFirstInFlow then flowY else flowY + prevMarginBottom
             let curLeft := leftFloatWidthAt lefts startY
             let (placeX, placeY) :=
               if curLeft + outerW ≤ cW - rightFloatWidthAt containerW rights startY then
@@ -105,7 +105,7 @@ def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem)
             let box : PlacedBox := ⟨item.id, placeX, placeY, item.w, item.h⟩
             loop rest (newFloat :: lefts) rights flowY prevMarginBottom isFirstInFlow (box :: acc)
         | .right =>
-            let startY := flowY
+            let startY := if isFirstInFlow then flowY else flowY + prevMarginBottom
             let curRight := rightFloatWidthAt containerW rights startY
             let (placeX, placeY) :=
               if leftFloatWidthAt lefts startY + outerW ≤ cW - curRight then
@@ -289,6 +289,20 @@ theorem clear_breaks_line (w1 w2 hpad : Nat) :
     max w1 w2 + hpad := by
   dsimp [computeMinMaxSizes, minMaxLoop]
   split <;> split <;> omega
+
+/-- Law: Clearance for `clear: left` is zero when there are no left floats.
+    CSS 2.1 §9.5.2 Clearance. -/
+theorem clear_left_no_left (rights : List (Int × Int × Nat × Nat)) (y : Int) (hy : 0 ≤ y) :
+    applyClearance .left [] rights y = y := by
+  dsimp [applyClearance, maxBottom]
+  omega
+
+/-- Law: Clearance for `clear: right` is zero when there are no right floats.
+    CSS 2.1 §9.5.2 Clearance. -/
+theorem clear_right_no_right (lefts : List (Int × Int × Nat × Nat)) (y : Int) (hy : 0 ≤ y) :
+    applyClearance .right lefts [] y = y := by
+  dsimp [applyClearance, maxBottom]
+  omega
 
 end BlockFloat
 end ChromiumLayout
