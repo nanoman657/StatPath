@@ -252,6 +252,84 @@ theorem UnusedSpaceInBlock_vectors :
     res[2]!.kids.isEmpty = true := by
   decide
 
+-- column_layout_algorithm_test.cc:617: TwoFloatsInOneColumn
+theorem TwoFloatsInOneColumn_vectors :
+    let nodes := [
+      BNode.leaf (.pct 15) 100 .auto .left,
+      BNode.leaf (.pct 16) 100 .auto .right
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 15 ∧ res[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 84 ∧ res[1]!.y = 0 ∧ res[1]!.w = 16 ∧ res[1]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:647: TwoFloatsInTwoColumns
+theorem TwoFloatsInTwoColumns_vectors :
+    let nodes := [
+      BNode.leaf (.pct 15) 150 .auto .left,
+      BNode.leaf (.pct 16) 150 .auto .right
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 15 ∧ res[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 84 ∧ res[1]!.y = 0 ∧ res[1]!.w = 16 ∧ res[1]!.h = 100 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 15 ∧ res[2]!.h = 50 ∧
+    res[3]!.col = 1 ∧ res[3]!.x = 84 ∧ res[3]!.y = 0 ∧ res[3]!.w = 16 ∧ res[3]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:717: FloatWithMargin
+theorem FloatWithMargin_vectors :
+    let nodes := [
+      BNode.leaf (.px 77) 140 .auto .left 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 10 ∧ res[0]!.w = 77 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:818: FloatWithAvoidBreak
+theorem FloatWithAvoidBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .auto [BNode.leaf (.px 77) 20 .avoid] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 77 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:855: FloatWithMarginAndAvoidBreak
+theorem FloatWithMarginAndAvoidBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .auto [BNode.leaf (.px 77) 20 .avoid] none .left 5
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 5 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 77 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:893: UnbreakableFloatBeforeBreakable
+theorem UnbreakableFloatBeforeBreakable_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 22) .auto [BNode.leaf (.px 11) 20 .avoid] (some 50) .left,
+      BNode.leaf (.px 33) 50 .auto .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 22 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 11 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 22 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 50 := by
+  decide
+
 -- column_layout_algorithm_test.cc:4415: Spanner
 def spanner_input : MulticolWithSpanners := {
   cols := 3, gap := 10, width := 320, border := 1,

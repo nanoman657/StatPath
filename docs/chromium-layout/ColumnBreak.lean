@@ -1,7 +1,8 @@
 /-
-  ColumnBreak.lean: nested boxes with `break-inside` and explicit block size inside a multicol
-  container, written from CSS 2.1 §10.6.2 (fixed height), §11.1 (overflow), CSS Multicol 1 §4,
-  and CSS Fragmentation Level 3 (§3.2 break-inside, §5.3 splitting boxes) and checked against
+  ColumnBreak.lean: nested boxes with `break-inside`, explicit block size, and floats inside
+  a multicol container, written from CSS 2.1 §9.5 (floats), §9.5.1 (Rule 6 float ordering),
+  §10.6.2 (fixed height), §11.1 (overflow), CSS Multicol 1 §4, and CSS Fragmentation Level 3
+  (§3.2 break-inside, §5.2 margins at breaks, §5.3 splitting boxes) and checked against
   column_layout_algorithm_test.cc. Owned by the block lane (Column*).
 -/
 import ColumnLayout
@@ -9,19 +10,28 @@ import ColumnLayout
 namespace ChromiumLayout
 namespace ColumnLayout
 
-/-- A margin-free block tree: a leaf of fixed height or a box of stacked children with optional
-    specified height.
-    CSS 2.1 §9.4.1 normal flow, §10.6.2 fixed height, §10.6.3 auto height;
+/-- Float type for boxes in multicol: none, left, or right. CSS 2.1 §9.5.1. -/
+inductive FloatType where
+  | none
+  | left
+  | right
+  deriving Inhabited, DecidableEq, Repr
+
+/-- A block tree: a leaf of fixed height or a box of stacked children with optional
+    specified height and float type.
+    CSS 2.1 §9.4.1 normal flow, §9.5 floats, §10.6.2 fixed height;
     CSS Fragmentation Level 3 §3.2 (`break-inside`), §5.3. -/
 inductive BNode where
-  | leaf (w : Len) (h : Nat) (bi : BreakInside := .auto)
-  | box (w : Len) (bi : BreakInside) (kids : List BNode) (optH : Option Nat := none)
+  | leaf (w : Len) (h : Nat) (bi : BreakInside := .auto) (fl : FloatType := .none) (marginTop : Nat := 0)
+  | box (w : Len) (bi : BreakInside) (kids : List BNode) (optH : Option Nat := none) (fl : FloatType := .none) (marginTop : Nat := 0)
   deriving Inhabited, Repr
 
-/-- A fragment of a node inside column `col`; `y` is the offset from the column top, `kids` are the
-    child fragments in the same column. CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+/-- A fragment of a node inside column `col`; `x` and `y` are the offset from the column top-left,
+    `kids` are the child fragments in the same column.
+    CSS 2.1 §9.5, CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
 structure NFrag where
   col : Nat
+  x : Nat := 0
   y : Nat
   w : Nat
   h : Nat
@@ -36,28 +46,35 @@ def shouldPush (y fragH : Nat) (avoids : Bool) (h : Nat) : Bool :=
 /-- Unfragmented block size of a node. CSS 2.1 §10.6.2 fixed height, §10.6.3 auto height. -/
 def nodeHeight : Nat → BNode → Nat
   | 0, _ => 0
-  | _ + 1, .leaf _ h _ => h
-  | f + 1, .box _ _ ks optH =>
+  | _ + 1, .leaf _ h _ _ _ => h
+  | f + 1, .box _ _ ks optH _ _ =>
     match optH with
     | some h => h
     | none => (ks.map (nodeHeight f)).sum
 
-/-- Lay out a node starting in column `c` at offset `y`. A node that avoids breaks inside and does
-    not fit in the rest of the column moves to the top of the next column, even when it is too tall
-    for it (CSS Fragmentation Level 3 §3.2); a box that breaks fills the rest of each column it
-    leaves (§5.3). In-flow progression follows specified height, while overflow children generate
-    fragments without advancing sibling progression (CSS 2.1 §10.6.2, §11.1).
-    Returns the fragments, the end column and the end offset. -/
+/-- Whether any part of a node avoids breaking inside. CSS Fragmentation Level 3 §3.2. -/
+def nodeAvoids : Nat → BNode → Bool
+  | 0, _ => false
+  | _ + 1, .leaf _ _ bi _ _ => bi.avoidsColumn
+  | f + 1, .box _ bi ks _ _ _ => bi.avoidsColumn || ks.any (nodeAvoids f)
+
+/-- Float direction and top margin of a node. CSS 2.1 §8.3, §9.5.1. -/
+def nodeProps : BNode → FloatType × Nat
+  | .leaf _ _ _ fl m => (fl, m)
+  | .box _ _ _ _ fl m => (fl, m)
+
+/-- Lay out an in-flow node starting in column `c` at offset `y`.
+    CSS 2.1 §10.6.2 (fixed height), §11.1 (overflow), CSS Fragmentation Level 3 §3.2 & §5.3. -/
 def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag × Nat × Nat
   | 0, _, c, y => ([], c, y)
-  | _ + 1, .leaf w h bi, c, y =>
+  | _ + 1, .leaf w h bi _ _, c, y =>
     let push := shouldPush y fragH bi.avoidsColumn h
     let c0 := if push then c + 1 else c
     let y0 := if push then 0 else y
     let rw := resolveLen colW w
     let r := placeChildSlices fragH rw (h + 1) 0 h c0 y0
-    (r.1.map (fun s => ⟨s.colIdx, s.relY, s.w, s.h, []⟩), r.2.1, r.2.2)
-  | f + 1, .box w bi ks optH, c, y =>
+    (r.1.map (fun s => ⟨s.colIdx, 0, s.relY, s.w, s.h, []⟩), r.2.1, r.2.2)
+  | f + 1, .box w bi ks optH _ _, c, y =>
     let hBox := match optH with | some h => h | none => (ks.map (nodeHeight f)).sum
     let push := shouldPush y fragH bi.avoidsColumn hBox
     let c0 := if push then c + 1 else c
@@ -87,7 +104,7 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
         else
           let b := if colIdx = r.2.1 then r.2.2 else fragH
           let colKidsRel := colKids.map (fun k => { k with y := k.y - boxFragY })
-          some ⟨colIdx, boxFragY, rw, b - boxFragY, colKidsRel⟩
+          some ⟨colIdx, 0, boxFragY, rw, b - boxFragY, colKidsRel⟩
       | some h =>
         let consumedBefore := if colIdx = c0 then 0 else (fragH - y0) + (colIdx - c0 - 1) * fragH
         let availInCol := if colIdx = c0 then fragH - y0 else fragH
@@ -96,18 +113,98 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
         if boxFragH = 0 && colKids.isEmpty then none
         else
           let colKidsRel := colKids.map (fun k => { k with y := k.y - boxFragY })
-          some ⟨colIdx, boxFragY, rw, boxFragH, colKidsRel⟩)
+          some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩)
     (pieces, endC, endY)
 
-/-- Lay out a sequence of block nodes across column fragmentainers.
-    CSS Multicol 1 §4: content is ordered into fragmentainers;
-    CSS Fragmentation Level 3 §5.3. -/
+/-- Float state in a column: placed left and right floats (x, y, w, h). CSS 2.1 §9.5. -/
+structure ColFloats where
+  lefts : List (Nat × Nat × Nat × Nat) := []
+  rights : List (Nat × Nat × Nat × Nat) := []
+  deriving Inhabited, Repr
+
+/-- Active left float width at vertical position y. CSS 2.1 §9.5.1. -/
+def leftWidthAt (cf : ColFloats) (y : Nat) : Nat :=
+  cf.lefts.foldl (fun mw (fx, fy, fw, fh) => if fy ≤ y && y < fy + fh then max mw (fx + fw) else mw) 0
+
+/-- Active right float width at vertical position y. CSS 2.1 §9.5.1. -/
+def rightWidthAt (colW : Nat) (cf : ColFloats) (y : Nat) : Nat :=
+  cf.rights.foldl (fun mw (fx, fy, _, fh) => if fy ≤ y && y < fy + fh then max mw (colW - fx) else mw) 0
+
+/-- Horizontal position of a float in a column. CSS 2.1 §9.5.1. -/
+def floatX (colW : Nat) (cf : ColFloats) (fl : FloatType) (w y : Nat) : Nat :=
+  match fl with
+  | .left => leftWidthAt cf y
+  | .right => colW - rightWidthAt colW cf y - w
+  | .none => 0
+
+/-- Record a placed float slice in column float state. CSS 2.1 §9.5.1. -/
+def addFloat (cf : ColFloats) (fl : FloatType) (x y w h : Nat) : ColFloats :=
+  match fl with
+  | .left => { cf with lefts := (x, y, w, h) :: cf.lefts }
+  | .right => { cf with rights := (x, y, w, h) :: cf.rights }
+  | .none => cf
+
+/-- Set the column float state at a specific column index. -/
+def padSet (l : List ColFloats) (idx : Nat) (val : ColFloats) : List ColFloats :=
+  match idx, l with
+  | 0, _ :: rest => val :: rest
+  | 0, [] => [val]
+  | n + 1, x :: rest => x :: padSet rest n val
+  | n + 1, [] => {} :: padSet [] n val
+
+/-- Place slices of a fragmented float across columns.
+    CSS 2.1 §9.5.1, CSS Fragmentation Level 3 §5.2, §5.3. -/
+def placeFloatSlices (fragH colW : Nat) (fl : FloatType) (w mTop : Nat) :
+    Nat → Nat → Nat → Nat → Bool → List NFrag → List ColFloats → List NFrag × List ColFloats
+  | 0, _, _, _, _, acc, cfl => (acc.reverse, cfl)
+  | fuel + 1, remH, curCol, curY, isFirst, acc, cfl =>
+    if remH = 0 then (acc.reverse, cfl)
+    else
+      let cf := cfl.getD curCol {}
+      let y0 := if isFirst then curY + mTop else 0
+      let avail := if y0 < fragH then fragH - y0 else 0
+      let sliceH := min avail remH
+      let placeX := floatX colW cf fl w y0
+      let frag : NFrag := ⟨curCol, placeX, y0, w, sliceH, []⟩
+      let nextCfl := padSet cfl curCol (addFloat cf fl placeX y0 w sliceH)
+      placeFloatSlices fragH colW fl w mTop fuel (remH - sliceH) (curCol + 1) 0 false (frag :: acc) nextCfl
+
+/-- Lay out a sequence of block nodes and floats across column fragmentainers.
+    CSS 2.1 §9.5, §9.5.1 Rule 6; CSS Multicol 1 §4; CSS Fragmentation Level 3 §3.2, §5.2, §5.3. -/
 def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :=
-  let frags := (nodes.foldl (fun (acc : List NFrag × Nat × Nat) n =>
-    let (rk, rc, ry) := layoutNode fragH colW f n acc.2.1 acc.2.2
-    (acc.1 ++ rk, rc, ry)) ([], 0, 0)).1
-  let maxCol := (frags.map (·.col)).foldl max 0
-  (List.range (maxCol + 1)).flatMap (fun c => frags.filter (·.col = c))
+  let rec loop (nodes : List BNode) (c y floatCol : Nat) (cfloats : List ColFloats)
+               (acc : List NFrag) : List NFrag :=
+    match nodes with
+    | [] => acc
+    | n :: rest =>
+      let (fl, mTop) := nodeProps n
+      match fl with
+      | .none =>
+        let (nFrags, endC, endY) := layoutNode fragH colW f n c y
+        loop rest endC endY (max floatCol endC) cfloats (acc ++ nFrags)
+      | _ =>
+        let h := nodeHeight f n
+        let avoids := nodeAvoids f n
+        let rw := resolveLen colW (match n with | .leaf w _ _ _ _ => w | .box w _ _ _ _ _ => w)
+        let fc0 := max c floatCol
+        let fy0 := if fc0 = c then y else 0
+        let avail0 := if fy0 + mTop < fragH then fragH - (fy0 + mTop) else 0
+        let mustPush := avoids && (avail0 < h)
+        let (fc, fy) := if mustPush then (fc0 + 1, 0) else (fc0, fy0)
+        match n with
+        | .leaf _ _ _ _ _ =>
+          let (frags, nextCfl) := placeFloatSlices fragH colW fl rw mTop (h + 1) h fc fy true [] cfloats
+          loop rest c y fc nextCfl (acc ++ frags)
+        | .box _ _ ks optH _ _ =>
+          let (nFrags, endC, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH) fc (fy + mTop)
+          let cf := cfloats.getD fc {}
+          let placeX := floatX colW cf fl rw (fy + mTop)
+          let fragsWithX := nFrags.map (fun fr => if fr.col = fc then { fr with x := placeX } else fr)
+          let nextCfl := padSet cfloats fc (addFloat cf fl placeX (fy + mTop) rw h)
+          loop rest c y (max fc endC) nextCfl (acc ++ fragsWithX)
+  let allFrags := loop nodes 0 0 0 [] []
+  let maxCol := (allFrags.map (·.col)).foldl max 0
+  (List.range (maxCol + 1)).flatMap (fun colIdx => allFrags.filter (·.col = colIdx))
 
 /-- Law: A leaf that avoids column breaks and does not fit in the remaining space
     is pushed to the start of the next column.
@@ -145,6 +242,13 @@ theorem box_fit_end_pos (fragH colW f c y h : Nat) (w : Len) (bi : BreakInside) 
   dsimp
   have : y + h ≤ fragH := h_fit
   simp [this]
+
+/-- Law: A right float placed in an empty column aligns with the column's right edge.
+    CSS 2.1 §9.5.1. -/
+theorem right_float_aligns_right (colW w y : Nat) (hw : w ≤ colW) :
+    floatX colW {} .right w y + w = colW := by
+  dsimp [floatX, rightWidthAt]
+  omega
 
 end ColumnLayout
 end ChromiumLayout
