@@ -14,73 +14,85 @@ namespace ChromiumLayout.TestsInline
 open ChromiumLayout
 
 /-- Test `InlineCaretPositionTest.AfterSpan` (`inline/inline_caret_position_test.cc:69`).
-    Non-culled inline box generates box fragment; caret after node resolves to kAfterBox. -/
+    CSS Inline 3 §2: Non-culled inline box generates box fragment; caret after node resolves to kAfterBox. -/
 theorem inlineCaretPosition_afterSpan :
-    let targetBoxFragId := 1
-    let textFragId := 2
-    let caret := resolveAfterNodeCaret false targetBoxFragId textFragId 3
-    caret = { fragmentId := targetBoxFragId, positionType := .afterBox, textOffset := none } := by
+    let doc := CaretDocItem.span "target" false "ABC"
+    let frags := buildCaretFragments doc
+    computeCaretPosition frags (.afterNode "target") .downstream =
+      { fragmentId := 0, positionType := .afterBox, textOffset := none } := by
   decide
 
 /-- Test `InlineCaretPositionTest.AfterSpanCulled` (`inline/inline_caret_position_test.cc:79`).
-    Culled inline box has no box fragment; caret after node resolves to kAtTextOffset at text length. -/
+    CSS Inline 3 §2: Culled inline box has no box fragment; caret after node resolves to kAtTextOffset at text length. -/
 theorem inlineCaretPosition_afterSpanCulled :
-    let targetBoxFragId := 1
-    let textFragId := 2
-    let caret := resolveAfterNodeCaret true targetBoxFragId textFragId 3
-    caret = { fragmentId := textFragId, positionType := .atTextOffset, textOffset := some 3 } := by
+    let doc := CaretDocItem.span "target" true "ABC"
+    let frags := buildCaretFragments doc
+    computeCaretPosition frags (.afterNode "target") .downstream =
+      { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 } := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionInOneLineOfText` (`inline/inline_caret_position_test.cc:89`).
-    Single line of text resolves carets at beginning, middle, and end to kAtTextOffset. -/
+    CSS Text 3 §5: Single line of text resolves carets at beginning, middle, and end to kAtTextOffset. -/
 theorem inlineCaretPosition_inOneLineOfText :
-    let fragId := 1
+    let doc := CaretDocItem.text "foo"
+    let frags := buildCaretFragments doc
     -- Beginning of line (offset 0)
-    (resolveTextCaret fragId 0 = { fragmentId := fragId, positionType := .atTextOffset, textOffset := some 0 }) ∧
+    (computeCaretPosition frags (.atOffset 0) .downstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 0 }) ∧
+    (computeCaretPosition frags (.atOffset 0) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 0 }) ∧
     -- Middle in the line (offset 1)
-    (resolveTextCaret fragId 1 = { fragmentId := fragId, positionType := .atTextOffset, textOffset := some 1 }) ∧
+    (computeCaretPosition frags (.atOffset 1) .downstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 1 }) ∧
+    (computeCaretPosition frags (.atOffset 1) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 1 }) ∧
     -- End of line (offset 3)
-    (resolveTextCaret fragId 3 = { fragmentId := fragId, positionType := .atTextOffset, textOffset := some 3 }) := by
+    (computeCaretPosition frags (.atOffset 3) .downstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 }) ∧
+    (computeCaretPosition frags (.atOffset 3) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionAtSoftHyphen` (`inline/inline_caret_position_test.cc:115`).
-    Caret after soft hyphen at offset 4 resolves to kAtTextOffset on the text fragment. -/
+    CSS Text 3 §5.3: Caret after soft hyphen at offset 4 resolves to kAtTextOffset on the text fragment. -/
 theorem inlineCaretPosition_atSoftHyphen :
-    let fragId := 1
-    resolveTextCaret fragId 4 = { fragmentId := fragId, positionType := .atTextOffset, textOffset := some 4 } := by
+    let doc := CaretDocItem.softHyphenText "foo" "bar"
+    let frags := buildCaretFragments doc
+    (computeCaretPosition frags (.atOffset 4) .downstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 4 }) ∧
+    (computeCaretPosition frags (.atOffset 4) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 4 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrap` (`inline/inline_caret_position_test.cc:130`).
-    Soft line wrap boundary resolves upstream to previous line fragment and downstream to next line fragment. -/
+    CSS Text 3 §5: Soft line wrap boundary resolves upstream to previous line fragment and downstream to next line fragment. -/
 theorem inlineCaretPosition_atSoftLineWrap :
-    let fooFrag := 1
-    let barFrag := 2
-    (resolveSoftWrapCaret fooFrag barFrag 3 .downstream = { fragmentId := barFrag, positionType := .atTextOffset, textOffset := some 3 }) ∧
-    (resolveSoftWrapCaret fooFrag barFrag 3 .upstream = { fragmentId := fooFrag, positionType := .atTextOffset, textOffset := some 3 }) := by
+    let doc := CaretDocItem.softWrapText "foo" "bar"
+    let frags := buildCaretFragments doc
+    (computeCaretPosition frags (.atOffset 3) .downstream = { fragmentId := 1, positionType := .atTextOffset, textOffset := some 3 }) ∧
+    (computeCaretPosition frags (.atOffset 3) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionAtForcedLineBreak` (`inline/inline_caret_position_test.cc:169`).
-    Forced line break (<br>) resolves caret before break to line 1 and after break to line 2. -/
+    CSS Text 3 §5: Forced line break (<br>) resolves caret before break to line 1 and after break to line 2. -/
 theorem inlineCaretPosition_atForcedLineBreak :
-    let fooFrag := 1
-    let barFrag := 2
-    (resolveTextCaret fooFrag 3 = { fragmentId := fooFrag, positionType := .atTextOffset, textOffset := some 3 }) ∧
-    (resolveTextCaret barFrag 4 = { fragmentId := barFrag, positionType := .atTextOffset, textOffset := some 4 }) := by
+    let doc := CaretDocItem.forcedBreakText "foo" "bar"
+    let frags := buildCaretFragments doc
+    (computeCaretPosition frags (.atOffset 3) .downstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 }) ∧
+    (computeCaretPosition frags (.atOffset 3) .upstream = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 }) ∧
+    (computeCaretPosition frags (.atOffset 4) .downstream = { fragmentId := 2, positionType := .atTextOffset, textOffset := some 4 }) ∧
+    (computeCaretPosition frags (.atOffset 4) .upstream = { fragmentId := 2, positionType := .atTextOffset, textOffset := some 4 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionAtEmptyLine` (`inline/inline_caret_position_test.cc:190`).
-    Empty line generated by consecutive <br> resolves caret at text offset 4 on br2 fragment. -/
+    CSS 2.1 §10.8: Empty line generated by consecutive <br> resolves caret at text offset 4 on br2 fragment. -/
 theorem inlineCaretPosition_atEmptyLine :
-    let br2Frag := 2
-    resolveTextCaret br2Frag 4 = { fragmentId := br2Frag, positionType := .atTextOffset, textOffset := some 4 } := by
+    let doc := CaretDocItem.emptyLineText "foo" "bar"
+    let frags := buildCaretFragments doc
+    (computeCaretPosition frags (.atOffset 4) .downstream = { fragmentId := 2, positionType := .atTextOffset, textOffset := some 4 }) ∧
+    (computeCaretPosition frags (.atOffset 4) .upstream = { fragmentId := 2, positionType := .atTextOffset, textOffset := some 4 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionInOneLineOfImage` (`inline/inline_caret_position_test.cc:203`).
-    Atomic inline image resolves offset 0 to kBeforeBox and offset 1 to kAfterBox. -/
+    CSS Inline 3 §2: Atomic inline image resolves offset 0 to kBeforeBox and offset 1 to kAfterBox. -/
 theorem inlineCaretPosition_inOneLineOfImage :
-    let imgFrag := 1
-    (resolveBoxCaret imgFrag false = { fragmentId := imgFrag, positionType := .beforeBox, textOffset := none }) ∧
-    (resolveBoxCaret imgFrag true = { fragmentId := imgFrag, positionType := .afterBox, textOffset := none }) := by
+    let doc := CaretDocItem.atomicImage "img"
+    let frags := buildCaretFragments doc
+    (computeCaretPosition frags (.atOffset 0) .downstream = { fragmentId := 0, positionType := .beforeBox, textOffset := none }) ∧
+    (computeCaretPosition frags (.atOffset 0) .upstream = { fragmentId := 0, positionType := .beforeBox, textOffset := none }) ∧
+    (computeCaretPosition frags (.atOffset 1) .downstream = { fragmentId := 0, positionType := .afterBox, textOffset := none }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineCaretPositionAtSoftLineWrapBetweenImages` (`inline/inline_caret_position_test.cc:221`).
