@@ -11,6 +11,7 @@
 import BlockFlow
 import BlockRelative
 import BlockAbsolute
+import ColumnLayout
 
 namespace ChromiumLayout
 namespace Mapping
@@ -51,26 +52,70 @@ def oofAxis (cbB st : Int) (inset : BlockAbsolute.InsetVal) (m : BlockAbsolute.M
   (BlockAbsolute.computeOof 0 inset .auto m .auto .auto 0).insetStart +
     match inset with | .px _ => cbB | .auto => st
 
+/-- The containing block of an out-of-flow box (CSS 2.1 §10.1): a box, whose padding box starts
+    inside its border, or an inline box, which a relative offset shifts as a whole. -/
+inductive CB where
+  | box (b : BF)
+  | inline (rel : Option BlockRelative.Insets := none)
+
+/-- Padding-box origin in the border-box (box) or the relative shift (inline). -/
+def CB.origin : CB → Pt
+  | .box b => ⟨b.bl, b.bt⟩
+  | .inline r => ⟨(r.map (·.left)).getD 0, (r.map (·.top)).getD 0⟩
+
+/-- Content-box origin of a box inside its border box. -/
+def contentOrigin (b : BF) : Pt := ⟨b.bl + b.pl, b.bt + b.pt⟩
+
+/-- Multi-column container geometry, content box `w` by `h`, `column-fill: auto`
+    (CSS Multi-column 1 §3 used column width, §6 column-fill, §5.1 column-gap): columns of height
+    `h` are filled in turn, each `colW` wide and a gap apart. -/
+structure Cols where
+  count : Nat
+  gap : Nat
+  w : Nat
+  h : Nat
+  rtl : Bool := false
+
+def Cols.colW (c : Cols) : Nat := ColumnWidth.usedWidth c.count 0 c.gap c.w
+
+/-- Column holding flow-thread block offset `fy` (content above the first column stays in it). -/
+def Cols.index (c : Cols) (fy : Int) : Nat := (fy / c.h).toNat
+
+/-- Physical position in the content box of a block at flow-thread offset `(fx, fy)` with border-box
+    width `cw`: shifted to its column; in a right-to-left container the columns run from the
+    right and the extent is mirrored in the content width (CSS Multi-column 1 §3.1, CSS Writing
+    Modes 3 §2.1). -/
+def Cols.place (c : Cols) (fx : Int) (cw : Nat) (fy : Int) : Pt :=
+  let k := c.index fy
+  let s := (ColumnLayout.columnInlineOffset k c.colW c.gap : Int) + fx
+  ⟨if c.rtl then c.w - s - cw else s, fy - k * c.h⟩
+
 /-- A step of the DOM-parent chain. A block contributes its fragment offset in its parent plus
     its relative-position insets (CSS 2.1 §9.4.3: the box is shifted by `left`/`top` after normal
     flow). An inline-level object (text, inline box) holds its geometry in the coordinate space
     of its container and contributes no offset, whatever its relative offset. An out-of-flow box
     (`position:absolute` or `fixed`) sits in the padding box of its containing block, `k` steps
-    above its DOM parent (`cb` is its box: the border widths locate the padding box); `static` is where it would sit in
+    above its DOM parent (`cb`: where the padding box starts); `static` is where it would sit in
     flow (the offset of a zero-size marker laid out in its place). -/
 inductive Node where
   | block (parent child : Frag) (rel : Option BlockRelative.Insets := none)
   | inline (rel : Option BlockRelative.Insets := none)
-  | oof (k : Nat) (cb : BF) (static : Pt) (top left : BlockAbsolute.InsetVal)
+  | oof (k : Nat) (cb : CB) (static : Pt) (top left : BlockAbsolute.InsetVal)
       (mt ml : BlockAbsolute.MarginVal)
+  | inlineIn (container : BF)
+  | col (container : BF) (cs : Cols) (flow child : Frag) (rel : Option BlockRelative.Insets := none)
 
 /-- The hop of a node, given the hops of the ancestors above it. -/
 def Node.hop (up : List Hop) : Node → Hop
   | .block p c r => ⟨(offIn p c).x + (r.map (·.left)).getD 0, (offIn p c).y + (r.map (·.top)).getD 0⟩
   | .inline _ => ⟨0, 0⟩
+  | .inlineIn c => contentOrigin c
+  | .col c cs f ch r =>
+      let q := cs.place (offIn f ch).x ch.w (offIn f ch).y
+      ⟨(contentOrigin c).x + q.x + (r.map (·.left)).getD 0, (contentOrigin c).y + q.y + (r.map (·.top)).getD 0⟩
   | .oof k b st t l mt ml =>
       let o := mapUp (up.take k) ⟨0, 0⟩
-      ⟨oofAxis (b.bl - o.x) st.x l ml, oofAxis (b.bt - o.y) st.y t mt⟩
+      ⟨oofAxis (b.origin.x - o.x) st.x l ml, oofAxis (b.origin.y - o.y) st.y t mt⟩
 
 /-- Hops of a leaf-first node chain. -/
 def hops : List Node → List Hop
@@ -173,14 +218,14 @@ theorem oofAxis_auto (cbB cbB' st : Int) (m : BlockAbsolute.MarginVal) :
 /-- An out-of-flow box with given insets, mapped through its DOM parent chain to its containing
     block, lands at the containing block's border origin plus padding offset: the position in the
     containing block does not depend on the intermediate ancestors. -/
-theorem oof_to_cb (k : Nat) (b : BF) (st : Pt) (t l : Int) (mt ml : BlockAbsolute.MarginVal)
+theorem oof_to_cb (k : Nat) (b : CB) (st : Pt) (t l : Int) (mt ml : BlockAbsolute.MarginVal)
     (up : List Hop) (p : Pt) :
     mapUp (Node.hop up (.oof k b st (.px t) (.px l) mt ml) :: up.take k) p
-      = ⟨p.x + b.bl + l + (match ml with | .auto => 0 | .px v => v),
-         p.y + b.bt + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
+      = ⟨p.x + b.origin.x + l + (match ml with | .auto => 0 | .px v => v),
+         p.y + b.origin.y + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
   have h : Node.hop up (.oof k b st (.px t) (.px l) mt ml)
-      = ⟨((b.bl : Int) - (mapUp (up.take k) ⟨0, 0⟩).x) + l + (match ml with | .auto => 0 | .px v => v),
-         ((b.bt : Int) - (mapUp (up.take k) ⟨0, 0⟩).y) + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
+      = ⟨(b.origin.x - (mapUp (up.take k) ⟨0, 0⟩).x) + l + (match ml with | .auto => 0 | .px v => v),
+         (b.origin.y - (mapUp (up.take k) ⟨0, 0⟩).y) + t + (match mt with | .auto => 0 | .px v => v)⟩ := by
     simp only [Node.hop, oofAxis_px]
   rw [h]
   show mapUp (up.take k) _ = _
@@ -188,6 +233,29 @@ theorem oof_to_cb (k : Nat) (b : BF) (st : Pt) (t l : Int) (mt ml : BlockAbsolut
   rw [mapUp_eq_add (up.take k) ⟨0, 0⟩]
   simp only [Pt.up, Pt.mk.injEq]
   constructor <;> omega
+
+/-- The block offset inside a column is the flow offset modulo the column height. -/
+theorem Cols.place_y (c : Cols) (fx : Int) (cw : Nat) (fy : Int) (h0 : 0 ≤ fy) (hh : 0 < c.h) :
+    (c.place fx cw fy).y = fy % c.h := by
+  have h1 : ((fy / (c.h : Int)).toNat : Int) = fy / c.h :=
+    Int.toNat_of_nonneg (Int.ediv_nonneg h0 (by omega))
+  simp only [Cols.place, Cols.index]
+  rw [h1, Int.emod_def, Int.mul_comm]
+
+/-- A flow offset is recovered from its column index and the offset inside the column. -/
+theorem Cols.place_recover (c : Cols) (fx : Int) (cw : Nat) (fy : Int) (h0 : 0 ≤ fy) (hh : 0 < c.h) :
+    fy = (c.place fx cw fy).y + (c.index fy : Int) * c.h := by
+  have h1 : ((fy / (c.h : Int)).toNat : Int) = fy / c.h :=
+    Int.toNat_of_nonneg (Int.ediv_nonneg h0 (by omega))
+  simp only [Cols.place, Cols.index]
+  rw [h1]
+  omega
+
+/-- Offsets inside a column stay within the column height. -/
+theorem Cols.place_y_lt (c : Cols) (fx : Int) (cw : Nat) (fy : Int) (h0 : 0 ≤ fy) (hh : 0 < c.h) :
+    0 ≤ (c.place fx cw fy).y ∧ (c.place fx cw fy).y < c.h := by
+  rw [Cols.place_y c fx cw fy h0 hh]
+  exact ⟨Int.emod_nonneg _ (by omega), Int.emod_lt_of_pos _ (by omega)⟩
 
 end Mapping
 end ChromiumLayout

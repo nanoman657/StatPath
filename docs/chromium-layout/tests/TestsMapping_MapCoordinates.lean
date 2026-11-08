@@ -90,7 +90,7 @@ def absPos : BF :=
 theorem AbsPos_vectors :
     let f := layoutRoot 800 absPos
     let sc := f.kid 0
-    let ns := [Node.oof 1 absPos (offIn sc (sc.kid 1)) (.px (-1)) (.px (-1)) (.px 10) (.px 10),
+    let ns := [Node.oof 1 (.box absPos) (offIn sc (sc.kid 1)) (.px (-1)) (.px (-1)) (.px 10) (.px 10),
                .block f sc]
     mapRange ns 0 2 ⟨0, 0⟩ = ⟨17, 17⟩ ∧ mapRangeDown ns 0 2 ⟨18, 18⟩ = ⟨1, 1⟩ ∧
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨-28, -28⟩ ∧ mapRange ns 1 2 ⟨-28, -28⟩ = ⟨17, 17⟩ ∧
@@ -106,7 +106,7 @@ def absPosAuto : BF :=
 theorem AbsPosAuto_vectors :
     let f := layoutRoot 800 absPosAuto
     let sc := f.kid 0
-    let ns := [Node.oof 1 absPosAuto (offIn sc (sc.kid 1)) .auto .auto (.px 10) (.px 10),
+    let ns := [Node.oof 1 (.box absPosAuto) (offIn sc (sc.kid 1)) .auto .auto (.px 10) (.px 10),
                .block f sc]
     mapRange ns 0 2 ⟨0, 0⟩ = ⟨55, 80⟩ ∧ mapRangeDown ns 0 2 ⟨56, 82⟩ = ⟨1, 2⟩ ∧
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨10, 35⟩ ∧ mapRange ns 1 2 ⟨10, 35⟩ = ⟨55, 80⟩ ∧
@@ -133,8 +133,8 @@ theorem FixedPosAuto_vectors :
     let body := h.kid 0
     let c := layoutRoot 800 fixedPosAutoC
     let sc := c.kid 0
-    let ns := [Node.oof 4 {} (offIn sc (sc.kid 1)) .auto .auto (.px 10) (.px 10),
-               .block c sc, .oof 2 {} (offIn body (body.kid 0)) .auto .auto (.px 3) (.px 3),
+    let ns := [Node.oof 4 (.box {}) (offIn sc (sc.kid 1)) .auto .auto (.px 10) (.px 10),
+               .block c sc, .oof 2 (.box {}) (offIn body (body.kid 0)) .auto .auto (.px 3) (.px 3),
                .block h body, .block view h]
     mapRange ns 0 5 ⟨0, 0⟩ = ⟨36, 61⟩ ∧ mapRangeDown ns 0 5 ⟨36, 61⟩ = ⟨0, 0⟩ ∧
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨10, 35⟩ ∧ mapRange ns 1 2 ⟨10, 35⟩ = ⟨25, 50⟩ ∧
@@ -152,9 +152,9 @@ theorem FixedPosInFixedPos_vectors :
     let body := h.kid 0
     let c := layoutRoot 800 fixedPosC
     let sc := c.kid 0
-    let ns := [Node.oof 5 {} ⟨0, 0⟩ (.px (-1)) (.px (-1)) (.px 10) (.px 10),
-               .oof 4 {} (offIn sc (sc.kid 1)) (.px 100) (.px 100) (.px 10) (.px 10),
-               .block c sc, .oof 2 {} (offIn body (body.kid 0)) .auto .auto (.px 4) (.px 4),
+    let ns := [Node.oof 5 (.box {}) ⟨0, 0⟩ (.px (-1)) (.px (-1)) (.px 10) (.px 10),
+               .oof 4 (.box {}) (offIn sc (sc.kid 1)) (.px 100) (.px 100) (.px 10) (.px 10),
+               .block c sc, .oof 2 (.box {}) (offIn body (body.kid 0)) .auto .auto (.px 4) (.px 4),
                .block h body, .block view h]
     mapRange ns 0 6 ⟨0, 0⟩ = ⟨9, 9⟩ ∧ mapRangeDown ns 0 6 ⟨9, 9⟩ = ⟨0, 0⟩ ∧
     mapRange ns 0 1 ⟨0, 0⟩ = ⟨-101, -101⟩ ∧ mapRange ns 1 2 ⟨-101, -101⟩ = ⟨-15, -15⟩ ∧
@@ -164,6 +164,94 @@ theorem FixedPosInFixedPos_vectors :
     mapRangeDown ns 3 4 ⟨1, 1⟩ = ⟨-3, -3⟩ ∧ mapRangeDown ns 2 3 ⟨-3, -3⟩ = ⟨-15, -15⟩ ∧
     mapRangeDown ns 1 2 ⟨-15, -15⟩ = ⟨-101, -101⟩ ∧ mapRangeDown ns 0 1 ⟨-101, -101⟩ = ⟨0, 0⟩ := by
   decide
+
+/-! ### Multi-column (CSS Multi-column 1): children are laid out in a flow thread of one column's
+    width, which is a block formatting context, then placed in their columns. -/
+def flowThread (cs : Cols) (kids : List BF) : BF :=
+  { width := .px cs.colW, newBfc := true, children := kids }
+
+/-- Multicol container with padding `pw` and border `bw`, `columns:n; column-gap:g`, content `w`×`h`. -/
+def mcBox (bw pw w h : Nat) : BF := bp bw pw { width := .px w, height := some h }
+
+/-! ### MulticolWithText (828), MulticolWithInline (849): the point of a text or inline box is
+    shifted by the multicol container's content-box origin (`padding:5px`). -/
+theorem MulticolWithText_vectors :
+    let ns := [Node.inlineIn (bp 0 5 { width := .px 400 })]
+    mapRange ns 0 1 ⟨220, 20⟩ = ⟨225, 25⟩ ∧ mapRangeDown ns 0 1 ⟨225, 25⟩ = ⟨220, 20⟩ := by decide
+
+theorem MulticolWithInline_vectors :
+    let ns := [Node.inlineIn (bp 0 5 { width := .px 400 })]
+    mapRange ns 0 1 ⟨220, 20⟩ = ⟨225, 25⟩ ∧ mapRangeDown ns 0 1 ⟨225, 25⟩ = ⟨220, 20⟩ := by decide
+
+/-! ### MulticolWithBlock (868): `columns:3; column-gap:0; column-fill:auto; width:300px;
+    height:100px; border:8px; padding:7px`; a 110px spacer, then `#target{margin:10px; padding:13px}`. -/
+def mcBlockCols : Cols := { count := 3, gap := 0, w := 300, h := 100 }
+
+theorem MulticolWithBlock_vectors :
+    let ft := layoutRoot 800 (flowThread mcBlockCols [{ height := some 110 }, mg 10 (bp 0 13 { id := 1 })])
+    let ns := [Node.col (mcBox 8 7 300 100) mcBlockCols ft (ft.kid 1)]
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨125, 35⟩ ∧ mapRangeDown ns 0 1 ⟨125, 35⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### MulticolWithBlockAbove (889): `columns:3; width:300px; height:200px`; `#target{margin-top:-50px;
+    height:100px}` stays in the first column. -/
+def mcAboveCols : Cols := { count := 3, gap := 0, w := 300, h := 200 }
+
+theorem MulticolWithBlockAbove_vectors :
+    let ft := layoutRoot 800 (flowThread mcAboveCols [{ mt := -50, height := some 100 }])
+    let ns := [Node.col (mcBox 0 0 300 200) mcAboveCols ft (ft.kid 0)]
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨0, -50⟩ ∧ mapRangeDown ns 0 1 ⟨0, -50⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### MulticolRtl (1060): `columns:4; width:400px; height:200px; direction:rtl`; a 200px spacer,
+    then `#target{height:50px}`: the second column from the right. -/
+def mcRtlCols : Cols := { count := 4, gap := 0, w := 400, h := 200, rtl := true }
+
+theorem MulticolRtl_vectors :
+    let ft := layoutRoot 800 (flowThread mcRtlCols [{ height := some 200 }, { id := 1, height := some 50 }])
+    let ns := [Node.col (mcBox 0 0 400 200) mcRtlCols ft (ft.kid 1)]
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨200, 0⟩ ∧ mapRangeDown ns 0 1 ⟨200, 0⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### MulticolWithLargeBorder (1079): `columns:3; width:300px; height:200px; border:200px`,
+    spacers of 200px around `#target{height:50px}`. -/
+theorem MulticolWithLargeBorder_vectors :
+    let ft := layoutRoot 800 (flowThread mcAboveCols
+      [{ height := some 200 }, { id := 1, height := some 50 }, { height := some 200 }])
+    let ns := [Node.col (mcBox 200 0 300 200) mcAboveCols ft (ft.kid 1)]
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨300, 200⟩ ∧ mapRangeDown ns 0 1 ⟨300, 200⟩ = ⟨0, 0⟩ := by decide
+
+/-! ### MulticolWithAbsPosInRelPos (945): as MulticolWithBlock, a 110px spacer then
+    `#relpos{position:relative; left:4px; top:4px}` holding `#target{position:absolute; left:15px;
+    top:15px; margin:10px}`. -/
+theorem MulticolWithAbsPosInRelPos_vectors :
+    let ft := layoutRoot 800 (flowThread mcBlockCols [{ height := some 110 }, { id := 1, children := [{ id := 2 }] }])
+    let rp1 := ft.kid 1
+    let ns := [Node.oof 0 (.box {}) (offIn rp1 (rp1.kid 0)) (.px 15) (.px 15) (.px 10) (.px 10),
+               .col (mcBox 8 7 300 100) mcBlockCols ft rp1 (rp 4 4)]
+    mapRange ns 0 2 ⟨0, 0⟩ = ⟨144, 54⟩ ∧ mapRangeDown ns 0 2 ⟨144, 54⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨25, 25⟩ ∧ mapRangeDown ns 0 1 ⟨25, 25⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 1 2 ⟨25, 25⟩ = ⟨144, 54⟩ ∧ mapRangeDown ns 1 2 ⟨144, 54⟩ = ⟨25, 25⟩ := by decide
+
+/-! ### MulticolWithAbsPosInInlineRelPos (981): the same target inside
+    `<span style='position:relative; left:4px; top:4px'>` in `#container`, after the spacer. -/
+theorem MulticolWithAbsPosInInlineRelPos_vectors :
+    let ft := layoutRoot 800 (flowThread mcBlockCols [{ height := some 110 }, { id := 1 }])
+    let ns := [Node.oof 0 (.inline (rp 4 4)) ⟨0, 0⟩ (.px 15) (.px 15) (.px 10) (.px 10),
+               .inline (rp 4 4), .col (mcBox 8 7 300 100) mcBlockCols ft (ft.kid 1)]
+    mapRange ns 0 3 ⟨0, 0⟩ = ⟨144, 54⟩ ∧ mapRangeDown ns 0 3 ⟨144, 54⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 2 ⟨0, 0⟩ = ⟨29, 29⟩ ∧ mapRangeDown ns 0 2 ⟨29, 29⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 2 3 ⟨29, 29⟩ = ⟨144, 54⟩ ∧ mapRangeDown ns 2 3 ⟨144, 54⟩ = ⟨29, 29⟩ := by decide
+
+/-! ### MulticolWithAbsPosNotContained (1019): `#container{position:relative; margin:666px;
+    border:7px; padding:3px}` > multicol (as MulticolWithBlock) > spacer, `#target{position:absolute;
+    left:-1px; top:-1px; margin:10px}`; the multicol is not in the target's containing-block chain. -/
+def notContained : BF := mg 666 (bp 7 3 { children := [mcBox 8 7 300 100] })
+
+theorem MulticolWithAbsPosNotContained_vectors :
+    let f := layoutRoot 800 notContained
+    let ns := [Node.oof 1 (.box notContained) ⟨0, 0⟩ (.px (-1)) (.px (-1)) (.px 10) (.px 10),
+               .block f (f.kid 0)]
+    mapRange ns 0 2 ⟨0, 0⟩ = ⟨16, 16⟩ ∧ mapRangeDown ns 0 2 ⟨16, 16⟩ = ⟨0, 0⟩ ∧
+    mapRange ns 0 1 ⟨0, 0⟩ = ⟨6, 6⟩ ∧ mapRange ns 1 2 ⟨6, 6⟩ = ⟨16, 16⟩ ∧
+    mapRangeDown ns 1 2 ⟨16, 16⟩ = ⟨6, 6⟩ ∧ mapRangeDown ns 0 1 ⟨6, 6⟩ = ⟨0, 0⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout

@@ -36,16 +36,16 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:732 | MapCoordinatesTest.FixedPosInIFrameWhenMainFrameScrolled | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:763 | MapCoordinatesTest.IFrameTransformed | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:797 | MapCoordinatesTest.FixedPosInScrolledIFrameWithTransform | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:828 | MapCoordinatesTest.MulticolWithText | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:849 | MapCoordinatesTest.MulticolWithInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:868 | MapCoordinatesTest.MulticolWithBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:889 | MapCoordinatesTest.MulticolWithBlockAbove | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:907 | MapCoordinatesTest.NestedMulticolWithBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:945 | MapCoordinatesTest.MulticolWithAbsPosInRelPos | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:981 | MapCoordinatesTest.MulticolWithAbsPosInInlineRelPos | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1019 | MapCoordinatesTest.MulticolWithAbsPosNotContained | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1060 | MapCoordinatesTest.MulticolRtl | geometry | blocked | not yet modelled (mapping lane, pending) |
-| map_coordinates_test.cc:1079 | MapCoordinatesTest.MulticolWithLargeBorder | geometry | blocked | not yet modelled (mapping lane, pending) |
+| map_coordinates_test.cc:828 | MapCoordinatesTest.MulticolWithText | geometry | formalized | `TestsMapping.MulticolWithText_vectors` |
+| map_coordinates_test.cc:849 | MapCoordinatesTest.MulticolWithInline | geometry | formalized | `TestsMapping.MulticolWithInline_vectors` |
+| map_coordinates_test.cc:868 | MapCoordinatesTest.MulticolWithBlock | geometry | formalized | `TestsMapping.MulticolWithBlock_vectors` |
+| map_coordinates_test.cc:889 | MapCoordinatesTest.MulticolWithBlockAbove | geometry | formalized | `TestsMapping.MulticolWithBlockAbove_vectors` |
+| map_coordinates_test.cc:907 | MapCoordinatesTest.NestedMulticolWithBlock | geometry | blocked | nested multicol: the inner balanced multicol is itself fragmented across outer columns; balancing and fragmenting an inner container are not in Mapping.Cols |
+| map_coordinates_test.cc:945 | MapCoordinatesTest.MulticolWithAbsPosInRelPos | geometry | formalized | `TestsMapping.MulticolWithAbsPosInRelPos_vectors` |
+| map_coordinates_test.cc:981 | MapCoordinatesTest.MulticolWithAbsPosInInlineRelPos | geometry | formalized | `TestsMapping.MulticolWithAbsPosInInlineRelPos_vectors` |
+| map_coordinates_test.cc:1019 | MapCoordinatesTest.MulticolWithAbsPosNotContained | geometry | formalized | `TestsMapping.MulticolWithAbsPosNotContained_vectors` |
+| map_coordinates_test.cc:1060 | MapCoordinatesTest.MulticolRtl | geometry | formalized | `TestsMapping.MulticolRtl_vectors` |
+| map_coordinates_test.cc:1079 | MapCoordinatesTest.MulticolWithLargeBorder | geometry | formalized | `TestsMapping.MulticolWithLargeBorder_vectors` |
 | map_coordinates_test.cc:1099 | MapCoordinatesTest.FlippedBlocksWritingModeWithText | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | geometry | blocked | not yet modelled (mapping lane, pending) |
 | map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
