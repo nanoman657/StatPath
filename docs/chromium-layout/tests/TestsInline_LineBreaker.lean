@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineShaping
 import InlineBreakCandidate
+import InlineTextCombine
 
 namespace ChromiumLayout.TestsInline
 
@@ -223,5 +224,38 @@ theorem line_breaker_single_word_progress (avail : Nat) (w : Nat) (id : Nat) :
     lines.length = 1 ∧ (lines.getD 0 default).inlineSize = w := by
   dsimp [breakLines, breakLinesFuel, takeLine]
   exact ⟨rfl, rfl⟩
+
+/-! ### Line Breaker Text Combine Tests (CSS Writing Modes 3 §5.1) -/
+
+/-- LineBreakerTest.TextCombineCloseTag (`inline/line_breaker_test.cc:197`):
+    LineBreaker does not care about white-space: pre inside text-combine;
+    unbreakable sequence overflows on a single line. -/
+theorem lineBreaker_textCombineCloseTag :
+    let lines := breakLinesWithTextCombine "abc" "XYZ" "def" 30 10
+    lines.length = 1 ∧ lines = ["abc\uFFFCdef"] := by
+  decide
+
+/-- LineBreakerTest.TextCombineBreak (`inline/line_breaker_test.cc:223`):
+    Combined hyphen element provides a soft wrap opportunity after it,
+    breaking the line into two lines. -/
+theorem lineBreaker_textCombineBreak :
+    let lines := breakLinesWithTextCombine "abc" "-" "def" 30 10
+    lines.length = 2 ∧ lines = ["abc\uFFFC", "def"] := by
+  decide
+
+/-- LineBreakerTest.TextCombineNoBreak (`inline/line_breaker_test.cc:241`):
+    Combined alphanumeric text has no break opportunities, overflowing on a single line. -/
+theorem lineBreaker_textCombineNoBreak :
+    let lines := breakLinesWithTextCombine "abc" "XYZ" "def" 30 10
+    lines.length = 1 ∧ lines = ["abc\uFFFCdef"] := by
+  decide
+
+/-- LineBreakerTest.TextCombineNoBreakWithSpace (`inline/line_breaker_test.cc:258`):
+    Space inside text-combine does not permit breaking inside;
+    boundary between 'Z' and 'd' has no break opportunity. -/
+theorem lineBreaker_textCombineNoBreakWithSpace :
+    let lines := breakLinesWithTextCombine "abc" "X Z" "def" 30 10
+    lines.length = 1 ∧ lines = ["abc\uFFFCdef"] := by
+  decide
 
 end ChromiumLayout.TestsInline

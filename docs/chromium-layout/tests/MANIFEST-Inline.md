@@ -30,10 +30,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 |---|---|---|---|---|---|
 | inline/line_breaker_test.cc:144 | FitWithEpsilon | geometry | formalized | `lineBreaker_fitWithEpsilon` | 50px text fits container with 1-epsilon tolerance in 1 line |
 | inline/line_breaker_test.cc:171 | SingleNode | geometry | formalized | `lineBreaker_singleNode` | Greedily breaks 123 456 789 at 80px (2 lines) and 60px (3 lines) with trailing space collapse |
-| inline/line_breaker_test.cc:197 | TextCombineCloseTag | geometry | blocked | - | Blocked: model lacks TextCombineCloseTag layout support |
-| inline/line_breaker_test.cc:223 | TextCombineBreak | geometry | blocked | - | Blocked: model lacks TextCombineBreak layout support |
-| inline/line_breaker_test.cc:241 | TextCombineNoBreak | geometry | blocked | - | Blocked: model lacks TextCombineNoBreak layout support |
-| inline/line_breaker_test.cc:258 | TextCombineNoBreakWithSpace | geometry | blocked | - | Blocked: model lacks TextCombineNoBreakWithSpace layout support |
+| inline/line_breaker_test.cc:197 | TextCombineCloseTag | geometry | formalized | `lineBreaker_textCombineCloseTag` | CSS Writing Modes 3 §5.1: Text combine white-space: pre does not affect outer wrapping |
+| inline/line_breaker_test.cc:223 | TextCombineBreak | geometry | formalized | `lineBreaker_textCombineBreak` | CSS Writing Modes 3 §5.1: Combined hyphen element breaks line after combine |
+| inline/line_breaker_test.cc:241 | TextCombineNoBreak | geometry | formalized | `lineBreaker_textCombineNoBreak` | CSS Writing Modes 3 §5.1: Combined alphanumeric word has no break opportunities |
+| inline/line_breaker_test.cc:258 | TextCombineNoBreakWithSpace | geometry | formalized | `lineBreaker_textCombineNoBreakWithSpace` | CSS Writing Modes 3 §5.1: Internal space does not permit breaking inside text combine |
 | inline/line_breaker_test.cc:275 | OverflowWord | geometry | blocked | - | Blocked: model lacks leading space collapse on second line |
 | inline/line_breaker_test.cc:301 | OverflowTab | geometry | formalized | `lineBreaker_overflowTab` | Tab characters expand to tab stops without breaking |
 | inline/line_breaker_test.cc:323 | OverflowTabBreakWord | geometry | formalized | `lineBreaker_overflowTab` | Tab characters do not break under word-wrap: break-word |

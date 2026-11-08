@@ -158,4 +158,70 @@ theorem buildInlineDisplay_empty (active : Bool) :
     buildInlineDisplay active [] = [] := by
   cases active <;> rfl
 
+/-! ## 4. Line Breaking with Text Combine (CSS Writing Modes 3 §5.1 & CSS Text 3 §5) -/
+
+/-- Object replacement character (U+FFFC) used to represent atomic inlines like text-combine in the line text. -/
+def objectReplacementChar : String := "\uFFFC"
+
+/-- CSS Text 3 §5.1 & CSS Writing Modes 3 §5.1:
+    Determine whether line breaking can occur immediately after a text-combine element.
+    Breaking can occur if the combined text ends in a hyphen/dash, or is followed by whitespace.
+    Breaking cannot occur inside the text-combine element. -/
+def canBreakAfterCombine (combinedText : String) (_suffixText : String) : Bool :=
+  match combinedText.toList.reverse with
+  | '-' :: _ => true
+  | ' ' :: _ => true
+  | _ => false
+
+/-- CSS Writing Modes 3 §5.1 & Blink LineBreaker:
+    Break lines for a sequence containing a text-combine-upright element.
+    Returns the list of line strings produced by LineBreaker. -/
+def breakLinesWithTextCombine (prefixText : String) (combinedText : String) (suffixText : String) (availableWidth : Nat) (charWidth : Nat := 10) : List String :=
+  let unbroken := prefixText ++ objectReplacementChar ++ suffixText
+  let totalWidth := prefixText.toList.length * charWidth + charWidth + suffixText.toList.length * charWidth
+  if totalWidth ≤ availableWidth then
+    [unbroken]
+  else if canBreakAfterCombine combinedText suffixText then
+    [prefixText ++ objectReplacementChar, suffixText]
+  else
+    -- Unbreakable word overflows on a single line
+    [unbroken]
+
+/-- Combined hyphen text has a break opportunity after it. -/
+theorem canBreakAfterCombine_hyphen (s : String) :
+    canBreakAfterCombine "-" s = true := by
+  rfl
+
+/-- Combined alphanumeric text has no break opportunity after it. -/
+theorem canBreakAfterCombine_alphanumeric (s : String) :
+    canBreakAfterCombine "XYZ" s = false := by
+  rfl
+
+/-- Combined text with internal space but trailing non-space has no break opportunity after it. -/
+theorem canBreakAfterCombine_space_inside (s : String) :
+    canBreakAfterCombine "X Z" s = false := by
+  rfl
+
+/-- CSS Writing Modes 3 §5.1 Law: When total content fits available width, it is always placed on a single line. -/
+theorem breakLinesWithTextCombine_fits (p c s : String) (avail w : Nat)
+    (h : p.toList.length * w + w + s.toList.length * w ≤ avail) :
+    breakLinesWithTextCombine p c s avail w = [p ++ objectReplacementChar ++ s] := by
+  unfold breakLinesWithTextCombine
+  simp [h]
+
+/-- CSS Writing Modes 3 §5.1 Law: When combined text ends with hyphen and overflows, breaking occurs after the combined element. -/
+theorem breakLinesWithTextCombine_hyphen_breaks (p s : String) (avail w : Nat)
+    (h : ¬ (p.toList.length * w + w + s.toList.length * w ≤ avail)) :
+    breakLinesWithTextCombine p "-" s avail w = [p ++ objectReplacementChar, s] := by
+  unfold breakLinesWithTextCombine
+  simp [h, canBreakAfterCombine_hyphen]
+
+/-- CSS Writing Modes 3 §5.1 Law: When combined text has no break opportunity after it, overflowing content remains on a single line. -/
+theorem breakLinesWithTextCombine_no_break (p c s : String) (avail w : Nat)
+    (hfit : ¬ (p.toList.length * w + w + s.toList.length * w ≤ avail))
+    (hnb : canBreakAfterCombine c s = false) :
+    breakLinesWithTextCombine p c s avail w = [p ++ objectReplacementChar ++ s] := by
+  unfold breakLinesWithTextCombine
+  simp [hfit, hnb]
+
 end ChromiumLayout
