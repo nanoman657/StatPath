@@ -49,7 +49,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1099 | MapCoordinatesTest.FlippedBlocksWritingModeWithText | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithText_vectors` |
 | map_coordinates_test.cc:1131 | MapCoordinatesTest.FlippedBlocksWritingModeWithInline | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithInline_vectors` |
 | map_coordinates_test.cc:1183 | MapCoordinatesTest.FlippedBlocksWritingModeWithBlock | geometry | formalized | `TestsMapping.FlippedBlocksWritingModeWithBlock_vectors` |
-| map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | geometry | blocked | table cell positions (border-spacing, section order, vertical-align middle) come from the table lane model TableLayout, not modelled in Mapping |
+| map_coordinates_test.cc:1217 | MapCoordinatesTest.Table | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:1318 | MapCoordinatesTest.Transforms | geometry | formalized | `TestsMapping.Transforms_vectors` |
 | map_coordinates_test.cc:1378 | MapCoordinatesTest.SVGShape | geometry | formalized | `TestsMapping.SVGShape_vectors` |
 | map_coordinates_test.cc:1397 | MapCoordinatesTest.SVGShapeScale | geometry | formalized | `TestsMapping.SVGShapeScale_vectors` |
