@@ -557,19 +557,19 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks text-transform: capitalize |
 | layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | internal | internal | - | Pseudo element text node presence check |
 | layout_text_test.cc:1755 | OriginalTextEmptyWhenTransformedTextIsNonEmpty | internal | internal | - | Marker pseudo element text presence check |
-| layout_text_fragment_test.cc:47 | Basics | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:47 | Basics | behaviour | formalized | `layoutTextFragment_basics` | Basic caret offset and resolved text length for first-letter and remaining text |
 | layout_text_fragment_test.cc:61 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:81 | CaretMinMaxOffset | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:81 | CaretMinMaxOffset | behaviour | formalized | `layoutTextFragment_caretMinMaxOffset` | Caret min/max offset queries with punctuation and surrounding whitespace |
 | layout_text_fragment_test.cc:107 | CaretMinMaxOffsetSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:133 | CaretMinMaxOffsetCollapsedRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:151 | ResolvedTextLength | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:169 | ResolvedTextLengthSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:187 | ResolvedTextLengthCollapsedRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:197 | ContainsCaretOffset | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:244 | ContainsCaretOffsetSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:258 | ContainsCaretOffsetPre | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:273 | ContainsCaretOffsetPreLine | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
-| layout_text_fragment_test.cc:288 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:133 | CaretMinMaxOffsetCollapsedRemainingText | behaviour | formalized | `layoutTextFragment_caretMinMaxOffsetCollapsedRemainingText` | Fully collapsed remaining text returns 0 and fragment length |
+| layout_text_fragment_test.cc:151 | ResolvedTextLength | behaviour | formalized | `layoutTextFragment_resolvedTextLength` | Resolved text length for first-letter and remaining text with punctuation |
+| layout_text_fragment_test.cc:169 | ResolvedTextLengthSpacesInBetween | behaviour | formalized | `layoutTextFragment_resolvedTextLengthSpacesInBetween` | Consecutive spaces between first-letter and remaining text collapse |
+| layout_text_fragment_test.cc:187 | ResolvedTextLengthCollapsedRemainingText | behaviour | formalized | `layoutTextFragment_resolvedTextLengthCollapsedRemainingText` | Fully collapsed remaining text has resolved text length 0 |
+| layout_text_fragment_test.cc:197 | ContainsCaretOffset | behaviour | formalized | `layoutTextFragment_containsCaretOffset` | Caret offset membership across whitespace collapsed first-letter and remaining text |
+| layout_text_fragment_test.cc:244 | ContainsCaretOffsetSpacesInBetween | behaviour | formalized | `layoutTextFragment_containsCaretOffsetSpacesInBetween` | Caret offset membership across consecutive spaces between fragments |
+| layout_text_fragment_test.cc:258 | ContainsCaretOffsetPre | behaviour | formalized | `layoutTextFragment_containsCaretOffsetPre` | Caret offset membership under white-space: pre preserving spaces and terminating at newline |
+| layout_text_fragment_test.cc:273 | ContainsCaretOffsetPreLine | behaviour | formalized | `layoutTextFragment_containsCaretOffsetPreLine` | Caret offset membership under white-space: pre-line collapsing spaces before newline |
+| layout_text_fragment_test.cc:288 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutTextFragment_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Before/after non-collapsed character queries across first-letter and remaining text fragments |
 | layout_text_fragment_test.cc:356 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
 | layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | internal | internal | - | First-letter LayoutTextFragment mutation |
 | layout_text_fragment_test.cc:442 | SplitTextWithZero | internal | internal | - | DOM text split mutation |
