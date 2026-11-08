@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
 import InlineItemBuilder
+import InlineBidi
 
 namespace ChromiumLayout.TestsInline
 
@@ -75,6 +76,23 @@ theorem inlineItemsBuilder_collapseTrailingNewlines :
 /-- Test 11: CollapseNewlineAcrossElements (inline_items_builder_test.cc:289) -/
 theorem inlineItemsBuilder_collapseNewlineAcrossElements :
     String.ofList (collapseText .normal "text \ntext".toList) = "text text" := by
+  decide
+
+/-- Test 12: BidiBlockOverride (inline_items_builder_test.cc:469) -/
+theorem inlineItemsBuilder_bidiBlockOverride :
+    wrapBidi .bidiOverride .rtl "Hello" = "\u202EHello\u202C" := by
+  decide
+
+/-- Test 13: BidiIsolate (inline_items_builder_test.cc:501) -/
+theorem inlineItemsBuilder_bidiIsolate :
+    ("Hello " ++ wrapBidi .isolate .rtl "\u05E2\u05D1\u05E8\u05D9\u05EA" ++ " World") =
+    "Hello \u2067\u05E2\u05D1\u05E8\u05D9\u05EA\u2069 World" := by
+  decide
+
+/-- Test 14: BidiIsolateOverride (inline_items_builder_test.cc:526) -/
+theorem inlineItemsBuilder_bidiIsolateOverride :
+    ("Hello " ++ wrapBidi .isolateOverride .rtl "\u05E2\u05D1\u05E8\u05D9\u05EA" ++ " World") =
+    "Hello \u2068\u202E\u05E2\u05D1\u05E8\u05D9\u05EA\u202C\u2069 World" := by
   decide
 
 end ChromiumLayout.TestsInline

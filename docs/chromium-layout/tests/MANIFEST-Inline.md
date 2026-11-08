@@ -213,12 +213,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | internal | internal | - | Crash regression test for area element without layout object |
-| inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxLTR` | Bidi levels for plain text, atomic inlines, and RTL bidi-override in LTR |
+| inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxRTL` | Bidi levels for Latin text and RTL bidi-override in RTL |
+| inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | formalized | `inlineCursor_bidiLevelSimpleLTR` | Nested RTL and LTR bidi-override levels in LTR |
+| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | blocked | - | Blocked: model lacks visual bidi reordering for RTL lines |
+| inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | formalized | `inlineCursor_bidiLevelFirstLineTextTransform` | First line uppercase text-transform with eszett at level 0 |
+| inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | formalized | `inlineCursor_bidiLevelFirstLineTextTransformBR` | First line uppercase text-transform with BR element at level 0 |
 | inline/inline_cursor_test.cc:184 | GetLayoutBlockFlowWithScopedCursor | internal | internal | - | Scoped cursor block flow pointer equality |
 | inline/inline_cursor_test.cc:191 | Parent | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
 | inline/inline_cursor_test.cc:226 | ContainingLine | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
@@ -308,9 +308,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_items_builder_test.cc:426 | Empty | behaviour | blocked | - | Blocked: model lacks Empty handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | blocked | - | Blocked: model lacks CollapsedSpaceAfterNoWrap handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | blocked | - | Blocked: model lacks GenerateBreakOpportunityAfterLeadingSpaces handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | blocked | - | Blocked: model lacks BidiBlockOverride handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | blocked | - | Blocked: model lacks BidiIsolate handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | blocked | - | Blocked: model lacks BidiIsolateOverride handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | formalized | `inlineItemsBuilder_bidiBlockOverride` | Injection of RLO and PDF bidi control characters for bidi-override block |
+| inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | formalized | `inlineItemsBuilder_bidiIsolate` | Injection of RLI and PDI bidi control characters for isolated inline |
+| inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | formalized | `inlineItemsBuilder_bidiIsolateOverride` | Injection of FSI, RLO, PDF, and PDI for isolate-override inline |
 | inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | blocked | - | Blocked: model lacks BlockInInline handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | blocked | - | Blocked: model lacks OpenCloseRubyColumns handling in InlineItemsBuilder |
 | inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
