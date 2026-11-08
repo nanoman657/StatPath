@@ -592,8 +592,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:644 | MultipleTextNode | internal | internal | - | Multiple text nodes in text combine |
 | layout_text_combine_test.cc:664 | Nested | internal | internal | - | Nested text combine elements |
 | layout_text_combine_test.cc:684 | Outline | geometry | blocked | - | Blocked: model lacks text-combine-upright outline layout |
-| layout_text_combine_test.cc:758 | PropageWritingModeFromBodyToHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright writing mode propagation |
-| layout_text_combine_test.cc:783 | PropageWritingModeFromBodyToVertical | behaviour | blocked | - | Blocked: model lacks text-combine-upright writing mode propagation |
+| layout_text_combine_test.cc:758 | PropageWritingModeFromBodyToHorizontal | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToHorizontal` | HTML writing mode propagation from body to html |
+| layout_text_combine_test.cc:783 | PropageWritingModeFromBodyToVertical | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToVertical` | HTML writing mode propagation to vertical |
 | layout_text_combine_test.cc:810 | RebuildLayoutTreeForDetails | internal | internal | - | Layout tree rebuild in details element |
 | layout_text_combine_test.cc:854 | RemoveBlockChild | internal | internal | - | DOM block removal in text combine |
 | layout_text_combine_test.cc:886 | RemoveChildCombine | internal | internal | - | DOM combine child removal |
@@ -604,24 +604,24 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:1046 | SplitText | internal | internal | - | Text split mutation |
 | layout_text_combine_test.cc:1081 | SplitTextAtZero | internal | internal | - | Text split at zero offset |
 | layout_text_combine_test.cc:1116 | SplitTextBeforeBox | internal | internal | - | Text split before box |
-| layout_text_combine_test.cc:1157 | StyleToTextCombineUprightAll | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1190 | StyleToTextCombineUprightNone | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1224 | StyleToHorizontalWritingMode | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1258 | StyleToHorizontalWritingModeWithWordBreak | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1282 | StyleToVerticalWritingMode | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
+| layout_text_combine_test.cc:1157 | StyleToTextCombineUprightAll | behaviour | formalized | `layoutTextCombine_styleToTextCombineUprightAll` | Dynamic style update to text-combine-upright: all |
+| layout_text_combine_test.cc:1190 | StyleToTextCombineUprightNone | behaviour | formalized | `layoutTextCombine_styleToTextCombineUprightNone` | Dynamic style update to text-combine-upright: none |
+| layout_text_combine_test.cc:1224 | StyleToHorizontalWritingMode | behaviour | formalized | `layoutTextCombine_styleToHorizontalWritingMode` | Dynamic writing mode update to horizontal |
+| layout_text_combine_test.cc:1258 | StyleToHorizontalWritingModeWithWordBreak | behaviour | formalized | `layoutTextCombine_styleToHorizontalWritingModeWithWordBreak` | Dynamic writing mode update with WBR |
+| layout_text_combine_test.cc:1282 | StyleToVerticalWritingMode | behaviour | formalized | `layoutTextCombine_styleToVerticalWritingMode` | Dynamic writing mode update to vertical |
 | layout_text_combine_test.cc:1314 | VerticalWritingModeByBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1329 | VerticalWritingModeByWBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright style change |
-| layout_text_combine_test.cc:1344 | WithBidiControl | behaviour | blocked | - | Blocked: model lacks text-combine-upright bidi control |
-| layout_text_combine_test.cc:1363 | WithBR | behaviour | blocked | - | Blocked: model lacks text-combine-upright with BR |
-| layout_text_combine_test.cc:1385 | WithMarker | behaviour | blocked | - | Blocked: model lacks text-combine-upright with marker |
-| layout_text_combine_test.cc:1412 | WithOrderedList | behaviour | blocked | - | Blocked: model lacks text-combine-upright with list |
-| layout_text_combine_test.cc:1431 | WithQuote | behaviour | blocked | - | Blocked: model lacks text-combine-upright with quotes |
-| layout_text_combine_test.cc:1456 | WithTab | behaviour | blocked | - | Blocked: model lacks text-combine-upright with tabs |
+| layout_text_combine_test.cc:1329 | VerticalWritingModeByWBR | behaviour | formalized | `layoutTextCombine_verticalWritingModeByWBR` | Writing mode specified on inline WBR does not apply |
+| layout_text_combine_test.cc:1344 | WithBidiControl | behaviour | formalized | `layoutTextCombine_withBidiControl` | Text combine with visual bidi ordering |
+| layout_text_combine_test.cc:1363 | WithBR | behaviour | formalized | `layoutTextCombine_withBR` | LayoutBR inside text combine container |
+| layout_text_combine_test.cc:1385 | WithMarker | behaviour | formalized | `layoutTextCombine_withMarker` | List marker with text combine |
+| layout_text_combine_test.cc:1412 | WithOrderedList | behaviour | formalized | `layoutTextCombine_withOrderedList` | Ordered list marker and items with text combine |
+| layout_text_combine_test.cc:1431 | WithQuote | behaviour | formalized | `layoutTextCombine_withQuote` | Quotes with text combine |
+| layout_text_combine_test.cc:1456 | WithTab | behaviour | formalized | `layoutTextCombine_withTab` | Preserved tab whitespace with text combine |
 | layout_text_combine_test.cc:1476 | WithTextIndent | geometry | blocked | - | Blocked: model lacks text-combine-upright text-indent |
-| layout_text_combine_test.cc:1493 | WithWordBreak | behaviour | blocked | - | Blocked: model lacks text-combine-upright with wbr |
+| layout_text_combine_test.cc:1493 | WithWordBreak | behaviour | formalized | `layoutTextCombine_withWordBreak` | WBR inside text combine container |
 | layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | internal | internal | - | Svg parent LayoutObject check |
 | layout_text_combine_test.cc:1531 | InHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright in horizontal mode |
-| layout_text_combine_test.cc:1545 | InVertical | behaviour | blocked | - | Blocked: model lacks text-combine-upright in vertical mode |
+| layout_text_combine_test.cc:1545 | InVertical | behaviour | formalized | `layoutTextCombine_inVertical` | Text combine in vertical writing mode |
 | layout_ruby_base_test.cc:16 | AddChildNoBlockChildren | internal | internal | - | Ruby base anonymous block child insertion |
 | layout_ruby_base_test.cc:30 | AddImageNoBlockChildren | internal | internal | - | Ruby base inline child insertion |
 | layout_ruby_base_test.cc:52 | AddSpecialWithTableInternalDisplayNoBlockChildren | internal | internal | - | Ruby base table child insertion |
