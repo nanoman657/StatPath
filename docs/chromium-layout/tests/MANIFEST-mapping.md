@@ -64,8 +64,8 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | formalized | `TestsMapping.Transform3DWithOffset_vectors` |
 | map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | geometry | formalized | `TestsMapping.Transform3DWithOffset2_vectors` |
 | map_coordinates_test.cc:1693 | MapCoordinatesTest.IgnoreScrollOffset | geometry | formalized | `TestsMapping.IgnoreScrollOffset_vectors` |
-| map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | geometry | blocked | position:sticky offset (CSS Positioned Layout 3 §3.4) is not modelled |
-| map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | blocked | scroll origin and scrollable-overflow width of a vertical-rl scroller are not modelled |
+| map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | geometry | formalized | `TestsMapping.IgnoreScrollOffsetForInline_vectors` |
+| map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | formalized | `TestsMapping.IgnoreScrollOffsetWithWritingModes_vectors` |
 | map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | geometry | formalized | `TestsMapping.FixedScrollOffset_vectors`, `Mapping.mapRange_oof` |
 | map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |

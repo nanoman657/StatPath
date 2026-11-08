@@ -147,7 +147,8 @@ inductive Node where
       (mt ml : BlockAbsolute.MarginVal)
   | inlineIn (container : BF)
   | boxInInline (wm : WM) (cw isz bsz : Int) (rel : Option BlockRelative.Insets)
-  | scrolled (s : Pt) (n : Node)
+  | scrolled (s : Pt) (n : Node) (o : Pt := ⟨0, 0⟩)
+  | sticky (top : Int) (s : Pt) (n : Node)
   | flow (wm : WM) (parent child : Frag)
   | col (container : BF) (cs : Cols) (flow child : Frag) (rel : Option BlockRelative.Insets := none)
 
@@ -159,7 +160,8 @@ def Node.hop (up : List Hop) : Node → Hop
   | .boxInInline wm cw isz bsz r =>
       let q := (LRect.mk 0 0 isz bsz).toPhys wm cw
       ⟨q.x + (r.map (·.left)).getD 0, q.y + (r.map (·.top)).getD 0⟩
-  | .scrolled s n => ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩
+  | .scrolled s n _ => ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩
+  | .sticky top s n => ⟨(n.hop up).x, max (n.hop up).y (s.y + top)⟩
   | .flow wm p c =>
       let q := (LRect.mk (offIn p c).x (offIn p c).y c.w c.h).toPhys wm p.h
       ⟨q.x, q.y⟩
@@ -178,7 +180,8 @@ def CB.ignoreScroll : CB → CB
 /-- The same node with every scroll offset ignored: a scroll container's offset is not
     subtracted (`MapCoordinatesMode::kIgnoreScrollOffset`). -/
 def Node.ignoreScroll : Node → Node
-  | .scrolled _ n => n.ignoreScroll
+  | .scrolled _ n o => .scrolled ⟨-o.x, -o.y⟩ n.ignoreScroll o
+  | .sticky t s n => .sticky t s n.ignoreScroll
   | .oof k cb st t l mt ml => .oof k cb.ignoreScroll st t l mt ml
   | n => n
 
@@ -250,16 +253,19 @@ theorem block_rel_offset (p c : Frag) (i : BlockRelative.Insets) (up : List Hop)
     (Node.block p c (some i)).hop up = ⟨(offIn p c).x + i.left, (offIn p c).y + i.top⟩ := rfl
 
 /-- A scroll container's offset moves everything mapped through it by exactly that offset. -/
-theorem scrolled_hop (s : Pt) (n : Node) (up : List Hop) :
-    (Node.scrolled s n).hop up = ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩ := rfl
+theorem scrolled_hop (s : Pt) (n : Node) (o : Pt) (up : List Hop) :
+    (Node.scrolled s n o).hop up = ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩ := rfl
 
-/-- Ignoring scroll removes the offset. -/
-theorem ignoreScroll_scrolled (s : Pt) (n : Node) : (Node.scrolled s n).ignoreScroll = n.ignoreScroll := rfl
+/-- Ignoring scroll puts the scroll position at zero: the offset is minus the scroll origin
+    (contents coordinates), which is zero for an ordinary scroller. -/
+theorem ignoreScroll_scrolled (s : Pt) (n : Node) (o : Pt) :
+    (Node.scrolled s n o).ignoreScroll = Node.scrolled ⟨-o.x, -o.y⟩ n.ignoreScroll o := rfl
 
 /-- Ignoring scroll twice is ignoring it once. -/
 theorem ignoreScroll_idem (n : Node) : n.ignoreScroll.ignoreScroll = n.ignoreScroll := by
   induction n with
-  | scrolled s n ih => simpa [Node.ignoreScroll] using ih
+  | scrolled s n o ih => simp [Node.ignoreScroll, ih]
+  | sticky t s n ih => simp [Node.ignoreScroll, ih]
   | oof k cb st t l mt ml => cases cb <;> simp [Node.ignoreScroll, CB.ignoreScroll]
   | _ => rfl
 

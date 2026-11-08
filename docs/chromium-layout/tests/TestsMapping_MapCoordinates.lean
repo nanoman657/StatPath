@@ -593,5 +593,32 @@ theorem LocalToAbsoluteTransformFlattens_vectors :
     (at3 false 100 50).near 50 50 1 1 64 = true ∧ (at3 false 50 100).near 25 100 1 1 64 = true := by
   decide
 
+/-- IgnoreScrollOffsetWithWritingModes (1770): `.scroller{vertical-rl; overflow:scroll; 100×100}` >
+    [`.box{position:absolute; top:10px; 10×10}`, `.spacer{2000×2000}`]. Scroll positions are
+    measured from the left; the initial position is the right end (the scroll origin, 1900). -/
+def vrlScroller : BF := BF.ofPhys .verticalRl (some 100) (some 100) { children := [BF.ofPhys .verticalRl (some 2000) (some 2000) {}] }
+
+def vrlBox (pos : Pt) : List Node :=
+  let f := layoutRoot 800 vrlScroller
+  let o := scrollOrigin .verticalRl vrlScroller f
+  let q := (LRect.mk 0 0 10 10).toPhys .verticalRl f.h
+  [Node.scrolled ⟨pos.x - o.x, pos.y - o.y⟩ (.oof 0 (.box vrlScroller) ⟨q.x, q.y⟩ (.px 10) .auto (.px 0) (.px 0)) o]
+
+theorem IgnoreScrollOffsetWithWritingModes_vectors :
+    let at1 (ign : Bool) (pos : Pt) := mapRange (if ign then (vrlBox pos).map Node.ignoreScroll else vrlBox pos) 0 1 z
+    scrollOrigin .verticalRl vrlScroller (layoutRoot 800 vrlScroller) = ⟨1900, 0⟩ ∧
+    at1 false ⟨1900, 0⟩ = ⟨90, 10⟩ ∧ at1 true ⟨1900, 0⟩ = ⟨1990, 10⟩ ∧
+    at1 false ⟨0, 50⟩ = ⟨1990, -40⟩ ∧ at1 true ⟨0, 50⟩ = ⟨1990, 10⟩ ∧
+    at1 false ⟨1900, 50⟩ = ⟨90, -40⟩ ∧ at1 true ⟨1900, 50⟩ = ⟨1990, 10⟩ := by decide
+
+/-- IgnoreScrollOffsetForInline (1732): `.scroller{overflow:scroll; 100×100}` > `.box{display:inline;
+    position:sticky; top:10px}` scrolled by 0 and by 50: the sticky box stays 10px from the top of
+    the scrollport; ignoring the scroll offset leaves it at its content position. -/
+theorem IgnoreScrollOffsetForInline_vectors :
+    let ns (s : Pt) := [Node.scrolled s (.sticky 10 s .inline)]
+    let at1 (ign : Bool) (s : Pt) := mapRange (if ign then (ns s).map Node.ignoreScroll else ns s) 0 1 z
+    at1 false ⟨0, 0⟩ = ⟨0, 10⟩ ∧ at1 true ⟨0, 0⟩ = ⟨0, 10⟩ ∧
+    at1 false ⟨0, 50⟩ = ⟨0, 10⟩ ∧ at1 true ⟨0, 50⟩ = ⟨0, 60⟩ := by decide
+
 end TestsMapping
 end ChromiumLayout
