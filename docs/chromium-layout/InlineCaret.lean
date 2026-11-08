@@ -58,6 +58,15 @@ def resolveSoftWrapCaret (frag1 frag2 : Nat) (wrapOffset : Nat) (affinity : Text
   | .upstream => { fragmentId := frag1, positionType := .atTextOffset, textOffset := some wrapOffset }
   | .downstream => { fragmentId := frag2, positionType := .atTextOffset, textOffset := some wrapOffset }
 
+/-- CSS Inline 3 §2 & Blink ComputeInlineCaretPosition:
+    Caret resolution at soft wrap boundary between two consecutive atomic inline boxes (e.g. images).
+    - Upstream affinity binds to the end of the first box (afterBox).
+    - Downstream affinity binds to the start of the second box (beforeBox). -/
+def resolveSoftWrapBoxCaret (box1 box2 : Nat) (affinity : TextAffinity) : InlineCaretPosition :=
+  match affinity with
+  | .upstream => { fragmentId := box1, positionType := .afterBox, textOffset := none }
+  | .downstream => { fragmentId := box2, positionType := .beforeBox, textOffset := none }
+
 /-- Caret resolution at atomic box boundary (e.g. image)
     (`inline/inline_caret_position.cc:200-240`). -/
 def resolveBoxCaret (fragId : Nat) (isAfter : Bool) : InlineCaretPosition :=
@@ -130,5 +139,22 @@ theorem resolveBoxCaret_before (fragId : Nat) :
 theorem resolveBoxCaret_after (fragId : Nat) :
     resolveBoxCaret fragId true = { fragmentId := fragId, positionType := .afterBox, textOffset := none } := by
   rfl
+
+/-- CSS Inline 3 §2 Law: Upstream caret at box wrap boundary targets the first box with afterBox. -/
+theorem soft_wrap_box_upstream (b1 b2 : Nat) :
+    resolveSoftWrapBoxCaret b1 b2 .upstream = { fragmentId := b1, positionType := .afterBox, textOffset := none } := by
+  rfl
+
+/-- CSS Inline 3 §2 Law: Downstream caret at box wrap boundary targets the second box with beforeBox. -/
+theorem soft_wrap_box_downstream (b1 b2 : Nat) :
+    resolveSoftWrapBoxCaret b1 b2 .downstream = { fragmentId := b2, positionType := .beforeBox, textOffset := none } := by
+  rfl
+
+/-- CSS Inline 3 §2 Law: Upstream and downstream box carets at distinct boxes target distinct fragments. -/
+theorem soft_wrap_box_distinct (b1 b2 : Nat) (h : b1 ≠ b2) :
+    (resolveSoftWrapBoxCaret b1 b2 .upstream).fragmentId ≠
+    (resolveSoftWrapBoxCaret b1 b2 .downstream).fragmentId := by
+  dsimp [resolveSoftWrapBoxCaret]
+  exact h
 
 end ChromiumLayout
