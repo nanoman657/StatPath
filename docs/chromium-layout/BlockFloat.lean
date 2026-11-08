@@ -34,6 +34,9 @@ structure FloatItem where
   float : FloatType := .none
   clear : ClearType := .none
   isNewFc : Bool := false
+  autoMarginLeft : Bool := false
+  autoMarginRight : Bool := false
+  isRtl : Bool := false
   deriving DecidableEq, Repr
 
 /-- Placed layout output fragment. -/
@@ -107,15 +110,28 @@ def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem) : List Pla
             loop rest lefts (newFloat :: rights) flowY prevMarginBottom isFirstInFlow (box :: acc)
         | .none =>
             if item.isNewFc then
-              -- New Formatting Context (e.g. display: flow-root): avoids floats (CSS 2.1 §9.5)
+              -- New Formatting Context (e.g. display: flow-root): avoids floats (CSS 2.1 §9.5, §10.3.3)
               let curLeft := leftFloatWidthAt lefts flowY
               let curRight := rightFloatWidthAt containerW rights flowY
               let (placeX, placeY) :=
                 if curLeft + (item.w : Int) ≤ cW - curRight then
-                  (curLeft + item.marginLeft, flowY)
+                  let avail := cW - curRight - curLeft
+                  let x :=
+                    if item.autoMarginLeft && item.autoMarginRight then
+                      curLeft + (avail - (item.w : Int)) / 2
+                    else if item.autoMarginRight then
+                      curLeft + item.marginLeft
+                    else if item.autoMarginLeft then
+                      cW - curRight - (item.w : Int) - item.marginRight
+                    else if item.isRtl then
+                      cW - curRight - (item.w : Int) - item.marginRight
+                    else
+                      curLeft + item.marginLeft
+                  (x, flowY)
                 else
                   let dropY := max (maxBottom lefts) (maxBottom rights)
-                  (item.marginLeft, dropY)
+                  let x := if item.isRtl then cW - (item.w : Int) - item.marginRight else item.marginLeft
+                  (x, dropY)
               let box : PlacedBox := ⟨item.id, placeX, placeY, item.w, item.h⟩
               let nextY := placeY + (item.h : Int) + item.marginBottom
               loop rest lefts rights nextY item.marginBottom false (box :: acc)
@@ -154,6 +170,14 @@ theorem clearance_respects_both_floats (lefts rights : List (Int × Int × Nat �
   change (if y ≤ (if a ≤ b then b else a) then (if a ≤ b then b else a) else y) ≥ a ∧
          (if y ≤ (if a ≤ b then b else a) then (if a ≤ b then b else a) else y) ≥ b
   split <;> split <;> omega
+
+/-- Law: An element with auto margins centered between left and right floats starts at least at the left float edge.
+    CSS 2.1 §9.5, §10.3.3. -/
+theorem new_fc_auto_margin (cW curLeft curRight w : Int) (hw : w ≤ cW - curRight - curLeft) :
+    let avail := cW - curRight - curLeft
+    curLeft ≤ curLeft + (avail - w) / 2 := by
+  dsimp
+  omega
 
 end BlockFloat
 end ChromiumLayout

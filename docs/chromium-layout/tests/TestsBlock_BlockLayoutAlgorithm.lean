@@ -218,6 +218,17 @@ theorem NewFcBlockWithAdjoiningFloatCollapsesMargins_vectors :
     res = [⟨1, 0, 0, 100, 30⟩, ⟨2, 100, 0, 80, 50⟩] := by
   decide
 
+/-- `NewFormattingContextAutoMargins` (line 1029): new formatting context with auto margins in RTL container. -/
+theorem NewFormattingContextAutoMargins_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 100, h := 60, float := .left },
+      { id := 2, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginRight := true },
+      { id := 3, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginLeft := true, autoMarginRight := true },
+      { id := 4, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginLeft := true }
+    ]
+    res = [⟨1, 0, 0, 100, 60⟩, ⟨2, 100, 0, 50, 20⟩, ⟨3, 125, 20, 50, 20⟩, ⟨4, 150, 40, 50, 20⟩] := by
+  decide
+
 /-- `PositionFragmentsWithClear` (line 1390): respects clear none/left/right/both. -/
 theorem PositionFragmentsWithClear_none_vectors :
     let res := BlockFloat.layoutBlockWithFloats 200 [
