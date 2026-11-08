@@ -1,18 +1,36 @@
 /-
-  docs/chromium-layout/tests/TestsInline_HyphenResult.lean
-
-  Test vectors and theorems transcribed from:
-  - `inline/hyphen_result_test.cc`
-
-  Note: Tests in hyphen_result_test.cc test internal HyphenResult::Shape C++ font shaping
-  and are classified as blocked: model lacks HyphenResult font shaping.
+Copyright 2024 The Chromium Authors
+Use of this source code is governed by a BSD-style license that can be
+found in the LICENSE file.
 -/
-import LayoutTypes
-import LayoutInline
-import InlineFragmentItem
+import InlineHyphen
 
 namespace ChromiumLayout.TestsInline
 
--- All tests in hyphen_result_test.cc are classified as blocked.
+open ChromiumLayout
+
+/-!
+# Tests for HyphenResult Font Shaping and Glyph Orientation
+
+Transcribed from `inline/hyphen_result_test.cc`.
+-/
+
+/-! ### Test 1: Horizontal (`inline/hyphen_result_test.cc:37`) -/
+theorem hyphenResult_horizontal :
+    (shapeHyphenResult "+=" .horizontalTb .mixed false).rotations = [.regular, .regular] ∧
+    (shapeHyphenResult "+=" .horizontalTb .mixed true).rotations = [.regular, .regular] := by
+  decide
+
+/-! ### Test 2: VerticalUpright (`inline/hyphen_result_test.cc:53`) -/
+theorem hyphenResult_verticalUpright :
+    (shapeHyphenResult "+=" .verticalRl .upright false).rotations = [.rotateCanvasUpright, .rotateCanvasUpright] ∧
+    (shapeHyphenResult "+=" .verticalRl .upright true).rotations = [.rotateCanvasUpright, .rotateCanvasUpright] := by
+  decide
+
+/-! ### Test 3: VerticalMixed (`inline/hyphen_result_test.cc:70`) -/
+theorem hyphenResult_verticalMixed :
+    (shapeHyphenResult "+=" .verticalRl .mixed false).rotations = [.rotateCanvasUpright, .rotateCanvasUpright] ∧
+    (shapeHyphenResult "+=" .verticalRl .mixed true).rotations = [.regular, .regular] := by
+  decide
 
 end ChromiumLayout.TestsInline

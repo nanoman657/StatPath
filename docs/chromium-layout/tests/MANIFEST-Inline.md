@@ -189,9 +189,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | blocked | - | Blocked: model lacks FragmentItemsBuilder line assembly |
 | inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
 | inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | blocked | - | Blocked: model lacks multicolumn culled inline container resolution |
-| inline/hyphen_result_test.cc:37 | Horizontal | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
-| inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
-| inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | blocked | - | Blocked: model lacks HyphenResult font shaping |
+| inline/hyphen_result_test.cc:37 | Horizontal | geometry | formalized | `hyphenResult_horizontal` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Horizontal writing hyphen glyph orientation |
+| inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | formalized | `hyphenResult_verticalUpright` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Vertical upright hyphen glyph orientation |
+| inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | formalized | `hyphenResult_verticalMixed` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Vertical mixed hyphen glyph orientation and feature fix |
 | inline/inline_caret_position_test.cc:69 | AfterSpan | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:79 | AfterSpanCulled | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
 | inline/inline_caret_position_test.cc:89 | InlineCaretPositionInOneLineOfText | behaviour | blocked | - | Blocked: model lacks InlineCaretPosition resolution algorithm from layout tree |
