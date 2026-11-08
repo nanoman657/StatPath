@@ -6,6 +6,7 @@
 -/
 import Mapping
 import MappingTransform
+import MappingTransform3
 
 namespace ChromiumLayout
 namespace TestsMapping
@@ -558,6 +559,39 @@ theorem LocalToAncestorTransform_vectors :
     ((composeAll (affs.take 2)).map p).near 0 100 1 1 64 = true ∧
     (composeAll affs).isId = false ∧
     ((composeAll affs).map p).near (-7071068) 7071068 100000 1 64 = true := by decide
+
+/-! ### 3D (CSS Transforms 2): Transform3DWithOffset (1645), Transform3DWithOffset2 (1668): a
+    `perspective:400px` box (0×0) > `div` (with `transform-style: preserve-3d` in the second) > a
+    100px spacer and a `preserve-3d; rotateY(0deg)` div > `#target{100×100; translateZ(200px)}`. -/
+def quad3 (M : Mat) : List RPt :=
+  [⟨0, 0⟩, ⟨100, 0⟩, ⟨100, 100⟩, ⟨0, 100⟩].map (fun p : Pt => Vec.project (M.apply (Vec.plane p.x p.y)))
+
+def scene3 (mid : Bool) : List (Box3 × Pt) :=
+  [({ origin := ⟨50, 50⟩, xf := Mat.translate3 0 0 200 }, ⟨0, 0⟩),
+   ({ xf := Mat.rotY 0, preserve := true }, ⟨0, 100⟩),
+   ({ preserve := mid }, ⟨0, 0⟩),
+   ({ persp := some (400, ⟨0, 0⟩) }, ⟨0, 0⟩)]
+
+theorem Transform3DWithOffset_vectors :
+    nearAll (quad3 (chain3 (scene3 false) Mat.id)) [(0, 10000), (10000, 10000), (10000, 20000), (0, 20000)] = true := by
+  decide
+
+theorem Transform3DWithOffset2_vectors :
+    nearAll (quad3 (chain3 (scene3 true) Mat.id)) [(0, 20000), (20000, 20000), (20000, 40000), (0, 40000)] = true := by
+  decide
+
+/-- LocalToAbsoluteTransformFlattens (1600): inside an absolutely positioned (0×0) box, `rotateY(45deg)`
+    over `rotateY(-45deg)` cancel with `preserve-3d` and flatten (each keeps `cos 45 = 1/2` of x
+    squared) without. -/
+def flat3 (pres : Bool) : List (Box3 × Pt) :=
+  [({}, ⟨0, 0⟩), ({ xf := Mat.rotY (-45), preserve := pres }, ⟨0, 0⟩),
+   ({ xf := Mat.rotY 45, preserve := pres }, ⟨0, 0⟩), ({}, ⟨0, 0⟩)]
+
+theorem LocalToAbsoluteTransformFlattens_vectors :
+    let at3 (pres : Bool) (x y : Int) := Vec.project ((chain3 (flat3 pres) Mat.id).apply (Vec.plane x y))
+    (at3 true 100 50).near 100 50 1 1 64 = true ∧ (at3 true 50 100).near 50 100 1 1 64 = true ∧
+    (at3 false 100 50).near 50 50 1 1 64 = true ∧ (at3 false 50 100).near 25 100 1 1 64 = true := by
+  decide
 
 end TestsMapping
 end ChromiumLayout

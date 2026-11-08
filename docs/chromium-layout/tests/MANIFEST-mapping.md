@@ -60,9 +60,9 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1495 | MapCoordinatesTest.SVGForeignObject | geometry | formalized | `TestsMapping.SVGForeignObject_vectors` |
 | map_coordinates_test.cc:1532 | MapCoordinatesTest.LocalToAbsoluteTransform | geometry | formalized | `TestsMapping.LocalToAbsoluteTransform_vectors` |
 | map_coordinates_test.cc:1555 | MapCoordinatesTest.LocalToAncestorTransform | geometry | formalized | `TestsMapping.LocalToAncestorTransform_vectors` |
-| map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
-| map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
-| map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | geometry | blocked | 3D transforms (rotateX/rotateY, perspective, preserve-3d flattening) need a 4x4 matrix model with irrational entries; not modelled |
+| map_coordinates_test.cc:1600 | MapCoordinatesTest.LocalToAbsoluteTransformFlattens | geometry | formalized | `TestsMapping.LocalToAbsoluteTransformFlattens_vectors` |
+| map_coordinates_test.cc:1645 | MapCoordinatesTest.Transform3DWithOffset | geometry | formalized | `TestsMapping.Transform3DWithOffset_vectors` |
+| map_coordinates_test.cc:1668 | MapCoordinatesTest.Transform3DWithOffset2 | geometry | formalized | `TestsMapping.Transform3DWithOffset2_vectors` |
 | map_coordinates_test.cc:1693 | MapCoordinatesTest.IgnoreScrollOffset | geometry | formalized | `TestsMapping.IgnoreScrollOffset_vectors` |
 | map_coordinates_test.cc:1732 | MapCoordinatesTest.IgnoreScrollOffsetForInline | geometry | blocked | position:sticky offset (CSS Positioned Layout 3 §3.4) is not modelled |
 | map_coordinates_test.cc:1770 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModes | geometry | blocked | scroll origin and scrollable-overflow width of a vertical-rl scroller are not modelled |
