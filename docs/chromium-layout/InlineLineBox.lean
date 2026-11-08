@@ -152,4 +152,48 @@ theorem text_nonEmpty_notEmptyLineBox (s : String) (h : s.isEmpty = false) :
   rw [h]
   rfl
 
+/-! ## 4. Propagated Descendants (CSS 2.1 §9.5, §9.3 & Blink PhysicalLineBoxFragment) -/
+
+/-- CSS 2.1 §9.5 (Floats) and CSS 2.1 §9.3 / CSS Position 3 (Out-of-flow):
+    Item kind within a line box, distinguishing normal flow items from out-of-flow items (floats and OOF positioned elements). -/
+inductive LineItemKind where
+  | normalFlow
+  | float
+  | outOfFlow
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS 2.1 §9.5, §9.3 & Blink PhysicalLineBoxFragment::HasPropagatedDescendants:
+    A line box fragment propagates descendants to its containing block if and only if
+    it contains any out-of-flow descendants (floats or absolutely positioned boxes). -/
+def hasPropagatedDescendants : List LineItemKind → Bool
+  | [] => false
+  | .normalFlow :: rest => hasPropagatedDescendants rest
+  | .float :: _ => true
+  | .outOfFlow :: _ => true
+
+/-- CSS 2.1 §9.5 & §9.3 Law: A line box containing only normal flow items never has propagated descendants. -/
+theorem lineBox_normal_no_propagated_descendants (n : Nat) :
+    hasPropagatedDescendants (List.replicate n .normalFlow) = false := by
+  induction n with
+  | zero => rfl
+  | succ n ih =>
+    show hasPropagatedDescendants (.normalFlow :: List.replicate n .normalFlow) = false
+    rw [hasPropagatedDescendants]
+    exact ih
+
+/-- CSS 2.1 §9.5 Law: A line box starting with a float always has propagated descendants for all following items. -/
+theorem lineBox_float_head (rest : List LineItemKind) :
+    hasPropagatedDescendants (.float :: rest) = true := by
+  rfl
+
+/-- CSS 2.1 §9.3 Law: A line box starting with an out-of-flow element always has propagated descendants for all following items. -/
+theorem lineBox_oof_head (rest : List LineItemKind) :
+    hasPropagatedDescendants (.outOfFlow :: rest) = true := by
+  rfl
+
+/-- CSS 2.1 §9.5 & §9.3 Law: Normal flow items do not affect whether subsequent items propagate descendants. -/
+theorem lineBox_normal_cons (rest : List LineItemKind) :
+    hasPropagatedDescendants (.normalFlow :: rest) = hasPropagatedDescendants rest := by
+  rfl
+
 end ChromiumLayout
