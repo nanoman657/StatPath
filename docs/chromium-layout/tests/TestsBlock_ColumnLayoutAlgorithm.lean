@@ -175,5 +175,194 @@ theorem ZeroHeightWithContent_vectors :
     (c4.slices[0]!).w = 20 ∧ (c4.slices[0]!).h = 1 := by
   decide
 
+-- column_layout_algorithm_test.cc:4415: Spanner
+def spanner_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := (List.replicate 5 { height := 20, avoid := true }) ++
+           [{ isSpanner := true, height := 44, width := .auto }] ++
+           (List.replicate 5 { height := 20, avoid := true })
+}
+
+theorem Spanner_vectors :
+    let res := layoutMulticolWithSpanners spanner_input
+    res.w = 322 ∧ res.h = 126 ∧ res.fragments.length = 7 ∧
+    (res.fragments[0]!).relX = 1 ∧ (res.fragments[0]!).relY = 1 ∧ (res.fragments[0]!).w = 100 ∧ (res.fragments[0]!).h = 40 ∧
+    (res.fragments[1]!).relX = 111 ∧ (res.fragments[1]!).relY = 1 ∧ (res.fragments[1]!).w = 100 ∧ (res.fragments[1]!).h = 40 ∧
+    (res.fragments[2]!).relX = 221 ∧ (res.fragments[2]!).relY = 1 ∧ (res.fragments[2]!).w = 100 ∧ (res.fragments[2]!).h = 40 ∧
+    (res.fragments[3]!).isSpanner = true ∧
+    (res.fragments[3]!).relX = 1 ∧ (res.fragments[3]!).relY = 41 ∧ (res.fragments[3]!).w = 320 ∧ (res.fragments[3]!).h = 44 ∧
+    (res.fragments[4]!).relX = 1 ∧ (res.fragments[4]!).relY = 85 ∧ (res.fragments[4]!).w = 100 ∧ (res.fragments[4]!).h = 40 ∧
+    (res.fragments[5]!).relX = 111 ∧ (res.fragments[5]!).relY = 85 ∧ (res.fragments[5]!).w = 100 ∧ (res.fragments[5]!).h = 40 ∧
+    (res.fragments[6]!).relX = 221 ∧ (res.fragments[6]!).relY = 85 ∧ (res.fragments[6]!).w = 100 ∧ (res.fragments[6]!).h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4468: SpannerWithContent
+def spannerWithContent_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := (List.replicate 5 { height := 20, avoid := true }) ++
+           [{ isSpanner := true, height := 62, width := .auto }] ++
+           (List.replicate 5 { height := 20, avoid := true })
+}
+
+theorem SpannerWithContent_vectors :
+    let res := layoutMulticolWithSpanners spannerWithContent_input
+    res.w = 322 ∧ res.h = 144 ∧ res.fragments.length = 7 ∧
+    (res.fragments[0]!).relX = 1 ∧ (res.fragments[0]!).relY = 1 ∧ (res.fragments[0]!).w = 100 ∧ (res.fragments[0]!).h = 40 ∧
+    (res.fragments[3]!).isSpanner = true ∧
+    (res.fragments[3]!).relX = 1 ∧ (res.fragments[3]!).relY = 41 ∧ (res.fragments[3]!).w = 320 ∧ (res.fragments[3]!).h = 62 ∧
+    (res.fragments[4]!).relX = 1 ∧ (res.fragments[4]!).relY = 103 ∧ (res.fragments[4]!).w = 100 ∧ (res.fragments[4]!).h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4528: TwoSpannersPercentWidth
+def twoSpannersPercentWidth_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := (List.replicate 5 { height := 20, avoid := true }) ++
+           [{ isSpanner := true, height := 44, width := .pct 50 },
+            { isSpanner := true, height := 1, width := .pct 50 }] ++
+           (List.replicate 5 { height := 20, avoid := true })
+}
+
+theorem TwoSpannersPercentWidth_vectors :
+    let res := layoutMulticolWithSpanners twoSpannersPercentWidth_input
+    res.w = 322 ∧ res.h = 127 ∧ res.fragments.length = 8 ∧
+    (res.fragments[3]!).w = 160 ∧ (res.fragments[3]!).h = 44 ∧ (res.fragments[3]!).relY = 41 ∧
+    (res.fragments[4]!).w = 160 ∧ (res.fragments[4]!).h = 1 ∧ (res.fragments[4]!).relY = 85 ∧
+    (res.fragments[5]!).relX = 1 ∧ (res.fragments[5]!).relY = 86 ∧ (res.fragments[5]!).h = 40 ∧
+    (res.fragments[6]!).relX = 111 ∧ (res.fragments[6]!).relY = 86 ∧ (res.fragments[6]!).h = 40 ∧
+    (res.fragments[7]!).relX = 221 ∧ (res.fragments[7]!).relY = 86 ∧ (res.fragments[7]!).h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4583: SpannerNoBalancing
+def spannerNoBalancing_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, height := 200, border := 1, fillAuto := true,
+  items := (List.replicate 5 { height := 20, avoid := true }) ++
+           [{ isSpanner := true, height := 44, width := .auto }] ++
+           (List.replicate 5 { height := 20, avoid := true })
+}
+
+theorem SpannerNoBalancing_vectors :
+    let res := layoutMulticolWithSpanners spannerNoBalancing_input
+    res.w = 322 ∧ res.h = 202 ∧
+    (res.fragments[3]!).isSpanner = true ∧
+    (res.fragments[3]!).relY = 41 ∧ (res.fragments[3]!).w = 320 ∧ (res.fragments[3]!).h = 44 ∧
+    (res.fragments[4]!).relX = 1 ∧ (res.fragments[4]!).relY = 85 ∧ (res.fragments[4]!).w = 100 ∧ (res.fragments[4]!).h = 116 ∧
+    (res.fragments[4]!).slices.length = 5 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4638: SpannerAtStart
+def spannerAtStart_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := [{ isSpanner := true, height := 44, width := .auto }] ++
+           (List.replicate 5 { height := 20, avoid := true })
+}
+
+theorem SpannerAtStart_vectors :
+    let res := layoutMulticolWithSpanners spannerAtStart_input
+    res.w = 322 ∧ res.h = 86 ∧ res.fragments.length = 5 ∧
+    (res.fragments[0]!).isSpanner = false ∧ (res.fragments[0]!).relX = 1 ∧ (res.fragments[0]!).relY = 1 ∧ (res.fragments[0]!).h = 0 ∧
+    (res.fragments[1]!).isSpanner = true ∧ (res.fragments[1]!).relX = 1 ∧ (res.fragments[1]!).relY = 1 ∧ (res.fragments[1]!).w = 320 ∧ (res.fragments[1]!).h = 44 ∧
+    (res.fragments[2]!).relX = 1 ∧ (res.fragments[2]!).relY = 45 ∧ (res.fragments[2]!).h = 40 ∧
+    (res.fragments[3]!).relX = 111 ∧ (res.fragments[3]!).relY = 45 ∧ (res.fragments[3]!).h = 40 ∧
+    (res.fragments[4]!).relX = 221 ∧ (res.fragments[4]!).relY = 45 ∧ (res.fragments[4]!).h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4679: SpannerAtEnd
+def spannerAtEnd_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := (List.replicate 5 { height := 20, avoid := true }) ++
+           [{ isSpanner := true, height := 44, width := .auto }]
+}
+
+theorem SpannerAtEnd_vectors :
+    let res := layoutMulticolWithSpanners spannerAtEnd_input
+    res.w = 322 ∧ res.h = 86 ∧ res.fragments.length = 4 ∧
+    (res.fragments[0]!).relX = 1 ∧ (res.fragments[0]!).relY = 1 ∧ (res.fragments[0]!).h = 40 ∧
+    (res.fragments[1]!).relX = 111 ∧ (res.fragments[1]!).relY = 1 ∧ (res.fragments[1]!).h = 40 ∧
+    (res.fragments[2]!).relX = 221 ∧ (res.fragments[2]!).relY = 1 ∧ (res.fragments[2]!).h = 40 ∧
+    (res.fragments[3]!).isSpanner = true ∧ (res.fragments[3]!).relX = 1 ∧ (res.fragments[3]!).relY = 41 ∧ (res.fragments[3]!).w = 320 ∧ (res.fragments[3]!).h = 44 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4719: SpannerAlone
+def spannerAlone_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, border := 1,
+  items := [{ isSpanner := true, height := 44, width := .auto }]
+}
+
+theorem SpannerAlone_vectors :
+    let res := layoutMulticolWithSpanners spannerAlone_input
+    res.w = 322 ∧ res.h = 46 ∧ res.fragments.length = 2 ∧
+    (res.fragments[0]!).isSpanner = false ∧ (res.fragments[0]!).relX = 1 ∧ (res.fragments[0]!).relY = 1 ∧ (res.fragments[0]!).h = 0 ∧
+    (res.fragments[1]!).isSpanner = true ∧ (res.fragments[1]!).relX = 1 ∧ (res.fragments[1]!).relY = 1 ∧ (res.fragments[1]!).w = 320 ∧ (res.fragments[1]!).h = 44 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4866: SpannerMargins
+def spannerMargins_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320,
+  items := [
+    { isSpanner := true, height := 10, width := .px 33, marginTop := 10, marginBottom := 10, marginStart := 10 },
+    { height := 20, avoid := true },
+    { isSpanner := true, height := 10, width := .px 44, marginTop := 10, marginBottom := 10, autoMargin := true },
+    { isSpanner := true, height := 0, width := .px 55, marginTop := 20, marginBottom := 20, marginStart := 20 },
+    { isSpanner := true, height := 10, width := .px 66, marginTop := 10, marginBottom := 10, marginStart := 10 }
+  ]
+}
+
+theorem SpannerMargins_vectors :
+    let res := layoutMulticolWithSpanners spannerMargins_input
+    res.w = 320 ∧ res.h = 130 ∧ res.fragments.length = 6 ∧
+    (res.fragments[0]!).h = 0 ∧
+    (res.fragments[1]!).relX = 10 ∧ (res.fragments[1]!).relY = 10 ∧ (res.fragments[1]!).w = 33 ∧ (res.fragments[1]!).h = 10 ∧
+    (res.fragments[2]!).relX = 0 ∧ (res.fragments[2]!).relY = 30 ∧ (res.fragments[2]!).w = 100 ∧ (res.fragments[2]!).h = 20 ∧
+    (res.fragments[3]!).relX = 138 ∧ (res.fragments[3]!).relY = 60 ∧ (res.fragments[3]!).w = 44 ∧ (res.fragments[3]!).h = 10 ∧
+    (res.fragments[4]!).relX = 20 ∧ (res.fragments[4]!).relY = 90 ∧ (res.fragments[4]!).w = 55 ∧ (res.fragments[4]!).h = 0 ∧
+    (res.fragments[5]!).relX = 10 ∧ (res.fragments[5]!).relY = 110 ∧ (res.fragments[5]!).w = 66 ∧ (res.fragments[5]!).h = 10 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4902: SpannerMarginsRtl
+def spannerMarginsRtl_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, isRtl := true,
+  items := [
+    { isSpanner := true, height := 10, width := .px 33, marginTop := 10, marginBottom := 10, marginStart := 10 },
+    { height := 20, avoid := true },
+    { isSpanner := true, height := 10, width := .px 44, marginTop := 10, marginBottom := 10, autoMargin := true },
+    { isSpanner := true, height := 0, width := .px 55, marginTop := 20, marginBottom := 20, marginStart := 20 },
+    { isSpanner := true, height := 10, width := .px 66, marginTop := 10, marginBottom := 10, marginStart := 10 }
+  ]
+}
+
+theorem SpannerMarginsRtl_vectors :
+    let res := layoutMulticolWithSpanners spannerMarginsRtl_input
+    res.w = 320 ∧ res.h = 130 ∧ res.fragments.length = 6 ∧
+    (res.fragments[0]!).relX = 220 ∧ (res.fragments[0]!).h = 0 ∧
+    (res.fragments[1]!).relX = 277 ∧ (res.fragments[1]!).relY = 10 ∧ (res.fragments[1]!).w = 33 ∧ (res.fragments[1]!).h = 10 ∧
+    (res.fragments[2]!).relX = 220 ∧ (res.fragments[2]!).relY = 30 ∧ (res.fragments[2]!).w = 100 ∧ (res.fragments[2]!).h = 20 ∧
+    (res.fragments[3]!).relX = 138 ∧ (res.fragments[3]!).relY = 60 ∧ (res.fragments[3]!).w = 44 ∧ (res.fragments[3]!).h = 10 ∧
+    (res.fragments[4]!).relX = 245 ∧ (res.fragments[4]!).relY = 90 ∧ (res.fragments[4]!).w = 55 ∧ (res.fragments[4]!).h = 0 ∧
+    (res.fragments[5]!).relX = 244 ∧ (res.fragments[5]!).relY = 110 ∧ (res.fragments[5]!).w = 66 ∧ (res.fragments[5]!).h = 10 := by
+  decide
+
+-- column_layout_algorithm_test.cc:4939: FixedSizeMulticolWithSpanner
+def fixedSizeMulticolWithSpanner_input : MulticolWithSpanners := {
+  cols := 3, gap := 10, width := 320, height := 300, fillAuto := true,
+  items := [
+    { height := 300, width := .px 33 },
+    { isSpanner := true, height := 50, width := .px 44 },
+    { height := 450, width := .px 55 }
+  ]
+}
+
+theorem FixedSizeMulticolWithSpanner_vectors :
+    let res := layoutMulticolWithSpanners fixedSizeMulticolWithSpanner_input
+    res.w = 320 ∧ res.h = 300 ∧ res.fragments.length = 7 ∧
+    (res.fragments[0]!).relX = 0 ∧ (res.fragments[0]!).relY = 0 ∧ (res.fragments[0]!).w = 100 ∧ (res.fragments[0]!).h = 100 ∧
+    (res.fragments[1]!).relX = 110 ∧ (res.fragments[1]!).relY = 0 ∧ (res.fragments[1]!).w = 100 ∧ (res.fragments[1]!).h = 100 ∧
+    (res.fragments[2]!).relX = 220 ∧ (res.fragments[2]!).relY = 0 ∧ (res.fragments[2]!).w = 100 ∧ (res.fragments[2]!).h = 100 ∧
+    (res.fragments[3]!).isSpanner = true ∧
+    (res.fragments[3]!).relX = 0 ∧ (res.fragments[3]!).relY = 100 ∧ (res.fragments[3]!).w = 44 ∧ (res.fragments[3]!).h = 50 ∧
+    (res.fragments[4]!).relX = 0 ∧ (res.fragments[4]!).relY = 150 ∧ (res.fragments[4]!).w = 100 ∧ (res.fragments[4]!).h = 150 ∧
+    (res.fragments[5]!).relX = 110 ∧ (res.fragments[5]!).relY = 150 ∧ (res.fragments[5]!).w = 100 ∧ (res.fragments[5]!).h = 150 ∧
+    (res.fragments[6]!).relX = 220 ∧ (res.fragments[6]!).relY = 150 ∧ (res.fragments[6]!).w = 100 ∧ (res.fragments[6]!).h = 150 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

@@ -300,19 +300,19 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:4321 | ColumnLayoutAlgorithmTest.NestedWithTallBorder | geometry | blocked | needs container border and padding fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:4353 | ColumnLayoutAlgorithmTest.NestedWithTallSpanner | geometry | blocked | needs nested multicolumn layout |
 | column_layout_algorithm_test.cc:4388 | ColumnLayoutAlgorithmTest.AbsposFitsInOneColumn | geometry | blocked | needs out-of-flow abspos layout in multicolumn |
-| column_layout_algorithm_test.cc:4415 | ColumnLayoutAlgorithmTest.Spanner | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4468 | ColumnLayoutAlgorithmTest.SpannerWithContent | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4528 | ColumnLayoutAlgorithmTest.TwoSpannersPercentWidth | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4583 | ColumnLayoutAlgorithmTest.SpannerNoBalancing | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4638 | ColumnLayoutAlgorithmTest.SpannerAtStart | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4679 | ColumnLayoutAlgorithmTest.SpannerAtEnd | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4719 | ColumnLayoutAlgorithmTest.SpannerAlone | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
+| column_layout_algorithm_test.cc:4415 | ColumnLayoutAlgorithmTest.Spanner | geometry | formalized | `TestsBlock.Spanner_vectors`, `ColumnLayout.spanner_width_auto`, `ColumnLayout.spanner_offset_advances` |
+| column_layout_algorithm_test.cc:4468 | ColumnLayoutAlgorithmTest.SpannerWithContent | geometry | formalized | `TestsBlock.SpannerWithContent_vectors` |
+| column_layout_algorithm_test.cc:4528 | ColumnLayoutAlgorithmTest.TwoSpannersPercentWidth | geometry | formalized | `TestsBlock.TwoSpannersPercentWidth_vectors` |
+| column_layout_algorithm_test.cc:4583 | ColumnLayoutAlgorithmTest.SpannerNoBalancing | geometry | formalized | `TestsBlock.SpannerNoBalancing_vectors` |
+| column_layout_algorithm_test.cc:4638 | ColumnLayoutAlgorithmTest.SpannerAtStart | geometry | formalized | `TestsBlock.SpannerAtStart_vectors` |
+| column_layout_algorithm_test.cc:4679 | ColumnLayoutAlgorithmTest.SpannerAtEnd | geometry | formalized | `TestsBlock.SpannerAtEnd_vectors` |
+| column_layout_algorithm_test.cc:4719 | ColumnLayoutAlgorithmTest.SpannerAlone | geometry | formalized | `TestsBlock.SpannerAlone_vectors` |
 | column_layout_algorithm_test.cc:4746 | ColumnLayoutAlgorithmTest.SpannerInBlock | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
 | column_layout_algorithm_test.cc:4781 | ColumnLayoutAlgorithmTest.SpannerWithSiblingsInBlock | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
 | column_layout_algorithm_test.cc:4824 | ColumnLayoutAlgorithmTest.SpannerInBlockWithSiblings | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:4866 | ColumnLayoutAlgorithmTest.SpannerMargins | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:4902 | ColumnLayoutAlgorithmTest.SpannerMarginsRtl | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:4939 | ColumnLayoutAlgorithmTest.FixedSizeMulticolWithSpanner | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
+| column_layout_algorithm_test.cc:4866 | ColumnLayoutAlgorithmTest.SpannerMargins | geometry | formalized | `TestsBlock.SpannerMargins_vectors`, `ColumnLayout.spanner_margin_collapsing` |
+| column_layout_algorithm_test.cc:4902 | ColumnLayoutAlgorithmTest.SpannerMarginsRtl | geometry | formalized | `TestsBlock.SpannerMarginsRtl_vectors` |
+| column_layout_algorithm_test.cc:4939 | ColumnLayoutAlgorithmTest.FixedSizeMulticolWithSpanner | geometry | formalized | `TestsBlock.FixedSizeMulticolWithSpanner_vectors` |
 | column_layout_algorithm_test.cc:4980 | ColumnLayoutAlgorithmTest.MarginAndBorderTopWithSpanner | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
 | column_layout_algorithm_test.cc:5018 | ColumnLayoutAlgorithmTest.BreakInsideSpannerWithMargins | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
 | column_layout_algorithm_test.cc:5054 | ColumnLayoutAlgorithmTest.InvalidSpanners | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
