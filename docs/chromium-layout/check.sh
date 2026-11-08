@@ -12,8 +12,11 @@ BEND_BIN="${BEND_BIN:-/root/.bend/bin/bend}"
 LEAN_BIN="${LEAN_BIN:-/root/.elan/toolchains/leanprover--lean4---v4.34.0/bin/lean}"
 LEAN_STACK_CAP_KB="${LEAN_STACK_SIZE_KB:-262144}"
 
-if [[ ! -x "$BEND_BIN" ]]; then
-  echo "FAIL: bend binary not found at $BEND_BIN" >&2
+# SKIP_BEND=1 skips step 1 for lanes that do not touch the .bend files (layout.bend, proof.bend);
+# the lanes that own them still run it.
+SKIP_BEND="${SKIP_BEND:-0}"
+if [[ "$SKIP_BEND" != 1 && ! -x "$BEND_BIN" ]]; then
+  echo "FAIL: bend binary not found at $BEND_BIN (set SKIP_BEND=1 if you did not change any .bend file)" >&2
   exit 1
 fi
 
@@ -58,6 +61,7 @@ if [[ "${#BEND_FILES[@]}" -eq 0 ]]; then
   exit 1
 fi
 
+[[ "$SKIP_BEND" == 1 ]] && { echo "== Skipping bend --verdict (SKIP_BEND=1)"; BEND_FILES=(); }
 for bf in "${BEND_FILES[@]}"; do
   rel="${bf#"$HERE"/}"
   echo "== Checking Bend file (verdict): $rel"

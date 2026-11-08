@@ -82,12 +82,33 @@ them in `exam/AUDIT.md`. It never edits another lane's files.
 
 ## Setup
 
-- Repo: `git clone https://github.com/nanoman657/StatPath` (public). Without push access, push your
-  branch to your fork and open a draft pull request into `chromium-layout-shared`.
-- Chromium, only the layout folder at the pin:
+- Repo: `git clone https://github.com/nanoman657/StatPath`, then
+  `git checkout -b chromium-layout-<lane> origin/chromium-layout-tests-block` and
+  `git checkout origin/chromium-layout-shared -- docs/chromium-layout/COORDINATION.md docs/chromium-layout/tools docs/chromium-layout/check.sh`.
+  Without push access, push your branch to a fork and open a draft pull request into
+  `chromium-layout-shared`.
+- Chromium layout folder at the pin (863 files, 2.8 MB, plus Chromium's LICENSE files), as a release
+  asset on this repo:
 
-      git clone --filter=blob:none --no-checkout --depth 1 https://github.com/chromium/chromium.git chromium
-      cd chromium && git sparse-checkout set third_party/blink/renderer/core/layout
-      git fetch --depth 1 origin 36c121be58126ddbb0686965897b8c8ff9b246fb && git checkout FETCH_HEAD
+      curl -fsSLO https://github.com/nanoman657/StatPath/releases/download/chromium-layout-pin-36c121be/chromium-layout-36c121be.tar.gz
+      echo "d379230d5377e229ba125ad67e93f3a539faff76cd6523fa69a08366091daea8  chromium-layout-36c121be.tar.gz" | sha256sum -c
+      tar xzf chromium-layout-36c121be.tar.gz
+      export CHROMIUM_LAYOUT=$PWD/chromium-36c121be/third_party/blink/renderer/core/layout
+      export CHROMIUM_LAYOUT_DIR=$CHROMIUM_LAYOUT   # the name verify_transcription.py reads
 
-- Lean 4.34.0 through elan; Bend 2 for `check.sh`'s Bend step.
+  Every file was checked against the pinned commit's blob hashes. (Alternatively, a sparse clone of
+  github.com/chromium/chromium at `36c121be58126ddbb0686965897b8c8ff9b246fb`.)
+- Lean 4.34.0, from the official release (no elan needed):
+
+      curl -fsSLO https://github.com/leanprover/lean4/releases/download/v4.34.0/lean-4.34.0-linux.tar.zst
+      tar --zstd -xf lean-4.34.0-linux.tar.zst
+      export LEAN_BIN=$PWD/lean-4.34.0-linux/bin/lean
+
+  (or `elan toolchain install leanprover/lean4:v4.34.0`; `lean-4.34.0-linux_aarch64` on ARM.)
+- Bend 2 is not needed. It only checks `layout.bend` and `proof.bend`, which no new lane edits.
+  Run the check without it:
+
+      SKIP_BEND=1 OLEAN_DIR=$PWD/olean-<lane> bash docs/chromium-layout/check.sh
+
+  `check.sh` compiles every Lean file, so it takes a while and wants about 600 MB of memory per
+  `lean` process.
