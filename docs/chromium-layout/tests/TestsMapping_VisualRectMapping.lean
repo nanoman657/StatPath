@@ -8,13 +8,16 @@ import Mapping
 
 namespace ChromiumLayout
 namespace TestsMapping
-open BlockFlow Mapping BlockAbsolute
+open BlockFlow Mapping BlockAbsolute BlockRelative
 
 /-- A page: `html` (a new formatting context) > `body` with margin `m` > `kids`. -/
 def bodyPage (m : Int) (kids : List BF) : BF :=
   { newBfc := true, children := [{ mt := m, mb := m, ml := .px m, mr := .px m, children := kids }] }
 
 def z : Pt := ⟨0, 0⟩
+
+/-- `position:relative; left:l; top:t` (right/bottom auto). -/
+def rp (l t : Int) : Option Insets := some (computeRelativeInsets (some t) none none (some l))
 
 /-- The viewport (`LayoutView`) at the page origin. -/
 def view : Frag := {}
@@ -178,6 +181,52 @@ theorem ContainPaint_vectors :
     let sc := absScene .horizontalTb bigKid { containPaint := true } 0 0 0 z z (some 200) (some 200)
     let tl := physBox .horizontalTb (sc.1.kid 0)
     tl = ⟨0, 0, 400, 400⟩ ∧ mapV false z sc.2 tl = ⟨0, 0, 200, 200⟩ := by decide
+
+/-! ### Inline containers (FloatUnderInline 1061, InlineBlock 1120, AbsoluteUnderRelativeInline 1174
+    and their `vertical-rl` variants 1089, 1199): `div{position:absolute; top:55px; left:66px}`
+    (`vertical-rl`: `width:600px; height:400px`) > `span{position:relative; top:100px; left:200px}`
+    (`vertical-rl`: `left:-200px`) > a 33×44 float, inline-block or absolutely positioned box. -/
+def inlineHost (wm : WM) (first : Nat → Node) : List (Hop × VP) :=
+  let hb := BF.ofPhys wm (some 600) (some 400) {}
+  let cw := (physBox wm (layoutRoot 800 hb)).w
+  let page := layoutRoot 800 (bodyPage 0 [{ id := 7 }])
+  vchain ([first cw.toNat, Node.inline, Node.oof 2 (.box {}) z (.px 55) (.px 66) (.px 0) (.px 0)]
+            ++ upToView page (page.kid 0)) [{}, {}, {}, {}, {}]
+
+def relH : Option BlockRelative.Insets := rp 200 100
+def relV : Option BlockRelative.Insets := rp (-200) 100
+
+theorem FloatUnderInline_vectors :
+    let os := inlineHost .horizontalTb (fun cw => .boxInInline .horizontalTb cw 33 44 relH)
+    let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
+    tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨266, 155, 33, 44⟩ ∧
+    mapV false z (os.take 1) tl = ⟨200, 100, 33, 44⟩ := by decide
+
+theorem FloatUnderInlineVerticalRL_vectors :
+    let os := inlineHost .verticalRl (fun cw => .boxInInline .verticalRl cw 44 33 relV)
+    let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
+    tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨433, 155, 33, 44⟩ ∧
+    mapV false z (os.take 1) tl = ⟨367, 100, 33, 44⟩ := by decide
+
+theorem InlineBlock_vectors :
+    let os := inlineHost .horizontalTb (fun cw => .boxInInline .horizontalTb cw 33 44 relH)
+    let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
+    tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨266, 155, 33, 44⟩ ∧
+    mapV false z (os.take 1) tl = ⟨200, 100, 33, 44⟩ := by decide
+
+theorem AbsoluteUnderRelativeInline_vectors :
+    let os := inlineHost .horizontalTb (fun cw =>
+      .oof 0 (.inline (inlineOrigin .horizontalTb cw) relH) z (.px 50) (.px 100) (.px 0) (.px 0))
+    let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
+    tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨366, 205, 33, 44⟩ ∧
+    mapV false z (os.take 1) tl = ⟨300, 150, 33, 44⟩ := by decide
+
+theorem AbsoluteUnderRelativeInlineVerticalRL_vectors :
+    let os := inlineHost .verticalRl (fun cw =>
+      .oof 0 (.inline (inlineOrigin .verticalRl cw) relV) z (.px 50) (.px 100) (.px 0) (.px 0))
+    let tl := physBox .horizontalTb (layoutRoot 800 (BF.ofPhys .horizontalTb (some 33) (some 44) {}))
+    tl = ⟨0, 0, 33, 44⟩ ∧ mapV false z os tl = ⟨566, 205, 33, 44⟩ ∧
+    mapV false z (os.take 1) tl = ⟨500, 150, 33, 44⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout

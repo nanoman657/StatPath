@@ -234,7 +234,7 @@ theorem MulticolWithAbsPosInRelPos_vectors :
     `<span style='position:relative; left:4px; top:4px'>` in `#container`, after the spacer. -/
 theorem MulticolWithAbsPosInInlineRelPos_vectors :
     let ft := layoutRoot 800 (flowThread mcBlockCols [{ height := some 110 }, { id := 1 }])
-    let ns := [Node.oof 0 (.inline (rp 4 4)) ⟨0, 0⟩ (.px 15) (.px 15) (.px 10) (.px 10),
+    let ns := [Node.oof 0 (.inline ⟨0, 0⟩ (rp 4 4)) ⟨0, 0⟩ (.px 15) (.px 15) (.px 10) (.px 10),
                .inline (rp 4 4), .col (mcBox 8 7 300 100) mcBlockCols ft (ft.kid 1)]
     mapRange ns 0 3 ⟨0, 0⟩ = ⟨144, 54⟩ ∧ mapRangeDown ns 0 3 ⟨144, 54⟩ = ⟨0, 0⟩ ∧
     mapRange ns 0 2 ⟨0, 0⟩ = ⟨29, 29⟩ ∧ mapRangeDown ns 0 2 ⟨29, 29⟩ = ⟨0, 0⟩ ∧

@@ -80,6 +80,12 @@ def PRect.toLogical (wm : WM) (cw : Int) (p : PRect) : LRect :=
     system `layoutRoot` uses). -/
 def offIn (p c : Frag) : Pt := ⟨c.x - p.x, c.y - p.y⟩
 
+/-- Where an empty inline box starts in a container of physical width `cw`: the block-start edge,
+    the left edge in a horizontal or `vertical-lr` mode and the right edge in `vertical-rl`. -/
+def inlineOrigin (wm : WM) (cw : Int) : Pt :=
+  let q := (LRect.mk 0 0 0 0).toPhys wm cw
+  ⟨q.x, q.y⟩
+
 /-- Offset of an out-of-flow box on one axis, in its DOM parent's border-box coordinates
     (CSS 2.1 §10.3.7, §10.6.4; CSS Position 3 §3): a given inset is measured from the containing
     block's padding-box start (`cbB` is that start in the parent's coordinates), an `auto` inset
@@ -89,16 +95,16 @@ def oofAxis (cbB st : Int) (inset : BlockAbsolute.InsetVal) (m : BlockAbsolute.M
     match inset with | .px _ => cbB | .auto => st
 
 /-- The containing block of an out-of-flow box (CSS 2.1 §10.1): a box, whose padding box starts
-    inside its border, or an inline box, which a relative offset shifts as a whole. -/
+    inside its border, or an inline box, which starts at its static origin and which a relative offset shifts as a whole. -/
 inductive CB where
   | box (b : BF) (scroll : Pt := ⟨0, 0⟩)
-  | inline (rel : Option BlockRelative.Insets := none)
+  | inline (static : Pt) (rel : Option BlockRelative.Insets := none)
 
 /-- Padding-box origin in the border-box (box, moved by the scroll offset of its content: CSSOM View
     §13 `scrollLeft`/`scrollTop`, CSS Overflow 3 §2.2) or the relative shift (inline). -/
 def CB.origin : CB → Pt
   | .box b s => ⟨b.bl - s.x, b.bt - s.y⟩
-  | .inline r => ⟨(r.map (·.left)).getD 0, (r.map (·.top)).getD 0⟩
+  | .inline st r => ⟨st.x + (r.map (·.left)).getD 0, st.y + (r.map (·.top)).getD 0⟩
 
 /-- Content-box origin of a box inside its border box. -/
 def contentOrigin (b : BF) : Pt := ⟨b.bl + b.pl, b.bt + b.pt⟩
@@ -140,6 +146,7 @@ inductive Node where
   | oof (k : Nat) (cb : CB) (static : Pt) (top left : BlockAbsolute.InsetVal)
       (mt ml : BlockAbsolute.MarginVal)
   | inlineIn (container : BF)
+  | boxInInline (wm : WM) (cw isz bsz : Int) (rel : Option BlockRelative.Insets)
   | scrolled (s : Pt) (n : Node)
   | flow (wm : WM) (parent child : Frag)
   | col (container : BF) (cs : Cols) (flow child : Frag) (rel : Option BlockRelative.Insets := none)
@@ -149,6 +156,9 @@ def Node.hop (up : List Hop) : Node → Hop
   | .block p c r => ⟨(offIn p c).x + (r.map (·.left)).getD 0, (offIn p c).y + (r.map (·.top)).getD 0⟩
   | .inline _ => ⟨0, 0⟩
   | .inlineIn c => contentOrigin c
+  | .boxInInline wm cw isz bsz r =>
+      let q := (LRect.mk 0 0 isz bsz).toPhys wm cw
+      ⟨q.x + (r.map (·.left)).getD 0, q.y + (r.map (·.top)).getD 0⟩
   | .scrolled s n => ⟨(n.hop up).x - s.x, (n.hop up).y - s.y⟩
   | .flow wm p c =>
       let q := (LRect.mk (offIn p c).x (offIn p c).y c.w c.h).toPhys wm p.h

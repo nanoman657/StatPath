@@ -98,12 +98,12 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:996 | VisualRectMappingTest.ContainerOfAbsoluteAbovePaintInvalidationContainer | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:1031 | VisualRectMappingTest.CSSClip | geometry | formalized | `TestsMapping.CSSClip_vectors` |
 | visual_rect_mapping_test.cc:1046 | VisualRectMappingTest.ContainPaint | geometry | formalized | `TestsMapping.ContainPaint_vectors` |
-| visual_rect_mapping_test.cc:1061 | VisualRectMappingTest.FloatUnderInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1089 | VisualRectMappingTest.FloatUnderInlineVerticalRL | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1120 | VisualRectMappingTest.InlineBlock | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1145 | VisualRectMappingTest.InlineBlockVerticalRL | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1174 | VisualRectMappingTest.AbsoluteUnderRelativeInline | geometry | blocked | not yet modelled (mapping lane, pending) |
-| visual_rect_mapping_test.cc:1199 | VisualRectMappingTest.AbsoluteUnderRelativeInlineVerticalRL | geometry | blocked | not yet modelled (mapping lane, pending) |
+| visual_rect_mapping_test.cc:1061 | VisualRectMappingTest.FloatUnderInline | geometry | formalized | `TestsMapping.FloatUnderInline_vectors` |
+| visual_rect_mapping_test.cc:1089 | VisualRectMappingTest.FloatUnderInlineVerticalRL | geometry | formalized | `TestsMapping.FloatUnderInlineVerticalRL_vectors` |
+| visual_rect_mapping_test.cc:1120 | VisualRectMappingTest.InlineBlock | geometry | formalized | `TestsMapping.InlineBlock_vectors` |
+| visual_rect_mapping_test.cc:1145 | VisualRectMappingTest.InlineBlockVerticalRL | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
+| visual_rect_mapping_test.cc:1174 | VisualRectMappingTest.AbsoluteUnderRelativeInline | geometry | formalized | `TestsMapping.AbsoluteUnderRelativeInline_vectors` |
+| visual_rect_mapping_test.cc:1199 | VisualRectMappingTest.AbsoluteUnderRelativeInlineVerticalRL | geometry | formalized | `TestsMapping.AbsoluteUnderRelativeInlineVerticalRL_vectors` |
 | visual_rect_mapping_test.cc:1228 | VisualRectMappingTest.ShouldAccountForPreserve3d | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:1258 | VisualRectMappingTest.ShouldAccountForPreserve3dNested | geometry | blocked | not yet modelled (mapping lane, pending) |
 | visual_rect_mapping_test.cc:1287 | VisualRectMappingTest.ShouldAccountForPerspective | geometry | blocked | not yet modelled (mapping lane, pending) |
