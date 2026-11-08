@@ -367,12 +367,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_shape_cache_test.cc:135 | ShapeResultPointerEqualFloatsAndOutOfFlow | internal | internal | - | Pointer equality check for ShapeResult cache across floats and abspos |
 | inline/inline_node_shape_cache_test.cc:152 | ShapeResultPointerEqualInline | internal | internal | - | Pointer equality check for ShapeResult cache across inline span |
 | inline/justification_utils_test.cc:14 | SetupItemJustificationOpportunityCrash | internal | internal | - | Crash regression test for null dereference in InlineItem::Style |
-| inline/line_break_candidate_test.cc:50 | Text | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:76 | SoftHyphen | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:104 | SoftHyphenDisabled | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:130 | Span | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:157 | SpanMidWord | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:183 | SpanCloseAfterSpace | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:50 | Text | geometry | formalized | `lineBreak_Text` | CSS Text 3 §4: Soft wrap opportunity at word boundary with collapsed trailing space |
+| inline/line_break_candidate_test.cc:76 | SoftHyphen | geometry | formalized | `lineBreak_SoftHyphen` | CSS Text 3 §4.1: Soft hyphen break opportunity with hyphen glyph expansion |
+| inline/line_break_candidate_test.cc:104 | SoftHyphenDisabled | geometry | formalized | `lineBreak_SoftHyphenDisabled` | CSS Text 3 §4.1: hyphens: none disables soft hyphen break opportunities |
+| inline/line_break_candidate_test.cc:130 | Span | geometry | formalized | `lineBreak_Span` | CSS Text 3 §4: Break candidate offsets across inline span boundaries |
+| inline/line_break_candidate_test.cc:157 | SpanMidWord | geometry | formalized | `lineBreak_SpanMidWord` | CSS Text 3 §4: Mid-word span boundary does not create break opportunity |
+| inline/line_break_candidate_test.cc:183 | SpanCloseAfterSpace | geometry | formalized | `lineBreak_SpanCloseAfterSpace` | CSS Text 3 §4: Break candidate offset advances past closing tag to next in-flow item |
 | inline/line_break_candidate_test.cc:210 | TrailingSpacesCollapsed | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_break_candidate_test.cc:247 | AtomicInline | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_break_candidate_test.cc:276 | AtomicInlineBr | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
