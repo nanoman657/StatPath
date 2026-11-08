@@ -473,6 +473,21 @@ theorem LinesInMulticolChildInsufficientSpaceForFirst_vectors :
     res[2]!.kids[0]!.col = 2 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
   decide
 
+-- column_layout_algorithm_test.cc:1681: LineAtColumnBoundaryInFirstBlock
+theorem LineAtColumnBoundaryInFirstBlock_vectors :
+    let nodes := [
+      BNode.box (.px 66) .auto [
+        BNode.leaf (.px 0) 20 .avoid
+      ] none .none 0 false false 0 0 false 1 1 40
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 66 ∧ res[0]!.h = 50 ∧ res[0]!.kids.isEmpty ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 66 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧
+    res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
 -- column_layout_algorithm_test.cc:1861: OrphansUnsatisfiable
 theorem OrphansUnsatisfiable_vectors :
     let nodes := [

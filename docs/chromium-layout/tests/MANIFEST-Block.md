@@ -230,7 +230,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:1552 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExactFit | geometry | formalized | `TestsBlock.LinesInMulticolChildExactFit_vectors`, `ColumnLayout.line_moves_next_col` |
 | column_layout_algorithm_test.cc:1594 | ColumnLayoutAlgorithmTest.LinesInMulticolChildNoSpaceForFirst | geometry | formalized | `TestsBlock.LinesInMulticolChildNoSpaceForFirst_vectors`, `ColumnLayout.line_moves_next_col` |
 | column_layout_algorithm_test.cc:1637 | ColumnLayoutAlgorithmTest.LinesInMulticolChildInsufficientSpaceForFirst | geometry | formalized | `TestsBlock.LinesInMulticolChildInsufficientSpaceForFirst_vectors`, `ColumnLayout.line_moves_next_col` |
-| column_layout_algorithm_test.cc:1681 | ColumnLayoutAlgorithmTest.LineAtColumnBoundaryInFirstBlock | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
+| column_layout_algorithm_test.cc:1681 | ColumnLayoutAlgorithmTest.LineAtColumnBoundaryInFirstBlock | geometry | formalized | `TestsBlock.LineAtColumnBoundaryInFirstBlock_vectors`, `ColumnBreak.box_slice_fills` |
 | column_layout_algorithm_test.cc:1725 | ColumnLayoutAlgorithmTest.LinesAndFloatsMulticol | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1774 | ColumnLayoutAlgorithmTest.FloatBelowLastLineInColumn | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1820 | ColumnLayoutAlgorithmTest.Orphans | geometry | blocked | needs orphans and widows balancing in multicolumn |

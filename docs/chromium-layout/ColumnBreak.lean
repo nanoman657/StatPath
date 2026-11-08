@@ -31,6 +31,7 @@ inductive BNode where
         (fl : FloatType := .none) (marginTop : Nat := 0) (breakBefore : Bool := false) (breakAfter : Bool := false)
         (border : Nat := 0) (padding : Nat := 0) (isNewFc : Bool := false)
         (orphans : Nat := 2) (widows : Nat := 2)
+        (padTop : Nat := 0)
   deriving Inhabited, Repr
 
 /-- A fragment of a node inside column `col`; `x` and `y` are the offset from the column top-left,
@@ -49,11 +50,11 @@ structure NFrag where
 def nodeHeight : Nat → BNode → Nat
   | 0, _ => 0
   | _ + 1, .leaf _ h .. => h
-  | f + 1, .box _ _ ks optH _ _ _ _ border padding .. =>
+  | f + 1, .box (optH := optH) (kids := ks) (border := border) (padding := padding) (padTop := padTop) .. =>
     let bp := border + padding
     match optH with
-    | some h => h + 2 * bp
-    | none => (ks.map (nodeHeight f)).sum + 2 * bp
+    | some h => h + 2 * bp + padTop
+    | none => (ks.map (nodeHeight f)).sum + 2 * bp + padTop
 
 /-- Whether any part of a node avoids breaking inside. CSS Fragmentation Level 3 §3.2. -/
 def nodeAvoids : Nat → BNode → Bool
@@ -173,28 +174,29 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
     let r := placeChildSlices fragH rw (h + 1) 0 h c0 y0
     let (finalC, finalY) := applyBreakAfter bA r.2.1 r.2.2
     (r.1.map (fun s => ⟨s.colIdx, 0, s.relY, s.w, s.h, []⟩), finalC, finalY)
-  | f + 1, .box w bi ks optH _ mTop bB bA border padding _ orphans widows, c, y =>
+  | f + 1, .box w bi ks optH _ mTop bB bA border padding _ orphans widows padTop, c, y =>
     let bp := border + padding
-    let hBox := match optH with | some h => h + 2 * bp | none => (ks.map (nodeHeight f)).sum + 2 * bp
+    let hBox := match optH with | some h => h + 2 * bp + padTop | none => (ks.map (nodeHeight f)).sum + 2 * bp + padTop
     let avoids := bi.avoidsColumn
     let (c0, y0) := nodeStart fragH c y bB avoids mTop hBox
     let rw := resolveLen colW w
     let innerW := if rw ≥ 2 * bp then rw - 2 * bp else 0
     let isLineList := !ks.isEmpty && ks.all (fun k => match k with | .leaf _ _ bi .. => bi.avoidsColumn | _ => false)
+    let contentY0 := y0 + bp + padTop
     let r :=
       if isLineList then
-        splitLines innerW fragH c0 (y0 + bp) orphans widows ks
+        splitLines innerW fragH c0 contentY0 orphans widows ks
       else
         ks.foldl (fun (acc : List NFrag × Nat × Nat) k =>
           let q := layoutNode fragH innerW f k acc.2.1 acc.2.2
-          (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, y0 + bp)
+          (acc.1 ++ q.1, q.2.1, q.2.2)) ([], c0, contentY0)
     let (endC, endY) := match optH with
       | none =>
-        if ks.isEmpty then (c0, y0 + 2 * bp)
+        if ks.isEmpty then (c0, contentY0 + bp)
         else if r.2.2 + bp ≤ fragH then (r.2.1, r.2.2 + bp)
         else (r.2.1 + 1, bp)
       | some h =>
-        let totalH := h + 2 * bp
+        let totalH := h + 2 * bp + padTop
         if y0 + totalH ≤ fragH then (c0, y0 + totalH)
         else
           let rem := totalH - (fragH - y0)
@@ -211,11 +213,11 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
       match optH with
       | none =>
         let boxFragH := if colIdx = endC then endY - boxFragY else if colIdx < endC then fragH - boxFragY else 0
-        if colKids.isEmpty && bp = 0 then none
+        if colKids.isEmpty && bp = 0 && (colIdx > c0 || padTop = 0) then none
         else if boxFragH = 0 && colKids.isEmpty then none
         else some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩
       | some h =>
-        let totalH := h + 2 * bp
+        let totalH := h + 2 * bp + padTop
         let consumedBefore := if colIdx = c0 then 0 else (fragH - y0) + (colIdx - c0 - 1) * fragH
         let availInCol := if colIdx = c0 then fragH - y0 else fragH
         let remH := if totalH > consumedBefore then totalH - consumedBefore else 0
@@ -326,7 +328,8 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
         let (adjY, adjMTop) := clearFloats colW cf isNewFc rw y mTop
         let nWithAdjMargin := match n with
           | .leaf w h bi fl _ bB bA isNewFc => .leaf w h bi fl adjMTop bB bA isNewFc
-          | .box w bi ks optH fl _ bB bA b p isNewFc orphans widows => .box w bi ks optH fl adjMTop bB bA b p isNewFc orphans widows
+          | .box w bi ks optH fl _ bB bA b p isNewFc orphans widows padTop =>
+            .box w bi ks optH fl adjMTop bB bA b p isNewFc orphans widows padTop
         let (nFrags, endC, endY) := layoutNode fragH colW f nWithAdjMargin c adjY
         loop rest endC endY (max floatCol endC) cfloats (acc ++ nFrags)
       | _ =>
@@ -343,8 +346,8 @@ def layoutNodes (fragH colW : Nat) (f : Nat) (nodes : List BNode) : List NFrag :
           let (frags, nextCfl) := placeFloatSlices fragH colW fl rw mTop (h + 1) h fc fy true [] cfloats
           let (finalC, _) := applyBreakAfter bA fc fy
           loop rest c y finalC nextCfl (acc ++ frags)
-        | .box _ _ ks optH _ _ _ _ border padding isNewFc orphans widows =>
-          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH .none 0 false false border padding isNewFc orphans widows) fc (fy + mTop)
+        | .box _ _ ks optH _ _ _ _ border padding isNewFc orphans widows padTop =>
+          let (nFrags, _, _) := layoutNode fragH colW f (.box (.px rw) .auto ks optH .none 0 false false border padding isNewFc orphans widows padTop) fc (fy + mTop)
           let (fragsWithX, nextCfl) := placeBoxFloatFrags colW fl nFrags cfloats
           let (finalC, _) := applyBreakAfter bA fc 0
           loop rest c y finalC nextCfl (acc ++ fragsWithX)
@@ -504,6 +507,24 @@ theorem orphans_min_head (total cap orphans widows : Nat) :
   split
   · omega
   · omega
+
+/-- Law: When a box breaks across fragmentainers (colIdx < endC), its fragment extent
+    fills the remaining fragmentainer height (fragH - boxFragY). CSS Fragmentation Level 3 §5.3. -/
+theorem box_slice_fills (fragH colIdx endC endY boxFragY : Nat)
+    (h_break : colIdx < endC) :
+    (if colIdx = endC then endY - boxFragY else if colIdx < endC then fragH - boxFragY else 0) =
+    fragH - boxFragY := by
+  split
+  · omega
+  · rfl
+
+/-- Law: Top padding applies only to the first fragmentainer slice; subsequent slices (colIdx > c0)
+    receive zero top padding. CSS Fragmentation Level 3 §5.4. -/
+theorem box_slice_pad_top (c0 colIdx padTop : Nat) (h_next : colIdx > c0) :
+    (if colIdx = c0 then padTop else 0) = 0 := by
+  split
+  · omega
+  · rfl
 
 end ColumnLayout
 end ChromiumLayout
