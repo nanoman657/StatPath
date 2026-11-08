@@ -451,11 +451,29 @@ structure VP where
   scroll : Pt := ⟨0, 0⟩
   origin : Pt := ⟨0, 0⟩
   clip : Option PRect := none
+  blur : Nat := 0
+  snap : Int := 0
+
+/-- Smallest rect of whole multiples of `u` containing `r`. -/
+def floorU (a u : Int) : Int := a / u * u
+def ceilU (a u : Int) : Int := -((-a) / u * u)
+
+def PRect.encloseTo (u : Int) (r : PRect) : PRect :=
+  ⟨floorU r.x u, floorU r.y u, ceilU (r.x + r.w) u - floorU r.x u, ceilU (r.y + r.h) u - floorU r.y u⟩
+
+/-- `filter: blur(r)` grows a non-empty rect by three standard deviations (CSS Filter Effects 1
+    §10.1 blur()) on every side. -/
+def filt (o : VP) (r : PRect) : PRect :=
+  if r.isEmpty then r else ⟨r.x - 3 * o.blur, r.y - 3 * o.blur, r.w + 6 * o.blur, r.h + 6 * o.blur⟩
+
+/-- A non-empty rect crossing a frame boundary is expanded to whole pixels (`snap` = LayoutUnit
+    units per pixel); the iframe's own offset is added afterwards. -/
+def snapR (o : VP) (r : PRect) : PRect := if 0 < o.snap ∧ r.isEmpty = false then r.encloseTo o.snap else r
 
 /-- Rectangle leaving a container: moved by its scroll position, then clipped to its clip. With
     `skip`, clips are ignored (`kSkipAncestorAndViewportClips`). -/
 def leave (skip : Bool) (o : VP) (r : PRect) : PRect :=
-  let r1 := r.translate ⟨-o.scroll.x, -o.scroll.y⟩
+  let r1 := snapR o (r.translate ⟨-o.scroll.x, -o.scroll.y⟩)
   match o.clip with
   | some c => if skip then r1 else r1.inter c
   | none => r1
@@ -464,8 +482,8 @@ def leave (skip : Bool) (o : VP) (r : PRect) : PRect :=
     child of the destination (leaf first); `d` is the destination's scroll origin. -/
 def mapV (skip : Bool) (d : Pt) : List (Hop × VP) → PRect → PRect
   | [], r => r
-  | [(h, _)], r => (r.translate h).translate ⟨-d.x, -d.y⟩
-  | (h, _) :: (h', o') :: rest, r => mapV skip d ((h', o') :: rest) (leave skip o' (r.translate h))
+  | [(h, o)], r => ((filt o r).translate h).translate ⟨-d.x, -d.y⟩
+  | (h, o) :: (h', o') :: rest, r => mapV skip d ((h', o') :: rest) (leave skip o' ((filt o r).translate h))
 
 /-- Hops and properties of a chain of nodes. -/
 def vchain (ns : List Node) (ps : List VP) : List (Hop × VP) := (hops ns).zip ps
@@ -487,9 +505,61 @@ theorem translate_within (r a : PRect) (p : Pt) (h : r.Within a) : (r.translate 
 theorem union_left (a b : PRect) : a.Within (a.union b) := by
   unfold PRect.union PRect.Within; dsimp only; omega
 
+theorem floorU_le (a u : Int) (hu : 0 < u) : floorU a u ≤ a := Int.ediv_mul_le a (by omega)
+
+theorem le_ceilU (a u : Int) (hu : 0 < u) : a ≤ ceilU a u := by
+  have := Int.ediv_mul_le (-a) (show u ≠ 0 by omega)
+  unfold ceilU; omega
+
+theorem floorU_mono (a b u : Int) (hu : 0 < u) (h : a ≤ b) : floorU a u ≤ floorU b u :=
+  Int.mul_le_mul_of_nonneg_right (Int.ediv_le_ediv hu h) (by omega)
+
+theorem ceilU_mono (a b u : Int) (hu : 0 < u) (h : a ≤ b) : ceilU a u ≤ ceilU b u := by
+  have := floorU_mono (-b) (-a) u hu (by omega)
+  unfold floorU ceilU at *; omega
+
+theorem filt_within (o : VP) (r r' : PRect) (h : r.Within r') : (filt o r).Within (filt o r') := by
+  unfold filt PRect.isEmpty PRect.Within at *
+  by_cases hr : (r.w ≤ 0 ∨ r.h ≤ 0)
+  · simp [hr]; omega
+  · have hr' : ¬(r'.w ≤ 0 ∨ r'.h ≤ 0) := by omega
+    simp only [Bool.or_eq_true, decide_eq_true_eq, hr, hr', ite_false]
+    omega
+
+theorem snapR_empty (o : VP) (r : PRect) (h : r.isEmpty = true) : snapR o r = r := by
+  unfold snapR; simp [h]
+
+theorem snapR_within (o : VP) (r r' : PRect) (h : r.Within r') : (snapR o r).Within (snapR o r') := by
+  by_cases hr : r.isEmpty = true
+  · rw [snapR_empty o r hr]
+    unfold PRect.isEmpty at hr
+    simp only [Bool.or_eq_true, decide_eq_true_eq] at hr
+    by_cases hs : 0 < o.snap ∧ r'.isEmpty = false
+    · unfold snapR; simp only [hs, and_self, ite_true]; unfold PRect.Within; omega
+    · unfold snapR; simp only [hs, ite_false]; unfold PRect.Within; omega
+  · have hr' : r'.isEmpty = false := by
+      unfold PRect.Within PRect.isEmpty at *
+      simp only [Bool.or_eq_true, decide_eq_true_eq, Bool.not_eq_true] at *
+      simp; omega
+    unfold snapR
+    by_cases hs : 0 < o.snap
+    · have h1 : r.isEmpty = false := by simpa using hr
+      simp only [hs, h1, hr', and_self, ite_true]
+      unfold PRect.isEmpty at h1 hr'
+      simp only [Bool.or_eq_false_iff, decide_eq_false_iff_not] at h1 hr'
+      unfold PRect.encloseTo PRect.Within PRect.isEmpty at *
+      have a1 := floorU_le r.x o.snap hs; have a2 := floorU_le r.y o.snap hs
+      have b1 := le_ceilU (r.x + r.w) o.snap hs; have b2 := le_ceilU (r.y + r.h) o.snap hs
+      have c1 := floorU_mono r'.x r.x o.snap hs (by omega)
+      have c2 := floorU_mono r'.y r.y o.snap hs (by omega)
+      have d1 := ceilU_mono (r.x + r.w) (r'.x + r'.w) o.snap hs (by omega)
+      have d2 := ceilU_mono (r.y + r.h) (r'.y + r'.h) o.snap hs (by omega)
+      right; right; dsimp only; omega
+    · simp only [hs, false_and, ite_false]; exact h
+
 theorem leave_within (o : VP) (r r' : PRect) (h : r.Within r') : (leave false o r).Within (leave true o r') := by
   unfold leave
-  have h1 := translate_within r r' ⟨-o.scroll.x, -o.scroll.y⟩ h
+  have h1 := snapR_within o _ _ (translate_within r r' ⟨-o.scroll.x, -o.scroll.y⟩ h)
   cases hc : o.clip with
   | none => simpa using h1
   | some c =>
@@ -507,10 +577,10 @@ theorem mapV_within (d : Pt) (os : List (Hop × VP)) (r r' : PRect) (h : r.Withi
       cases t with
       | nil =>
           simp only [mapV]
-          exact translate_within _ _ _ (translate_within _ _ _ h)
+          exact translate_within _ _ _ (translate_within _ _ _ (filt_within _ _ _ h))
       | cons y rest =>
           simp only [mapV]
-          exact ih _ _ (leave_within _ _ _ (translate_within _ _ _ h))
+          exact ih _ _ (leave_within _ _ _ (translate_within _ _ _ (filt_within _ _ _ h)))
 
 theorem translate_empty (r : PRect) (p : Pt) (h : r.isEmpty = true) : (r.translate p).isEmpty = true := by
   unfold PRect.translate PRect.isEmpty at *
@@ -520,6 +590,7 @@ theorem translate_empty (r : PRect) (p : Pt) (h : r.isEmpty = true) : (r.transla
 theorem leave_empty (skip : Bool) (o : VP) (r : PRect) (h : r.isEmpty = true) : (leave skip o r).isEmpty = true := by
   unfold leave
   have h1 := translate_empty r ⟨-o.scroll.x, -o.scroll.y⟩ h
+  rw [snapR_empty o _ h1]
   cases hc : o.clip with
   | none => simpa using h1
   | some c =>
@@ -531,14 +602,17 @@ theorem leave_empty (skip : Bool) (o : VP) (r : PRect) (h : r.isEmpty = true) : 
       · simpa using h1
 
 /-- An empty rectangle stays empty along any chain. -/
+theorem filt_empty (o : VP) (r : PRect) (h : r.isEmpty = true) : (filt o r).isEmpty = true := by
+  unfold filt; simp [h]
+
 theorem mapV_empty (skip : Bool) (d : Pt) (os : List (Hop × VP)) (r : PRect) (h : r.isEmpty = true) :
     (mapV skip d os r).isEmpty = true := by
   induction os generalizing r with
   | nil => simpa [mapV] using h
   | cons x t ih =>
       cases t with
-      | nil => simp only [mapV]; exact translate_empty _ _ (translate_empty _ _ h)
-      | cons y rest => simp only [mapV]; exact ih _ (leave_empty _ _ _ (translate_empty _ _ h))
+      | nil => simp only [mapV]; exact translate_empty _ _ (translate_empty _ _ (filt_empty _ _ h))
+      | cons y rest => simp only [mapV]; exact ih _ (leave_empty _ _ _ (translate_empty _ _ (filt_empty _ _ h)))
 
 
 /-- The scroll and clip data of a box: its scroll position and origin, and the clip its

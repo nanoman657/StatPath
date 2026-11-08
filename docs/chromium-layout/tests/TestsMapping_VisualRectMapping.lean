@@ -420,5 +420,33 @@ theorem LayoutViewDisplayNone_vectors :
     (layoutBox? .none (BF.ofPhys .horizontalTb (some 50) (some 50) {})).isNone = true ∧
     (layoutBox? .block (BF.ofPhys .horizontalTb (some 50) (some 50) {})).isSome = true := by decide
 
+/-- LayoutViewSubpixelRounding (588), in `LayoutUnit` raw units (64 per pixel): a `position:relative;
+    left:0.5px` target in a 200×200 iframe that is itself `left:0.5px`; crossing the frame
+    boundary expands the rect `(0.5, 0, 100, 100)` to whole pixels, then the iframe's 0.5 is added:
+    `(0.5, 0, 101, 100)`. -/
+theorem LayoutViewSubpixelRounding_vectors :
+    let mp := layoutRoot 800 (bodyPage 0 [{ id := 3, children := [BF.ofPhys .horizontalTb (some 12800) (some 12800) { id := 4 }] }])
+    let mb := mp.kid 0
+    let fc := mb.kid 0
+    let ifr := fc.kid 0
+    let cp := layoutRoot 800 (bodyPage 0 [{ id := 7, width := .px 6400, height := some 6400 }])
+    let os := vchain [Node.block (cp.kid 0) ((cp.kid 0).kid 0) (rp 32 0), .block cp (cp.kid 0), .block view cp, .inline,
+                      .block fc ifr (rp 32 0)]
+                     [{}, {}, {}, { snap := 64, clip := some (physBox .horizontalTb ifr) }, {}]
+    mapV false z os ⟨0, 0, 6400, 6400⟩ = ⟨32, 0, 6464, 6400⟩ := by decide
+
+/-- IgnoreFilters (1656): `#parent` > `#filter{filter:blur(1px)}` > `#child`, input `(0,0,50,50)`:
+    the blur grows the rect by 3 px per side when it leaves the filtered box, unless filters are
+    ignored. -/
+theorem IgnoreFilters_vectors :
+    let f := layoutRoot 800 { id := 1, children := [{ id := 2, children := [{ id := 3, height := some 50 }] }] }
+    let flt := f.kid 0
+    let ns := [Node.block flt (flt.kid 0), .block f flt]
+    let os (b : Nat) := vchain ns [{}, { blur := b }]
+    let r : PRect := ⟨0, 0, 50, 50⟩
+    mapV false z ((os 1).take 1) r = r ∧ mapV false z ((os 0).take 1) r = r ∧
+    mapV false z (os 1) r = ⟨-3, -3, 56, 56⟩ ∧ mapV false z (os 0) r = r ∧
+    mapV false z ((os 1).drop 1) r = ⟨-3, -3, 56, 56⟩ ∧ mapV false z ((os 0).drop 1) r = r := by decide
+
 end TestsMapping
 end ChromiumLayout

@@ -85,7 +85,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:419 | VisualRectMappingTest.SkipAncestorAndViewportClipsInSubframe | geometry | formalized | `TestsMapping.SkipAncestorAndViewportClipsInSubframe_vectors` |
 | visual_rect_mapping_test.cc:488 | VisualRectMappingTest.RegressionTest_SkipAncestorClipExpansion | geometry | formalized | `TestsMapping.RegressionTest_SkipAncestorClipExpansion_vectors` |
 | visual_rect_mapping_test.cc:542 | VisualRectMappingTest.LayoutView | geometry | formalized | `TestsMapping.LayoutView_vectors` |
-| visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | blocked | fractional LayoutUnit positions and enclosing-rect snapping are not modelled (Mapping coordinates are whole pixels) |
+| visual_rect_mapping_test.cc:588 | VisualRectMappingTest.LayoutViewSubpixelRounding | geometry | formalized | `TestsMapping.LayoutViewSubpixelRounding_vectors` |
 | visual_rect_mapping_test.cc:619 | VisualRectMappingTest.LayoutViewDisplayNone | behaviour | formalized | `TestsMapping.LayoutViewDisplayNone_vectors` |
 | visual_rect_mapping_test.cc:658 | VisualRectMappingTest.SelfFlippedWritingMode | geometry | formalized | `TestsMapping.SelfFlippedWritingMode_vectors` |
 | visual_rect_mapping_test.cc:681 | VisualRectMappingTest.ContainerFlippedWritingMode | geometry | formalized | `TestsMapping.ContainerFlippedWritingMode_vectors` |
@@ -117,7 +117,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | geometry | formalized | `TestsMapping.PerspectiveWithAnonymousTable_vectors` |
 | visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | geometry | formalized | `TestsMapping.MapToVisualRectFastPathMapsToViewport_vectors` |
 | visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | blocked | anchor positioning with scroll snapshots belongs to the anchor lane (CSS Anchor Positioning 1) |
-| visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | blocked | filter blur visual extent (CSS Filter Effects 1) is not modelled |
+| visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | formalized | `TestsMapping.IgnoreFilters_vectors` |
 | visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | formalized | `TestsMapping.SVGTransformsFastVsSlowPath_vectors` |
 | visual_rect_mapping_test.cc:1787 | VisualRectMappingTest.NestedTransformsGeometryMapperFlag | geometry | blocked | compares the geometry-mapper path with the slow path of the same mapping; the model has one path, so the row has no independent expected value to state |
