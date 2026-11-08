@@ -115,6 +115,49 @@ theorem ComputeMinMaxContent_sizes : maxContent fuel mmc = 30 := by decide
 theorem ShrinkToFit_width :
     shrinkToFit 100 (maxContent fuel mmc) (maxContent fuel mmc) = 30 := by decide
 
+-- block_layout_algorithm_test.cc:1533: ComputeMinMaxContentFloats
+theorem ComputeMinMaxContentFloats_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, float := .right }
+    ]
+    sizes.minSize = 40 ∧ sizes.maxSize = 90 := by decide
+
+-- block_layout_algorithm_test.cc:1554: ComputeMinMaxContentFloatsClearance
+theorem ComputeMinMaxContentFloatsClearance_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, float := .right, clear := .left }
+    ]
+    sizes.minSize = 40 ∧ sizes.maxSize = 50 := by decide
+
+-- block_layout_algorithm_test.cc:1575: ComputeMinMaxContentNewFormattingContext
+theorem ComputeMinMaxContentNewFormattingContext_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, marginLeft := 60, isNewFc := true }
+    ]
+    sizes.minSize = 100 ∧ sizes.maxSize = 100 := by decide
+
+-- block_layout_algorithm_test.cc:1596: ComputeMinMaxContentNewFormattingContextNegativeMargins
+theorem ComputeMinMaxContentNewFormattingContextNegativeMargins_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, marginLeft := -20, isNewFc := true }
+    ]
+    sizes.minSize = 30 ∧ sizes.maxSize = 70 := by decide
+
+-- block_layout_algorithm_test.cc:1618: ComputeMinMaxContentSingleNewFormattingContextNegativeMargins
+theorem ComputeMinMaxContentSingleNewFormattingContextNegativeMargins_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, marginLeft := -40, isNewFc := true }
+    ]
+    sizes.minSize = 0 ∧ sizes.maxSize = 0 := by decide
+
 /-! ### ZeroBlockSizeAboveEdge (line 2321): new-BFC container; `#inflow` 50x50 `margin-top:-70px`;
     `#zero` `width:70px; margin:10px 0 30px 0`. -/
 def zbsae : BF :=

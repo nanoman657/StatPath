@@ -201,5 +201,94 @@ theorem new_fc_auto_margin (cW curLeft curRight w : Int) (hw : w ≤ cW - curRig
   dsimp
   omega
 
+/-- Result of min/max content inline sizing (CSS Intrinsic Sizing Level 3 §4,
+    CSS 2.1 §10.3.5). -/
+structure MinMaxSizes where
+  minSize : Nat := 0
+  maxSize : Nat := 0
+  deriving DecidableEq, Repr
+
+/-- Helper loop for min/max content inline sizing across floats and clearance.
+    CSS Intrinsic Sizing Level 3 §4.1; CSS 2.1 §9.5, §9.5.1, §9.5.2, §10.3.5. -/
+def minMaxLoop (rest : List FloatItem) (fl : Int) (fr : Int) (minS maxS : Int) : Int × Int :=
+  match rest with
+  | [] => (minS, maxS)
+  | item :: xs =>
+    let (flClear, frClear, curMax) :=
+      if item.float != .none || item.isNewFc then
+        let lineF := fl + fr
+        let m := if item.clear != .none then max maxS lineF else maxS
+        let fl1 := if item.clear == .both || item.clear == .left then 0 else fl
+        let fr1 := if item.clear == .both || item.clear == .right then 0 else fr
+        (fl1, fr1, m)
+      else
+        (fl, fr, maxS)
+
+    let itemMargin := item.marginLeft + item.marginRight
+    let itemW : Int := item.w
+
+    let (nextFl, nextFr, maxContrib) :=
+      match item.float with
+      | .left =>
+        let fsize := itemW + itemMargin
+        let newFl := if fsize > 0 then flClear + fsize else flClear
+        (newFl, frClear, newFl + frClear)
+      | .right =>
+        let fsize := itemW + itemMargin
+        let newFr := if fsize > 0 then frClear + fsize else frClear
+        (flClear, newFr, flClear + newFr)
+      | .none =>
+        if item.isNewFc then
+          let lineLeftInset :=
+            if item.marginLeft > 0 then max flClear item.marginLeft
+            else flClear + item.marginLeft
+          let lineRightInset :=
+            if item.marginRight > 0 then max frClear item.marginRight
+            else frClear + item.marginRight
+          (0, 0, itemW + lineLeftInset + lineRightInset)
+        else
+          (0, 0, itemW + itemMargin)
+
+    let newMaxS := max curMax maxContrib
+    let minContrib := itemW + itemMargin
+    let newMinS := max minS minContrib
+    minMaxLoop xs nextFl nextFr newMinS newMaxS
+
+/-- Compute intrinsic min-content and max-content inline sizes for a list of items
+    with floats, clearance, and new-FC elements.
+    CSS Intrinsic & Retargeted Sizing Module Level 3 §4.1;
+    CSS 2.1 §9.5, §9.5.1 (floats), §9.5.2 (clearance), §10.3.5 (shrink-to-fit). -/
+def computeMinMaxSizes (items : List FloatItem) (hpad : Nat := 0) : MinMaxSizes :=
+  let (rawMin, rawMax) := minMaxLoop items 0 0 0 0
+  let finalMin := (max 0 rawMin).toNat + hpad
+  let finalMax := (max 0 rawMax).toNat + hpad
+  ⟨finalMin, finalMax⟩
+
+/-- Law: A single float with zero margins has equal min-content and max-content
+    inline size equal to its specified width plus horizontal padding.
+    CSS Intrinsic & Retargeted Sizing Module Level 3 §4.1; CSS 2.1 §10.3.5. -/
+theorem single_float_min_max (w hpad : Nat) :
+    computeMinMaxSizes [{ w := w, float := .left }] hpad = ⟨w + hpad, w + hpad⟩ := by
+  dsimp [computeMinMaxSizes, minMaxLoop]
+  congr 1 <;> (try split) <;> omega
+
+/-- Law: Two consecutive left floats without clearance sit side by side in max-content sizing,
+    yielding a max-content size equal to the sum of their widths plus padding.
+    CSS Intrinsic & Retargeted Sizing Module Level 3 §4.1; CSS 2.1 §9.5.1, §10.3.5. -/
+theorem floats_max_content (w1 w2 hpad : Nat) :
+    (computeMinMaxSizes [{ w := w1, float := .left }, { w := w2, float := .left }] hpad).maxSize =
+    w1 + w2 + hpad := by
+  dsimp [computeMinMaxSizes, minMaxLoop]
+  split <;> split <;> omega
+
+/-- Law: Clearance between left floats breaks the accumulation line: with clearance,
+    the max-content size is max(w1, w2) + hpad instead of w1 + w2 + hpad.
+    CSS Intrinsic Sizing Level 3 §4.1; CSS 2.1 §9.5.2 clearance. -/
+theorem clear_breaks_line (w1 w2 hpad : Nat) :
+    (computeMinMaxSizes [{ w := w1, float := .left }, { w := w2, float := .left, clear := .left }] hpad).maxSize =
+    max w1 w2 + hpad := by
+  dsimp [computeMinMaxSizes, minMaxLoop]
+  split <;> split <;> omega
+
 end BlockFloat
 end ChromiumLayout
