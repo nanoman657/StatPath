@@ -4,6 +4,7 @@
 -/
 import BlockFlow
 import BlockFragmentation
+import BlockFloat
 
 namespace ChromiumLayout
 namespace TestsBlock
@@ -195,6 +196,94 @@ theorem InnerChildrenFragmentationSmallHeight_vectors :
     sliceSize 200 c1.y c1.h.toNat 0 = 180 ∧ sliceOffset 200 f.y c1.y 0 = 20 ∧
     sliceSize 200 c1.y c1.h.toNat 1 = 20 ∧ sliceOffset 200 f.y c1.y 1 = 0 ∧
     sliceSize 200 c2.y c2.h.toNat 1 = 100 ∧ sliceOffset 200 f.y c2.y 1 = 40 := by decide
+
+/-! ### Floats & Clearance (CSS 2.1 §9.5) -/
+
+/-- `NewFcAvoidsFloats` (line 2281): new formatting context avoids floats by clearing below when too wide. -/
+theorem NewFcAvoidsFloats_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 100, h := 30, float := .left },
+      { id := 2, w := 150, h := 120, isNewFc := true }
+    ]
+    res = [⟨1, 0, 0, 100, 30⟩, ⟨2, 0, 30, 150, 120⟩] := by
+  decide
+
+/-- `NewFcBlockWithAdjoiningFloatCollapsesMargins` (line 2226): fits beside float when space permits. -/
+theorem NewFcBlockWithAdjoiningFloatCollapsesMargins_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 100, h := 30, float := .left },
+      { id := 2, w := 80, h := 50, marginTop := 20, isNewFc := true }
+    ]
+    res = [⟨1, 0, 0, 100, 30⟩, ⟨2, 100, 0, 80, 50⟩] := by
+  decide
+
+/-- `PositionFragmentsWithClear` (line 1390): respects clear none/left/right/both. -/
+theorem PositionFragmentsWithClear_none_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 30, h := 30, float := .left },
+      { id := 2, w := 40, h := 170, float := .right },
+      { id := 3, w := 60, h := 60, marginTop := 20, marginBottom := 20, clear := .none },
+      { id := 4, w := 60, h := 60, marginTop := 40, marginBottom := 40 },
+      { id := 5, w := 20, h := 20, marginTop := 30, marginBottom := 30, clear := .left }
+    ]
+    res[2]!.y = 0 ∧ res[3]!.y = 100 ∧ res[4]!.y = 200 := by
+  decide
+
+theorem PositionFragmentsWithClear_left_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 30, h := 30, float := .left },
+      { id := 2, w := 40, h := 170, float := .right },
+      { id := 3, w := 60, h := 60, marginTop := 20, marginBottom := 20, clear := .left },
+      { id := 4, w := 60, h := 60, marginTop := 40, marginBottom := 40 },
+      { id := 5, w := 20, h := 20, marginTop := 30, marginBottom := 30, clear := .left }
+    ]
+    res[2]!.y = 30 ∧ res[3]!.y = 130 ∧ res[4]!.y = 230 := by
+  decide
+
+theorem PositionFragmentsWithClear_right_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 30, h := 30, float := .left },
+      { id := 2, w := 40, h := 170, float := .right },
+      { id := 3, w := 60, h := 60, marginTop := 20, marginBottom := 20, clear := .right },
+      { id := 4, w := 60, h := 60, marginTop := 40, marginBottom := 40 },
+      { id := 5, w := 20, h := 20, marginTop := 30, marginBottom := 30, clear := .left }
+    ]
+    res[2]!.y = 170 ∧ res[3]!.y = 270 ∧ res[4]!.y = 370 := by
+  decide
+
+theorem PositionFragmentsWithClear_both_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 30, h := 30, float := .left },
+      { id := 2, w := 40, h := 170, float := .right },
+      { id := 3, w := 60, h := 60, marginTop := 20, marginBottom := 20, clear := .both },
+      { id := 4, w := 60, h := 60, marginTop := 40, marginBottom := 40 },
+      { id := 5, w := 20, h := 20, marginTop := 30, marginBottom := 30, clear := .left }
+    ]
+    res[2]!.y = 170 ∧ res[3]!.y = 270 ∧ res[4]!.y = 370 := by
+  decide
+
+/-- `PositionFloatFragments` (line 1275): left and right float placement and dropping. -/
+theorem PositionFloatFragments_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 30, h := 30, float := .left },
+      { id := 2, w := 180, h := 30, float := .left },
+      { id := 3, w := 40, h := 40 },
+      { id := 4, w := 50, h := 50, float := .right },
+      { id := 5, w := 120, h := 120, marginTop := 10, marginRight := 10, marginBottom := 10, marginLeft := 10, float := .left }
+    ]
+    res[0]!.y = 0 ∧ res[1]!.y = 30 ∧ res[2]!.y = 0 ∧
+    res[4]!.x = 10 ∧ res[4]!.y = 70 := by
+  decide
+
+/-- `CollapsingMarginsCase1WithFloats` (line 418): in-flow child sits at y = 0 inside container. -/
+theorem CollapsingMarginsCase1WithFloats_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 10, h := 10, marginTop := 10, marginRight := 10, marginBottom := 10, marginLeft := 10, float := .left },
+      { id := 2, w := 30, h := 30, float := .right },
+      { id := 3, w := 200, h := 10, marginTop := 20 }
+    ]
+    res[2]!.y = 0 := by
+  decide
 
 end TestsBlock
 end ChromiumLayout
