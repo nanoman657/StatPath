@@ -330,6 +330,101 @@ theorem UnbreakableFloatBeforeBreakable_vectors :
     res[2]!.col = 1 ∧ res[2]!.x = 22 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 50 := by
   decide
 
+-- column_layout_algorithm_test.cc:2480: ForcedBreakInSecondChild
+theorem ForcedBreakInSecondChild_vectors :
+    let nodes := [
+      BNode.leaf (.px 33) 20,
+      BNode.box (.px 34) .auto [
+        BNode.leaf (.px 35) 20,
+        BNode.leaf (.px 36) 20 .auto .none 0 true
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 20 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 20 ∧ res[1]!.w = 34 ∧ res[1]!.h = 80 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 35 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 34 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 36 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2517: ForcedAndUnforcedBreaksAtSameBoundary
+theorem ForcedAndUnforcedBreaksAtSameBoundary_vectors :
+    let nodes := [
+      BNode.box (.px 33) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50 true
+      ] none .left,
+      BNode.box (.px 34) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50 false
+      ] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 10 ∧ res[0]!.kids[0]!.h = 70 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 33 ∧ res[1]!.y = 0 ∧ res[1]!.w = 34 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 10 ∧ res[1]!.kids[0]!.h = 70 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 70 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 50 ∧ res[2]!.kids[0]!.w = 20 ∧ res[2]!.kids[0]!.h = 20 ∧
+    res[3]!.col = 1 ∧ res[3]!.x = 33 ∧ res[3]!.y = 0 ∧ res[3]!.w = 34 ∧ res[3]!.h = 20 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 20 ∧ res[3]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2568: ResumeInsideFormattingContextRoot
+theorem ResumeInsideFormattingContextRoot_vectors :
+    let nodes := [
+      BNode.box (.px 33) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 10 ∧ res[0]!.kids[0]!.h = 70 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 33 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 20 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2602: NewFcAtColumnBoundary
+theorem NewFcAtColumnBoundary_vectors :
+    let nodes := [
+      BNode.leaf (.px 22) 100,
+      BNode.leaf (.px 33) 50
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 22 ∧ res[0]!.h = 100 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 33 ∧ res[1]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2633: NewFcWithMargin
+theorem NewFcWithMargin_vectors :
+    let nodes := [
+      BNode.leaf (.px 22) 50,
+      BNode.leaf (.px 33) 50 .auto .none 30
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 22 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 80 ∧ res[1]!.w = 33 ∧ res[1]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2697: NewFcWithMarginPastColumnBoundary
+theorem NewFcWithMarginPastColumnBoundary_vectors :
+    let nodes := [
+      BNode.leaf (.px 22) 80,
+      BNode.leaf (.px 33) 50 .auto .none 30
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 22 ∧ res[0]!.h = 80 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 33 ∧ res[1]!.h = 50 := by
+  decide
+
 -- column_layout_algorithm_test.cc:4415: Spanner
 def spanner_input : MulticolWithSpanners := {
   cols := 3, gap := 10, width := 320, border := 1,
