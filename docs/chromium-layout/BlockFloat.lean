@@ -72,8 +72,16 @@ def leftFloatWidthAt (lefts : List (Int × Int × Nat × Nat)) (y : Int) : Int :
 def rightFloatWidthAt (containerW : Nat) (rights : List (Int × Int × Nat × Nat)) (y : Int) : Int :=
   rights.foldl (fun w f => if f.2.1 ≤ y && y < floatBottom f then max w ((containerW : Int) - f.1) else w) 0
 
-/-- General CSS 2.1 block layout with floats, clearance, and BFC avoidance. -/
-def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem) : List PlacedBox :=
+/-- Filter and translate ancestor floats that intrude into a descendant block container box.
+    CSS 2.1 §9.5. -/
+def intrudeFloats (blockY : Int) (floats : List (Int × Int × Nat × Nat)) : List (Int × Int × Nat × Nat) :=
+  floats.filterMap (fun (x, y, w, h) =>
+    if y + (h : Int) > blockY then some (x, y - blockY, w, h) else none)
+
+/-- General CSS 2.1 block layout with floats, clearance, and BFC avoidance.
+    CSS 2.1 §9.5 (floats and intruding floats), §9.5.2 (clearance). -/
+def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem)
+    (initLefts initRights : List (Int × Int × Nat × Nat) := []) : List PlacedBox :=
   let rec loop (items : List FloatItem) (lefts rights : List (Int × Int × Nat × Nat))
                (flowY : Int) (prevMarginBottom : Int) (isFirstInFlow : Bool)
                (acc : List PlacedBox) : List PlacedBox :=
@@ -144,7 +152,21 @@ def layoutBlockWithFloats (containerW : Nat) (items : List FloatItem) : List Pla
               let box : PlacedBox := ⟨item.id, placeX, placeY, item.w, item.h⟩
               let nextY := placeY + (item.h : Int)
               loop rest lefts rights nextY item.marginBottom false (box :: acc)
-  loop items [] [] 0 0 true []
+  loop items initLefts initRights 0 0 true []
+
+/-- Law: Intruding float clearance inside a block is at least the float's intrusion extent.
+    CSS 2.1 §9.5, §9.5.2. -/
+theorem clear_intrude_pos (blockY : Int) (f : Int × Int × Nat × Nat) (hf : floatBottom f > blockY) :
+    maxBottom (intrudeFloats blockY [f]) = floatBottom f - blockY := by
+  dsimp [intrudeFloats, List.filterMap]
+  have hcond : f.2.1 + (f.2.2.2 : Int) > blockY := hf
+  rw [if_pos hcond]
+  dsimp [maxBottom, List.foldl]
+  have hfb : floatBottom (f.1, f.2.1 - blockY, f.2.2.1, f.2.2.2) = floatBottom f - blockY := by
+    dsimp [floatBottom]; omega
+  rw [hfb]
+  dsimp [max]
+  split <;> omega
 
 /-- Law: Clearance ensures the placed box's top edge is never above the cleared float's bottom. -/
 theorem clearance_respects_left_floats (lefts rights : List (Int × Int × Nat × Nat)) (y : Int) :

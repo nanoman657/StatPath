@@ -297,6 +297,26 @@ theorem CollapsingMarginsCase1WithFloats_vectors :
     res[2]!.y = 0 := by
   decide
 
+/-- `PositionBlocksWithClearanceAndIntrudingFloats` (line 1705): clearance and intruding floats into descendant block. -/
+theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
+    let bodyItems : List BlockFloat.FloatItem := [
+      { id := 1, w := 50, h := 50, float := .left },
+      { id := 2, w := 50, h := 80, marginLeft := 10, marginRight := 80, float := .right },
+      { id := 3, w := 200, h := 30, marginTop := 130, marginBottom := 20 },
+      { id := 4, w := 200, h := 0, marginTop := 30, clear := .left }
+    ]
+    let bodyRes := BlockFloat.layoutBlockWithFloats 640 bodyItems
+    let rightFloat : Int × Int × Nat × Nat := (640 - 80 - 50, 0, 140, 80)
+    let containerY : Int := 60
+    let intruding := BlockFloat.intrudeFloats containerY [rightFloat]
+    let childItems : List BlockFloat.FloatItem := [
+      { id := 10, w := 200, h := 0, marginTop := 30 },
+      { id := 11, w := 200, h := 20, clear := .right }
+    ]
+    let childRes := BlockFloat.layoutBlockWithFloats 640 childItems [] intruding
+    bodyRes[3]!.y = 60 ∧ childRes[1]!.y = 20 := by
+  decide
+
 /-! ### Writing Mode and Orthogonal Flow Tests -/
 
 /-- `LayoutBlockChildrenWithWritingMode` (line 380): child in vertical-lr container with horizontal-tb writing mode. -/
