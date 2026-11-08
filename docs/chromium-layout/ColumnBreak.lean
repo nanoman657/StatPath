@@ -58,7 +58,7 @@ def nodeHeight : Nat → BNode → Nat
 def nodeAvoids : Nat → BNode → Bool
   | 0, _ => false
   | _ + 1, .leaf _ _ bi .. => bi.avoidsColumn
-  | f + 1, .box _ bi ks .. => bi.avoidsColumn || ks.any (nodeAvoids f)
+  | f + 1, .box _ bi ks _ fl .. => bi.avoidsColumn || (fl ≠ .none && ks.any (nodeAvoids f))
 
 /-- Margin top of a node. CSS 2.1 §8.3. -/
 def nodeMarginTop : BNode → Nat
@@ -122,7 +122,7 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
   | f + 1, .box w bi ks optH _ mTop bB bA border padding .., c, y =>
     let bp := border + padding
     let hBox := match optH with | some h => h + 2 * bp | none => (ks.map (nodeHeight f)).sum + 2 * bp
-    let avoids := bi.avoidsColumn || ks.any (nodeAvoids f)
+    let avoids := bi.avoidsColumn
     let (c0, y0) := nodeStart fragH c y bB avoids mTop hBox
     let rw := resolveLen colW w
     let innerW := if rw ≥ 2 * bp then rw - 2 * bp else 0
@@ -152,7 +152,8 @@ def layoutNode (fragH colW : Nat) : Nat → BNode → Nat → Nat → List NFrag
       match optH with
       | none =>
         let boxFragH := if colIdx = endC then endY - boxFragY else if colIdx < endC then fragH - boxFragY else 0
-        if boxFragH = 0 && colKids.isEmpty then none
+        if colKids.isEmpty && bp = 0 then none
+        else if boxFragH = 0 && colKids.isEmpty then none
         else some ⟨colIdx, 0, boxFragY, rw, boxFragH, colKidsRel⟩
       | some h =>
         let totalH := h + 2 * bp
@@ -336,13 +337,13 @@ theorem box_fit_end_pos (fragH colW f c y h : Nat) (w : Len) (bi : BreakInside) 
     let (_, endC, endY) := layoutNode fragH colW (f + 1) (.box w bi ks (some h)) c y
     endC = c ∧ endY = y + h := by
   dsimp [layoutNode]
-  have hp : nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h = (c, y) := by
+  have hp : nodeStart fragH c y false bi.avoidsColumn 0 h = (c, y) := by
     dsimp [nodeStart]
     have h1 : decide (y ≥ fragH) = false := by simp; omega
     have h2 : decide (y + h > fragH) = false := by simp; omega
     simp [h1, h2]
-  have hpc : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h).fst = c := by rw [hp]
-  have hpy : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 h).snd = y := by rw [hp]
+  have hpc : (nodeStart fragH c y false bi.avoidsColumn 0 h).fst = c := by rw [hp]
+  have hpy : (nodeStart fragH c y false bi.avoidsColumn 0 h).snd = y := by rw [hp]
   have hle : y + h ≤ fragH := h_fit
   simp [hpc, hpy, hle, applyBreakAfter]
 
@@ -354,13 +355,13 @@ theorem box_border_size (fragH colW f c y h b : Nat) (w : Len) (bi : BreakInside
     let (_, endC, endY) := layoutNode fragH colW (f + 1) (.box w bi ks (some h) .none 0 false false b 0) c y
     endC = c ∧ endY = y + h + 2 * b := by
   dsimp [layoutNode]
-  have hp : nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b) = (c, y) := by
+  have hp : nodeStart fragH c y false bi.avoidsColumn 0 (h + 2 * b) = (c, y) := by
     dsimp [nodeStart]
     have h1 : decide (y ≥ fragH) = false := by simp; omega
     have h2 : decide (y + (h + 2 * b) > fragH) = false := by simp; omega
     simp [h1, h2]
-  have hpc : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b)).fst = c := by rw [hp]
-  have hpy : (nodeStart fragH c y false (bi.avoidsColumn || ks.any (nodeAvoids f)) 0 (h + 2 * b)).snd = y := by rw [hp]
+  have hpc : (nodeStart fragH c y false bi.avoidsColumn 0 (h + 2 * b)).fst = c := by rw [hp]
+  have hpy : (nodeStart fragH c y false bi.avoidsColumn 0 (h + 2 * b)).snd = y := by rw [hp]
   have hle : y + (h + 2 * b) ≤ fragH := by omega
   simp [hpc, hpy, hle, applyBreakAfter]
   omega
@@ -409,6 +410,15 @@ theorem line_moves_next_col (fragH c y lineH : Nat)
   have h1 : y > 0 := hy
   have h2 : fragH < y + lineH := h_fit
   simp [h1, h2]
+
+/-- Law: An auto-break box whose first child fits in remaining column space starts in the current column.
+    CSS Fragmentation Level 3 §3.2, §4.1. -/
+theorem auto_box_start_col (fragH c y h1 : Nat) (hy : y + h1 < fragH) :
+    let (c0, y0) := nodeStart fragH c y false false 0 h1
+    c0 = c ∧ y0 = y := by
+  dsimp [nodeStart]
+  have h1 : decide (y ≥ fragH) = false := by simp; omega
+  simp [h1]
 
 end ColumnLayout
 end ChromiumLayout

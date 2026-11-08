@@ -240,9 +240,9 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2017 | ColumnLayoutAlgorithmTest.OrphansAndUnsatisfiableWidows | geometry | blocked | needs orphans and widows balancing in multicolumn |
 | column_layout_algorithm_test.cc:2057 | ColumnLayoutAlgorithmTest.UnsatisfiableOrphansAndWidows | geometry | blocked | needs orphans and widows balancing in multicolumn |
 | column_layout_algorithm_test.cc:2097 | ColumnLayoutAlgorithmTest.WidowsAndAbspos | geometry | blocked | needs orphans and widows balancing in multicolumn |
-| column_layout_algorithm_test.cc:2147 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:2194 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore2 | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:2236 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore3 | geometry | blocked | needs inline line box fragmentation in multicolumn |
+| column_layout_algorithm_test.cc:2147 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore | geometry | formalized | `TestsBlock.BreakBetweenLinesNotBefore_vectors`, `ColumnLayout.auto_box_start_col` |
+| column_layout_algorithm_test.cc:2194 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore2 | geometry | formalized | `TestsBlock.BreakBetweenLinesNotBefore2_vectors`, `ColumnLayout.auto_box_start_col` |
+| column_layout_algorithm_test.cc:2236 | ColumnLayoutAlgorithmTest.BreakBetweenLinesNotBefore3 | geometry | formalized | `TestsBlock.BreakBetweenLinesNotBefore3_vectors`, `ColumnLayout.auto_box_start_col` |
 | column_layout_algorithm_test.cc:2278 | ColumnLayoutAlgorithmTest.FloatInBlockMovedByOrphans | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:2318 | ColumnLayoutAlgorithmTest.FloatMovedWithWidows | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:2361 | ColumnLayoutAlgorithmTest.BorderAndPadding | geometry | formalized | `TestsBlock.BorderAndPadding_vectors`, `ColumnLayout.multicol_bp_size` |
