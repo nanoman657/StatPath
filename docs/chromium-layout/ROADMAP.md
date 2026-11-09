@@ -203,9 +203,25 @@ Before starting any of these, check whether a formal model of it already exists.
 
 ## Phase 9: Revision maintenance (not estimated)
 
-- [ ] Write a re-pin procedure: pick the new revision, diff the 67 in-scope files against the old pin, and list every changed function that the model transcribes.
-- [ ] Re-run the differential vectors at each re-pin.
-- [ ] Keep a changelog in this file, one line per pin.
+- [x] Write a re-pin procedure: pick the new revision, diff the 67 in-scope files against the old pin, and list every changed function that the model transcribes. The procedure and its tool (`docs/chromium-layout/repin.py`) are below.
+- [x] Re-run the differential vectors at each re-pin (step 5 of the procedure). This is a step to repeat at every re-pin, not a one-time task.
+- [x] Keep a changelog in this file, one line per pin.
+
+
+### Re-pin procedure
+
+`repin.py` only reads: it never edits the model, `pins.txt` or this file. Run it from the repository root.
+
+1. Check out the new revision's `third_party/blink/renderer/core/layout` (same sparse method as P0.5). Keep the old pin's checkout too, if you have it.
+2. Run `python3 docs/chromium-layout/repin.py --new-dir NEW/third_party/blink/renderer/core/layout --old-dir OLD/third_party/blink/renderer/core/layout`. Without `--old-dir` it reports changes by blob SHA-1 only.
+3. Read the report. Exit status 0 means no pinned file changed, 1 means there is something to review, 2 means bad input. For each pinned file it prints:
+   - `MISSING`: renamed or removed. Find the new location, then update `pins.txt` and the audit rows.
+   - `CHANGED`, with each audit row citing the file and whether the row's line range overlaps a changed hunk (`CHANGED RANGE`) or the file changed elsewhere (line numbers may have moved), plus the block-lane manifest rows citing the file.
+4. For every flagged row, re-read the C++ and decide whether the model function still matches. Change the Bend and Lean definitions and proofs if not. Then update the line range, anchor and slice digest in the audit table, and reset the row's `Reviewer 2` sign-off to pending if the function changed.
+5. Write the new pins with `--revision <40-char SHA> --write-pins OUT` and replace `pins.txt` with the result. Re-run `docs/chromium-layout/check.sh` (set `REQUIRE_CHROMIUM=1` and `CHROMIUM_LAYOUT` to the new checkout so the manifest and slice checks are not skipped), `python3 docs/chromium-layout/model_vectors.py`, and the vitest suite in `tests/chromium_layout_bend.test.ts`.
+6. Add one line to the changelog below with the date, the new revision and the files that changed.
+
+Limits: `repin.py` sees file changes, not semantic ones. A file that is unchanged cannot break a transcription, but a changed file whose changed hunk lies outside every audit row's line range can still affect a function through a header or helper it calls. Treat `file changed, range untouched` rows as needing a quick read, not as safe.
 
 ---
 
@@ -244,3 +260,4 @@ The SCOPE estimates are anchored to the repository's earlier developments (SCOPE
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 5 complete (M5): `layout.mjs` compiled (`gen.sh`); 650 bounded vectors generated (`model_vectors.py` / `model_vectors.txt`) and verified (`tests/chromium_layout_bend.test.ts`); `CompilerCheckCore.lean` and `CompilerCheck.lean` extended for `Nat.max` (`>`) and record constructors (`compiler_check.py` / `compiler_check_report.txt`). |
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 6: 36-row Transcription Audit Table added with Reviewer 1 (model author) sign-off (Reviewer 2 pending); mechanized verification added in `verify_transcription.py` (checking `layout.bend`, `LayoutTypes.lean`, `pins.txt`, and pinned Chromium C++ slice hashes); external WPT layout geometry probe added in `wpt_geometry_check.cjs` (Playwright 1.63.0 + headless Chromium against `layout.mjs`). |
 | 2026-11-07 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 7 complete: Assumptions Register documented in `README.md` and `ROADMAP.md`; explicit hypotheses and `LayoutUnit` (`2^31 - 1`) / `nat_chk` (`2^48 - 1`) overflow-bound theorems proved in `Layout.lean`. |
+| 2026-11-09 | `36c121be58126ddbb0686965897b8c8ff9b246fb` | Phase 9 re-pin procedure and `repin.py` added (no re-pin done; pin unchanged). `tests/check_tests.sh` now skips with a warning when the pinned Chromium checkout is absent (`REQUIRE_CHROMIUM=1` makes it fail). |

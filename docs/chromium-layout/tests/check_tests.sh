@@ -8,6 +8,10 @@
 set -euo pipefail
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CHROMIUM_LAYOUT="${CHROMIUM_LAYOUT:-/root/agy-scratch/chromium-layout/chromium/third_party/blink/renderer/core/layout}"
+if [[ ! -d "$CHROMIUM_LAYOUT" && "${REQUIRE_CHROMIUM:-0}" != 1 ]]; then
+  echo "SKIPPED: pinned Chromium checkout not found at $CHROMIUM_LAYOUT (set CHROMIUM_LAYOUT, or REQUIRE_CHROMIUM=1 to fail instead); manifest rows were NOT checked against the C++ tests"
+  exit 0
+fi
 python3 - "$HERE" "$CHROMIUM_LAYOUT" <<'PY'
 import os, re, sys
 here, root = sys.argv[1], sys.argv[2]

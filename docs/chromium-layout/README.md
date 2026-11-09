@@ -18,6 +18,7 @@ This directory contains the formal specification and mechanized proofs of Chromi
 | `CompilerCheckCore.lean` | Extended translation-validation semantics and soundness proofs (`JE.condGt`, `BE.max`, `JRet.record`, `BRet.record`, `decomp_sound`, `rec_fn_correct`) |
 | `CompilerCheck.lean` | Extended readers (`parseJS`, `parseRecJS`, `parseBend`) and kernel-checked validation (`layout_compiler_checked`, `layout_transitions_correct`) for `layout.mjs` and `$lp_max` |
 | `model_vectors.py` / `model_vectors.txt` | Bounded vector generator and 650 committed test vectors across M1 (`M`), M2 (`B`), M3 (`L`), and M4 (`I`) |
+| `repin.py` | Read-only re-pin report: which pinned Chromium files changed in another revision and which audit rows to review (ROADMAP Phase 9) |
 | `compiler_check.py` / `compiler_check_report.txt` | Translation-validation runner and committed report extracting compiled functions from `layout.mjs` and `merge.mjs` |
 | `verify_transcription.py` | Mechanized Phase 6 audit checker verifying every row of the Transcription Audit Table against `layout.bend`, `LayoutTypes.lean`, `pins.txt`, and the pinned Chromium C++ tree |
 | `wpt_geometry_check.cjs` | External WPT layout geometry check running headless Chromium via Playwright 1.63.0 (`offsetTop`, `offsetLeft`, `offsetWidth`, `offsetHeight`, `getClientRects()`) against `layout.mjs` |
