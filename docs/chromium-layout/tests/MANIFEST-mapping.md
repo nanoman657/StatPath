@@ -112,7 +112,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1392 | VisualRectMappingTest.FixedContentsInIframe | geometry | formalized | `TestsMapping.FixedContentsInIframe_vectors` |
 | visual_rect_mapping_test.cc:1431 | VisualRectMappingTest.FixedContentsWithScrollOffset | geometry | formalized | `TestsMapping.FixedContentsWithScrollOffset_vectors` |
 | visual_rect_mapping_test.cc:1464 | VisualRectMappingTest.FixedContentsUnderViewWithScrollOffset | geometry | formalized | `TestsMapping.FixedContentsUnderViewWithScrollOffset_vectors` |
-| visual_rect_mapping_test.cc:1492 | VisualRectMappingTest.InclusiveIntersect | geometry | blocked | edge-inclusive intersection and the boolean result of MapToVisualRectInAncestorSpace are not modelled |
+| visual_rect_mapping_test.cc:1492 | VisualRectMappingTest.InclusiveIntersect | geometry | formalized | `TestsMapping.InclusiveIntersect_vectors` via the new general `mapVis` (rectangle and visibility, with `PRect.touches` for kEdgeInclusive) |
 | visual_rect_mapping_test.cc:1522 | VisualRectMappingTest.Perspective | geometry | formalized | `TestsMapping.Perspective_vectors` |
 | visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | geometry | formalized | `TestsMapping.PerspectiveWithAnonymousTable_vectors` |
 | visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | geometry | formalized | `TestsMapping.MapToVisualRectFastPathMapsToViewport_vectors` |

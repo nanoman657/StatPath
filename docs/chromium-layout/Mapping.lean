@@ -485,6 +485,32 @@ def mapV (skip : Bool) (d : Pt) : List (Hop × VP) → PRect → PRect
   | [(h, o)], r => ((filt o r).translate h).translate ⟨-d.x, -d.y⟩
   | (h, o) :: (h', o') :: rest, r => mapV skip d ((h', o') :: rest) (leave skip o' ((filt o r).translate h))
 
+/-- Edge-inclusive overlap: the rectangles share at least a point, an edge or a corner
+    (`PhysicalRect::InclusiveIntersect` with `kEdgeInclusive`). -/
+def PRect.touches (a b : PRect) : Bool :=
+  decide (max a.x b.x ≤ min (a.x + a.w) (b.x + b.w) ∧ max a.y b.y ≤ min (a.y + a.h) (b.y + b.h))
+
+/-- The clip step of `leave` with visibility: `none` when the rectangle is clipped out. Without
+    `incl` a zero-area overlap is not visible; with `incl` a rectangle touching the clip edge is. -/
+def leaveVis (incl skip : Bool) (o : VP) (r : PRect) : Option PRect :=
+  let r1 := snapR o (r.translate ⟨-o.scroll.x, -o.scroll.y⟩)
+  match o.clip with
+  | some c =>
+    if skip then some r1
+    else if (if incl then r1.touches c else !(r1.inter c).isEmpty) then some (r1.inter c)
+    else none
+  | none => some r1
+
+/-- `MapToVisualRectInAncestorSpace` with its visibility result: the mapped rectangle and whether it
+    is visible; a rectangle clipped out becomes the empty rectangle and is not visible. -/
+def mapVis (incl skip : Bool) (d : Pt) : List (Hop × VP) → PRect → PRect × Bool
+  | [], r => (r, true)
+  | [(h, o)], r => (((filt o r).translate h).translate ⟨-d.x, -d.y⟩, true)
+  | (h, o) :: (h', o') :: rest, r =>
+    match leaveVis incl skip o' ((filt o r).translate h) with
+    | some r' => mapVis incl skip d ((h', o') :: rest) r'
+    | none => (⟨0, 0, 0, 0⟩, false)
+
 /-- Hops and properties of a chain of nodes. -/
 def vchain (ns : List Node) (ps : List VP) : List (Hop × VP) := (hops ns).zip ps
 
