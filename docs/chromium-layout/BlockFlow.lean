@@ -63,6 +63,9 @@ structure BF where
   bl : Nat := 0
   br : Nat := 0
   newBfc : Bool := false
+  /-- A left float (CSS 2.1 §9.5). Floats are leaf boxes here: they are placed at the flow position
+      without consuming it and never collapse margins (`CollapsingMarginsCase2WithFloats`). -/
+  isFloat : Bool := false
   children : List BF := []
 
 /-- Border-box fragment in absolute coordinates (`PhysicalBoxFragment` size and offset,
@@ -107,13 +110,13 @@ end BF
     Fuel `d` bounds the tree depth. -/
 def isEmpty : Nat → BF → Bool
   | 0, _ => false
-  | d + 1, b => !b.hasStartEdge && !b.hasEndEdge && b.children.all (isEmpty d)
+  | d + 1, b => !b.hasStartEdge && !b.hasEndEdge && b.children.all (fun c => c.isFloat || isEmpty d c)
 
 /-- All margins of an empty subtree collapse into one strut (`NewFcFirstChildIsZeroBlockSize`). -/
 def allMargins : Nat → BF → MarginStrut
   | 0, b => MarginStrut.append (MarginStrut.ofInt b.mt) (MarginStrut.ofInt b.mb)
   | d + 1, b =>
-      b.children.foldl (fun s c => MarginStrut.append s (allMargins d c))
+      b.children.foldl (fun s c => if c.isFloat then s else MarginStrut.append s (allMargins d c))
         (MarginStrut.append (MarginStrut.ofInt b.mt) (MarginStrut.ofInt b.mb))
 
 /-- The strut at the moment a non-empty box's border-box top is resolved: the box's top margin
@@ -127,7 +130,7 @@ def firstResolve : Nat → BF → MarginStrut → MarginStrut
       else
         (b.children.foldl
           (fun (st : MarginStrut × Bool) c =>
-            if st.2 then st
+            if st.2 || c.isFloat then st
             else if isEmpty (d + 1) c then (MarginStrut.append st.1 (allMargins d c), false)
             else (firstResolve d c st.1, true))
           (s1, false)).1
@@ -153,6 +156,15 @@ def usedMargins (A : Nat) (b : BF) : Int × Int :=
   | .px l, .auto => (l, rem - l)
   | .px l, .px r => (l, r)
 
+/-- A left float laid out at the current flow position: its top is the incoming strut resolved
+    against `pos`, but the flow position and strut are not changed (CSS 2.1 §9.5.1). A float is a
+    leaf here; its content is not modelled. -/
+def layoutFloat (A : Nat) (x0 pos : Int) (s : MarginStrut) (b : BF) : Frag :=
+  let vert : Int := (b.pt : Int) + (b.pb : Int) + (b.bt : Int) + (b.bb : Int)
+  { id := b.id, x := x0 + (usedMargins A b).1, y := pos + s.signedSum,
+    w := contentWidth A b + b.hpad,
+    h := (match b.height with | some H => (H : Int) | none => 0) + vert }
+
 /-- Lay out one block box in absolute coordinates. `A`: containing block content width;
     `x0`: containing block content-left; `pos`: block position the incoming strut `s` hangs from.
     Returns the fragment, the new flow position (border-box bottom, or `pos` for an empty box) and
@@ -169,7 +181,8 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
         let cx : Int := x + (b.bl : Int) + (b.pl : Int)
         let kids := (b.children.foldl
           (fun (st : List Frag × Int × MarginStrut) c =>
-            let res := layoutBox d cw cx st.2.1 st.2.2 c
+            let res := if c.isFloat then (layoutFloat cw cx st.2.1 st.2.2 c, st.2.1, st.2.2)
+                       else layoutBox d cw cx st.2.1 st.2.2 c
             (res.1 :: st.1, res.2.1, res.2.2))
           ([], y, MarginStrut.empty)).1.reverse
         ({ id := b.id, x := x, y := y, w := cw + b.hpad, h := 0, kids := kids },
@@ -182,8 +195,11 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
         let cx : Int := x + (b.bl : Int) + (b.pl : Int)
         let r := b.children.foldl
           (fun (st : List Frag × Int × MarginStrut × Bool) c =>
-            let res := layoutBox d cw cx st.2.1 st.2.2.1 c
-            (res.1 :: st.1, res.2.1, res.2.2, st.2.2.2 || !isEmpty (d + 1) c))
+            if c.isFloat then
+              (layoutFloat cw cx st.2.1 st.2.2.1 c :: st.1, st.2.1, st.2.2.1, st.2.2.2)
+            else
+              let res := layoutBox d cw cx st.2.1 st.2.2.1 c
+              (res.1 :: st.1, res.2.1, res.2.2, st.2.2.2 || !isEmpty (d + 1) c))
           ([], inner.1, inner.2, false)
         let pos' := r.2.1
         let s' := r.2.2.1

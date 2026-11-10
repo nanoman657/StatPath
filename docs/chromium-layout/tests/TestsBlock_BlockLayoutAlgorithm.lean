@@ -331,5 +331,20 @@ theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
     res[4]!.y - res[3]!.y = 20 := by
   decide
 
+/-- `CollapsingMarginsCase2WithFloats` (line 487). The test's body children are read as offsets
+    relative to the body: first-child 0, the float 70, second-child 40, empty5 90; body at -7, from
+    empty1's margin -15 collapsing with the body's 8. The float between the empties and the float
+    in second-child are leaves that never collapse margins (`isFloat`). -/
+theorem CollapsingMarginsCase2WithFloats_vectors :
+    let first : BF := { id := 2, height := some 50, mb := 20, children := [{ id := 11, mb := -15 }, { id := 12, width := .px 30, height := some 30, isFloat := true }, { id := 13 }] }
+    let second : BF := { id := 4, height := some 50, mt := 10, children := [{ id := 7, width := .px 50, height := some 50, isFloat := true }, { id := 5 }, { id := 6, mt := -30 }] }
+    let fl : BF := { id := 3, width := .px 40, height := some 40, isFloat := true }
+    let body := (layoutRoot 800 (htmlBody [first, fl, second, { id := 8 }])).kid 0
+    body.y = -7 ∧
+    (body.kid 0).y - body.y = 0 ∧ (body.kid 1).y - body.y = 70 ∧
+    (body.kid 2).y - body.y = 40 ∧ (body.kid 3).y - body.y = 90 ∧
+    (body.kid 1).x - body.x = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
