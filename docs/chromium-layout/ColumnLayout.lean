@@ -377,5 +377,69 @@ theorem spanner_margin_collapsing (m1 m2 : Nat) :
   · apply Nat.le_max_left
   · apply Nat.le_max_right
 
+/-! ### Column balancing (`column-fill: balance`)
+
+Balancing picks the smallest column block size at which the content fits in `numCols`
+columns, subject to the container's `height`, `min-height` and `max-height`. The model
+assumes breakable content; unbreakable and zero-height children are not modelled. -/
+
+/-- Balanced column block size: `ceil(contentH / numCols)`, or 0 for empty content. -/
+def balancedColumnHeight (numCols contentH : Nat) : Nat :=
+  if contentH = 0 then 0 else (contentH + numCols - 1) / numCols
+
+/-- Upper bound on the container's content block size: `height` clamped by `max-height`
+(`none` when neither is set). -/
+def containerUpper (fixedH maxH : Option Nat) : Option Nat :=
+  match fixedH, maxH with
+  | none, none => none
+  | some f, none => some f
+  | none, some x => some x
+  | some f, some x => some (Nat.min f x)
+
+/-- Column fragmentainer height under balancing: the balanced height, capped by the
+container's upper bound. When the cap binds, columns fill to it (`column-fill: auto`). -/
+def balancedFragH (numCols contentH : Nat) (upper : Option Nat) : Nat :=
+  match upper with
+  | none => balancedColumnHeight numCols contentH
+  | some u => Nat.min (balancedColumnHeight numCols contentH) u
+
+/-- Container content block size. A fixed `height` is clamped by `max-height`; otherwise
+the container grows to the column height. `min-height` wins over `max-height`. -/
+def balancedContainerH (numCols contentH minH : Nat) (fixedH maxH : Option Nat) : Nat :=
+  match fixedH with
+  | some f => Nat.max minH (Nat.min f (maxH.getD f))
+  | none => Nat.max minH (balancedFragH numCols contentH maxH)
+
+/-- Multicol layout with `column-fill: balance`. The columns come from `layoutMulticol` at
+the balanced fragmentainer height; the container reports its own content height. -/
+def layoutMulticolBalanced (numCols gap width minH : Nat) (fixedH maxH : Option Nat)
+    (children : List ColChild) : MulticolResult :=
+  let contentH := totalContentHeight children
+  let fragH := balancedFragH numCols contentH (containerUpper fixedH maxH)
+  let res := layoutMulticol ⟨numCols, gap, width, fragH, children⟩
+  { res with h := balancedContainerH numCols contentH minH fixedH maxH }
+
+/-- The balanced height holds the content in `numCols` columns. -/
+theorem balancedColumnHeight_fits (n c : Nat) (hn : 0 < n) :
+    c ≤ n * balancedColumnHeight n c := by
+  unfold balancedColumnHeight
+  split
+  · omega
+  · have h1 := Nat.div_add_mod (c + n - 1) n
+    have h2 := Nat.mod_lt (c + n - 1) hn
+    omega
+
+/-- A capped fragmentainer height never exceeds the cap. -/
+theorem balancedFragH_le_upper (n c u : Nat) :
+    balancedFragH n c (some u) ≤ u := by
+  unfold balancedFragH
+  exact Nat.min_le_right _ _
+
+/-- The container never shrinks below `min-height`. -/
+theorem balancedContainerH_ge_min (n c m : Nat) (f x : Option Nat) :
+    m ≤ balancedContainerH n c m f x := by
+  unfold balancedContainerH
+  split <;> exact Nat.le_max_left _ _
+
 end ColumnLayout
 end ChromiumLayout

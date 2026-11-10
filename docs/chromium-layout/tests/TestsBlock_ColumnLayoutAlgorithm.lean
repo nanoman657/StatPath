@@ -364,5 +364,86 @@ theorem FixedSizeMulticolWithSpanner_vectors :
     (res.fragments[6]!).relX = 220 ∧ (res.fragments[6]!).relY = 150 ∧ (res.fragments[6]!).w = 100 ∧ (res.fragments[6]!).h = 150 := by
   decide
 
+-- Column balancing. Container border and padding (5px) and child overflow are omitted;
+-- the checks are on column offsets, sizes and the container's content height.
+-- One breakable 150px child in three 100px columns with a 10px gap.
+def balance150_children : List ColChild := [ { id := 1, width := .px 30, height := 150 } ]
+-- One 100px child (auto width) in three columns.
+def balance100_children : List ColChild := [ { id := 1, height := 100 } ]
+
+-- column_layout_algorithm_test.cc:2799: ColumnBalancing
+theorem ColumnBalancing_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 none none balance150_children
+    res.h = 50 ∧ res.w = 320 ∧ res.colWidth = 100 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧ (res.columns[2]!).relX = 220 ∧
+    (res.columns[0]!).h = 50 ∧ (res.columns[1]!).h = 50 ∧ (res.columns[2]!).h = 50 ∧
+    (res.columns[0]!).slices.length = 1 ∧ (res.columns[2]!).slices.length = 1 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2829: ColumnBalancingFixedHeightExactMatch
+theorem ColumnBalancingFixedHeightExactMatch_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 (some 50) none balance150_children
+    res.h = 50 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).h = 50 ∧ (res.columns[1]!).h = 50 ∧ (res.columns[2]!).h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2860: ColumnBalancingFixedHeightLessContent
+theorem ColumnBalancingFixedHeightLessContent_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 (some 100) none balance150_children
+    res.h = 100 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).h = 50 ∧ (res.columns[1]!).h = 50 ∧ (res.columns[2]!).h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2891: ColumnBalancingFixedHeightOverflowingContent
+theorem ColumnBalancingFixedHeightOverflowingContent_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 (some 35) none balance150_children
+    res.h = 35 ∧ res.columns.length = 5 ∧
+    (res.columns[0]!).h = 35 ∧ (res.columns[4]!).h = 35 ∧
+    ((res.columns[4]!).slices[0]!).h = 10 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2927: ColumnBalancingMinHeight
+theorem ColumnBalancingMinHeight_vectors :
+    let res := layoutMulticolBalanced 3 10 320 70 none none balance150_children
+    res.h = 70 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).h = 50 ∧ (res.columns[1]!).h = 50 ∧ (res.columns[2]!).h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2960: ColumnBalancingMaxHeight
+theorem ColumnBalancingMaxHeight_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 none (some 40) balance150_children
+    res.h = 40 ∧ res.columns.length = 4 ∧
+    (res.columns[0]!).h = 40 ∧ (res.columns[3]!).h = 40 ∧
+    ((res.columns[3]!).slices[0]!).h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2993: ColumnBalancingMinHeightLargerThanMaxHeight
+theorem ColumnBalancingMinHeightLargerThanMaxHeight_vectors :
+    let res := layoutMulticolBalanced 3 10 320 70 none (some 50) balance150_children
+    res.h = 70 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).h = 50 ∧ (res.columns[2]!).h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3027: ColumnBalancingFixedHeightMinHeight
+theorem ColumnBalancingFixedHeightMinHeight_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 (some 40) (some 30) balance150_children
+    res.h = 30 ∧ res.columns.length = 5 ∧
+    (res.columns[0]!).h = 30 ∧ (res.columns[4]!).h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3063: ColumnBalancing100By3
+theorem ColumnBalancing100By3_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 none none balance100_children
+    res.columns.length = 3 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3086: ColumnBalancingEmpty
+theorem ColumnBalancingEmpty_vectors :
+    let res := layoutMulticolBalanced 3 10 320 0 none none ([] : List ColChild)
+    res.h = 0 ∧ res.columns.length = 1 ∧
+    (res.columns[0]!).w = 100 ∧ (res.columns[0]!).h = 0 ∧
+    (res.columns[0]!).slices.length = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
