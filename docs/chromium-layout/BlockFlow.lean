@@ -220,10 +220,12 @@ def shiftFrag : Nat → Int → Frag → Frag
 /-- Lay out one block box in absolute coordinates. `A`: containing block content width;
     `x0`: containing block content-left; `pos`: block position the incoming strut `s` hangs from.
     Returns the fragment, the new flow position (border-box bottom, or `pos` for an empty box) and
-    the outgoing strut. Fuel `d` bounds the tree depth. -/
-def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × Int × MarginStrut
-  | 0, _, x0, pos, s, b => ({ id := b.id, x := x0, y := pos }, pos, s)
-  | d + 1, A, x0, pos, s, b =>
+    the outgoing strut. `lbIn`/`rbIn`: the bottoms of the earlier left and right floats of the
+    enclosing block formatting context that this box's in-flow content can clear (`none`: none).
+    Fuel `d` bounds the tree depth. -/
+def layoutBox : Nat → Nat → Int → Int → MarginStrut → Option Int → Option Int → BF → Frag × Int × MarginStrut
+  | 0, _, x0, pos, s, _, _, b => ({ id := b.id, x := x0, y := pos }, pos, s)
+  | d + 1, A, x0, pos, s, lbIn, rbIn, b =>
       let cw := contentWidth A b
       let x := x0 + (usedMargins A b).1
       if isEmpty (d + 1) b then
@@ -236,7 +238,7 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
         let kids := (b.children.foldl
           (fun (st : List Frag × Int × MarginStrut) c =>
             let res := if c.isFloat then (layoutFloat cw cx st.2.1 st.2.2 c, st.2.1, st.2.2)
-                       else layoutBox d cw cx st.2.1 st.2.2 c
+                       else layoutBox d cw cx st.2.1 st.2.2 lbIn rbIn c
             (res.1 :: st.1, res.2.1, res.2.2))
           ([], pos, s')).1.reverse
         ({ id := b.id, x := x, y := y, w := cw + b.hpad, h := 0, kids := kids },
@@ -247,6 +249,9 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
           if b.hasStartEdge then (y + (b.bt : Int) + (b.pt : Int), MarginStrut.empty)
           else (pos, MarginStrut.append s (MarginStrut.ofInt b.mt))
         let cx : Int := x + (b.bl : Int) + (b.pl : Int)
+        -- Floats the children can clear: the ones visible to this box, plus this box's own earlier
+        -- floats added in the fold. A new formatting context's content sees none of the outer floats.
+        let base : Option Int × Option Int := if b.newBfc then (none, none) else (lbIn, rbIn)
         -- Fold state: fragments (reversed), flow position, strut, "a non-empty child was seen",
         -- and the bottoms of the earlier left and right floats (`none`: no float yet).
         let r := (b.children.zip (afterEach b.children)).foldl
@@ -254,12 +259,15 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
             let c := cr.1
             let (acc, pos, strut, resolved, lb, rb) := st
             if c.isFloat then
-              let f := layoutFloat cw cx pos strut c
+              -- A float before the first in-flow child of a box with no start edge sits at the collapsed
+              -- top: its strut collapses through to that child, as for leading empty children.
+              let fstrut := if !b.hasStartEdge && !resolved then throughStrut (d + 1) cr.2 strut else strut
+              let f := layoutFloat cw cx pos fstrut c
               let fb : Int := f.y + f.h + c.mb
               if c.floatRight then (f :: acc, pos, strut, resolved, lb, maxOpt rb (some fb))
               else (f :: acc, pos, strut, resolved, maxOpt lb (some fb), rb)
             else
-              let res := layoutBox d cw cx pos strut c
+              let res := layoutBox d cw cx pos strut lb rb c
               -- A leading empty child (no non-empty sibling before it) of a box with no start edge
               -- sits where its margins collapse through the box's top margin (`throughStrut`).
               let f := if !b.hasStartEdge && !resolved && isEmpty (d + 1) c
@@ -280,7 +288,7 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
                 | none => 0
               (shiftFrag (d + 1) delta f :: acc, res.2.1 + delta, res.2.2,
                resolved || !isEmpty (d + 1) c, lb, rb))
-          ([], inner.1, inner.2, false, none, none)
+          ([], inner.1, inner.2, false, base.1, base.2)
         let pos' := r.2.1
         let s' := r.2.2.1
         let resolved := r.2.2.2.1
@@ -302,7 +310,7 @@ def fuel : Nat := 12
 
 /-- Lay out a root box (a new formatting context at the origin with available width `A`). -/
 def layoutRoot (A : Nat) (b : BF) : Frag :=
-  (layoutBox fuel A 0 0 MarginStrut.empty b).1
+  (layoutBox fuel A 0 0 MarginStrut.empty none none b).1
 
 /-- The viewport-rooted `html > body` chain used by the tests that read `GetHtmlPhysicalFragment()`:
     viewport width 800, `html` a new BFC, `body` with the UA `margin: 8px`. -/
@@ -358,16 +366,16 @@ theorem append_pos_ge (s t : MarginStrut) : s.pos ≤ (MarginStrut.append s t).p
 
 /-- An empty box is transparent to the flow position (`ZeroBlockSizeAboveEdge`: the box after an
     empty box starts from the same position). -/
-theorem empty_box_keeps_pos (d A : Nat) (x0 pos : Int) (s : MarginStrut) (b : BF)
+theorem empty_box_keeps_pos (d A : Nat) (x0 pos : Int) (s : MarginStrut) (lb rb : Option Int) (b : BF)
     (h : isEmpty (d + 1) b = true) :
-    (layoutBox (d + 1) A x0 pos s b).2.1 = pos := by
+    (layoutBox (d + 1) A x0 pos s lb rb b).2.1 = pos := by
   simp [layoutBox, h]
 
 /-- A non-empty box with a start edge is placed at the incoming strut collapsed with its own top
     margin (`CollapsingMarginsCase4`, with padding: `220 = 20 + 200`). -/
-theorem start_edge_top (d A : Nat) (x0 pos : Int) (s : MarginStrut) (b : BF)
+theorem start_edge_top (d A : Nat) (x0 pos : Int) (s : MarginStrut) (lb rb : Option Int) (b : BF)
     (hne : isEmpty (d + 1) b = false) (he : b.hasStartEdge = true) :
-    (layoutBox (d + 1) A x0 pos s b).1.y
+    (layoutBox (d + 1) A x0 pos s lb rb b).1.y
       = pos + (MarginStrut.append s (MarginStrut.ofInt b.mt)).signedSum := by
   have h1 : firstResolve (d + 1) b s = MarginStrut.append s (MarginStrut.ofInt b.mt) := by
     simp [firstResolve, he]

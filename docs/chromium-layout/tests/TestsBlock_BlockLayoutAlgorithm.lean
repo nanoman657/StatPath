@@ -331,6 +331,30 @@ theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
     res[4]!.y - res[3]!.y = 20 := by
   decide
 
+/-- `PositionBlocksWithClearanceAndIntrudingFloats` (line 1705) as a tree, with no flattening. The body
+    has `margin: 80px` (`mt`/`mb`/`ml`/`mr`), so its top margin collapses with `#block1`'s 130 and its
+    content starts at 130. The floats are direct children of the body. `#container-clear` (clear: left)
+    holds `#zero` (margin-top 30, empty) and `#clears-right` (clear: right, height 20), which clears the
+    right float that is a sibling of its parent. Expected: the container 60 below the body top, and
+    `#clears-right` 20 below the container top. The containing block is 360 wide, so the body is 200. -/
+theorem PositionBlocksWithClearanceAndIntrudingFloats_tree_vectors :
+    let leftF : BF := { id := 2, width := .px 50, height := some 50, isFloat := true }
+    let rightF : BF := { id := 3, width := .px 50, height := some 80, isFloat := true, floatRight := true,
+                         ml := .px 10, mr := .px 80 }
+    let block1 : BF := { id := 4, height := some 30, mt := 130, mb := 20 }
+    let zero : BF := { id := 6, mt := 30 }
+    let clearsRight : BF := { id := 7, height := some 20, clearRight := true }
+    let container : BF := { id := 5, clearLeft := true, children := [zero, clearsRight] }
+    let bodyBox : BF := { id := 1, mt := 80, mb := 80, ml := .px 80, mr := .px 80,
+                          children := [leftF, rightF, block1, container] }
+    let root : BF := { id := 0, newBfc := true, children := [bodyBox] }
+    let body := (layoutRoot 360 root).kid 0
+    body.kids.length = 4 ∧
+    (body.kid 3).y - body.y = 60 ∧
+    ((body.kid 3).kid 1).y - (body.kid 3).y = 20 ∧
+    ((body.kid 3).kid 1).y - body.y = 80 := by
+  decide
+
 /-- `CollapsingMarginsCase2WithFloats` (line 487). The test's body children are read as offsets
     relative to the body: first-child 0, the float 70, second-child 40, empty5 90; body at -7, from
     empty1's margin -15 collapsing with the body's 8. The float between the empties and the float
