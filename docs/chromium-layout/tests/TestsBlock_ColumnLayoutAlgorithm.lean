@@ -543,5 +543,82 @@ theorem BlockWithTopMarginInThreeColumns_vectors :
     ((res.columns[2]!).slices[0]!).relY = 0 := by
   decide
 
+-- column_layout_algorithm_test.cc:1292: MarginTopPastEndOfFragmentainer
+-- The first block fills 90px of column 1. The second block's 20px top margin would put its
+-- border box at y = 110, past the column end at 100. The margin is cut there, so the block starts
+-- at the top of column 2.
+def marginTopPastEnd_children : List MarginChild :=
+  [ { child := { id := 1, height := 90 } },
+    { child := { id := 2, width := .px 20, height := 20 }, marginTop := 20 } ]
+
+theorem MarginTopPastEndOfFragmentainer_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 marginTopPastEnd_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1327: MarginBottomPastEndOfFragmentainer
+-- The first block has a 20px bottom margin. The gap to the next block is the collapsed margin
+-- of 20px, which puts its border box at y = 110, past the column end. The margin is cut there.
+def marginBottomPastEnd_children : List MarginChild :=
+  [ { child := { id := 1, height := 90 }, marginBottom := 20 },
+    { child := { id := 2, width := .px 20, height := 20 } } ]
+
+theorem MarginBottomPastEndOfFragmentainer_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 marginBottomPastEnd_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1362: MarginTopAtEndOfFragmentainer
+-- The 10px top margin ends exactly at the column end, y = 100. The block is flush with the end of
+-- column 1, so it starts column 2 with one fragment and no empty fragment in column 1.
+def marginTopAtEnd_children : List MarginChild :=
+  [ { child := { id := 1, height := 90 } },
+    { child := { id := 2, width := .px 20, height := 20 }, marginTop := 10 } ]
+
+theorem MarginTopAtEndOfFragmentainer_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 marginTopAtEnd_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1396: MarginBottomAtEndOfFragmentainer
+-- The 10px bottom margin gives a collapsed gap that ends exactly at the column end, y = 100.
+-- The block starts column 2 with one fragment.
+def marginBottomAtEnd_children : List MarginChild :=
+  [ { child := { id := 1, height := 90 }, marginBottom := 10 },
+    { child := { id := 2, width := .px 20, height := 20 } } ]
+
+theorem MarginBottomAtEndOfFragmentainer_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 marginBottomAtEnd_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

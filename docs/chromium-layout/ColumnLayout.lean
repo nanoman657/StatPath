@@ -507,11 +507,12 @@ theorem shiftedStart_ge (fragH y : Nat) (c : ColChild) :
   dsimp only
   split <;> omega
 
-/-- A child with a block-start margin. Only the top margin is modelled, and it is not collapsed
-with the previous sibling. -/
+/-- A child with block-start and block-end margins. Adjoining margins collapse: the gap between
+two siblings is the larger of the previous child's bottom margin and this child's top margin. -/
 structure MarginChild where
   child : ColChild := {}
   marginTop : Nat := 0
+  marginBottom : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- Block-start of a child after its top margin. The first child keeps its margin. A later
@@ -524,17 +525,18 @@ def marginStart (fragH prevEnd : Nat) (first : Bool) (m : Nat) : Nat :=
   else Nat.min (prevEnd + m) (prevEnd + (fragH - prevEnd % fragH))
 
 /-- Block-start of each child, in order, after the margin rule. -/
-def marginChildStarts (fragH : Nat) : List MarginChild → Nat → Bool → List (Nat × ColChild)
-  | [], _, _ => []
-  | mc :: mcs, prevEnd, first =>
-      let s := marginStart fragH prevEnd first mc.marginTop
-      (s, mc.child) :: marginChildStarts fragH mcs (s + mc.child.height) false
+def marginChildStarts (fragH : Nat) : List MarginChild → Nat → Nat → Bool → List (Nat × ColChild)
+  | [], _, _, _ => []
+  | mc :: mcs, prevEnd, prevBottom, first =>
+      let m := if first then mc.marginTop else Nat.max prevBottom mc.marginTop
+      let s := marginStart fragH prevEnd first m
+      (s, mc.child) :: marginChildStarts fragH mcs (s + mc.child.height) mc.marginBottom false
 
 /-- Multicol layout with block-start margins, for a fixed column height `fragH > 0`. -/
 def layoutMulticolMargins (numCols gap width fragH : Nat) (children : List MarginChild) :
     MulticolResult :=
   let colW := usedWidth numCols 0 gap width
-  let blocks := marginChildStarts fragH children 0 true
+  let blocks := marginChildStarts fragH children 0 0 true
   let endY := blocks.foldl (fun acc (s, c) => Nat.max acc (s + c.height)) 0
   let cols := (List.range (actualColumnCount fragH endY)).map (fun k =>
     ({ colIdx := k, relX := columnInlineOffset k colW gap, relY := 0, w := colW,

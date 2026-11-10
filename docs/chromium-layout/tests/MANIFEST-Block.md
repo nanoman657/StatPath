@@ -220,10 +220,10 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:1174 | ColumnLayoutAlgorithmTest.NestedBreakInsideAvoid | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:1215 | ColumnLayoutAlgorithmTest.NestedBreakInsideAvoidTall | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:1258 | ColumnLayoutAlgorithmTest.BreakInsideAvoidAtColumnBoundary | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:1292 | ColumnLayoutAlgorithmTest.MarginTopPastEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1327 | ColumnLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1362 | ColumnLayoutAlgorithmTest.MarginTopAtEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
-| column_layout_algorithm_test.cc:1396 | ColumnLayoutAlgorithmTest.MarginBottomAtEndOfFragmentainer | geometry | blocked | needs margin truncation at fragmentainer boundary in multicolumn |
+| column_layout_algorithm_test.cc:1292 | ColumnLayoutAlgorithmTest.MarginTopPastEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginTopPastEndOfFragmentainer_vectors` (`marginStart`: the margin is cut at the column boundary, so the block starts column 2) |
+| column_layout_algorithm_test.cc:1327 | ColumnLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomPastEndOfFragmentainer_vectors` (collapsed bottom/top margin cut at the column boundary) |
+| column_layout_algorithm_test.cc:1362 | ColumnLayoutAlgorithmTest.MarginTopAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginTopAtEndOfFragmentainer_vectors` (margin ends exactly at the column boundary; one fragment in column 2) |
+| column_layout_algorithm_test.cc:1396 | ColumnLayoutAlgorithmTest.MarginBottomAtEndOfFragmentainer | geometry | formalized | `TestsBlock.MarginBottomAtEndOfFragmentainer_vectors` (collapsed margin ends exactly at the column boundary; one fragment in column 2) |
 | column_layout_algorithm_test.cc:1430 | ColumnLayoutAlgorithmTest.LinesInMulticolExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1470 | ColumnLayoutAlgorithmTest.LinesInMulticolExactFit | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:1510 | ColumnLayoutAlgorithmTest.LinesInMulticolChildExtraSpace | geometry | blocked | needs inline line box fragmentation in multicolumn |
