@@ -372,5 +372,17 @@ theorem PositionFloatInsideEmptyBlocks_vectors :
     (e2.kid 1).x - e2.x = 150 ∧ (e2.kid 1).y - e2.y = 15 := by
   decide
 
+/-- `ComputeMinMaxContentFloats` (line 1533). Left floats 20 and 30, right float 40, no clearance.
+    Min-content is the widest float (40); max-content is the three on one line (90). -/
+theorem ComputeMinMaxContentFloats_vectors :
+    BlockFloat.minMaxFloats [{ id := 1, w := 20, float := .left }, { id := 2, w := 30, float := .left }, { id := 3, w := 40, float := .right }] = (40, 90) := by
+  decide
+
+/-- `ComputeMinMaxContentFloatsClearance` (line 1554). As above, but the right float clears left, so it
+    starts a new run after the left floats: min 40, max 50 (the left pair alone, wider than the right float). -/
+theorem ComputeMinMaxContentFloatsClearance_vectors :
+    BlockFloat.minMaxFloats [{ id := 1, w := 20, float := .left }, { id := 2, w := 30, float := .left }, { id := 3, w := 40, float := .right, clear := .left }] = (40, 50) := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

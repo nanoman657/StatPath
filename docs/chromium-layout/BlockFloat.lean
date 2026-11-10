@@ -155,5 +155,43 @@ theorem clearance_respects_both_floats (lefts rights : List (Int × Int × Nat �
          (if y ≤ (if a ≤ b then b else a) then (if a ≤ b then b else a) else y) ≥ b
   split <;> split <;> omega
 
+/-- Whether a clear value clears the left floats. -/
+def clearsLeft : ClearType → Bool
+  | .left => true
+  | .both => true
+  | _ => false
+
+/-- Whether a clear value clears the right floats. -/
+def clearsRight : ClearType → Bool
+  | .right => true
+  | .both => true
+  | _ => false
+
+/-- Min-content and max-content inline sizes of a block whose in-flow children are floats only
+    (`ComputeMinMaxContentFloats`, `ComputeMinMaxContentFloatsClearance`). Min-content is the widest
+    float's outer width. Max-content is the widest run of floats that share a line: left and right
+    floats accumulate, and a float that clears a side starts a new run, so the floats before it are
+    closed off. This run rule is the model's own; the two tests are its only checks. -/
+def minMaxFloats (items : List FloatItem) : Int × Int :=
+  let step : Int × Int × Int × Int → FloatItem → Int × Int × Int × Int :=
+    fun (st : Int × Int × Int × Int) (it : FloatItem) =>
+      let mn := st.1
+      let mx := st.2.1
+      let l := st.2.2.1
+      let r := st.2.2.2
+      let outer : Int := (it.w : Int) + it.marginLeft + it.marginRight
+      let cL := clearsLeft it.clear
+      let cR := clearsRight it.clear
+      let mx' := if cL || cR then max mx (l + r) else mx
+      let l' := if cL then 0 else l
+      let r' := if cR then 0 else r
+      let mn' := max mn outer
+      match it.float with
+      | .left => (mn', mx', l' + outer, r')
+      | .right => (mn', mx', l', r' + outer)
+      | .none => (mn', mx', l', r')
+  let fin := items.foldl step (0, 0, 0, 0)
+  (fin.1, max fin.2.1 (fin.2.2.1 + fin.2.2.2))
+
 end BlockFloat
 end ChromiumLayout
