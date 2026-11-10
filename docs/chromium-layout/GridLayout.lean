@@ -179,5 +179,80 @@ theorem track_offset_zero (gap : Nat) (tracks : List Nat) :
   dsimp [trackOffset]
   cases tracks <;> rfl
 
+/-- A track sizing function (CSS Grid 1 §7.2): a keyword, a fixed length, a percentage, a flexible
+    length, or fit-content(percentage). -/
+inductive TrackSz where
+  | auto
+  | minContent
+  | maxContent
+  | fixed (px : Nat)
+  | pct (p : Nat)
+  | fr (q : Nat)
+  | fitContent (p : Nat)
+  deriving DecidableEq, Repr
+
+/-- A track definition: one track sizing function, or `minmax(lo, hi)` (CSS Grid 1 §7.2.2). -/
+inductive TrackDef where
+  | single (s : TrackSz)
+  | minmax (lo hi : TrackSz)
+  deriving DecidableEq, Repr
+
+/-- Minimum of a track after normalization (CSS Grid 1 §7.2.2): a percentage resolves only against a
+    definite content size and is `auto` otherwise, and a flexible minimum is `auto`. -/
+def normMin (definite : Bool) : TrackSz → TrackSz
+  | .pct p => if definite then .pct p else .auto
+  | .fr _ => .auto
+  | s => s
+
+/-- Maximum of a track after normalization: a percentage as for `normMin`; fit-content(p) stays a
+    fit-content in a definite container and is `max-content` in an indefinite one. -/
+def normMax (definite : Bool) : TrackSz → TrackSz
+  | .pct p => if definite then .pct p else .auto
+  | .fitContent p => if definite then .fitContent p else .maxContent
+  | s => s
+
+/-- Normalized (min, max) of a track definition. A single fit-content(p) has minimum `p` in a
+    definite container and `auto` otherwise. This is the rule the set constructor applies. -/
+def normalizeTrack (definite : Bool) : TrackDef → TrackSz × TrackSz
+  | .single (.fitContent p) => (normMin definite (.pct p), normMax definite (.fitContent p))
+  | .single s => (normMin definite s, normMax definite s)
+  | .minmax lo hi => (normMin definite lo, normMax definite hi)
+
+/-- Law: in an indefinite container no normalized track keeps a percentage. -/
+theorem normalizeTrack_indefinite_no_pct (t : TrackDef) (p : Nat) :
+    (normalizeTrack false t).1 ≠ .pct p ∧ (normalizeTrack false t).2 ≠ .pct p := by
+  cases t with
+  | single s => cases s <;> simp [normalizeTrack, normMin, normMax]
+  | minmax lo hi => cases lo <;> cases hi <;> simp [normalizeTrack, normMin, normMax]
+
+/-- An explicit repeater (CSS Grid 2 §7.2): `tracks` tracks per repetition, repeated `reps` times.
+    An auto-fit repeater takes the auto repetition count instead, and it collapses (CSS Grid 2
+    §7.2.3.2) when no grid item is placed in it. -/
+structure RepeaterSpec where
+  tracks : Nat
+  reps : Nat := 1
+  autoFit : Bool := false
+  hasItems : Bool := false
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Explicit ranges from a starting grid line, each paired with whether it is collapsed. -/
+def rangesFrom (autoReps : Nat) : Nat → List RepeaterSpec → List (GridRange × Bool)
+  | _, [] => []
+  | curLine, r :: rest =>
+      let reps := if r.autoFit then autoReps else r.reps
+      let count := r.tracks * reps
+      (⟨curLine, count⟩, r.autoFit && !r.hasItems) :: rangesFrom autoReps (curLine + count) rest
+
+/-- Explicit ranges from the start of the grid, with auto-fit collapse (`GridRangeBuilder`). -/
+def buildGridRangesAuto (autoReps : Nat) (repeaters : List RepeaterSpec) : List (GridRange × Bool) :=
+  rangesFrom autoReps 0 repeaters
+
+/-- Law: a range is collapsed exactly when its repeater is auto-fit and has no placed item. -/
+theorem collapsed_iff_autofit_empty (autoReps : Nat) (rs : List RepeaterSpec) (curLine : Nat) :
+    (rangesFrom autoReps curLine rs).map (·.2) = rs.map (fun r => r.autoFit && !r.hasItems) := by
+  induction rs generalizing curLine with
+  | nil => rfl
+  | cons r rest ih => simp [rangesFrom, ih]
+
 end GridLayout
 end ChromiumLayout
