@@ -483,5 +483,25 @@ theorem BreakInsideAvoidTallBlock_vectors :
     ((res.columns[2]!).slices[0]!).h = 70 ∧ ((res.columns[2]!).slices[0]!).relY = 0 := by
   decide
 
+-- column_layout_algorithm_test.cc:973: BlockStartAtColumnBoundary
+-- Two 100px children and no margins. The first fills column 1 exactly, so the second starts
+-- column 2. The container asks for three columns, but only two are needed.
+def blockStartAtColumnBoundary_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 50, height := 100 },
+                  { id := 2, width := .px 60, height := 100 } ] }
+
+theorem BlockStartAtColumnBoundary_vectors :
+    let res := layoutMulticol blockStartAtColumnBoundary_input
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 50 ∧ ((res.columns[0]!).slices[0]!).h = 100 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 60 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

@@ -211,7 +211,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:855 | ColumnLayoutAlgorithmTest.FloatWithMarginAndAvoidBreak | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:893 | ColumnLayoutAlgorithmTest.UnbreakableFloatBeforeBreakable | geometry | blocked | needs float fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:939 | ColumnLayoutAlgorithmTest.BlockWithTopMarginInThreeColumns | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
-| column_layout_algorithm_test.cc:973 | ColumnLayoutAlgorithmTest.BlockStartAtColumnBoundary | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
+| column_layout_algorithm_test.cc:973 | ColumnLayoutAlgorithmTest.BlockStartAtColumnBoundary | geometry | formalized | `TestsBlock.BlockStartAtColumnBoundary_vectors` (two 100px children with no margins; the third column is not created) |
 | column_layout_algorithm_test.cc:1004 | ColumnLayoutAlgorithmTest.NestedBlockAfterBlock | geometry | blocked | needs margin collapsing across column boundaries in multicolumn |
 | column_layout_algorithm_test.cc:1042 | ColumnLayoutAlgorithmTest.BreakInsideAvoid | geometry | formalized | `TestsBlock.BreakInsideAvoid_vectors`, `ColumnLayout.shiftedStart_ge`. Avoid rule: a child that does not fit in the rest of a column moves to the next column start, once. Fixed column height only. |
 | column_layout_algorithm_test.cc:1073 | ColumnLayoutAlgorithmTest.BreakInsideAvoidColumn | geometry | formalized | `TestsBlock.BreakInsideAvoidColumn_vectors` (avoid-column uses the same flag in a column-only layout) |
