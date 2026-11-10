@@ -115,6 +115,31 @@ theorem ComputeMinMaxContent_sizes : maxContent fuel mmc = 30 := by decide
 theorem ShrinkToFit_width :
     shrinkToFit 100 (maxContent fuel mmc) (maxContent fuel mmc) = 30 := by decide
 
+-- block_layout_algorithm_test.cc:1575: ComputeMinMaxContentNewFormattingContext
+theorem ComputeMinMaxContentNewFormattingContext_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, marginLeft := 60, isNewFc := true }
+    ]
+    sizes.minSize = 100 ∧ sizes.maxSize = 100 := by decide
+
+-- block_layout_algorithm_test.cc:1596: ComputeMinMaxContentNewFormattingContextNegativeMargins
+theorem ComputeMinMaxContentNewFormattingContextNegativeMargins_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, float := .left },
+      { id := 2, w := 30, float := .left },
+      { id := 3, w := 40, marginLeft := -20, isNewFc := true }
+    ]
+    sizes.minSize = 30 ∧ sizes.maxSize = 70 := by decide
+
+-- block_layout_algorithm_test.cc:1618: ComputeMinMaxContentSingleNewFormattingContextNegativeMargins
+theorem ComputeMinMaxContentSingleNewFormattingContextNegativeMargins_vectors :
+    let sizes := ChromiumLayout.BlockFloat.computeMinMaxSizes [
+      { id := 1, w := 20, marginLeft := -40, isNewFc := true }
+    ]
+    sizes.minSize = 0 ∧ sizes.maxSize = 0 := by decide
+
 /-! ### ZeroBlockSizeAboveEdge (line 2321): new-BFC container; `#inflow` 50x50 `margin-top:-70px`;
     `#zero` `width:70px; margin:10px 0 30px 0`. -/
 def zbsae : BF :=
@@ -216,6 +241,17 @@ theorem NewFcBlockWithAdjoiningFloatCollapsesMargins_vectors :
       { id := 2, w := 80, h := 50, marginTop := 20, isNewFc := true }
     ]
     res = [⟨1, 0, 0, 100, 30⟩, ⟨2, 100, 0, 80, 50⟩] := by
+  decide
+
+/-- `NewFormattingContextAutoMargins` (line 1029): new formatting context with auto margins in RTL container. -/
+theorem NewFormattingContextAutoMargins_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 100, h := 60, float := .left },
+      { id := 2, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginRight := true },
+      { id := 3, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginLeft := true, autoMarginRight := true },
+      { id := 4, w := 50, h := 20, isNewFc := true, isRtl := true, autoMarginLeft := true }
+    ]
+    res = [⟨1, 0, 0, 100, 60⟩, ⟨2, 100, 0, 50, 20⟩, ⟨3, 125, 20, 50, 20⟩, ⟨4, 150, 40, 50, 20⟩] := by
   decide
 
 /-- `PositionFragmentsWithClear` (line 1390): respects clear none/left/right/both. -/

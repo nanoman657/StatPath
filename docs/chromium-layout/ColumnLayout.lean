@@ -31,13 +31,15 @@ structure ColChild where
   avoid : Bool := false
   deriving Inhabited, DecidableEq, Repr
 
-/-- Multicolumn container specification. -/
+/-- Multicolumn container specification. CSS Multi-column Layout Level 1 §3 & CSS 2.1 §8.1. -/
 structure Multicol where
   cols : Nat
   gap : Nat
   width : Nat
   height : Nat
   children : List ColChild := []
+  border : Nat := 0
+  padding : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- Fragment of a child inside a column fragmentainer. -/
@@ -127,17 +129,29 @@ def sliceChildren (k : Nat) (fragH : Nat) (colW : Nat) (children : List ColChild
               rest
     sliceAt children 0
 
-/-- Multicolumn layout algorithm for `column-fill: auto`. -/
+/-- Multicolumn layout algorithm for `column-fill: auto`.
+    CSS Multi-column Layout Level 1 §3 & §4, CSS 2.1 §8.1. -/
 def layoutMulticol (mc : Multicol) : MulticolResult :=
   let colW := usedWidth mc.cols 0 mc.gap mc.width
   let contentH := totalContentHeight mc.children
   let numCols := actualColumnCount mc.height contentH
+  let bp := mc.border + mc.padding
   let cols := (List.range numCols).map (fun k =>
-    let x := columnInlineOffset k colW mc.gap
-    let y := 0
+    let x := bp + columnInlineOffset k colW mc.gap
+    let y := bp
     let slices := sliceChildren k mc.height colW mc.children
     ⟨k, x, y, colW, mc.height, slices⟩)
-  ⟨mc.width, mc.height, colW, cols⟩
+  ⟨mc.width + 2 * bp, mc.height + 2 * bp, colW, cols⟩
+
+/-- Law: The outer dimensions of a multicolumn container account for left/right
+    and top/bottom border and padding.
+    CSS 2.1 §8.1 & CSS Multi-column Layout Level 1 §3. -/
+theorem multicol_bp_size (mc : Multicol) :
+    let res := layoutMulticol mc
+    res.w = mc.width + 2 * (mc.border + mc.padding) ∧
+    res.h = mc.height + 2 * (mc.border + mc.padding) := by
+  dsimp [layoutMulticol]
+  omega
 
 /-- Column stride is strictly positive when column width is positive. -/
 theorem colStride_pos (colWidth gap : Nat) (h : 0 < colWidth) :
@@ -418,7 +432,7 @@ def layoutMulticolBalanced (numCols gap width minH : Nat) (fixedH maxH : Option 
     (children : List ColChild) : MulticolResult :=
   let contentH := totalContentHeight children
   let fragH := balancedFragH numCols contentH (containerUpper fixedH maxH)
-  let res := layoutMulticol ⟨numCols, gap, width, fragH, children⟩
+  let res := layoutMulticol { cols := numCols, gap := gap, width := width, height := fragH, children := children }
   { res with h := balancedContainerH numCols contentH minH fixedH maxH }
 
 /-- Zero content block size: the single column has height 0 and holds every child at its own
@@ -542,6 +556,111 @@ def layoutMulticolMargins (numCols gap width fragH : Nat) (children : List Margi
     ({ colIdx := k, relX := columnInlineOffset k colW gap, relY := 0, w := colW,
        h := fragH, slices := sliceAbs k fragH colW blocks } : ColFrag))
   { w := width, h := fragH, colWidth := colW, columns := cols }
+/-- `break-inside` values. CSS Fragmentation Level 3 §3.2 (`break-inside`). -/
+inductive BreakInside where
+  | auto | avoid | avoidColumn | avoidPage
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Whether a `break-inside` value forbids a break inside the box in a column fragmentainer;
+    `avoid-page` only applies to page breaks. CSS Fragmentation Level 3 §3.2. -/
+def BreakInside.avoidsColumn : BreakInside → Bool
+  | .avoid | .avoidColumn => true
+  | _ => false
+
+/-- A child block with top and bottom margins inside a multicol container.
+    CSS Fragmentation Level 3 §5.2 Adjoining Margins at Breaks. -/
+structure ColChildWithMargin where
+  id : Nat := 0
+  width : Len := .auto
+  height : Nat := 0
+  marginTop : Nat := 0
+  marginBottom : Nat := 0
+  breakInside : BreakInside := .auto
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Fragment slice of a child placed in a specific column fragmentainer.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+structure PlacedSlice where
+  colIdx : Nat := 0
+  id : Nat := 0
+  relX : Nat := 0
+  relY : Nat := 0
+  w : Nat := 0
+  h : Nat := 0
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Slice a child box across columns.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+def placeChildSlices (fragH w fuel cId remH colIdx curY : Nat) : List PlacedSlice × Nat × Nat :=
+  match fuel with
+  | 0 => ([], colIdx, curY)
+  | fuel + 1 =>
+    if remH = 0 then ([], colIdx, curY)
+    else
+      let avail := fragH - curY
+      let sliceH := Nat.min remH avail
+      let s : PlacedSlice := ⟨colIdx, cId, 0, curY, w, sliceH⟩
+      let newRem := remH - sliceH
+      if newRem = 0 then
+        ([s], colIdx, curY + sliceH)
+      else
+        let (more, finalCol, finalY) := placeChildSlices fragH w fuel cId newRem (colIdx + 1) 0
+        (s :: more, finalCol, finalY)
+
+/-- Layout block children with margins across fragmentainers (columns), truncating margins at breaks.
+    CSS Fragmentation Level 3 §5.2 & CSS Multi-column Layout Level 1 §4. -/
+def layoutFragmentedBlocks (fragH : Nat) (colW : Nat) (children : List ColChildWithMargin) : List PlacedSlice :=
+  let rec loop (chs : List ColChildWithMargin) (colIdx curY prevMarginBottom : Nat) : List PlacedSlice :=
+    match chs with
+    | [] => []
+    | c :: cs =>
+      let w := resolveLen colW c.width
+      let margin := Nat.max prevMarginBottom c.marginTop
+      let candY := curY + margin
+      -- CSS Fragmentation 3 §3.2: a box avoiding breaks inside that does not fit in the
+      -- remaining space moves to the next fragmentainer start (even if it is too tall there).
+      if curY > 0 && (candY >= fragH || (c.breakInside.avoidsColumn && candY + c.height > fragH)) then
+        let (slices, nextCol, nextY) := placeChildSlices fragH w (c.height + 1) c.id c.height (colIdx + 1) 0
+        slices ++ loop cs nextCol nextY c.marginBottom
+      else
+        let startY := if curY = 0 then 0 else candY
+        let (slices, nextCol, nextY) := placeChildSlices fragH w (c.height + 1) c.id c.height colIdx startY
+        slices ++ loop cs nextCol nextY c.marginBottom
+
+  loop children 0 0 0
+
+/-- Law: A single in-flow child that fits within fragmentainer height is placed in column 0 with relY = 0.
+    CSS Fragmentation Level 3 §5.3 Splitting Boxes. -/
+theorem single_child_slice_col_zero (fragH colW : Nat) (c : ColChildWithMargin) (h : c.height > 0) (h_fit : c.height ≤ fragH) :
+    let res := layoutFragmentedBlocks fragH colW [c]
+    ∃ s, res = [s] ∧ s.colIdx = 0 ∧ s.relY = 0 ∧ s.h = c.height := by
+  dsimp [layoutFragmentedBlocks, layoutFragmentedBlocks.loop, placeChildSlices]
+  split
+  · omega
+  · split
+    · refine ⟨_, rfl, rfl, rfl, ?_⟩
+      exact Nat.min_eq_left h_fit
+    · have h_min : Nat.min c.height fragH = c.height := Nat.min_eq_left h_fit
+      omega
+
+/-- Law: a box avoiding column breaks that does not fit after its predecessor starts at the top of
+    the next column. CSS Fragmentation Level 3 §3.2 (`break-inside: avoid`). -/
+theorem avoid_moves_to_next_column (fragH colW : Nat) (c1 c2 : ColChildWithMargin)
+    (h1 : 0 < c1.height) (h1f : c1.height < fragH) (m1 : c1.marginBottom = 0) (m2 : c2.marginTop = 0)
+    (ha : c2.breakInside.avoidsColumn = true) (hf : fragH < c1.height + c2.height) (h2 : 0 < c2.height) :
+    ∃ s1 s2 rest, layoutFragmentedBlocks fragH colW [c1, c2] = s1 :: s2 :: rest ∧
+      s1.colIdx = 0 ∧ s2.colIdx = 1 ∧ s2.relY = 0 := by
+  have e1 : Nat.min c1.height fragH = c1.height := Nat.min_eq_left (by omega)
+  have e2 : c1.height - c1.height = 0 := Nat.sub_self _
+  have e3 : c1.height + 1 = (c1.height).succ := rfl
+  have e4 : ¬ (c1.height = 0) := by omega
+  have e5 : fragH - 0 = fragH := rfl
+  have e6 : 0 < fragH - c1.height := by omega
+  have e7 : ¬ (fragH ≤ c1.height + 0) := by omega
+  have hc : 0 < c1.height ∧ (fragH ≤ c1.height ∨ fragH < c1.height + c2.height) := by omega
+  have e8 : c2.height ≠ 0 := by omega
+  simp [layoutFragmentedBlocks, layoutFragmentedBlocks.loop, placeChildSlices, m1, m2, ha, e1, e2, e4, hc, e8]
+  split <;> exact ⟨_, _, ⟨rfl, _, rfl⟩, rfl, rfl, rfl⟩
 
 end ColumnLayout
 end ChromiumLayout

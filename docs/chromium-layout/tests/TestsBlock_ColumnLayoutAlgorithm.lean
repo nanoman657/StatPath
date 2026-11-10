@@ -1,4 +1,5 @@
 import ColumnLayout
+import ColumnBreak
 
 namespace ChromiumLayout
 namespace TestsBlock
@@ -173,6 +174,557 @@ theorem ZeroHeightWithContent_vectors :
     (c2.slices[0]!).w = 20 ∧ (c2.slices[0]!).h = 1 ∧
     (c3.slices[0]!).w = 20 ∧ (c3.slices[0]!).h = 1 ∧
     (c4.slices[0]!).w = 20 ∧ (c4.slices[0]!).h = 1 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2361: BorderAndPadding
+def borderAndPadding_input : Multicol := {
+  cols := 3,
+  gap := 10,
+  width := 320,
+  height := 100,
+  border := 3,
+  padding := 2,
+  children := [{ id := 0, width := .px 30, height := 150 }]
+}
+
+theorem BorderAndPadding_vectors :
+    let res := layoutMulticol borderAndPadding_input
+    res.w = 330 ∧ res.h = 110 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).colIdx = 0 ∧ (res.columns[0]!).relX = 5 ∧ (res.columns[0]!).relY = 5 ∧
+    (res.columns[0]!).w = 100 ∧ (res.columns[0]!).h = 100 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).relX = 0 ∧ ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    ((res.columns[0]!).slices[0]!).w = 30 ∧ ((res.columns[0]!).slices[0]!).h = 100 ∧
+    (res.columns[1]!).colIdx = 1 ∧ (res.columns[1]!).relX = 115 ∧ (res.columns[1]!).relY = 5 ∧
+    (res.columns[1]!).w = 100 ∧ (res.columns[1]!).h = 100 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).relX = 0 ∧ ((res.columns[1]!).slices[0]!).relY = 0 ∧
+    ((res.columns[1]!).slices[0]!).w = 30 ∧ ((res.columns[1]!).slices[0]!).h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:429: OverflowedBlock
+theorem OverflowedBlock_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [
+        BNode.leaf (.px 50) 120,
+        BNode.leaf (.px 40) 20
+      ] (some 60),
+      BNode.leaf (.pct 85) 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 60 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 60 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 75 ∧ res[2]!.h = 0 ∧
+    res[2]!.kids.length = 2 ∧
+    res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 50 ∧ res[2]!.kids[0]!.h = 20 ∧
+    res[2]!.kids[1]!.y = 20 ∧ res[2]!.kids[1]!.w = 40 ∧ res[2]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:467: OverflowedBlock2
+theorem OverflowedBlock2_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [BNode.leaf (.px 50) 220] (some 10),
+      BNode.leaf (.pct 85) 10,
+      BNode.box (.pct 65) .auto [BNode.leaf (.px 51) 220] (some 10)
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 7 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 10 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 10 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 0 ∧ res[2]!.y = 20 ∧ res[2]!.w = 65 ∧ res[2]!.h = 10 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 51 ∧ res[2]!.kids[0]!.h = 80 ∧
+    res[3]!.col = 1 ∧ res[3]!.y = 0 ∧ res[3]!.w = 75 ∧ res[3]!.h = 0 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 50 ∧ res[3]!.kids[0]!.h = 100 ∧
+    res[4]!.col = 1 ∧ res[4]!.y = 0 ∧ res[4]!.w = 65 ∧ res[4]!.h = 0 ∧
+    res[4]!.kids.length = 1 ∧ res[4]!.kids[0]!.y = 0 ∧ res[4]!.kids[0]!.w = 51 ∧ res[4]!.kids[0]!.h = 100 ∧
+    res[5]!.col = 2 ∧ res[5]!.y = 0 ∧ res[5]!.w = 75 ∧ res[5]!.h = 0 ∧
+    res[5]!.kids.length = 1 ∧ res[5]!.kids[0]!.y = 0 ∧ res[5]!.kids[0]!.w = 50 ∧ res[5]!.kids[0]!.h = 20 ∧
+    res[6]!.col = 2 ∧ res[6]!.y = 0 ∧ res[6]!.w = 65 ∧ res[6]!.h = 0 ∧
+    res[6]!.kids.length = 1 ∧ res[6]!.kids[0]!.y = 0 ∧ res[6]!.kids[0]!.w = 51 ∧ res[6]!.kids[0]!.h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:515: OverflowedBlock3
+theorem OverflowedBlock3_vectors :
+    let nodes := [
+      BNode.box (.pct 75) .auto [BNode.leaf (.px 50) 220] (some 60),
+      BNode.leaf (.pct 85) 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 75 ∧ res[0]!.h = 60 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 50 ∧ res[0]!.kids[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 60 ∧ res[1]!.w = 85 ∧ res[1]!.h = 10 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 75 ∧ res[2]!.h = 0 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 50 ∧ res[2]!.kids[0]!.h = 100 ∧
+    res[3]!.col = 2 ∧ res[3]!.y = 0 ∧ res[3]!.w = 75 ∧ res[3]!.h = 0 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 50 ∧ res[3]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:554: UnusedSpaceInBlock
+theorem UnusedSpaceInBlock_vectors :
+    let nodes := [
+      BNode.box .auto .auto [BNode.leaf (.px 20) 20] (some 300)
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 20 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.isEmpty = true ∧
+    res[2]!.col = 2 ∧ res[2]!.y = 0 ∧ res[2]!.w = 100 ∧ res[2]!.h = 100 ∧
+    res[2]!.kids.isEmpty = true := by
+  decide
+
+-- column_layout_algorithm_test.cc:617: TwoFloatsInOneColumn
+theorem TwoFloatsInOneColumn_vectors :
+    let nodes := [
+      BNode.leaf (.pct 15) 100 .auto .left,
+      BNode.leaf (.pct 16) 100 .auto .right
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 15 ∧ res[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 84 ∧ res[1]!.y = 0 ∧ res[1]!.w = 16 ∧ res[1]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:647: TwoFloatsInTwoColumns
+theorem TwoFloatsInTwoColumns_vectors :
+    let nodes := [
+      BNode.leaf (.pct 15) 150 .auto .left,
+      BNode.leaf (.pct 16) 150 .auto .right
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 15 ∧ res[0]!.h = 100 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 84 ∧ res[1]!.y = 0 ∧ res[1]!.w = 16 ∧ res[1]!.h = 100 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 15 ∧ res[2]!.h = 50 ∧
+    res[3]!.col = 1 ∧ res[3]!.x = 84 ∧ res[3]!.y = 0 ∧ res[3]!.w = 16 ∧ res[3]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:717: FloatWithMargin
+theorem FloatWithMargin_vectors :
+    let nodes := [
+      BNode.leaf (.px 77) 140 .auto .left 10
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 10 ∧ res[0]!.w = 77 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:779: FloatWithLastResortBreak
+theorem FloatWithLastResortBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .avoid [BNode.leaf (.px 0) 20] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:818: FloatWithAvoidBreak
+theorem FloatWithAvoidBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .auto [BNode.leaf (.px 77) 20 .avoid] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 77 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:855: FloatWithMarginAndAvoidBreak
+theorem FloatWithMarginAndAvoidBreak_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 88) .auto [BNode.leaf (.px 77) 20 .avoid] none .left 5
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 5 ∧ res[1]!.w = 88 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 77 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:893: UnbreakableFloatBeforeBreakable
+theorem UnbreakableFloatBeforeBreakable_vectors :
+    let nodes := [
+      BNode.leaf (.px 99) 90,
+      BNode.box (.px 22) .auto [BNode.leaf (.px 11) 20 .avoid] (some 50) .left,
+      BNode.leaf (.px 33) 50 .auto .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 99 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 22 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 11 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 22 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 50 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1430: LinesInMulticolExtraSpace
+theorem LinesInMulticolExtraSpace_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 50 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1470: LinesInMulticolExactFit
+theorem LinesInMulticolExactFit_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 40 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 40 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1510: LinesInMulticolChildExtraSpace
+theorem LinesInMulticolChildExtraSpace_vectors :
+    let nodes := [
+      BNode.box (.px 77) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 77 ∧ res[0]!.h = 50 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1552: LinesInMulticolChildExactFit
+theorem LinesInMulticolChildExactFit_vectors :
+    let nodes := [
+      BNode.box (.px 77) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 40 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 77 ∧ res[0]!.h = 40 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1594: LinesInMulticolChildNoSpaceForFirst
+theorem LinesInMulticolChildNoSpaceForFirst_vectors :
+    let nodes := [
+      BNode.leaf (.px 100) 50,
+      BNode.box (.px 77) .auto (List.replicate 3 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[2]!.col = 2 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 77 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 2 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1637: LinesInMulticolChildInsufficientSpaceForFirst
+theorem LinesInMulticolChildInsufficientSpaceForFirst_vectors :
+    let nodes := [
+      BNode.leaf (.px 100) 40,
+      BNode.box (.px 77) .auto (List.replicate 3 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 40 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 77 ∧ res[1]!.h = 50 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[2]!.col = 2 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 77 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 2 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1681: LineAtColumnBoundaryInFirstBlock
+theorem LineAtColumnBoundaryInFirstBlock_vectors :
+    let nodes := [
+      BNode.box (.px 66) .auto [
+        BNode.leaf (.px 0) 20 .avoid
+      ] none .none 0 false false 0 0 false 1 1 40
+    ]
+    let res := layoutNodes 50 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 66 ∧ res[0]!.h = 50 ∧ res[0]!.kids.isEmpty ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 66 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧
+    res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1861: OrphansUnsatisfiable
+theorem OrphansUnsatisfiable_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 6 (BNode.leaf (.px 0) 20 .avoid)) none .none 0 false false 0 0 false 100 1
+    ]
+    let res := layoutNodes 90 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[0]!.kids.length = 4 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[0]!.kids[2]!.col = 0 ∧ res[0]!.kids[2]!.x = 0 ∧ res[0]!.kids[2]!.y = 40 ∧ res[0]!.kids[2]!.w = 0 ∧ res[0]!.kids[2]!.h = 20 ∧
+    res[0]!.kids[3]!.col = 0 ∧ res[0]!.kids[3]!.x = 0 ∧ res[0]!.kids[3]!.y = 60 ∧ res[0]!.kids[3]!.w = 0 ∧ res[0]!.kids[3]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1905: Widows
+theorem Widows_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 7 (BNode.leaf (.px 0) 20 .avoid)) none .none 0 false false 0 0 false 1 3
+    ]
+    let res := layoutNodes 110 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 110 ∧
+    res[0]!.kids.length = 4 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[0]!.kids[2]!.col = 0 ∧ res[0]!.kids[2]!.x = 0 ∧ res[0]!.kids[2]!.y = 40 ∧ res[0]!.kids[2]!.w = 0 ∧ res[0]!.kids[2]!.h = 20 ∧
+    res[0]!.kids[3]!.col = 0 ∧ res[0]!.kids[3]!.x = 0 ∧ res[0]!.kids[3]!.y = 60 ∧ res[0]!.kids[3]!.w = 0 ∧ res[0]!.kids[3]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 60 ∧
+    res[1]!.kids.length = 3 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[1]!.kids[2]!.col = 1 ∧ res[1]!.kids[2]!.x = 0 ∧ res[1]!.kids[2]!.y = 40 ∧ res[1]!.kids[2]!.w = 0 ∧ res[1]!.kids[2]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1951: WidowsUnsatisfiable
+theorem WidowsUnsatisfiable_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 14 (BNode.leaf (.px 0) 20 .avoid)) none .none 0 false false 0 0 false 1 100
+    ]
+    let res := layoutNodes 90 100 5 nodes
+    res.length = 5 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[0]!.kids.length = 1 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 90 ∧
+    res[1]!.kids.length = 4 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[1]!.kids[2]!.col = 1 ∧ res[1]!.kids[2]!.x = 0 ∧ res[1]!.kids[2]!.y = 40 ∧ res[1]!.kids[2]!.w = 0 ∧ res[1]!.kids[2]!.h = 20 ∧
+    res[1]!.kids[3]!.col = 1 ∧ res[1]!.kids[3]!.x = 0 ∧ res[1]!.kids[3]!.y = 60 ∧ res[1]!.kids[3]!.w = 0 ∧ res[1]!.kids[3]!.h = 20 ∧
+    res[2]!.col = 2 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 100 ∧ res[2]!.h = 90 ∧
+    res[2]!.kids.length = 4 ∧
+    res[3]!.col = 3 ∧ res[3]!.x = 0 ∧ res[3]!.y = 0 ∧ res[3]!.w = 100 ∧ res[3]!.h = 90 ∧
+    res[3]!.kids.length = 4 ∧
+    res[4]!.col = 4 ∧ res[4]!.x = 0 ∧ res[4]!.y = 0 ∧ res[4]!.w = 100 ∧ res[4]!.h = 20 ∧
+    res[4]!.kids.length = 1 ∧
+    res[4]!.kids[0]!.col = 4 ∧ res[4]!.kids[0]!.x = 0 ∧ res[4]!.kids[0]!.y = 0 ∧ res[4]!.kids[0]!.w = 0 ∧ res[4]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2017: OrphansAndUnsatisfiableWidows
+theorem OrphansAndUnsatisfiableWidows_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid)) none .none 0 false false 0 0 false 2 3
+    ]
+    let res := layoutNodes 70 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 70 ∧
+    res[0]!.kids.length = 2 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 1 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2057: UnsatisfiableOrphansAndWidows
+theorem UnsatisfiableOrphansAndWidows_vectors :
+    let nodes := [
+      BNode.box (.px 100) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid)) none .none 0 false false 0 0 false 4 4
+    ]
+    let res := layoutNodes 70 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 70 ∧
+    res[0]!.kids.length = 3 ∧
+    res[0]!.kids[0]!.col = 0 ∧ res[0]!.kids[0]!.x = 0 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 0 ∧ res[0]!.kids[0]!.h = 20 ∧
+    res[0]!.kids[1]!.col = 0 ∧ res[0]!.kids[1]!.x = 0 ∧ res[0]!.kids[1]!.y = 20 ∧ res[0]!.kids[1]!.w = 0 ∧ res[0]!.kids[1]!.h = 20 ∧
+    res[0]!.kids[2]!.col = 0 ∧ res[0]!.kids[2]!.x = 0 ∧ res[0]!.kids[2]!.y = 40 ∧ res[0]!.kids[2]!.w = 0 ∧ res[0]!.kids[2]!.h = 20 ∧
+    res[1]!.col = 1 ∧ res[1]!.x = 0 ∧ res[1]!.y = 0 ∧ res[1]!.w = 100 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧
+    res[1]!.kids[0]!.col = 1 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2147: BreakBetweenLinesNotBefore
+theorem BreakBetweenLinesNotBefore_vectors :
+    let nodes := [
+      BNode.leaf (.px 44) 60,
+      BNode.box (.px 55) .auto (List.replicate 4 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 44 ∧ res[0]!.h = 60 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 60 ∧ res[1]!.w = 55 ∧ res[1]!.h = 40 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.col = 0 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[1]!.kids[1]!.col = 0 ∧ res[1]!.kids[1]!.x = 0 ∧ res[1]!.kids[1]!.y = 20 ∧ res[1]!.kids[1]!.w = 0 ∧ res[1]!.kids[1]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 55 ∧ res[2]!.h = 40 ∧
+    res[2]!.kids.length = 2 ∧
+    res[2]!.kids[0]!.col = 1 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 ∧
+    res[2]!.kids[1]!.col = 1 ∧ res[2]!.kids[1]!.x = 0 ∧ res[2]!.kids[1]!.y = 20 ∧ res[2]!.kids[1]!.w = 0 ∧ res[2]!.kids[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2194: BreakBetweenLinesNotBefore2
+theorem BreakBetweenLinesNotBefore2_vectors :
+    let nodes := [
+      BNode.leaf (.px 44) 80,
+      BNode.box (.px 55) .auto (List.replicate 2 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 44 ∧ res[0]!.h = 80 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 80 ∧ res[1]!.w = 55 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧
+    res[1]!.kids[0]!.col = 0 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 55 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 1 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2236: BreakBetweenLinesNotBefore3
+theorem BreakBetweenLinesNotBefore3_vectors :
+    let nodes := [
+      BNode.leaf (.px 44) 80,
+      BNode.box (.px 55) .auto (List.replicate 2 (BNode.leaf (.px 0) 20 .avoid))
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 44 ∧ res[0]!.h = 80 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 80 ∧ res[1]!.w = 55 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧
+    res[1]!.kids[0]!.col = 0 ∧ res[1]!.kids[0]!.x = 0 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 0 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 55 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧
+    res[2]!.kids[0]!.col = 1 ∧ res[2]!.kids[0]!.x = 0 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 0 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2391: BreakInsideWithBorder
+theorem BreakInsideWithBorder_vectors :
+    let nodes := [
+      BNode.leaf .auto 85,
+      BNode.box .auto .auto [
+        BNode.leaf .auto 10
+      ] none .none 0 false false 10 0
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 85 ∧
+    res[1]!.col = 0 ∧ res[1]!.y = 85 ∧ res[1]!.w = 100 ∧ res[1]!.h = 15 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.x = 10 ∧ res[1]!.kids[0]!.y = 10 ∧ res[1]!.kids[0]!.w = 80 ∧ res[1]!.kids[0]!.h = 5 ∧
+    res[2]!.col = 1 ∧ res[2]!.y = 0 ∧ res[2]!.w = 100 ∧ res[2]!.h = 15 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.x = 10 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 80 ∧ res[2]!.kids[0]!.h = 5 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2480: ForcedBreakInSecondChild
+theorem ForcedBreakInSecondChild_vectors :
+    let nodes := [
+      BNode.leaf (.px 33) 20,
+      BNode.box (.px 34) .auto [
+        BNode.leaf (.px 35) 20,
+        BNode.leaf (.px 36) 20 .auto .none 0 true
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 20 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 20 ∧ res[1]!.w = 34 ∧ res[1]!.h = 80 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 35 ∧ res[1]!.kids[0]!.h = 20 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 34 ∧ res[2]!.h = 20 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 0 ∧ res[2]!.kids[0]!.w = 36 ∧ res[2]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2517: ForcedAndUnforcedBreaksAtSameBoundary
+theorem ForcedAndUnforcedBreaksAtSameBoundary_vectors :
+    let nodes := [
+      BNode.box (.px 33) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50 true
+      ] none .left,
+      BNode.box (.px 34) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50 false
+      ] none .left
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 4 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 10 ∧ res[0]!.kids[0]!.h = 70 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 33 ∧ res[1]!.y = 0 ∧ res[1]!.w = 34 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 10 ∧ res[1]!.kids[0]!.h = 70 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 33 ∧ res[2]!.h = 70 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.y = 50 ∧ res[2]!.kids[0]!.w = 20 ∧ res[2]!.kids[0]!.h = 20 ∧
+    res[3]!.col = 1 ∧ res[3]!.x = 33 ∧ res[3]!.y = 0 ∧ res[3]!.w = 34 ∧ res[3]!.h = 20 ∧
+    res[3]!.kids.length = 1 ∧ res[3]!.kids[0]!.y = 0 ∧ res[3]!.kids[0]!.w = 20 ∧ res[3]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2568: ResumeInsideFormattingContextRoot
+theorem ResumeInsideFormattingContextRoot_vectors :
+    let nodes := [
+      BNode.box (.px 33) .auto [
+        BNode.leaf (.px 10) 70,
+        BNode.leaf (.px 20) 20 .auto .none 50
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 33 ∧ res[0]!.h = 100 ∧
+    res[0]!.kids.length = 1 ∧ res[0]!.kids[0]!.y = 0 ∧ res[0]!.kids[0]!.w = 10 ∧ res[0]!.kids[0]!.h = 70 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 33 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.y = 0 ∧ res[1]!.kids[0]!.w = 20 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2665: NewFcBelowFloat
+theorem NewFcBelowFloat_vectors :
+    let nodes := [
+      BNode.leaf (.px 22) 50 .auto .left,
+      BNode.leaf (.px 88) 70 .auto .none 40 false false true
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.x = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 22 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 0 ∧ res[1]!.x = 0 ∧ res[1]!.y = 50 ∧ res[1]!.w = 88 ∧ res[1]!.h = 50 ∧
+    res[2]!.col = 1 ∧ res[2]!.x = 0 ∧ res[2]!.y = 0 ∧ res[2]!.w = 88 ∧ res[2]!.h = 20 := by
   decide
 
 -- column_layout_algorithm_test.cc:4415: Spanner
@@ -451,38 +1003,6 @@ def breakAvoid_mc (h2 : Nat) (avoid2 : Bool) : Multicol :=
     children := [ { id := 1, width := .px 10, height := 50 },
                   { id := 2, width := .px 20, height := h2, avoid := avoid2 } ] }
 
--- column_layout_algorithm_test.cc:1042: BreakInsideAvoid
-theorem BreakInsideAvoid_vectors :
-    let res := layoutMulticolAvoid (breakAvoid_mc 70 true)
-    res.h = 100 ∧ res.columns.length = 2 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧ ((res.columns[0]!).slices[0]!).h = 50 ∧
-    (res.columns[1]!).relX = 110 ∧ (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 70 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 := by
-  decide
-
--- column_layout_algorithm_test.cc:1073: BreakInsideAvoidColumn (avoid-column shares the
--- avoid flag in a column-only layout)
-theorem BreakInsideAvoidColumn_vectors :
-    let res := layoutMulticolAvoid (breakAvoid_mc 70 true)
-    res.h = 100 ∧ res.columns.length = 2 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧ ((res.columns[0]!).slices[0]!).h = 50 ∧
-    (res.columns[1]!).relX = 110 ∧ (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 70 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 := by
-  decide
-
--- column_layout_algorithm_test.cc:1137: BreakInsideAvoidTallBlock (moved once, then breaks)
-theorem BreakInsideAvoidTallBlock_vectors :
-    let res := layoutMulticolAvoid (breakAvoid_mc 170 true)
-    res.columns.length = 3 ∧
-    (res.columns[1]!).slices.length = 1 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 ∧
-    ((res.columns[2]!).slices[0]!).h = 70 ∧ ((res.columns[2]!).slices[0]!).relY = 0 := by
-  decide
-
 -- column_layout_algorithm_test.cc:973: BlockStartAtColumnBoundary
 -- Two 100px children and no margins. The first fills column 1 exactly, so the second starts
 -- column 2. The container asks for three columns, but only two are needed.
@@ -490,18 +1010,6 @@ def blockStartAtColumnBoundary_input : Multicol :=
   { cols := 3, gap := 10, width := 320, height := 100,
     children := [ { id := 1, width := .px 50, height := 100 },
                   { id := 2, width := .px 60, height := 100 } ] }
-
-theorem BlockStartAtColumnBoundary_vectors :
-    let res := layoutMulticol blockStartAtColumnBoundary_input
-    res.columns.length = 2 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).w = 50 ∧ ((res.columns[0]!).slices[0]!).h = 100 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 60 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 := by
-  decide
 
 -- column_layout_algorithm_test.cc:3109: ColumnBalancingEmptyBlock
 -- Three columns, 320px wide, and one 20px child with zero height. The container is 0px tall and
@@ -526,23 +1034,6 @@ def blockWithTopMarginInThreeColumns_children : List MarginChild :=
   [ { child := { id := 1, width := .px 50, height := 70 } },
     { child := { id := 2, width := .px 60, height := 150 }, marginTop := 10 } ]
 
-theorem BlockWithTopMarginInThreeColumns_vectors :
-    let res := layoutMulticolMargins 3 10 320 100 blockWithTopMarginInThreeColumns_children
-    res.w = 320 ∧ res.h = 100 ∧ res.columns.length = 3 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧ (res.columns[2]!).relX = 220 ∧
-    (res.columns[0]!).slices.length = 2 ∧
-    ((res.columns[0]!).slices[0]!).w = 50 ∧ ((res.columns[0]!).slices[0]!).h = 70 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    ((res.columns[0]!).slices[1]!).w = 60 ∧ ((res.columns[0]!).slices[1]!).h = 20 ∧
-    ((res.columns[0]!).slices[1]!).relY = 80 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 60 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 ∧
-    (res.columns[2]!).slices.length = 1 ∧
-    ((res.columns[2]!).slices[0]!).w = 60 ∧ ((res.columns[2]!).slices[0]!).h = 30 ∧
-    ((res.columns[2]!).slices[0]!).relY = 0 := by
-  decide
-
 -- column_layout_algorithm_test.cc:1292: MarginTopPastEndOfFragmentainer
 -- The first block fills 90px of column 1. The second block's 20px top margin would put its
 -- border box at y = 110, past the column end at 100. The margin is cut there, so the block starts
@@ -551,36 +1042,12 @@ def marginTopPastEnd_children : List MarginChild :=
   [ { child := { id := 1, height := 90 } },
     { child := { id := 2, width := .px 20, height := 20 }, marginTop := 20 } ]
 
-theorem MarginTopPastEndOfFragmentainer_vectors :
-    let res := layoutMulticolMargins 3 10 320 100 marginTopPastEnd_children
-    res.columns.length = 2 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 := by
-  decide
-
 -- column_layout_algorithm_test.cc:1327: MarginBottomPastEndOfFragmentainer
 -- The first block has a 20px bottom margin. The gap to the next block is the collapsed margin
 -- of 20px, which puts its border box at y = 110, past the column end. The margin is cut there.
 def marginBottomPastEnd_children : List MarginChild :=
   [ { child := { id := 1, height := 90 }, marginBottom := 20 },
     { child := { id := 2, width := .px 20, height := 20 } } ]
-
-theorem MarginBottomPastEndOfFragmentainer_vectors :
-    let res := layoutMulticolMargins 3 10 320 100 marginBottomPastEnd_children
-    res.columns.length = 2 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 := by
-  decide
 
 -- column_layout_algorithm_test.cc:1362: MarginTopAtEndOfFragmentainer
 -- The 10px top margin ends exactly at the column end, y = 100. The block is flush with the end of
@@ -589,36 +1056,12 @@ def marginTopAtEnd_children : List MarginChild :=
   [ { child := { id := 1, height := 90 } },
     { child := { id := 2, width := .px 20, height := 20 }, marginTop := 10 } ]
 
-theorem MarginTopAtEndOfFragmentainer_vectors :
-    let res := layoutMulticolMargins 3 10 320 100 marginTopAtEnd_children
-    res.columns.length = 2 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 := by
-  decide
-
 -- column_layout_algorithm_test.cc:1396: MarginBottomAtEndOfFragmentainer
 -- The 10px bottom margin gives a collapsed gap that ends exactly at the column end, y = 100.
 -- The block starts column 2 with one fragment.
 def marginBottomAtEnd_children : List MarginChild :=
   [ { child := { id := 1, height := 90 }, marginBottom := 10 },
     { child := { id := 2, width := .px 20, height := 20 } } ]
-
-theorem MarginBottomAtEndOfFragmentainer_vectors :
-    let res := layoutMulticolMargins 3 10 320 100 marginBottomAtEnd_children
-    res.columns.length = 2 ∧
-    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
-    (res.columns[0]!).slices.length = 1 ∧
-    ((res.columns[0]!).slices[0]!).w = 100 ∧ ((res.columns[0]!).slices[0]!).h = 90 ∧
-    ((res.columns[0]!).slices[0]!).relY = 0 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 := by
-  decide
 
 -- column_layout_algorithm_test.cc:2602: NewFcAtColumnBoundary
 -- A 100px block fills column 1. A 50px new formatting context root (`display: flow-root`, with no
@@ -675,6 +1118,159 @@ theorem NewFcWithMarginPastColumnBoundary_vectors :
     (res.columns[1]!).slices.length = 1 ∧
     ((res.columns[1]!).slices[0]!).w = 33 ∧ ((res.columns[1]!).slices[0]!).h = 50 ∧
     ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:939: BlockWithTopMarginInThreeColumns
+theorem BlockWithTopMarginInThreeColumns_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .px 50, height := 70 },
+      { id := 2, width := .px 60, height := 150, marginTop := 10 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 50 ∧ res[0]!.h = 70 ∧
+    res[1]!.colIdx = 0 ∧ res[1]!.relY = 80 ∧ res[1]!.w = 60 ∧ res[1]!.h = 20 ∧
+    res[2]!.colIdx = 1 ∧ res[2]!.relY = 0 ∧ res[2]!.w = 60 ∧ res[2]!.h = 100 ∧
+    res[3]!.colIdx = 2 ∧ res[3]!.relY = 0 ∧ res[3]!.w = 60 ∧ res[3]!.h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:973: BlockStartAtColumnBoundary
+theorem BlockStartAtColumnBoundary_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .px 50, height := 100 },
+      { id := 2, width := .px 60, height := 100 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 50 ∧ res[0]!.h = 100 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 60 ∧ res[1]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1292: MarginTopPastEndOfFragmentainer
+theorem MarginTopPastEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90 },
+      { id := 2, width := .px 20, height := 20, marginTop := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1327: MarginBottomPastEndOfFragmentainer
+theorem MarginBottomPastEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90, marginBottom := 20 },
+      { id := 2, width := .px 20, height := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1362: MarginTopAtEndOfFragmentainer
+theorem MarginTopAtEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90 },
+      { id := 2, width := .px 20, height := 20, marginTop := 10 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1396: MarginBottomAtEndOfFragmentainer
+theorem MarginBottomAtEndOfFragmentainer_vectors :
+    let res := layoutFragmentedBlocks 100 100 [
+      { id := 1, width := .auto, height := 90, marginBottom := 10 },
+      { id := 2, width := .px 20, height := 20 }
+    ]
+    res[0]!.colIdx = 0 ∧ res[0]!.relY = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1042/1073/1137: break-inside on a 70px (170px) block after a
+-- 50px block in a 100px column.
+def breakInside_input (bi : BreakInside) (h : Nat) : List ColChildWithMargin :=
+  [{ id := 1, width := .px 10, height := 50 },
+   { id := 2, width := .px 20, height := h, breakInside := bi }]
+
+theorem BreakInsideAvoid_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoid 70)
+    res.length = 2 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 70 := by
+  decide
+
+theorem BreakInsideAvoidColumn_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoidColumn 70)
+    res.length = 2 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.w = 20 ∧ res[1]!.h = 70 := by
+  decide
+
+theorem BreakInsideAvoidTallBlock_vectors :
+    let res := layoutFragmentedBlocks 100 100 (breakInside_input .avoid 170)
+    res.length = 3 ∧ res[0]!.colIdx = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.colIdx = 1 ∧ res[1]!.relY = 0 ∧ res[1]!.h = 100 ∧
+    res[2]!.colIdx = 2 ∧ res[2]!.relY = 0 ∧ res[2]!.h = 70 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1174: NestedBreakInsideAvoid
+theorem NestedBreakInsideAvoid_vectors :
+    let nodes := [
+      BNode.leaf (.px 10) 50 .auto,
+      BNode.box (.px 30) .avoid [
+        BNode.leaf (.px 21) 30 .avoid,
+        BNode.leaf (.px 22) 30 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.y = 0 ∧ res[0]!.w = 10 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 30 ∧ res[1]!.h = 60 ∧
+    res[1]!.kids.length = 2 ∧
+    res[1]!.kids[0]!.w = 21 ∧ res[1]!.kids[0]!.h = 30 ∧
+    res[1]!.kids[1]!.w = 22 ∧ res[1]!.kids[1]!.h = 30 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1215: NestedBreakInsideAvoidTall
+theorem NestedBreakInsideAvoidTall_vectors :
+    let nodes := [
+      BNode.leaf (.px 10) 50 .auto,
+      BNode.box (.px 30) .avoid [
+        BNode.leaf (.px 21) 30 .auto,
+        BNode.leaf (.px 22) 80 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 3 ∧
+    res[0]!.col = 0 ∧ res[0]!.h = 50 ∧
+    res[1]!.col = 1 ∧ res[1]!.y = 0 ∧ res[1]!.w = 30 ∧ res[1]!.h = 100 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 21 ∧ res[1]!.kids[0]!.h = 30 ∧
+    res[2]!.col = 2 ∧ res[2]!.y = 0 ∧ res[2]!.w = 30 ∧ res[2]!.h = 80 ∧
+    res[2]!.kids.length = 1 ∧ res[2]!.kids[0]!.w = 22 ∧ res[2]!.kids[0]!.h = 80 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1258: BreakInsideAvoidAtColumnBoundary
+theorem BreakInsideAvoidAtColumnBoundary_vectors :
+    let nodes := [
+      BNode.leaf .auto 90 .auto,
+      BNode.box .auto .auto [
+        BNode.leaf (.px 20) 20 .avoid
+      ]
+    ]
+    let res := layoutNodes 100 100 3 nodes
+    res.length = 2 ∧
+    res[0]!.col = 0 ∧ res[0]!.w = 100 ∧ res[0]!.h = 90 ∧
+    res[1]!.col = 1 ∧ res[1]!.w = 100 ∧ res[1]!.h = 20 ∧
+    res[1]!.kids.length = 1 ∧ res[1]!.kids[0]!.w = 20 ∧ res[1]!.kids[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2728: MinMax
+-- Intrinsic sizes for multicolumn: column-count + column-width, count-only, width-only.
+-- CSS Sizing 3 §4, CSS Sizing 4 §4.1.
+theorem MinMax_vectors :
+    -- Both column-count: 3 and column-width: 80 set (gap: 10, contentMin: 50, contentMax: 100)
+    (ColumnWidth.multicolMinMax 50 100 (some 3) (some 80) 10).1 = 50 ∧
+    (ColumnWidth.multicolMinMax 50 100 (some 3) (some 80) 10).2 = 320 ∧
+    -- Only column-count: 3 set
+    (ColumnWidth.multicolMinMax 50 100 (some 3) none 10).1 = 170 ∧
+    (ColumnWidth.multicolMinMax 50 100 (some 3) none 10).2 = 320 ∧
+    -- Only column-width: 80 set
+    (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).1 = 50 ∧
+    (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).2 = 80 := by
   decide
 
 end TestsBlock
