@@ -266,7 +266,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:3027 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightMinHeight | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightMinHeight_vectors` (max-height caps the fixed height) |
 | column_layout_algorithm_test.cc:3063 | ColumnLayoutAlgorithmTest.ColumnBalancing100By3 | geometry | formalized | `TestsBlock.ColumnBalancing100By3_vectors` (column count, no overflow column) |
 | column_layout_algorithm_test.cc:3086 | ColumnLayoutAlgorithmTest.ColumnBalancingEmpty | geometry | formalized | `TestsBlock.ColumnBalancingEmpty_vectors` (empty content gives one column) |
-| column_layout_algorithm_test.cc:3109 | ColumnLayoutAlgorithmTest.ColumnBalancingEmptyBlock | geometry | blocked | needs zero-height child slices in the balanced single-column path; the fragmentainer-height 0 path does not place a zero-height child |
+| column_layout_algorithm_test.cc:3109 | ColumnLayoutAlgorithmTest.ColumnBalancingEmptyBlock | geometry | formalized | `TestsBlock.ColumnBalancingEmptyBlock_vectors` (zero-content path of `layoutMulticolBalancedAll`: one column of height 0 holds the zero-height child) |
 | column_layout_algorithm_test.cc:3135 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLine | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:3163 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNested | geometry | blocked | needs inline line box fragmentation in multicolumn |
 | column_layout_algorithm_test.cc:3195 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNestedSpanner | geometry | blocked | needs inline line box fragmentation in multicolumn |

@@ -503,5 +503,20 @@ theorem BlockStartAtColumnBoundary_vectors :
     ((res.columns[1]!).slices[0]!).relY = 0 := by
   decide
 
+-- column_layout_algorithm_test.cc:3109: ColumnBalancingEmptyBlock
+-- Three columns, 320px wide, and one 20px child with zero height. The container is 0px tall and
+-- has one column of width 100 that holds the child.
+def columnBalancingEmptyBlock_children : List ColChild :=
+  [ { id := 1, width := .px 20, height := 0 } ]
+
+theorem ColumnBalancingEmptyBlock_vectors :
+    let res := layoutMulticolBalancedAll 3 10 320 0 none none columnBalancingEmptyBlock_children
+    res.w = 320 ∧ res.h = 0 ∧ res.columns.length = 1 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[0]!).w = 100 ∧ (res.columns[0]!).h = 0 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 20 ∧ ((res.columns[0]!).slices[0]!).h = 0 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
