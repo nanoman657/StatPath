@@ -10,8 +10,11 @@
   Coordinates are absolute (root border-box top-left = (0, 0)); the tests' child offsets are
   differences (`Frag.relY`, `Frag.relX`). Lengths are whole pixels (`Int`/`Nat`).
 
-  Not modelled (rows depending on them are `blocked` in MANIFEST-Block.md): floats, clear,
-  writing modes, text/inline content, fragmentation, caching.
+  Not modelled (rows depending on them are `blocked` in MANIFEST-Block.md): floats beyond the
+  direct children of a box (a float inside a child does not clear siblings), clearance of empty
+  boxes, writing modes, text/inline content, fragmentation, caching. Clearance of non-empty direct
+  children is modelled with one known gap: it does not inhibit the collapse of a cleared first
+  in-flow child's top margin into its parent (see the clearance note in `layoutBox`).
 -/
 import LayoutTypes
 
@@ -70,6 +73,11 @@ structure BF where
       edge. Floats never shift around each other in this model, so placements are exact only where
       floats do not overlap (`PositionFloatInsideEmptyBlocks`). -/
   floatRight : Bool := false
+  /-- `clear: left` (or `both`): the box's border top is moved below the margin-box bottom of the
+      earlier left floats among its siblings (CSS 2.1 §9.5.2). Applies to in-flow, non-empty boxes. -/
+  clearLeft : Bool := false
+  /-- `clear: right` (or `both`): as `clearLeft`, for right floats. -/
+  clearRight : Bool := false
   children : List BF := []
 
 /-- Border-box fragment in absolute coordinates (`PhysicalBoxFragment` size and offset,
@@ -139,6 +147,31 @@ def firstResolve : Nat → BF → MarginStrut → MarginStrut
             else (firstResolve d c st.1, true))
           (s1, false)).1
 
+/-- The siblings after each child: `afterEach [a, b, c] = [[b, c], [c], []]`. -/
+def afterEach : List BF → List (List BF)
+  | [] => []
+  | _ :: rest => rest :: afterEach rest
+
+/-- The collapse of a leading empty box's margins with the siblings after it. `s` is the strut through
+    the box (incoming strut and its own top margin). Empty siblings collapse in, and the first
+    non-empty sibling's resolved strut is taken; floats are skipped. `none` when no non-empty sibling
+    follows. -/
+def throughAux : Nat → List BF → MarginStrut → Option MarginStrut
+  | _, [], _ => none
+  | 0, _, _ => none
+  | d + 1, c :: rest, s =>
+      if c.isFloat then throughAux (d + 1) rest s
+      else if isEmpty (d + 1) c then throughAux (d + 1) rest (MarginStrut.append s (allMargins d c))
+      else some (firstResolve d c s)
+
+/-- Where a leading empty box sits in a box with no start edge: its top margin collapses through the
+    parent's top margin to the first non-empty sibling's, so the box is at the same position as that
+    sibling's collapsed top (`CollapsingMarginsCase7`: the empty `#zero` is at the body's content top,
+    20, not at its own margin, 10). With no non-empty sibling after it, `s` (its own top margin only,
+    `ZeroBlockSizeAboveEdge`). -/
+def throughStrut (d : Nat) (rest : List BF) (s : MarginStrut) : MarginStrut :=
+  (throughAux d rest s).getD s
+
 /-- Used content width: pixel, percentage of the containing block's content width, or stretch to
     the available inline size (`FixedSize`, `PercentageResolutionSize`, `LayoutBlockChildren`). -/
 def contentWidth (A : Nat) (b : BF) : Nat :=
@@ -171,6 +204,19 @@ def layoutFloat (A : Nat) (x0 pos : Int) (s : MarginStrut) (b : BF) : Frag :=
   let outerW : Int := ((contentWidth A b + b.hpad : Nat) : Int)
   { id := b.id, x := (if b.floatRight then x0 + (A : Int) - mr - outerW else x0 + ml), y := pos + s.signedSum + (b.mt : Int), w := contentWidth A b + b.hpad, h := (match b.height with | some H => (H : Int) | none => 0) + vert }
 
+/-- The larger of two optional bounds; `none` is no bound. -/
+def maxOpt : Option Int → Option Int → Option Int
+  | none, b => b
+  | a, none => a
+  | some a, some b => some (max a b)
+
+/-- Translates a fragment and its descendants vertically by `dl`. A cleared box is moved as a whole,
+    which is exact because a block's descendants are laid out at offsets from its border top
+    (`fuel` bounds the depth). -/
+def shiftFrag : Nat → Int → Frag → Frag
+  | 0, _, f => f
+  | n + 1, dl, f => { f with y := f.y + dl, kids := f.kids.map (shiftFrag n dl) }
+
 /-- Lay out one block box in absolute coordinates. `A`: containing block content width;
     `x0`: containing block content-left; `pos`: block position the incoming strut `s` hangs from.
     Returns the fragment, the new flow position (border-box bottom, or `pos` for an empty box) and
@@ -201,17 +247,43 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
           if b.hasStartEdge then (y + (b.bt : Int) + (b.pt : Int), MarginStrut.empty)
           else (pos, MarginStrut.append s (MarginStrut.ofInt b.mt))
         let cx : Int := x + (b.bl : Int) + (b.pl : Int)
-        let r := b.children.foldl
-          (fun (st : List Frag × Int × MarginStrut × Bool) c =>
+        -- Fold state: fragments (reversed), flow position, strut, "a non-empty child was seen",
+        -- and the bottoms of the earlier left and right floats (`none`: no float yet).
+        let r := (b.children.zip (afterEach b.children)).foldl
+          (fun (st : List Frag × Int × MarginStrut × Bool × Option Int × Option Int) (cr : BF × List BF) =>
+            let c := cr.1
+            let (acc, pos, strut, resolved, lb, rb) := st
             if c.isFloat then
-              (layoutFloat cw cx st.2.1 st.2.2.1 c :: st.1, st.2.1, st.2.2.1, st.2.2.2)
+              let f := layoutFloat cw cx pos strut c
+              let fb : Int := f.y + f.h + c.mb
+              if c.floatRight then (f :: acc, pos, strut, resolved, lb, maxOpt rb (some fb))
+              else (f :: acc, pos, strut, resolved, maxOpt lb (some fb), rb)
             else
-              let res := layoutBox d cw cx st.2.1 st.2.2.1 c
-              (res.1 :: st.1, res.2.1, res.2.2, st.2.2.2 || !isEmpty (d + 1) c))
-          ([], inner.1, inner.2, false)
+              let res := layoutBox d cw cx pos strut c
+              -- A leading empty child (no non-empty sibling before it) of a box with no start edge
+              -- sits where its margins collapse through the box's top margin (`throughStrut`).
+              let f := if !b.hasStartEdge && !resolved && isEmpty (d + 1) c
+                       then { res.1 with y := pos + (throughStrut (d + 1) cr.2 (MarginStrut.append strut (MarginStrut.ofInt c.mt))).signedSum }
+                       else res.1
+              -- Clearance (CSS 2.1 §9.5.2): the cleared box's border top moves to the bottom of the
+              -- floats it clears, absorbing its own margins. The box is moved as a whole, so the flow
+              -- position after it moves by the same amount. Empty boxes are not moved.
+              -- Known gap: CSS 2.1 §9.5.2 says clearance inhibits margin collapsing, but `y` above
+              -- (`firstResolve`) still collapses a first in-flow child's top margin into this box.
+              -- So a cleared first child with a top margin moves this box's top edge up by that
+              -- margin (scratch check: float height 20, then a child with mt 5 and clear: left, gives
+              -- the box top at 5 where the spec gives 0). No vector covers this case yet.
+              let tgt := maxOpt (if c.clearLeft then lb else none) (if c.clearRight then rb else none)
+              let delta : Int :=
+                match tgt with
+                | some t => if isEmpty (d + 1) c || f.y ≥ t then 0 else t - f.y
+                | none => 0
+              (shiftFrag (d + 1) delta f :: acc, res.2.1 + delta, res.2.2,
+               resolved || !isEmpty (d + 1) c, lb, rb))
+          ([], inner.1, inner.2, false, none, none)
         let pos' := r.2.1
         let s' := r.2.2.1
-        let resolved := r.2.2.2
+        let resolved := r.2.2.2.1
         let icb : Int :=
           if resolved then (if b.hasEndEdge then pos' + s'.signedSum else pos')
           else y + (b.bt : Int) + (b.pt : Int)

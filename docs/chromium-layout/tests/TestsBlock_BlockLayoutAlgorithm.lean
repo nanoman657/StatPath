@@ -384,5 +384,23 @@ theorem ComputeMinMaxContentFloatsClearance_vectors :
     BlockFloat.minMaxFloats [{ id := 1, w := 20, float := .left }, { id := 2, w := 30, float := .left }, { id := 3, w := 40, float := .right, clear := .left }] = (40, 50) := by
   decide
 
+/-- `CollapsingMarginsCase7` (line 818). Body (200px, UA margins 8) holds `#zero` (margin-top 10, empty,
+    with a 20x20 right float) and `#inflow` (height 20, margin-top 20, `clear: left`). `#zero`'s margin
+    collapses through the body's top margin to `#inflow`'s 20, so `#zero` sits at the body's content top
+    (offset 0, not 10). `clear: left` (`clearLeft`) changes nothing here: the only float is a right float,
+    so there is no left float to clear. -/
+theorem CollapsingMarginsCase7_vectors :
+    let flt : BF := { id := 3, width := .px 20, height := some 20, isFloat := true, floatRight := true }
+    let zeroBox : BF := { id := 2, mt := 10, children := [flt] }
+    let inflow : BF := { id := 4, height := some 20, mt := 20, clearLeft := true }
+    let root : BF := { id := 0, newBfc := true, children := [{ id := 1, width := .px 200, mt := 8, mb := 8, ml := .px 8, mr := .px 8, children := [zeroBox, inflow] }] }
+    let body := (layoutRoot 800 root).kid 0
+    let z := body.kid 0
+    let i := body.kid 1
+    body.x = 8 ∧ body.y = 20 ∧ body.w = 200 ∧ body.h = 20 ∧
+    body.relY z = 0 ∧ body.relX z = 0 ∧ z.w = 200 ∧ z.h = 0 ∧
+    body.relY i = 0 ∧ body.relX i = 0 ∧ i.w = 200 ∧ i.h = 20 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
