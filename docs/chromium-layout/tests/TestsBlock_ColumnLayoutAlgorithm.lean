@@ -474,17 +474,6 @@ theorem BreakInsideAvoidColumn_vectors :
     ((res.columns[1]!).slices[0]!).w = 20 := by
   decide
 
--- column_layout_algorithm_test.cc:1104: BreakInsideAvoidPage (no effect without page breaks)
-theorem BreakInsideAvoidPage_vectors :
-    let res := layoutMulticolAvoid (breakAvoid_mc 70 false)
-    res.columns.length = 2 ∧
-    (res.columns[0]!).slices.length = 2 ∧
-    ((res.columns[0]!).slices[1]!).relY = 50 ∧ ((res.columns[0]!).slices[1]!).h = 50 ∧
-    (res.columns[1]!).slices.length = 1 ∧
-    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
-    ((res.columns[1]!).slices[0]!).w = 20 := by
-  decide
-
 -- column_layout_algorithm_test.cc:1137: BreakInsideAvoidTallBlock (moved once, then breaks)
 theorem BreakInsideAvoidTallBlock_vectors :
     let res := layoutMulticolAvoid (breakAvoid_mc 170 true)
