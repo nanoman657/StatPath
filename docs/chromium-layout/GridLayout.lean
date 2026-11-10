@@ -254,5 +254,55 @@ theorem collapsed_iff_autofit_empty (autoReps : Nat) (rs : List RepeaterSpec) (c
   | nil => rfl
   | cons r rest ih => simp [rangesFrom, ih]
 
+/-- Midpoint of gap `g` along one axis, between track `g` and track `g + 1`. The gutter starts at
+    the end of track `g` and is `gap` wide; the midpoint is `gap / 2` into it. Centring the rule in
+    the gutter is the convention the gap-geometry tests check; the spec text does not state it. -/
+def gapMidpoint (gap : Nat) (tracks : List Nat) (g : Nat) : Nat :=
+  trackOffset gap tracks g + tracks.getD g 0 + gap / 2
+
+/-- Content size along one axis: the track sizes plus the `length - 1` gaps between them. -/
+def gridContentSize (gap : Nat) (tracks : List Nat) : Nat :=
+  tracks.foldl (· + ·) 0 + (tracks.length - 1) * gap
+
+/-- A placed item as half-open track ranges on each axis (`lo` inclusive, `hi` exclusive). -/
+structure GapItem where
+  rowLo : Nat
+  rowHi : Nat
+  colLo : Nat
+  colHi : Nat
+
+/-- Row ranges, as `(rowLo, rowHi)`, over which the column gap `g` (between columns `g` and
+    `g + 1`) is blocked: an item that covers both columns blocks the gap across its rows. This is
+    the default `column-rule-break: spanning-item` (CSS Gap Decorations: decorations do not paint
+    behind a spanning item). -/
+def blockedAlongCols (items : List GapItem) (g : Nat) : List (Nat × Nat) :=
+  items.filterMap fun it =>
+    if it.colLo ≤ g && g + 1 < it.colHi then some (it.rowLo, it.rowHi) else none
+
+/-- Column ranges, as `(colLo, colHi)`, over which the row gap `g` is blocked. -/
+def blockedAlongRows (items : List GapItem) (g : Nat) : List (Nat × Nat) :=
+  items.filterMap fun it =>
+    if it.rowLo ≤ g && g + 1 < it.rowHi then some (it.colLo, it.colHi) else none
+
+/-- Law: a gap midpoint lies at or after the end of its leading track. -/
+theorem gapMidpoint_ge_track_end (gap : Nat) (tracks : List Nat) (g : Nat) :
+    trackOffset gap tracks g + tracks.getD g 0 ≤ gapMidpoint gap tracks g := by
+  unfold gapMidpoint
+  omega
+
+/-- Size of each of `n` auto tracks, all with zero base size, after stretching. With
+    `align-content: normal` the free space left in a box of size `box` after the `n - 1` gaps is
+    divided equally among the auto tracks (CSS Grid Layout 1, stretch auto tracks). -/
+def stretchedAutoSize (box gap n : Nat) : Nat :=
+  if n = 0 then 0 else (box - (n - 1) * gap) / n
+
+/-- Law: the stretched auto tracks never exceed the box. -/
+theorem stretchedAutoSize_total_le (box gap n : Nat) :
+    stretchedAutoSize box gap n * n ≤ box := by
+  unfold stretchedAutoSize
+  split
+  · simp
+  · exact Nat.le_trans (Nat.div_mul_le_self _ _) (Nat.sub_le _ _)
+
 end GridLayout
 end ChromiumLayout

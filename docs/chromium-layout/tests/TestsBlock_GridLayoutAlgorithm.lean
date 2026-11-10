@@ -115,5 +115,40 @@ theorem ItemsSizeWithGap_vectors :
     (res.items[2]!).x = 240 ∧ (res.items[2]!).w = 100 := by
   decide
 
+-- grid_layout_algorithm_test.cc:209: GridLayoutAlgorithmGapGeometry
+-- Checks midpoints, gap counts and content edges. The GapGeometry container type and gap-size
+-- accessors are Blink API and are not modelled.
+def gapGeometry_cols : List Nat := [80, 120, 90]
+def gapGeometry_rows : List Nat := [90, 130, 110, 140]
+
+theorem GridLayoutAlgorithmGapGeometry_vectors :
+    gapMidpoint 12 gapGeometry_rows 0 = 96 ∧ gapMidpoint 12 gapGeometry_rows 1 = 238 ∧
+    gapMidpoint 12 gapGeometry_rows 2 = 360 ∧
+    gapGeometry_rows.length - 1 = 3 ∧
+    gapMidpoint 14 gapGeometry_cols 0 = 87 ∧ gapMidpoint 14 gapGeometry_cols 1 = 221 ∧
+    gapGeometry_cols.length - 1 = 2 ∧
+    trackOffset 14 gapGeometry_cols 0 = 0 ∧ trackOffset 12 gapGeometry_rows 0 = 0 ∧
+    gridContentSize 14 gapGeometry_cols = 318 ∧ gridContentSize 12 gapGeometry_rows = 506 := by
+  decide
+
+-- grid_layout_algorithm_test.cc:290: GapGeomoetryWithSpanningItems (name as in the source)
+-- The three auto rows (zero base size) are stretched to fill the 320px height, so each is
+-- `stretchedAutoSize 320 10 3`. Single-cell items are omitted: they never cross a gap.
+def spanningGaps_tracks : List Nat := List.replicate 3 (stretchedAutoSize 320 10 3)
+def spanningGaps_items : List GapItem :=
+  [ { rowLo := 0, rowHi := 1, colLo := 0, colHi := 2 },   -- item1: columns 1-2, row 1
+    { rowLo := 0, rowHi := 2, colLo := 2, colHi := 3 },   -- item3: column 3, rows 1-2
+    { rowLo := 2, rowHi := 3, colLo := 1, colHi := 3 } ]  -- item8: columns 2-3, row 3
+
+theorem GapGeomoetryWithSpanningItems_vectors :
+    stretchedAutoSize 320 10 3 = 100 ∧
+    gapMidpoint 10 spanningGaps_tracks 0 = 105 ∧ gapMidpoint 10 spanningGaps_tracks 1 = 215 ∧
+    gridContentSize 10 spanningGaps_tracks = 320 ∧
+    blockedAlongCols spanningGaps_items 0 = [(0, 1)] ∧
+    blockedAlongCols spanningGaps_items 1 = [(2, 3)] ∧
+    blockedAlongRows spanningGaps_items 0 = [(2, 3)] ∧
+    blockedAlongRows spanningGaps_items 1 = [] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
