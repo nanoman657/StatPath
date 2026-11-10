@@ -31,7 +31,29 @@ box by its insets) and `hideNames` and `anchorMapCB` (CSS Anchor Positioning 1, 
 containing block only). No later test reuses them yet. Until one does, the anchor lane will not commit this
 change against the review rule.
 
-## 2. Nothing else is requested
+## 2. Combined gate results (all three lanes, one tree)
 
-Remaining anchor rows and their reasons are in `tests/MANIFEST-anchor.md`. Held-out rows (310, 327,
-anchor_scope 33) are left to the examiner lane and were not opened for this change.
+Measured with a temporary commit on `HEAD` (`ef6158a` plus the doc commit `dfc4ae6`), for the working tree
+holding anchor row 284, Block rows 5723 and 5762 (`ColumnLayout.childStartsB` with `break-after: column`), and
+mapping row 1931 (test vector only, no model change):
+
+- `MANIFEST-anchor`: PASS WITH REVIEW. Explained 5 -> 6. Total 39971 -> 40984 (+1013).
+- `MANIFEST-Block`: PASS WITH REVIEW. Explained 187 -> 189. Total 186061 -> 186761 (+700).
+- `MANIFEST-mapping`: PASS WITH REVIEW. Explained 92 -> 93. Total 41720 -> 42619 (+899).
+
+The mapping change on its own is a clean PASS (total 41720 -> 41593), but the anchor and Block gates
+then report `FAIL: model grew but explains no new rows`, because a new test vector counts as input growth
+for every lane. So no lane can land a change unless the other two lanes also explain a row in that commit.
+
+Blocking condition for the anchor part: the review rule allows PASS WITH REVIEW only for a spec-cited
+definition that later tests reuse. `oofFrag`, `placeTree`, `hideNames` and `anchorMapCB` have no reuse in
+the anchor manifest. The only candidates would be rows with an out-of-flow box placed by its insets:
+`visual_rect_mapping_test.cc:1592` (AnchorPositionScroll, needs clipping, scrolling and `anchor()`
+resolution in the mapping model), or a new fragmented-container row (`anchor_evaluator_impl_test.cc:375`
+has no out-of-flow box, so it does not reuse these definitions).
+
+Until that reuse exists, the anchor lane will not commit row 284 under the review rule. Because of the
+scorer coupling above, the Block and mapping changes wait on the same decision. The combined patch is
+saved at `/tmp/claude-0/-home-user-StatPath/633c6dad-e0dc-5be8-9447-c5aaccd0d583/scratchpad/combined-anchor284-block5723-5762-mapping1931.patch`.
+
+Held-out rows (310, 327, anchor_scope 33) are left to the examiner lane and were not opened for this change.
