@@ -518,5 +518,30 @@ theorem ColumnBalancingEmptyBlock_vectors :
     ((res.columns[0]!).slices[0]!).relY = 0 := by
   decide
 
+-- column_layout_algorithm_test.cc:939: BlockWithTopMarginInThreeColumns
+-- A 70px block, then a block with a 10px top margin and 150px height. The margin is inside the
+-- first column, so the second block starts at y = 80 and fills 20px of column 1, then 100px of
+-- column 2 and 30px of column 3.
+def blockWithTopMarginInThreeColumns_children : List MarginChild :=
+  [ { child := { id := 1, width := .px 50, height := 70 } },
+    { child := { id := 2, width := .px 60, height := 150 }, marginTop := 10 } ]
+
+theorem BlockWithTopMarginInThreeColumns_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 blockWithTopMarginInThreeColumns_children
+    res.w = 320 ∧ res.h = 100 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧ (res.columns[2]!).relX = 220 ∧
+    (res.columns[0]!).slices.length = 2 ∧
+    ((res.columns[0]!).slices[0]!).w = 50 ∧ ((res.columns[0]!).slices[0]!).h = 70 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    ((res.columns[0]!).slices[1]!).w = 60 ∧ ((res.columns[0]!).slices[1]!).h = 20 ∧
+    ((res.columns[0]!).slices[1]!).relY = 80 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 60 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 ∧
+    (res.columns[2]!).slices.length = 1 ∧
+    ((res.columns[2]!).slices[0]!).w = 60 ∧ ((res.columns[2]!).slices[0]!).h = 30 ∧
+    ((res.columns[2]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

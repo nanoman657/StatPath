@@ -507,5 +507,39 @@ theorem shiftedStart_ge (fragH y : Nat) (c : ColChild) :
   dsimp only
   split <;> omega
 
+/-- A child with a block-start margin. Only the top margin is modelled, and it is not collapsed
+with the previous sibling. -/
+structure MarginChild where
+  child : ColChild := {}
+  marginTop : Nat := 0
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Block-start of a child after its top margin. The first child keeps its margin. A later
+margin is truncated at a column break: when the previous child ends at a column top, the margin
+is dropped, and when the margin crosses the next column boundary it is cut there. -/
+def marginStart (fragH prevEnd : Nat) (first : Bool) (m : Nat) : Nat :=
+  if first then m
+  else if fragH = 0 then prevEnd + m
+  else if prevEnd % fragH = 0 then prevEnd
+  else Nat.min (prevEnd + m) (prevEnd + (fragH - prevEnd % fragH))
+
+/-- Block-start of each child, in order, after the margin rule. -/
+def marginChildStarts (fragH : Nat) : List MarginChild → Nat → Bool → List (Nat × ColChild)
+  | [], _, _ => []
+  | mc :: mcs, prevEnd, first =>
+      let s := marginStart fragH prevEnd first mc.marginTop
+      (s, mc.child) :: marginChildStarts fragH mcs (s + mc.child.height) false
+
+/-- Multicol layout with block-start margins, for a fixed column height `fragH > 0`. -/
+def layoutMulticolMargins (numCols gap width fragH : Nat) (children : List MarginChild) :
+    MulticolResult :=
+  let colW := usedWidth numCols 0 gap width
+  let blocks := marginChildStarts fragH children 0 true
+  let endY := blocks.foldl (fun acc (s, c) => Nat.max acc (s + c.height)) 0
+  let cols := (List.range (actualColumnCount fragH endY)).map (fun k =>
+    ({ colIdx := k, relX := columnInlineOffset k colW gap, relY := 0, w := colW,
+       h := fragH, slices := sliceAbs k fragH colW blocks } : ColFrag))
+  { w := width, h := fragH, colWidth := colW, columns := cols }
+
 end ColumnLayout
 end ChromiumLayout
