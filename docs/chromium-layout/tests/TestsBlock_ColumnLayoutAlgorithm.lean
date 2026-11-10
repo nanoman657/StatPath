@@ -445,5 +445,54 @@ theorem ColumnBalancingEmpty_vectors :
     (res.columns[0]!).slices.length = 0 := by
   decide
 
+-- Break-inside avoid. A 10px block of 50px, then a 20px block of h2px in three 100px columns.
+def breakAvoid_mc (h2 : Nat) (avoid2 : Bool) : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 10, height := 50 },
+                  { id := 2, width := .px 20, height := h2, avoid := avoid2 } ] }
+
+-- column_layout_algorithm_test.cc:1042: BreakInsideAvoid
+theorem BreakInsideAvoid_vectors :
+    let res := layoutMulticolAvoid (breakAvoid_mc 70 true)
+    res.h = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧ ((res.columns[0]!).slices[0]!).h = 50 ∧
+    (res.columns[1]!).relX = 110 ∧ (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 70 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1073: BreakInsideAvoidColumn (avoid-column shares the
+-- avoid flag in a column-only layout)
+theorem BreakInsideAvoidColumn_vectors :
+    let res := layoutMulticolAvoid (breakAvoid_mc 70 true)
+    res.h = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧ ((res.columns[0]!).slices[0]!).h = 50 ∧
+    (res.columns[1]!).relX = 110 ∧ (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 70 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1104: BreakInsideAvoidPage (no effect without page breaks)
+theorem BreakInsideAvoidPage_vectors :
+    let res := layoutMulticolAvoid (breakAvoid_mc 70 false)
+    res.columns.length = 2 ∧
+    (res.columns[0]!).slices.length = 2 ∧
+    ((res.columns[0]!).slices[1]!).relY = 50 ∧ ((res.columns[0]!).slices[1]!).h = 50 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 ∧ ((res.columns[1]!).slices[0]!).h = 20 ∧
+    ((res.columns[1]!).slices[0]!).w = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:1137: BreakInsideAvoidTallBlock (moved once, then breaks)
+theorem BreakInsideAvoidTallBlock_vectors :
+    let res := layoutMulticolAvoid (breakAvoid_mc 170 true)
+    res.columns.length = 3 ∧
+    (res.columns[1]!).slices.length = 1 ∧ ((res.columns[1]!).slices[0]!).h = 100 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 ∧
+    ((res.columns[2]!).slices[0]!).h = 70 ∧ ((res.columns[2]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

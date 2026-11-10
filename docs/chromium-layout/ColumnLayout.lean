@@ -27,6 +27,8 @@ structure ColChild where
   id : Nat := 0
   width : Len := .auto
   height : Nat := 0
+  /-- `break-inside: avoid` (or `avoid-column`, which is the same in a column-only layout). -/
+  avoid : Bool := false
   deriving Inhabited, DecidableEq, Repr
 
 /-- Multicolumn container specification. -/
@@ -440,6 +442,53 @@ theorem balancedContainerH_ge_min (n c m : Nat) (f x : Option Nat) :
     m ≤ balancedContainerH n c m f x := by
   unfold balancedContainerH
   split <;> exact Nat.le_max_left _ _
+
+/-! ### Break-inside avoid in column fragmentation
+
+A child with `avoid` is moved to the start of the next column when it does not fit in the rest
+of the current one. It moves at most once, so a child taller than a column still breaks after
+moving. `avoid-page` has no effect without page breaks. Needs a fixed column height (`> 0`). -/
+
+/-- Block-start of a child after the avoid rule. -/
+def shiftedStart (fragH y : Nat) (c : ColChild) : Nat :=
+  let r := y % fragH
+  if c.avoid = true ∧ 0 < r ∧ fragH < r + c.height then y + (fragH - r) else y
+
+/-- Block-start of each child, in order, after the avoid rule. -/
+def childStarts (fragH : Nat) : List ColChild → Nat → List (Nat × ColChild)
+  | [], _ => []
+  | c :: cs, y =>
+      let s := shiftedStart fragH y c
+      (s, c) :: childStarts fragH cs (s + c.height)
+
+/-- Slices of positioned children in column `k`. -/
+def sliceAbs (k fragH colW : Nat) (blocks : List (Nat × ColChild)) : List ChildSlice :=
+  blocks.filterMap fun (s, c) =>
+    let colStart := k * fragH
+    let overlapStart := Nat.max s colStart
+    let overlapEnd := Nat.min (s + c.height) ((k + 1) * fragH)
+    if overlapStart < overlapEnd then
+      some ({ id := c.id, relX := 0, relY := overlapStart - colStart,
+              w := resolveLen colW c.width, h := overlapEnd - overlapStart } : ChildSlice)
+    else none
+
+/-- Multicol layout with break-inside avoid, for a fixed column height. -/
+def layoutMulticolAvoid (mc : Multicol) : MulticolResult :=
+  let colW := usedWidth mc.cols 0 mc.gap mc.width
+  let blocks := childStarts mc.height mc.children 0
+  let endY := blocks.foldl (fun acc (s, c) => Nat.max acc (s + c.height)) 0
+  let numCols := actualColumnCount mc.height endY
+  let cols := (List.range numCols).map (fun k =>
+    ({ colIdx := k, relX := columnInlineOffset k colW mc.gap, relY := 0, w := colW,
+       h := mc.height, slices := sliceAbs k mc.height colW blocks } : ColFrag))
+  { w := mc.width, h := mc.height, colWidth := colW, columns := cols }
+
+/-- The avoid rule never moves a child back. -/
+theorem shiftedStart_ge (fragH y : Nat) (c : ColChild) :
+    y ≤ shiftedStart fragH y c := by
+  unfold shiftedStart
+  dsimp only
+  split <;> omega
 
 end ColumnLayout
 end ChromiumLayout
