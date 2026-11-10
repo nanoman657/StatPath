@@ -355,6 +355,28 @@ theorem PositionBlocksWithClearanceAndIntrudingFloats_tree_vectors :
     ((body.kid 3).kid 1).y - body.y = 80 := by
   decide
 
+/-- `NewFormattingContextAutoMargins` (`block_layout_algorithm_test.cc:1029`). The test's container is
+    200 wide and a new formatting context. It holds a 100x60 left float and three 50x20 new formatting
+    contexts with auto margins: the first has a right margin of auto, the second both margins auto,
+    the third a left margin of auto. Expected, as the test dumps them: the float at (0, 0), the boxes
+    at (100, 0), (125, 20), (150, 40), and the container 60 high. The test sets `direction: rtl`, which
+    this model does not represent, so the geometry here is written left-to-right. The expected offsets
+    are the same in both directions because no margin is over-constrained. -/
+theorem NewFormattingContextAutoMargins_tree_vectors :
+    let flt : BF := { id := 2, width := .px 100, height := some 60, isFloat := true }
+    let nfc1 : BF := { id := 3, width := .px 50, height := some 20, newBfc := true, mr := .auto }
+    let nfc2 : BF := { id := 4, width := .px 50, height := some 20, newBfc := true, ml := .auto, mr := .auto }
+    let nfc3 : BF := { id := 5, width := .px 50, height := some 20, newBfc := true, ml := .auto }
+    let root : BF := { id := 0, newBfc := true, children := [flt, nfc1, nfc2, nfc3] }
+    let r := layoutRoot 200 root
+    r.kids.length = 4 ∧
+    (r.kid 0).x = 0 ∧ (r.kid 0).y = 0 ∧
+    (r.kid 1).x = 100 ∧ (r.kid 1).y = 0 ∧
+    (r.kid 2).x = 125 ∧ (r.kid 2).y = 20 ∧
+    (r.kid 3).x = 150 ∧ (r.kid 3).y = 40 ∧
+    r.h = 60 := by
+  decide
+
 /-- `CollapsingMarginsCase2WithFloats` (line 487). The test's body children are read as offsets
     relative to the body: first-child 0, the float 70, second-child 40, empty5 90; body at -7, from
     empty1's margin -15 collapsing with the body's 8. The float between the empties and the float
