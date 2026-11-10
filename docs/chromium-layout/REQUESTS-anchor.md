@@ -57,3 +57,46 @@ scorer coupling above, the Block and mapping changes wait on the same decision. 
 saved at `/tmp/claude-0/-home-user-StatPath/633c6dad-e0dc-5be8-9447-c5aaccd0d583/scratchpad/combined-anchor284-block5723-5762-mapping1931.patch`.
 
 Held-out rows (310, 327, anchor_scope 33) are left to the examiner lane and were not opened for this change.
+
+## 3. Joint-commit measurement with the pinned Chromium sources (coordinator)
+
+Measured on a temporary commit (not pushed) = HEAD `5ae1237` plus all eight uncommitted working-tree files
+(`Anchor.lean`, `ColumnLayout.lean`, `MANIFEST-Block.md`, `MANIFEST-anchor.md`, `MANIFEST-mapping.md`,
+`TestsAnchor_AnchorEvaluatorImpl.lean`, `TestsBlock_ColumnLayoutAlgorithm.lean`, `TestsMapping_VisualRectMapping.lean`),
+with `CHROMIUM_LAYOUT` set to the pinned copy. Sections 1 and 2 above were measured before this check; treat
+section 3 as the current numbers.
+
+| Lane | HEAD total | Joint total | Delta | Breakdown | Explained rows | Gate |
+|---|---|---|---|---|---|---|
+| anchor | 40071 | 41297 | +1226 | model+inputs +1339, exceptions -113 | 5 -> 6 | PASS WITH REVIEW |
+| Block | 186161 | 187074 | +913 | model+inputs +1339, exceptions -426 | 187 -> 189 | PASS WITH REVIEW |
+| mapping | 41593 | 42747 | +1154 | model+inputs +1339, exceptions -185 | 93 -> 94 | PASS WITH REVIEW |
+
+What this shows:
+
+- The model+inputs growth (+1339) is counted in every lane. Each lane's own exception drop (113, 426, 185) is
+  smaller than that growth, so no lane's total falls. Under the review rule, PASS WITH REVIEW needs a spec-cited
+  definition that later tests reuse and a total below its prior value within three commits. No later reuse exists
+  yet for `oofFrag`, `placeTree`, `hideNames`, `anchorMapCB` or `childStartsB`.
+- Test inputs are counted globally, not per lane. Row 1592 on its own (inputs +313, exceptions -185) moves the
+  mapping total by +128. It is therefore not a plain PASS, and it cannot be committed without a reused definition.
+- Mapping has no remaining row the current model can formalize without model growth or touching held-out rows.
+  Remaining: 3D rows 1228-1352 (need a matrix model), 955 and 996 (parked), 1787 and 2001 (no independent expected
+  value), and held-out rows 338, 385, 797, 842, 873, 907, 1145, 1217, 1688, 1853, 1889, 2054.
+
+Decision needed (coordinator), one of:
+
+- (a) score each lane's model and inputs from that lane's own files and tests. Recommended: it removes the
+  coupling at its source.
+- (b) each lane commits on its own branch (section 1, option b).
+- (c) an explicit rule for joint commits that says how a shared total is judged.
+
+No decision was taken here. The scorer and COORDINATION were not changed.
+
+## 4. Cross-lane edits flagged (not committed)
+
+- `tests/MANIFEST-Block.md`: rows 5723 and 5762 changed to formalized, to be applied by the Block lane owner if the
+  decision above allows it.
+- `tests/MANIFEST-anchor.md`: row 284 changed to formalized, to be applied by the anchor lane owner if the decision
+  above allows it.
+- Both edits are uncommitted working-tree changes. Owners should confirm them or drop them.
