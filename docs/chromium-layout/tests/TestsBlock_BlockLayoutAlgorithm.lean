@@ -313,5 +313,23 @@ theorem CollapsingMarginsCase6_vectors :
     res[1]!.y = 100 := by
   decide
 
+/-- `PositionBlocksWithClearanceAndIntrudingFloats` (line 1705). Input flattened: body and html
+    margins are already collapsed out (block1's 130 is the first in-flow margin); `#container-clear`
+    (clear: left, no border or padding) is an item whose top margin is its first child's collapsed
+    margin (`#zero`, 30); its child `#clears-right` (clear: right, height 20) follows. Expected: the
+    container at y = 60, clears-right at 80, so 20 below the container's top (the test's (0, 20)). -/
+theorem PositionBlocksWithClearanceAndIntrudingFloats_vectors :
+    let res := BlockFloat.layoutBlockWithFloats 200 [
+      { id := 1, w := 50, h := 50, float := .left },
+      { id := 2, w := 50, h := 80, marginLeft := 10, marginRight := 80, float := .right },
+      { id := 3, w := 200, h := 30, marginTop := 130, marginBottom := 20 },
+      { id := 4, w := 200, h := 0, marginTop := 30, clear := .left },
+      { id := 5, w := 200, h := 20, clear := .right }
+    ]
+    res = [⟨1, 0, 0, 50, 50⟩, ⟨2, 70, 0, 50, 80⟩, ⟨3, 0, 0, 200, 30⟩,
+           ⟨4, 0, 60, 200, 0⟩, ⟨5, 0, 80, 200, 20⟩] ∧
+    res[4]!.y - res[3]!.y = 20 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
