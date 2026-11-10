@@ -620,5 +620,62 @@ theorem MarginBottomAtEndOfFragmentainer_vectors :
     ((res.columns[1]!).slices[0]!).relY = 0 := by
   decide
 
+-- column_layout_algorithm_test.cc:2602: NewFcAtColumnBoundary
+-- A 100px block fills column 1. A 50px new formatting context root (`display: flow-root`, with no
+-- floats) starts column 2. The model has no formatting-context flag; the root is a plain block.
+def newFcAtColumnBoundary_children : List MarginChild :=
+  [ { child := { id := 1, width := .px 22, height := 100 } },
+    { child := { id := 2, width := .px 33, height := 50 } } ]
+
+theorem NewFcAtColumnBoundary_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 newFcAtColumnBoundary_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 22 ∧ ((res.columns[0]!).slices[0]!).h = 100 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 33 ∧ ((res.columns[1]!).slices[0]!).h = 50 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2633: NewFcWithMargin
+-- A 50px block, then a 50px new formatting context root with a 30px top margin. The margin and
+-- the first 20px of the root stay in column 1, and the last 30px go to column 2.
+def newFcWithMargin_children : List MarginChild :=
+  [ { child := { id := 1, width := .px 22, height := 50 } },
+    { child := { id := 2, width := .px 33, height := 50 }, marginTop := 30 } ]
+
+theorem NewFcWithMargin_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 newFcWithMargin_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).slices.length = 2 ∧
+    ((res.columns[0]!).slices[0]!).w = 22 ∧ ((res.columns[0]!).slices[0]!).h = 50 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    ((res.columns[0]!).slices[1]!).w = 33 ∧ ((res.columns[0]!).slices[1]!).h = 20 ∧
+    ((res.columns[0]!).slices[1]!).relY = 80 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 33 ∧ ((res.columns[1]!).slices[0]!).h = 30 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
+-- column_layout_algorithm_test.cc:2697: NewFcWithMarginPastColumnBoundary
+-- An 80px block, then a new formatting context root with a 30px top margin. The margin would end
+-- at y = 110, past the column end, so it is cut at 100 and the root starts column 2.
+def newFcWithMarginPastColumnBoundary_children : List MarginChild :=
+  [ { child := { id := 1, width := .px 22, height := 80 } },
+    { child := { id := 2, width := .px 33, height := 50 }, marginTop := 30 } ]
+
+theorem NewFcWithMarginPastColumnBoundary_vectors :
+    let res := layoutMulticolMargins 3 10 320 100 newFcWithMarginPastColumnBoundary_children
+    res.columns.length = 2 ∧
+    (res.columns[0]!).slices.length = 1 ∧
+    ((res.columns[0]!).slices[0]!).w = 22 ∧ ((res.columns[0]!).slices[0]!).h = 80 ∧
+    ((res.columns[0]!).slices[0]!).relY = 0 ∧
+    (res.columns[1]!).slices.length = 1 ∧
+    ((res.columns[1]!).slices[0]!).w = 33 ∧ ((res.columns[1]!).slices[0]!).h = 50 ∧
+    ((res.columns[1]!).slices[0]!).relY = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
