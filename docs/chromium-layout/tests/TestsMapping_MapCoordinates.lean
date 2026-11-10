@@ -611,6 +611,24 @@ theorem IgnoreScrollOffsetWithWritingModes_vectors :
     at1 false ⟨0, 50⟩ = ⟨1990, -40⟩ ∧ at1 true ⟨0, 50⟩ = ⟨1990, 10⟩ ∧
     at1 false ⟨1900, 50⟩ = ⟨90, -40⟩ ∧ at1 true ⟨1900, 50⟩ = ⟨1990, 10⟩ := by decide
 
+/-- IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar (1931): the scroller of 1770 with
+    non-overlay scrollbars. The vertical scrollbar takes `scrollbar` px on the right and the
+    horizontal one as much at the bottom, so the client box is `100 - scrollbar` square. The box
+    sits at the block start, the right edge of the client box; the scroll origin is the scrollable
+    overflow's block extent (the 2000px spacer) minus the client block size. The 15px scrollbar is a
+    platform input of the test's `USE_NON_OVERLAY_SCROLLBARS_OR_QUIT` setting; the layout folder
+    does not define it, so the value is recorded here and not checked against the platform code. -/
+def vrlBarBox (scrollbar : Int) (pos : Pt) : List Node :=
+  let client : Int := 100 - scrollbar
+  let o : Pt := ⟨2000 - client, 0⟩
+  let q := (LRect.mk 0 0 10 10).toPhys .verticalRl client
+  [Node.scrolled ⟨pos.x - o.x, pos.y - o.y⟩ (.oof 0 (.box vrlScroller) ⟨q.x, q.y⟩ (.px 10) .auto (.px 0) (.px 0)) o]
+
+theorem IgnoreScrollOffsetWithScrollbar_vectors :
+    let at1 (ign : Bool) (pos : Pt) := mapRange (if ign then (vrlBarBox 15 pos).map Node.ignoreScroll else vrlBarBox 15 pos) 0 1 z
+    at1 false ⟨1915, 0⟩ = ⟨75, 10⟩ ∧ at1 true ⟨1915, 0⟩ = ⟨1990, 10⟩ ∧
+    at1 false ⟨0, 0⟩ = ⟨1990, 10⟩ ∧ at1 true ⟨0, 0⟩ = ⟨1990, 10⟩ := by decide
+
 /-- IgnoreScrollOffsetForInline (1732): `.scroller{overflow:scroll; 100×100}` > `.box{display:inline;
     position:sticky; top:10px}` scrolled by 0 and by 50: the sticky box stays 10px from the top of
     the scrollport; ignoring the scroll offset leaves it at its content position. -/

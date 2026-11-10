@@ -69,7 +69,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | map_coordinates_test.cc:1818 | MapCoordinatesTest.FixedPositionWithScrollOffset | geometry | formalized | `TestsMapping.FixedScrollOffset_vectors`, `Mapping.mapRange_oof` |
 | map_coordinates_test.cc:1853 | MapCoordinatesTest.FixedPositionWithScrollOffsetVerticalRL | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | map_coordinates_test.cc:1889 | MapCoordinatesTest.FixedPositionUnderTransformWithScrollOffset | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
-| map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | geometry | blocked | scrollbar themes: engine service, parked |
+| map_coordinates_test.cc:1931 | MapCoordinatesTest.IgnoreScrollOffsetWithWritingModesAndNonOverlayScrollbar | geometry | formalized | `TestsMapping.IgnoreScrollOffsetWithScrollbar_vectors`: the 1770 scroller with a 15px non-overlay scrollbar (`vrlBarBox`); the 15px width is a platform input of the test's setting, recorded in the test and not checked against platform code |
 | map_coordinates_test.cc:1975 | MapCoordinatesTest.ElementCanvasTransform | geometry | formalized | `TestsMapping.ElementCanvasTransform_vectors` |
 | map_coordinates_test.cc:1996 | MapCoordinatesTest.NestedElementCanvasTransform | geometry | formalized | `TestsMapping.NestedElementCanvasTransform_vectors` |
 | map_coordinates_test.cc:2021 | MapCoordinatesTest.NestedElementCanvasTransformWithOffset | geometry | formalized | `TestsMapping.NestedElementCanvasTransformWithOffset_vectors` |
