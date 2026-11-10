@@ -63,9 +63,13 @@ structure BF where
   bl : Nat := 0
   br : Nat := 0
   newBfc : Bool := false
-  /-- A left float (CSS 2.1 §9.5). Floats are leaf boxes here: they are placed at the flow position
+  /-- A float (CSS 2.1 §9.5). Floats are leaf boxes here: they are placed at the flow position
       without consuming it and never collapse margins (`CollapsingMarginsCase2WithFloats`). -/
   isFloat : Bool := false
+  /-- With `isFloat`: a right float, whose margin box ends at the containing block's content right
+      edge. Floats never shift around each other in this model, so placements are exact only where
+      floats do not overlap (`PositionFloatInsideEmptyBlocks`). -/
+  floatRight : Bool := false
   children : List BF := []
 
 /-- Border-box fragment in absolute coordinates (`PhysicalBoxFragment` size and offset,
@@ -156,14 +160,16 @@ def usedMargins (A : Nat) (b : BF) : Int × Int :=
   | .px l, .auto => (l, rem - l)
   | .px l, .px r => (l, r)
 
-/-- A left float laid out at the current flow position: its top is the incoming strut resolved
-    against `pos`, but the flow position and strut are not changed (CSS 2.1 §9.5.1). A float is a
+/-- A float laid out at the current flow position: its top margin edge is the incoming strut resolved
+    against `pos`, the float's own top margin is added, and the flow position and strut are not
+    changed (CSS 2.1 §9.5.1). A left float starts at the containing block's content left plus its
+    margin; a right float (`floatRight`) ends at the content right minus its margin. A float is a
     leaf here; its content is not modelled. -/
 def layoutFloat (A : Nat) (x0 pos : Int) (s : MarginStrut) (b : BF) : Frag :=
   let vert : Int := (b.pt : Int) + (b.pb : Int) + (b.bt : Int) + (b.bb : Int)
-  { id := b.id, x := x0 + (usedMargins A b).1, y := pos + s.signedSum,
-    w := contentWidth A b + b.hpad,
-    h := (match b.height with | some H => (H : Int) | none => 0) + vert }
+  let (ml, mr) := usedMargins A b
+  let outerW : Int := ((contentWidth A b + b.hpad : Nat) : Int)
+  { id := b.id, x := (if b.floatRight then x0 + (A : Int) - mr - outerW else x0 + ml), y := pos + s.signedSum + (b.mt : Int), w := contentWidth A b + b.hpad, h := (match b.height with | some H => (H : Int) | none => 0) + vert }
 
 /-- Lay out one block box in absolute coordinates. `A`: containing block content width;
     `x0`: containing block content-left; `pos`: block position the incoming strut `s` hangs from.
@@ -175,16 +181,18 @@ def layoutBox : Nat → Nat → Int → Int → MarginStrut → BF → Frag × I
       let cw := contentWidth A b
       let x := x0 + (usedMargins A b).1
       if isEmpty (d + 1) b then
-        let y := pos + (MarginStrut.append s (MarginStrut.ofInt b.mt)).signedSum
-        -- Children of an empty box are materialised at the box's resolved position with a fresh
-        -- strut (an approximation; the tests only read their widths).
+        let s' := MarginStrut.append s (MarginStrut.ofInt b.mt)
+        let y := pos + s'.signedSum
+        -- Children continue the box's own collapsing strut from the same flow position: an empty
+        -- child's margins collapse with the box's, so it sits at the box's offset (not one margin
+        -- further), and a float sits at that offset plus its own top margin.
         let cx : Int := x + (b.bl : Int) + (b.pl : Int)
         let kids := (b.children.foldl
           (fun (st : List Frag × Int × MarginStrut) c =>
             let res := if c.isFloat then (layoutFloat cw cx st.2.1 st.2.2 c, st.2.1, st.2.2)
                        else layoutBox d cw cx st.2.1 st.2.2 c
             (res.1 :: st.1, res.2.1, res.2.2))
-          ([], y, MarginStrut.empty)).1.reverse
+          ([], pos, s')).1.reverse
         ({ id := b.id, x := x, y := y, w := cw + b.hpad, h := 0, kids := kids },
          pos, MarginStrut.append s (allMargins d b))
       else

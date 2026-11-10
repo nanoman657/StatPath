@@ -346,5 +346,31 @@ theorem CollapsingMarginsCase2WithFloats_vectors :
     (body.kid 1).x - body.x = 0 := by
   decide
 
+/-- `PositionFloatInsideEmptyBlocks` (line 1180). `#container` (300 wide and high, no edges) holds
+    `#empty1` (margin 20, padding 0 20px), which holds `#empty2` (margin 15, padding 0 15px). `#empty2`
+    holds a left float (width 5, padding and margin 10) and a right float (width 15, margin 15px 10px).
+    Expected, as the test reads them: the body top at 20 (the UA margin 8 collapses with the 20);
+    empty1 at (20, 0) in the container; empty2 at (35, 0) in empty1; the left float at (25, 10) and the
+    right float at (150, 15) in empty2. The three empty boxes collapse their vertical margins, so each
+    sits at the container's top. The floats do not overlap (45 + 35 ≤ 160), so placing each without
+    shifting is exact here. -/
+theorem PositionFloatInsideEmptyBlocks_vectors :
+    let lf : BF := { id := 5, width := .px 5, height := some 5, pt := 10, pb := 10, pl := 10, pr := 10, mt := 10, mb := 10, ml := .px 10, mr := .px 10, isFloat := true }
+    let rf : BF := { id := 6, width := .px 15, height := some 15, mt := 15, mb := 15, ml := .px 10, mr := .px 10, isFloat := true, floatRight := true }
+    let empty2 : BF := { id := 4, mt := 15, mb := 15, ml := .px 15, mr := .px 15, pl := 15, pr := 15, children := [lf, rf] }
+    let empty1 : BF := { id := 3, mt := 20, mb := 20, ml := .px 20, mr := .px 20, pl := 20, pr := 20, children := [empty2] }
+    let container : BF := { id := 2, width := .px 300, height := some 300, children := [empty1] }
+    let body := (layoutRoot 800 (htmlBody [container])).kid 0
+    let cont := body.kid 0
+    let e1 := cont.kid 0
+    let e2 := e1.kid 0
+    body.y = 20 ∧
+    body.kids.length = 1 ∧ cont.kids.length = 1 ∧ e1.kids.length = 1 ∧ e2.kids.length = 2 ∧
+    e1.x - cont.x = 20 ∧ e1.y - cont.y = 0 ∧
+    e2.x - e1.x = 35 ∧ e2.y - e1.y = 0 ∧
+    (e2.kid 0).x - e2.x = 25 ∧ (e2.kid 0).y - e2.y = 10 ∧
+    (e2.kid 1).x - e2.x = 150 ∧ (e2.kid 1).y - e2.y = 15 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
