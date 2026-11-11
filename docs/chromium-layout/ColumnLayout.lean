@@ -29,6 +29,10 @@ structure ColChild where
   height : Nat := 0
   /-- `break-inside: avoid` (or `avoid-column`, which is the same in a column-only layout). -/
   avoid : Bool := false
+  /-- `break-before: avoid`: no break is taken before this child (CSS Fragmentation 3 §3.1). -/
+  breakBeforeAvoid : Bool := false
+  /-- `break-after: column`: a column break is forced after this child (CSS Fragmentation 3 §3.3). -/
+  breakAfterColumn : Bool := false
   deriving Inhabited, DecidableEq, Repr
 
 /-- Multicolumn container specification. CSS Multi-column Layout Level 1 §3 & CSS 2.1 §8.1. -/
@@ -503,10 +507,54 @@ def sliceAbs (k fragH colW : Nat) (blocks : List (Nat × ColChild)) : List Child
               w := resolveLen colW c.width, h := overlapEnd - overlapStart } : ChildSlice)
     else none
 
-/-- Multicol layout with break-inside avoid, for a fixed column height. -/
+/-- The first column start at or after `x`, for a column of height `fragH`. -/
+def nextColStart (fragH x : Nat) : Nat := (x + fragH - 1) / fragH * fragH
+
+/-- Block-starts with `break-before: avoid` (CSS Fragmentation 3 §3.1) and `break-after: column`
+    (CSS Fragmentation 3 §3.3). A forced break after a child starts the next child at the next
+    column start, and it wins over an avoid on that child (`AvoidAndForceBreakBetween`). Otherwise,
+    if the next child may not start a column (it is pushed to one by its own avoid, or the child
+    before it ends exactly at a column end), the child before it moves to the next column start
+    instead, unless it is at one already. This looks one child ahead; `shiftedStart` decides every
+    other break. -/
+def childStartsB (fragH : Nat) : List ColChild → Nat → List (Nat × ColChild)
+  | [], _ => []
+  | [c], y => [(shiftedStart fragH y c, c)]
+  | c :: n :: cs, y =>
+      let s := shiftedStart fragH y c
+      let after := s + c.height
+      if c.breakAfterColumn = true then
+        (s, c) :: childStartsB fragH (n :: cs) (nextColStart fragH after)
+      else
+        let nStart := shiftedStart fragH after n
+        let breaksHere := after < nStart ∨ (after % fragH = 0 ∧ 0 < after)
+        let s' := if n.breakBeforeAvoid = true ∧ breaksHere ∧ s % fragH ≠ 0
+                  then s + (fragH - s % fragH) else s
+        (s', c) :: childStartsB fragH (n :: cs) (s' + c.height)
+
+/-- Without any `break-before: avoid` or `break-after: column`, `childStartsB` is `childStarts`
+    (for all children and all starts). -/
+theorem childStartsB_eq_childStarts (fragH : Nat) :
+    ∀ (cs : List ColChild) (y : Nat),
+      (∀ c ∈ cs, c.breakBeforeAvoid = false ∧ c.breakAfterColumn = false) →
+      childStartsB fragH cs y = childStarts fragH cs y
+  | [], _, _ => rfl
+  | [_], _, _ => rfl
+  | c :: n :: cs, y, h => by
+      have hc := h c (by simp)
+      have hr : ∀ d ∈ n :: cs, d.breakBeforeAvoid = false ∧ d.breakAfterColumn = false :=
+        fun d hd => h d (List.mem_cons_of_mem _ hd)
+      have hn := hr n (by simp)
+      have ih := childStartsB_eq_childStarts fragH (n :: cs)
+        (shiftedStart fragH y c + c.height) hr
+      simp only [childStartsB, hc.2, hn.1, Bool.false_eq_true, ↓reduceIte, false_and]
+      rw [childStarts, ih]
+
+/-- Multicol layout with break-inside avoid, break-before avoid and forced column breaks, for a fixed
+    column height (`childStartsB`; it is `childStarts` when no child has a break flag). -/
 def layoutMulticolAvoid (mc : Multicol) : MulticolResult :=
   let colW := usedWidth mc.cols 0 mc.gap mc.width
-  let blocks := childStarts mc.height mc.children 0
+  let blocks := childStartsB mc.height mc.children 0
   let endY := blocks.foldl (fun acc (s, c) => Nat.max acc (s + c.height)) 0
   let numCols := actualColumnCount mc.height endY
   let cols := (List.range numCols).map (fun k =>

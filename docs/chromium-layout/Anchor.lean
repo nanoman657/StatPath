@@ -32,6 +32,16 @@ structure AN where
   ty : Int := 0
   scrolls : Bool := false
   kids : List AN := []
+  /-- `position` other than `static`: a containing block for its out-of-flow descendants. -/
+  positioned : Bool := false
+  /-- `position: absolute` or `fixed`. -/
+  oof : Bool := false
+  /-- `left` and `top` insets of an out-of-flow box, when not `auto`. -/
+  inL : Option Int := none
+  inT : Option Int := none
+  /-- `width` and `height` of an out-of-flow box, when not `auto`. -/
+  szW : Option Nat := none
+  szH : Option Nat := none
 
 /-- One entry of an anchor map: the name, its rectangle, and whether a scroll container lies between
     the anchor and the container (CSS Anchor 1, "Taking Scroll Into Account": only then can scrolling move the anchor). -/
@@ -66,8 +76,53 @@ def walk (ox oy : Int) : Nat → List Work → List AEntry
 def anchorMap (container : Frag) (n : AN) : List AEntry :=
   walk container.x container.y 1000 (zipKids 0 0 false container.kids n.kids)
 
+/-- An out-of-flow box with a `left`/`top` inset and a size is placed at its containing block's origin plus
+    the inset, with its size (CSS 2.1 §10.3.7, §10.6.4, zero margins). An `auto` inset keeps the fragment's
+    static position. The containing block's border is not added: no test here has one. -/
+def oofFrag (cb : Frag) (n : AN) (f : Frag) : Frag :=
+  if n.oof then
+    { f with x := (n.inL.map (fun l => cb.x + l)).getD f.x,
+             y := (n.inT.map (fun t => cb.y + t)).getD f.y,
+             w := n.szW.getD f.w,
+             h := (n.szH.map (fun v => (v : Int))).getD f.h }
+  else f
+
+/-- Places the out-of-flow boxes of `f` against their containing blocks. `cb` is the containing block of
+    `f`'s box, and a positioned box is the containing block of its descendants. -/
+def placeTree : Nat → Frag → Frag → AN → Frag
+  | 0, _, f, _ => f
+  | k + 1, cb, f, n =>
+    let f' := oofFrag cb n f
+    let cb' := if n.positioned then f' else cb
+    { f' with kids := (f'.kids.zip n.kids).map (fun p => placeTree k cb' p.1 p.2) ++ f'.kids.drop n.kids.length }
+
+/-- An out-of-flow box is a child of its containing block's fragment, after the in-flow children, and not a
+    child of its parent's (CSS 2.1 §9.3.1; `PhysicalFragmentTest.DumpFragmentTreeWithAbspos`: the view is the
+    containing block). Returns the fragment, with the out-of-flow fragments of its subtree that it contains,
+    and those still waiting for a containing block. An out-of-flow box takes its own subtree with it. -/
+def hoistOof : Nat → Frag → AN → Frag × List Frag
+  | 0, f, _ => (f, [])
+  | k + 1, f, n =>
+    let rs := (f.kids.zip n.kids).map (fun p => (p.2.oof, hoistOof k p.1 p.2))
+    let flow := (rs.filter (fun r => !r.1)).map (·.2.1)
+    let up := rs.flatMap (fun r => if r.1 then r.2.1 :: r.2.2 else r.2.2)
+    let rest := f.kids.drop n.kids.length
+    if n.positioned then ({ f with kids := flow ++ up ++ rest }, [])
+    else ({ f with kids := flow ++ rest }, up)
+
 /-- Lookup by name (the spec resolves duplicate names by tree order; not needed here). -/
 def AEntry.find (es : List AEntry) (s : String) : Option AEntry := es.find? (·.name == s)
+
+/-- A positioned box is a containing block: no out-of-flow fragment waits below it. -/
+theorem hoistOof_positioned (k : Nat) (f : Frag) (n : AN) (h : n.positioned = true) :
+    (hoistOof (k + 1) f n).2 = [] := by
+  simp [hoistOof, h]
+
+/-- A static box without children is left as it is. -/
+theorem hoistOof_leaf (k : Nat) (f : Frag) (n : AN) (hk : n.kids = []) (hp : n.positioned = false) :
+    hoistOof (k + 1) f n = (f, []) := by
+  cases f
+  simp [hoistOof, hk, hp]
 
 /-! ### Laws -/
 

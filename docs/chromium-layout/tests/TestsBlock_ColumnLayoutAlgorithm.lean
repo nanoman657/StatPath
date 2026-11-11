@@ -1207,6 +1207,78 @@ theorem BreakInsideAvoidTallBlock_vectors :
     res[2]!.colIdx = 2 ∧ res[2]!.relY = 0 ∧ res[2]!.h = 70 := by
   decide
 
+-- column_layout_algorithm_test.cc:5723: AvoidBreakBetween. `#parent{columns:3; gap 10; height 100;
+-- width 320}` with four 30px `break-inside:avoid` children; the fourth has `break-before:avoid`, so
+-- the break moves before the third child. The 1000px outer container is not part of the multicol model.
+def avoidBreakBetween_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 81, height := 30, avoid := true },
+                  { id := 2, width := .px 82, height := 30, avoid := true },
+                  { id := 3, width := .px 83, height := 30, avoid := true },
+                  { id := 4, width := .px 84, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBetween_vectors :
+    let res := layoutMulticolAvoid avoidBreakBetween_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 81, 30), (2, 30, 82, 30)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(3, 0, 83, 30), (4, 30, 84, 30)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:5762: AvoidAndForceBreakBetween. The same columns; the third child
+-- has `break-after:column` and the fourth `break-before:avoid`. The forced break wins, so the
+-- fourth child is the only one in the second column and the first three stay together.
+def avoidAndForceBreakBetween_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 81, height := 30, avoid := true },
+                  { id := 2, width := .px 82, height := 30, avoid := true },
+                  { id := 3, width := .px 83, height := 30, avoid := true, breakAfterColumn := true },
+                  { id := 4, width := .px 84, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidAndForceBreakBetween_vectors :
+    let res := layoutMulticolAvoid avoidAndForceBreakBetween_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 81, 30), (2, 30, 82, 30), (3, 60, 83, 30)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(4, 0, 84, 30)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:5938: AvoidBreakBetweenAndInside. `#middle` (80px, `break-inside:avoid`,
+-- `break-after:avoid`) would fit in the first column after the 20px first child, but then the break
+-- would fall between `#middle` and the last child. The only break that violates no rule is before
+-- `#middle`. `break-after:avoid` on `#middle` is the same constraint as `break-before:avoid` on the
+-- next sibling. The four children inside `#middle` stay in one column and are not modelled.
+def avoidBreakBetweenAndInside_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 32, height := 20, avoid := true },
+                  { id := 2, width := .auto, height := 80, avoid := true },
+                  { id := 3, width := .px 37, height := 20, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBetweenAndInside_vectors :
+    let res := layoutMulticolAvoid avoidBreakBetweenAndInside_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 32, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(2, 0, 100, 80), (3, 80, 37, 20)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:6416: AvoidBreakBeforeBlockReplacedContent. Replaced content is
+-- unbreakable, so the `img` is a child with `avoid := true`. It does not fit after the second child
+-- and has `break-before:avoid`, so the second child moves to the second column with it.
+def avoidBreakBeforeReplaced_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 22, height := 40 },
+                  { id := 2, width := .px 33, height := 50, avoid := true },
+                  { id := 3, width := .px 44, height := 50, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBeforeBlockReplacedContent_vectors :
+    let res := layoutMulticolAvoid avoidBreakBeforeReplaced_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 22, 40)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(2, 0, 33, 50), (3, 50, 44, 50)] := by
+  decide
+
 -- column_layout_algorithm_test.cc:1174: NestedBreakInsideAvoid
 theorem NestedBreakInsideAvoid_vectors :
     let nodes := [
