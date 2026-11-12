@@ -59,5 +59,18 @@ theorem TestGridSetTrackSizeNormalization_vectors :
     normalizeTrack false (.single (.fitContent 40)) = (.auto, .maxContent) := by
   decide
 
+/-- `TestGridSizingTrackCollectionSetIterator` (grid_track_collection_test.cc:300): six repeaters of
+    one track each, holding 2, 5, 3, 11, 13 and 7 sets (41 sets in all). The ranges start at the
+    cumulative set counts, which is `buildGridRanges` over `(size, 1)` repeaters. Every set holds one
+    track with a flex size counted from 0, and in an indefinite container each flex set has `auto`
+    as its minimum and its flex size as its maximum (`normalizeTrack`). The set
+    iterator and the set-to-range partition are not modelled. -/
+theorem TestGridSizingTrackCollectionSetIterator_vectors :
+    (buildGridRanges [(2, 1), (5, 1), (3, 1), (11, 1), (13, 1), (7, 1)]).map
+        (fun r => (r.startLine, r.trackCount)) =
+      [(0, 2), (2, 5), (7, 3), (10, 11), (21, 13), (34, 7)] ∧
+    (∀ k, k < 41 → normalizeTrack false (.single (.fr k)) = (.auto, .fr k)) := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
