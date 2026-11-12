@@ -1298,6 +1298,79 @@ theorem IgnoreBreakInsideAvoidBecauseBreakBetweenAvoid_vectors :
     (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(4, 0, 84, 20)] := by
   decide
 
+-- column_layout_algorithm_test.cc:5892: AvoidBreakBetweenAndInsideIgnoreInside. The outer box has
+-- `break-inside:avoid` but is 110px, taller than a column, so its own avoid is ignored. Its children
+-- are flattened into the sequence (the box has no other break flags). The last child has
+-- `break-before:avoid`, so the third child moves to the second column with it.
+def avoidBreakBetweenAndInsideIgnoreInside_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 80, height := 20 },
+                  { id := 2, width := .px 81, height := 30, avoid := true },
+                  { id := 3, width := .px 82, height := 30, avoid := true },
+                  { id := 4, width := .px 83, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBetweenAndInsideIgnoreInside_vectors :
+    let res := layoutMulticolAvoid avoidBreakBetweenAndInsideIgnoreInside_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 80, 20), (2, 20, 81, 30)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(3, 0, 82, 30), (4, 30, 83, 30)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:5984 (AvoidBreakBetweenInsideBreakableParent) and :6037
+-- (AvoidBreakBetweenAfterBreakableSibling). Both have a breakable parent around the first children
+-- and a second block whose first child has no break flag. Flattened, both give the same sequence:
+-- `#first` has no break restriction of its own, so the first three children are plain; the fourth
+-- children from the fourth on have `break-before:avoid`: directly in 5984, and in 6037 the fifth one
+-- comes from `break-after:avoid` on the first block. The run of the last three children is kept
+-- together and moves to the second column with the third child, the only break that violates no rule.
+def breakableParentSequence_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 33, height := 20, avoid := true },
+                  { id := 2, width := .px 34, height := 20, avoid := true },
+                  { id := 3, width := .px 35, height := 20, avoid := true },
+                  { id := 4, width := .px 36, height := 20, avoid := true, breakBeforeAvoid := true },
+                  { id := 5, width := .px 37, height := 20, avoid := true, breakBeforeAvoid := true },
+                  { id := 6, width := .px 38, height := 20, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBetweenInsideBreakableParent_vectors :
+    let res := layoutMulticolAvoid breakableParentSequence_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 33, 20), (2, 20, 34, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) =
+      [(3, 0, 35, 20), (4, 20, 36, 20), (5, 40, 37, 20), (6, 60, 38, 20)] := by
+  decide
+
+theorem AvoidBreakBetweenAfterBreakableSibling_vectors :
+    let res := layoutMulticolAvoid breakableParentSequence_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 33, 20), (2, 20, 34, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) =
+      [(3, 0, 35, 20), (4, 20, 36, 20), (5, 40, 37, 20), (6, 60, 38, 20)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:6092: AvoidBreakBetweenBreakInsidePreviousSibling. The container of
+-- four 20px children has `break-after:avoid`, so the next child (the last, 37px) is
+-- `break-before:avoid` in the flattened sequence. The fourth child moves to the second column with it.
+def avoidBreakBetweenBreakInsidePreviousSibling_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 32, height := 20, avoid := true },
+                  { id := 2, width := .px 33, height := 20, avoid := true },
+                  { id := 3, width := .px 34, height := 20, avoid := true },
+                  { id := 4, width := .px 35, height := 20, avoid := true },
+                  { id := 5, width := .px 36, height := 20, avoid := true },
+                  { id := 6, width := .px 37, height := 20, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem AvoidBreakBetweenBreakInsidePreviousSibling_vectors :
+    let res := layoutMulticolAvoid avoidBreakBetweenBreakInsidePreviousSibling_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) =
+      [(1, 0, 32, 20), (2, 20, 33, 20), (3, 40, 34, 20), (4, 60, 35, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(5, 0, 36, 20), (6, 20, 37, 20)] := by
+  decide
+
 -- column_layout_algorithm_test.cc:1174: NestedBreakInsideAvoid
 theorem NestedBreakInsideAvoid_vectors :
     let nodes := [
