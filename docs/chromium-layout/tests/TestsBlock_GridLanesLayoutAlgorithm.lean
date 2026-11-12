@@ -17,5 +17,52 @@ theorem GridLanesGapGeometryRequiresGapRule_vectors :
     gapGeometryPresent false [100, 100] = false := by
   decide
 
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:2925: GapGeometryColumn
+-- Columns 80, 120 and 90px with a 14px column-gap inside a 5px border. Each gap offset is the
+-- gap midpoint measured from the border edge (5px). The inline content end is the border plus
+-- the grid content size, and the block content end is the 400px border-box minus the border.
+-- The object's container type, main direction and cross-gap count are not modelled.
+theorem GridLanesGapGeometryColumn_vectors :
+    gapGeometryPresent true [80, 120, 90] = true ∧
+    ([80, 120, 90] : List Nat).length - 1 = 2 ∧
+    5 + gapMidpoint 14 [80, 120, 90] 0 = 92 ∧
+    5 + gapMidpoint 14 [80, 120, 90] 1 = 226 ∧
+    5 + gridContentSize 14 [80, 120, 90] = 323 ∧
+    400 - 5 = 395 := by
+  decide
+
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:2979: GapGeometryRow
+-- Rows 90, 130 and 110px with a 12px row-gap inside a 5px border, in a 500px-wide box. The
+-- block content end is the border plus the grid content size. The object's container type,
+-- main direction and cross-gap count are not modelled.
+theorem GridLanesGapGeometryRow_vectors :
+    gapGeometryPresent true [90, 130, 110] = true ∧
+    ([90, 130, 110] : List Nat).length - 1 = 2 ∧
+    5 + gapMidpoint 12 [90, 130, 110] 0 = 101 ∧
+    5 + gapMidpoint 12 [90, 130, 110] 1 = 243 ∧
+    500 - 5 = 495 ∧
+    5 + gridContentSize 12 [90, 130, 110] = 359 := by
+  decide
+
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:3031: GapGeometryEmptyExplicitTracks
+-- Three 50px columns with a 10px column-gap and no items, inside a 5px border. The main gap
+-- count is the number of tracks minus one. The cross-gap count is not modelled.
+theorem GridLanesGapGeometryEmptyExplicitTracks_vectors :
+    gapGeometryPresent true [50, 50, 50] = true ∧
+    ([50, 50, 50] : List Nat).length - 1 = 2 ∧
+    5 + gapMidpoint 10 [50, 50, 50] 0 = 60 ∧
+    5 + gapMidpoint 10 [50, 50, 50] 1 = 120 := by
+  decide
+
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:3265: GapGeometryRowStackingAxisOverflow
+-- Two 80px rows with a 10px row-gap inside a 5px border, in a 60px-wide box. The two 40px items
+-- in row 1 sit on the inline (stacking) axis with a 6px gap between them, so the inline content
+-- end is the border (5px) plus the stacking extent 40 + 6 + 40 = 86 (gridContentSize 6 [40, 40]).
+theorem GridLanesGapGeometryRowStackingAxisOverflow_vectors :
+    gapGeometryPresent true [80, 80] = true ∧
+    ([80, 80] : List Nat).length - 1 = 1 ∧
+    5 + gridContentSize 6 [40, 40] = 91 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

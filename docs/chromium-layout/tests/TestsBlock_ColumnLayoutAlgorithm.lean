@@ -1437,5 +1437,23 @@ theorem MinMax_vectors :
     (ColumnWidth.multicolMinMax 50 100 none (some 80) 10).2 = 80 := by
   decide
 
+-- column_layout_algorithm_test.cc:6326: AvoidBreakBetweenLinesInsideBreakAvoid. Two 20px blocks, a
+-- 40px break-inside:avoid block and a 30px block with break-before:avoid, in 100px columns. The
+-- break is taken before the 40px block, which moves with the 30px block (childStartsB). The line
+-- fragments inside the 40px block are not compared (line boxes are not modelled).
+theorem AvoidBreakBetweenLinesInsideBreakAvoid_vectors :
+    let res := layoutMulticolAvoid
+      { cols := 3, gap := 10, width := 320, height := 100,
+        children := [ { id := 1, width := .px 33, height := 20, avoid := true },
+                      { id := 2, width := .px 34, height := 20, avoid := true },
+                      { id := 3, width := .px 35, height := 40, avoid := true },
+                      { id := 4, width := .px 36, height := 30, avoid := true,
+                        breakBeforeAvoid := true } ] }
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 33, 20), (2, 20, 34, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(3, 0, 35, 40), (4, 40, 36, 30)] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
