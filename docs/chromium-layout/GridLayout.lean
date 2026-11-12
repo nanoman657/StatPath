@@ -149,16 +149,6 @@ structure GridRange where
   trackCount : Nat
   deriving Inhabited, DecidableEq, Repr
 
-/-- Build grid ranges from repeater definitions (`GridRangeBuilder`). -/
-def buildGridRanges (repeaters : List (Nat × Nat)) : List GridRange :=
-  let rec loop (curLine : Nat) (rem : List (Nat × Nat)) : List GridRange :=
-    match rem with
-    | [] => []
-    | (trackSize, repeatCount) :: rest =>
-        let count := trackSize * repeatCount
-        ⟨curLine, count⟩ :: loop (curLine + count) rest
-  loop 0 repeaters
-
 /-- Adding gap strictly increases inter-track distance when gap is positive. -/
 theorem grid_gap_positive (t gap : Nat) (h : 0 < gap) :
     t < t + gap := by
@@ -247,6 +237,11 @@ def rangesFrom (autoReps : Nat) : Nat → List RepeaterSpec → List (GridRange 
 def buildGridRangesAuto (autoReps : Nat) (repeaters : List RepeaterSpec) : List (GridRange × Bool) :=
   rangesFrom autoReps 0 repeaters
 
+/-- Grid ranges from `(trackSize, repeatCount)` repeaters with no auto-fit repeater
+    (`GridRangeBuilder`): `buildGridRangesAuto` with zero auto repetitions and no auto-fit repeater. -/
+def buildGridRanges (repeaters : List (Nat × Nat)) : List GridRange :=
+  (buildGridRangesAuto 0 (repeaters.map fun p => ({ tracks := p.1, reps := p.2 } : RepeaterSpec))).map (·.1)
+
 /-- Law: a range is collapsed exactly when its repeater is auto-fit and has no placed item. -/
 theorem collapsed_iff_autofit_empty (autoReps : Nat) (rs : List RepeaterSpec) (curLine : Nat) :
     (rangesFrom autoReps curLine rs).map (·.2) = rs.map (fun r => r.autoFit && !r.hasItems) := by
@@ -263,13 +258,6 @@ def gapMidpoint (gap : Nat) (tracks : List Nat) (g : Nat) : Nat :=
 /-- Content size along one axis: the track sizes plus the `length - 1` gaps between them. -/
 def gridContentSize (gap : Nat) (tracks : List Nat) : Nat :=
   tracks.foldl (· + ·) 0 + (tracks.length - 1) * gap
-
-/-- A placed item as half-open track ranges on each axis (`lo` inclusive, `hi` exclusive). -/
-structure GapItem where
-  rowLo : Nat
-  rowHi : Nat
-  colLo : Nat
-  colHi : Nat
 
 /-- Law: a gap midpoint lies at or after the end of its leading track. -/
 theorem gapMidpoint_ge_track_end (gap : Nat) (tracks : List Nat) (g : Nat) :

@@ -135,10 +135,11 @@ theorem GridLayoutAlgorithmGapGeometry_vectors :
 -- The three auto rows (zero base size) are stretched to fill the 320px height, so each is
 -- `stretchedAutoSize 320 10 3`. Single-cell items are omitted: they never cross a gap.
 def spanningGaps_tracks : List Nat := List.replicate 3 (stretchedAutoSize 320 10 3)
-def spanningGaps_items : List GapItem :=
-  [ { rowLo := 0, rowHi := 1, colLo := 0, colHi := 2 },   -- item1: columns 1-2, row 1
-    { rowLo := 0, rowHi := 2, colLo := 2, colHi := 3 },   -- item3: column 3, rows 1-2
-    { rowLo := 2, rowHi := 3, colLo := 1, colHi := 3 } ]  -- item8: columns 2-3, row 3
+-- Placed items as `(rowLo, rowHi, colLo, colHi)`: half-open track ranges (`lo` inclusive, `hi` exclusive).
+def spanningGaps_items : List (Nat × Nat × Nat × Nat) :=
+  [ (0, 1, 0, 2),   -- item1: columns 1-2, row 1
+    (0, 2, 2, 3),   -- item3: column 3, rows 1-2
+    (2, 3, 1, 3) ]  -- item8: columns 2-3, row 3
 
 theorem GapGeomoetryWithSpanningItems_vectors :
     stretchedAutoSize 320 10 3 = 100 ∧
@@ -146,14 +147,14 @@ theorem GapGeomoetryWithSpanningItems_vectors :
     gridContentSize 10 spanningGaps_tracks = 320 ∧
     -- Blocked ranges under the default `column-rule-break: spanning-item` (CSS Gap Decorations:
     -- decorations do not paint behind a spanning item): the items that cover both tracks of the gap.
-    (spanningGaps_items.filterMap fun it =>
-      if it.colLo ≤ 0 && 0 + 1 < it.colHi then some (it.rowLo, it.rowHi) else none) = [(0, 1)] ∧
-    (spanningGaps_items.filterMap fun it =>
-      if it.colLo ≤ 1 && 1 + 1 < it.colHi then some (it.rowLo, it.rowHi) else none) = [(2, 3)] ∧
-    (spanningGaps_items.filterMap fun it =>
-      if it.rowLo ≤ 0 && 0 + 1 < it.rowHi then some (it.colLo, it.colHi) else none) = [(2, 3)] ∧
-    (spanningGaps_items.filterMap fun it =>
-      if it.rowLo ≤ 1 && 1 + 1 < it.rowHi then some (it.colLo, it.colHi) else none) = [] := by
+    (spanningGaps_items.filterMap fun ⟨rl, rh, cl, ch⟩ =>
+      if cl ≤ 0 && 0 + 1 < ch then some (rl, rh) else none) = [(0, 1)] ∧
+    (spanningGaps_items.filterMap fun ⟨rl, rh, cl, ch⟩ =>
+      if cl ≤ 1 && 1 + 1 < ch then some (rl, rh) else none) = [(2, 3)] ∧
+    (spanningGaps_items.filterMap fun ⟨rl, rh, cl, ch⟩ =>
+      if rl ≤ 0 && 0 + 1 < rh then some (cl, ch) else none) = [(2, 3)] ∧
+    (spanningGaps_items.filterMap fun ⟨rl, rh, cl, ch⟩ =>
+      if rl ≤ 1 && 1 + 1 < rh then some (cl, ch) else none) = [] := by
   decide
 
 end TestsBlock
