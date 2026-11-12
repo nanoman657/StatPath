@@ -76,6 +76,17 @@ def walk (ox oy : Int) : Nat → List Work → List AEntry
 def anchorMap (container : Frag) (n : AN) : List AEntry :=
   walk container.x container.y 1000 (zipKids 0 0 false container.kids n.kids)
 
+/-- Removes the name of each out-of-flow box whose containing block is not the container. `cb` says
+    whether the nearest positioned ancestor-or-self of the box's parent is the container. The rule
+    is the test's comment "Anchor names of out-of-flow positioned objects are propagated to their
+    containing blocks": such a name is reported by its containing block only. The CSS Anchor Positioning 1
+    section for this rule is not cited because the spec was not reachable when this was written. -/
+def hideNames : Nat → Bool → AN → AN
+  | 0, _, n => n
+  | k + 1, cb, n =>
+    { n with name := if n.oof && !cb then none else n.name,
+             kids := n.kids.map (hideNames k (cb && !n.positioned)) }
+
 /-- An out-of-flow box with a `left`/`top` inset and a size is placed at its containing block's origin plus
     the inset, with its size (CSS 2.1 §10.3.7, §10.6.4, zero margins). An `auto` inset keeps the fragment's
     static position. The containing block's border is not added: no test here has one. -/
@@ -109,6 +120,12 @@ def hoistOof : Nat → Frag → AN → Frag × List Frag
     let rest := f.kids.drop n.kids.length
     if n.positioned then ({ f with kids := flow ++ up ++ rest }, [])
     else ({ f with kids := flow ++ rest }, up)
+
+/-- The anchor map of a container in which out-of-flow boxes report to their containing block only and are
+    placed by their insets. The container is the root: it is not placed here, so its own `oof` is ignored. -/
+def anchorMapCB (container : Frag) (n : AN) : List AEntry :=
+  let n' := { n with kids := n.kids.map (hideNames 1000 n.positioned), oof := false }
+  anchorMap (placeTree 1000 container container n') n'
 
 /-- Lookup by name (the spec resolves duplicate names by tree order; not needed here). -/
 def AEntry.find (es : List AEntry) (s : String) : Option AEntry := es.find? (·.name == s)

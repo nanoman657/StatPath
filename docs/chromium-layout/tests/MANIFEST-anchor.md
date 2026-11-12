@@ -24,7 +24,7 @@ Rows marked held-out are left to the examiner lane.
 | anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | geometry | formalized | `TestsAnchor.AnchorNameRemove_before`, `AnchorNameRemove_after` |
 | anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | geometry | formalized | `TestsAnchor.BlockFlow_before`, `BlockFlow_after` |
 | anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | geometry | blocked | needs inline layout with Ahem text, culled and non-culled spans, `img` and inline-block anchors; the anchor model only reuses block layout |
-| anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | geometry | blocked | `BlockFlow.BF` has no out-of-flow boxes; propagation of anchors to the out-of-flow containing block is not modelled |
+| anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | geometry | formalized | `TestsAnchor.OutOfFlow_container`, `TestsAnchor.OutOfFlow_middle`: an out-of-flow name reaches its containing block only (`anchorMapCB`); the box is placed by its `left`/`top` insets and sizes (`oofFrag`, CSS 2.1 §10.6.4). `BlockFlow` lays the box out in flow as a placeholder, which its placement then overrides |
 | anchor_evaluator_impl_test.cc:310 | AnchorEvaluatorImplTest.Relative | geometry | blocked | held-out row, left to the examiner lane |
 | anchor_evaluator_impl_test.cc:330 | AnchorEvaluatorImplTest.Transform | geometry | formalized | `TestsAnchor.Transform_translate` |
 | anchor_evaluator_impl_test.cc:351 | AnchorEvaluatorImplTest.Scroll | geometry | partly formalized | `TestsAnchor.Scroll_inner`: the map is independent of scrolling because scroll offset is not an input to `anchorMap`; the scroll step itself is not simulated |

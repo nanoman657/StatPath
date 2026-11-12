@@ -116,7 +116,7 @@ disagreements: `SPEC-DIFF-mapping.md`.
 | visual_rect_mapping_test.cc:1522 | VisualRectMappingTest.Perspective | geometry | formalized | `TestsMapping.Perspective_vectors` |
 | visual_rect_mapping_test.cc:1542 | VisualRectMappingTest.PerspectiveWithAnonymousTable | geometry | formalized | `TestsMapping.PerspectiveWithAnonymousTable_vectors` |
 | visual_rect_mapping_test.cc:1561 | VisualRectMappingTest.MapToVisualRectFastPathMapsToViewport | geometry | formalized | `TestsMapping.MapToVisualRectFastPathMapsToViewport_vectors` |
-| visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | blocked | anchor positioning with scroll snapshots belongs to the anchor lane (CSS Anchor Positioning 1) |
+| visual_rect_mapping_test.cc:1592 | VisualRectMappingTest.AnchorPositionScroll | geometry | formalized | `TestsMapping.AnchorPositionScroll_vectors`: the anchor rectangle is `Anchor.anchorMap` of `#cb`; `anchor(left)` and `anchor(top)` are resolved by the anchor lane's `Anchor.edgeInCb` and `Anchor.bottomAreaHeight` (CSS Anchor Positioning 1, anchor() insets; CSS 2.1 §10.6.4 bottom inset) at the scroll offset the frame snapshots. The clipped-out result is compared with `isEmpty`, as the other clipped rows are |
 | visual_rect_mapping_test.cc:1656 | VisualRectMappingTest.IgnoreFilters | geometry | formalized | `TestsMapping.IgnoreFilters_vectors` |
 | visual_rect_mapping_test.cc:1688 | VisualRectMappingTest.NestedTransformsFastVsSlowPath | geometry | blocked | held-out row (tools/heldout-inline.txt); left to the examiner lane |
 | visual_rect_mapping_test.cc:1741 | VisualRectMappingTest.SVGTransformsFastVsSlowPath | geometry | formalized | `TestsMapping.SVGTransformsFastVsSlowPath_vectors` |

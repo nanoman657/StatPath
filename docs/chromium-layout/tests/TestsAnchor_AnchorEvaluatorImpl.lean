@@ -78,5 +78,25 @@ theorem Scroll_inner :
     anchorMap (layoutRoot 800 scrollPage) { kids := [ { name := some "--inner" } ] } =
       [entry "--inner" 0 0 400 500] := by decide
 
+/-! ### OutOfFlow (line 284): `#container` is `position: relative`; its static child `#middle` holds an
+    absolutely positioned `--abs1` at left 100px, top 50px, width 400px, height 20px. The name reaches the
+    containing block `#container` and not `#middle`. The box is in the `BF` tree as its HTML has it.
+    `BlockFlow` lays it out in flow (it has no out-of-flow layout); it is the only child, so the placement
+    `oofFrag` gives it from its insets and sizes is the whole of its position. -/
+def oofBF : BF := { id := 2, children := [ { id := 3, children := [ { id := 4 } ] } ] }
+
+def oofLaid : Frag := (layoutRoot 800 (page oofBF)).kid 0
+
+def oofAbsAN : AN :=
+  { name := some "--abs1", positioned := true, oof := true,
+    inL := some 100, inT := some 50, szW := some 400, szH := some 20 }
+
+theorem OutOfFlow_container :
+    anchorMapCB oofLaid { positioned := true, kids := [ { kids := [ oofAbsAN ] } ] } =
+      [entry "--abs1" 100 50 400 20] := by decide
+
+theorem OutOfFlow_middle :
+    anchorMapCB (oofLaid.kid 0) { kids := [ oofAbsAN ] } = [] := by decide
+
 end TestsAnchor
 end ChromiumLayout

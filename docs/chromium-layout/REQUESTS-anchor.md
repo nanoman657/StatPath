@@ -100,3 +100,21 @@ No decision was taken here. The scorer and COORDINATION were not changed.
 - `tests/MANIFEST-anchor.md`: row 284 changed to formalized, to be applied by the anchor lane owner if the decision
   above allows it.
 - Both edits are uncommitted working-tree changes. Owners should confirm them or drop them.
+
+## 5. Rows 284 and 1592 landed by explicit override
+
+The Block commit (`24e1a94`) landed `ColumnLayout.childStartsB` (column rows 5723, 5762, 5938, 6416) and
+`Anchor.oofFrag`, `Anchor.placeTree`, `Anchor.hoistOof` (physical_fragment_test.cc 149, 165). The next commit adds:
+
+- anchor_evaluator_impl_test.cc 284 (OutOfFlow_container, OutOfFlow_middle) in `tests/MANIFEST-anchor.md`.
+- visual_rect_mapping row 1592 (`AnchorPositionScroll_vectors`) in `tests/MANIFEST-mapping.md`.
+- `Anchor.hideNames` and `Anchor.anchorMapCB`, used by row 284 only. The spec section for name scoping is not
+  verified (the spec host was unreachable), so they do not meet the review rule's reuse clause.
+
+Gate with the Block commit as the baseline: anchor +410 and mapping +338, both PASS WITH REVIEW. The repository
+owner chose to commit these as an explicit override of the review rule. The coordinator should confirm or revert.
+
+Open question for the coordinator: each lane's gate counts all model and input growth in the whole tree, so these
+lanes pay for growth that other lanes made. Options: (a) score each lane on its own files, (b) keep the override,
+(c) find a second spec-cited row that uses `hideNames` or `anchorMapCB`. None was found in the anchor manifest:
+the other anchor_scope_test.cc rows are internal hash tests or held-out.

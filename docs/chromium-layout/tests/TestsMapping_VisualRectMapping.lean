@@ -7,6 +7,7 @@
 import Mapping
 import MappingTransform
 import MappingTransform3
+import Anchor
 
 namespace ChromiumLayout
 namespace TestsMapping
@@ -447,6 +448,48 @@ theorem IgnoreFilters_vectors :
     mapV false z ((os 1).take 1) r = r ∧ mapV false z ((os 0).take 1) r = r ∧
     mapV false z (os 1) r = ⟨-3, -3, 56, 56⟩ ∧ mapV false z (os 0) r = r ∧
     mapV false z ((os 1).drop 1) r = ⟨-3, -3, 56, 56⟩ ∧ mapV false z ((os 0).drop 1) r = r := by decide
+
+/-! ### AnchorPositionScroll (1592): `#cb{position:relative; overflow:hidden; 300×300}` holds
+    `#scroller{overflow:scroll; 300×300}` > `#anchor{anchor-name; margin-top:100px; margin-left:500px;
+    margin-right:500px; 50×50}`, and `#cb` holds `#anchored{position:absolute; left:anchor(left);
+    bottom:anchor(top); 50×50}`. The anchor rectangle comes from `Anchor.anchorMap` (its scroll-free
+    position in `#cb`). `anchor(left)` is that left edge less the scroll offset the frame snapshots
+    (`Anchor.edgeInCb`); `bottom: anchor(top)` puts the box's bottom edge at the anchor's top
+    (`Anchor.bottomAreaHeight`, CSS 2.1 §10.6.4). The box is clipped by `#cb` at scroll 0 and is in
+    view after the scroll to 400. -/
+def apAnchorBF : BF := { width := .px 50, height := some 50, mt := 100, ml := .px 500, mr := .px 500 }
+
+/-- `overflow: scroll` makes a new formatting context, so the anchor's top margin does not collapse
+    through the scroller (CSS 2.1 §9.4.1). -/
+def apScrollerBF : BF := BF.ofPhys .horizontalTb (some 300) (some 300) { newBfc := true, children := [apAnchorBF] }
+
+def apCbBF : BF := BF.ofPhys .horizontalTb (some 300) (some 300) { children := [apScrollerBF] }
+
+def apPage : Frag := layoutRoot 800 (bodyPage 0 [apCbBF])
+
+def apCbF : Frag := (apPage.kid 0).kid 0
+
+def apAN : Anchor.AN :=
+  { kids := [{ scrolls := true, kids := [{ name := some "--anchor" }] }] }
+
+def apRect : Anchor.ARect :=
+  ((Anchor.AEntry.find (Anchor.anchorMap apCbF apAN) "--anchor").map (·.rect)).getD ⟨0, 0, 0, 0⟩
+
+/-- The visual-rect chain from `#anchored` up to `body` (its last hop is `#cb`'s), with `#cb`
+    clipping its descendants (`overflow:hidden`) and the scroll offset `scroll` snapshotted. -/
+def apScene (scroll : Nat) : List (Hop × VP) :=
+  let left : Int := Anchor.edgeInCb apRect.x [scroll]
+  let anchorTop : Int := Anchor.edgeInCb apRect.y []
+  let top : Int := 300 - Anchor.bottomAreaHeight 300 anchorTop - apRect.h
+  let ns := [Node.oof 0 (.box apCbBF) z (.px top) (.px left) (.px 0) (.px 0),
+             .block (apPage.kid 0) apCbF] ++ upToView apPage (apPage.kid 0)
+  vchain ns [{}, VP.ofBox .horizontalTb apCbBF apCbF { overflow := true }, {}, {}]
+
+/-- The test's `PhysicalRect()` is an empty rectangle; as in the other clipped-out rows of this file,
+    the empty result is compared with `isEmpty`. -/
+theorem AnchorPositionScroll_vectors :
+    (mapV false z ((apScene 0).take 2) ⟨0, 0, 50, 50⟩).isEmpty = true ∧
+    mapV false z ((apScene 400).take 2) ⟨0, 0, 50, 50⟩ = ⟨100, 50, 50, 50⟩ := by decide
 
 end TestsMapping
 end ChromiumLayout
