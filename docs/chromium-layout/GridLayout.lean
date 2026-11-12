@@ -290,6 +290,12 @@ theorem gapMidpoint_ge_track_end (gap : Nat) (tracks : List Nat) (g : Nat) :
   unfold gapMidpoint
   omega
 
+/-- A gap decoration object exists only when the container sets a gap rule and there is a gap to
+    decorate, i.e. at least two tracks. The rule flag is an input; the Blink `GapGeometry` object
+    itself is not modelled. Each conjunct is checked by one negative row (`nullptr` results). -/
+def gapGeometryPresent (hasRule : Bool) (tracks : List Nat) : Bool :=
+  hasRule && decide (2 ≤ tracks.length)
+
 /-- Size of each of `n` auto tracks, all with zero base size, after stretching. With
     `align-content: normal` the free space left in a box of size `box` after the `n - 1` gaps is
     divided equally among the auto tracks (CSS Grid Layout 1, stretch auto tracks). -/
