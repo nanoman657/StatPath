@@ -1017,8 +1017,17 @@ def blockStartAtColumnBoundary_input : Multicol :=
 def columnBalancingEmptyBlock_children : List ColChild :=
   [ { id := 1, width := .px 20, height := 0 } ]
 
+-- The zero-content branch of the balancing entry point (no content: one column of height 0 that
+-- holds every child at its own block size) is stated inline with the same `if` test.
 theorem ColumnBalancingEmptyBlock_vectors :
-    let res := layoutMulticolBalancedAll 3 10 320 0 none none columnBalancingEmptyBlock_children
+    let colW := ColumnWidth.usedWidth 3 0 10 320
+    let res : MulticolResult :=
+      if totalContentHeight columnBalancingEmptyBlock_children = 0 then
+        { w := 320, h := balancedContainerH 3 0 0 none none, colWidth := colW,
+          columns := [⟨0, 0, 0, colW, 0,
+            columnBalancingEmptyBlock_children.map
+              (fun c => ⟨c.id, 0, 0, resolveLen colW c.width, c.height⟩)⟩] }
+      else layoutMulticolBalanced 3 10 320 0 none none columnBalancingEmptyBlock_children
     res.w = 320 ∧ res.h = 0 ∧ res.columns.length = 1 ∧
     (res.columns[0]!).relX = 0 ∧ (res.columns[0]!).w = 100 ∧ (res.columns[0]!).h = 0 ∧
     (res.columns[0]!).slices.length = 1 ∧

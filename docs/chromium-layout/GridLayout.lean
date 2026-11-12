@@ -271,19 +271,6 @@ structure GapItem where
   colLo : Nat
   colHi : Nat
 
-/-- Row ranges, as `(rowLo, rowHi)`, over which the column gap `g` (between columns `g` and
-    `g + 1`) is blocked: an item that covers both columns blocks the gap across its rows. This is
-    the default `column-rule-break: spanning-item` (CSS Gap Decorations: decorations do not paint
-    behind a spanning item). -/
-def blockedAlongCols (items : List GapItem) (g : Nat) : List (Nat × Nat) :=
-  items.filterMap fun it =>
-    if it.colLo ≤ g && g + 1 < it.colHi then some (it.rowLo, it.rowHi) else none
-
-/-- Column ranges, as `(colLo, colHi)`, over which the row gap `g` is blocked. -/
-def blockedAlongRows (items : List GapItem) (g : Nat) : List (Nat × Nat) :=
-  items.filterMap fun it =>
-    if it.rowLo ≤ g && g + 1 < it.rowHi then some (it.colLo, it.colHi) else none
-
 /-- Law: a gap midpoint lies at or after the end of its leading track. -/
 theorem gapMidpoint_ge_track_end (gap : Nat) (tracks : List Nat) (g : Nat) :
     trackOffset gap tracks g + tracks.getD g 0 ≤ gapMidpoint gap tracks g := by

@@ -439,23 +439,6 @@ def layoutMulticolBalanced (numCols gap width minH : Nat) (fixedH maxH : Option 
   let res := layoutMulticol { cols := numCols, gap := gap, width := width, height := fragH, children := children }
   { res with h := balancedContainerH numCols contentH minH fixedH maxH }
 
-/-- Zero content block size: the single column has height 0 and holds every child at its own
-block size. `layoutMulticol` cannot place these, since its `fragH = 0` path places a child only
-when it has positive height. -/
-def zeroContentSlices (colW : Nat) (children : List ColChild) : List ChildSlice :=
-  children.map (fun c => ⟨c.id, 0, 0, resolveLen colW c.width, c.height⟩)
-
-/-- Balanced multicol that also covers zero content: with no content there is one column of
-height 0, and zero-height children are placed in it. Otherwise it is `layoutMulticolBalanced`. -/
-def layoutMulticolBalancedAll (numCols gap width minH : Nat) (fixedH maxH : Option Nat)
-    (children : List ColChild) : MulticolResult :=
-  if totalContentHeight children = 0 then
-    let colW := usedWidth numCols 0 gap width
-    { w := width, h := balancedContainerH numCols 0 minH fixedH maxH, colWidth := colW,
-      columns := [⟨0, 0, 0, colW, 0, zeroContentSlices colW children⟩] }
-  else
-    layoutMulticolBalanced numCols gap width minH fixedH maxH children
-
 /-- Balanced multicol over unbreakable items (`column-fill: balance` with `break-inside: avoid`,
 CSS Fragmentation 3 `break-inside`). Each item is an atom that is never split: a breakable block
 is given as its line boxes, and a `break-inside: avoid` block as one item. The column height is

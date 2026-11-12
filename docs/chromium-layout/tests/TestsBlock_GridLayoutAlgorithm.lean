@@ -144,10 +144,16 @@ theorem GapGeomoetryWithSpanningItems_vectors :
     stretchedAutoSize 320 10 3 = 100 ∧
     gapMidpoint 10 spanningGaps_tracks 0 = 105 ∧ gapMidpoint 10 spanningGaps_tracks 1 = 215 ∧
     gridContentSize 10 spanningGaps_tracks = 320 ∧
-    blockedAlongCols spanningGaps_items 0 = [(0, 1)] ∧
-    blockedAlongCols spanningGaps_items 1 = [(2, 3)] ∧
-    blockedAlongRows spanningGaps_items 0 = [(2, 3)] ∧
-    blockedAlongRows spanningGaps_items 1 = [] := by
+    -- Blocked ranges under the default `column-rule-break: spanning-item` (CSS Gap Decorations:
+    -- decorations do not paint behind a spanning item): the items that cover both tracks of the gap.
+    (spanningGaps_items.filterMap fun it =>
+      if it.colLo ≤ 0 && 0 + 1 < it.colHi then some (it.rowLo, it.rowHi) else none) = [(0, 1)] ∧
+    (spanningGaps_items.filterMap fun it =>
+      if it.colLo ≤ 1 && 1 + 1 < it.colHi then some (it.rowLo, it.rowHi) else none) = [(2, 3)] ∧
+    (spanningGaps_items.filterMap fun it =>
+      if it.rowLo ≤ 0 && 0 + 1 < it.rowHi then some (it.colLo, it.colHi) else none) = [(2, 3)] ∧
+    (spanningGaps_items.filterMap fun it =>
+      if it.rowLo ≤ 1 && 1 + 1 < it.rowHi then some (it.colLo, it.colHi) else none) = [] := by
   decide
 
 end TestsBlock
