@@ -1524,5 +1524,25 @@ theorem AvoidBreakBetweenHonorOrphansWidows3_vectors :
       [(3, 0, 20), (4, 20, 20), (5, 40, 20), (6, 60, 20), (7, 80, 20)] := by
   decide
 
+-- column_layout_algorithm_test.cc:6281: AvoidBreakBetweenIgnoreOrphansWidows
+-- A 40px block with break-after:avoid, two 20px line boxes, then a 30px block with
+-- break-inside:avoid and break-before:avoid, in 100px columns with orphans:2 and widows:2. The
+-- break-after:avoid on the first block is break-before:avoid on the line after it (as for 6092).
+-- The test takes the break between the two lines anyway, because that is better than ignoring
+-- break-after:avoid, so the second line is not break-before:avoid. The wrapper blocks around the
+-- lines are not checked (as for 5984).
+theorem AvoidBreakBetweenIgnoreOrphansWidows_vectors :
+    let res := layoutMulticolAvoid
+      { cols := 3, gap := 10, width := 320, height := 100,
+        children := [ { id := 1, height := 40 },
+                      { id := 2, height := 20, breakBeforeAvoid := true },
+                      { id := 3, height := 20 },
+                      { id := 4, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 40), (2, 40, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(3, 0, 20), (4, 20, 30)] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
