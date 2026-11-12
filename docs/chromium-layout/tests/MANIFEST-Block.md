@@ -326,7 +326,7 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:5390 | ColumnLayoutAlgorithmTest.ForcedBreakBetweenSpanners5 | geometry | blocked | needs forced breaks (break-before/after: column/page) in multicolumn |
 | column_layout_algorithm_test.cc:5424 | ColumnLayoutAlgorithmTest.SoftBreakBetweenSpanners | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
 | column_layout_algorithm_test.cc:5458 | ColumnLayoutAlgorithmTest.SoftBreakBetweenSpanners2 | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
-| column_layout_algorithm_test.cc:5493 | ColumnLayoutAlgorithmTest.AvoidSoftBreakBetweenSpanners | geometry | blocked | needs nested multicolumn with spanners that carry break-inside avoid and break-before avoid; the model has one multicolumn level |
+| column_layout_algorithm_test.cc:5493 | ColumnLayoutAlgorithmTest.AvoidSoftBreakBetweenSpanners | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
 | column_layout_algorithm_test.cc:5530 | ColumnLayoutAlgorithmTest.AvoidSoftBreakBetweenSpanners2 | geometry | blocked | needs nested multicolumn with spanners that carry break-inside avoid and break-before avoid; the model has one multicolumn level |
 | column_layout_algorithm_test.cc:5574 | ColumnLayoutAlgorithmTest.AvoidSoftBreakBetweenSpanners3 | geometry | blocked | needs nested multicolumn with spanners that carry break-inside avoid and break-before avoid; the model has one multicolumn level |
 | column_layout_algorithm_test.cc:5624 | ColumnLayoutAlgorithmTest.SoftBreakBetweenRowAndSpanner | geometry | blocked | needs column spanners (column-span: all) in multicolumn |
@@ -921,15 +921,15 @@ checks every row against the pinned sources and the Lean modules.
 | scrollbars_test.cc:2229 | ScrollbarAppearanceTest.ThemeEngineDefinesMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
 | scrollbars_test.cc:2256 | ScrollbarAppearanceTest.HugeScrollingThumbPosition | behaviour | blocked | model lacks scrollbar theme and overlay controller |
 | scrollbars_test.cc:2295 | ScrollbarAppearanceTest.CustomScrollbarUseThemeEngineMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2343 | ScrollbarsTest.WideBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2367 | ScrollbarsTest.TallBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2392 | ScrollbarsTest.TallAndWideBodyShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2417 | ScrollbarsTest.BodySizeEqualWindowSizeShouldNotHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2442 | ScrollbarsTest.WidePercentageBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2343 | ScrollbarsTest.WideBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.WideBodyShouldNotHaveScrollbars_vectors` |
+| scrollbars_test.cc:2367 | ScrollbarsTest.TallBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.TallBodyShouldNotHaveScrollbars_vectors` |
+| scrollbars_test.cc:2392 | ScrollbarsTest.TallAndWideBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.TallAndWideBodyShouldNotHaveScrollbars_vectors` |
+| scrollbars_test.cc:2417 | ScrollbarsTest.BodySizeEqualWindowSizeShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.BodySizeEqualWindowSizeShouldNotHaveScrollbars_vectors` |
+| scrollbars_test.cc:2442 | ScrollbarsTest.WidePercentageBodyShouldHaveScrollbar | behaviour | formalized | `TestsBlock.WidePercentageBodyShouldHaveScrollbar_vectors` |
 | scrollbars_test.cc:2468 | ScrollbarsTest.WidePercentageAndTallBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2494 | ScrollbarsTest.TallPercentageBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2520 | ScrollbarsTest.TallPercentageAndWideBodyShouldHaveScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2546 | ScrollbarsTest.TallAndWidePercentageBodyShouldHaveScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2494 | ScrollbarsTest.TallPercentageBodyShouldHaveScrollbar | behaviour | formalized | `TestsBlock.TallPercentageBodyShouldHaveScrollbar_vectors` |
+| scrollbars_test.cc:2520 | ScrollbarsTest.TallPercentageAndWideBodyShouldHaveScrollbar | behaviour | formalized | `TestsBlock.TallPercentageAndWideBodyShouldHaveScrollbar_vectors` |
+| scrollbars_test.cc:2546 | ScrollbarsTest.TallAndWidePercentageBodyShouldHaveScrollbars | behaviour | formalized | `TestsBlock.TallAndWidePercentageBodyShouldHaveScrollbars_vectors` |
 | scrollbars_test.cc:2570 | ScrollbarsTest.MouseOverIFrameScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
 | scrollbars_test.cc:2622 | ScrollbarsTest.AutosizeTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
 | scrollbars_test.cc:2690 | ScrollbarsTest.AutosizeHeightOverflowWithOverlayScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |

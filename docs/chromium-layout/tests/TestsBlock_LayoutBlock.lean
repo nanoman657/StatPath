@@ -22,7 +22,7 @@ theorem scroller_content_height :
 theorem WidthAvailableToChildrenChanged_vectors (sb : Nat) :
     childInlineSize 150 sb true 100 120 = 150 - sb ∧
     childInlineSize 150 sb false 100 120 = 150 := by
-  simp [childInlineSize, needsVerticalScrollbar]
+  simp [childInlineSize, needsVerticalScrollbar, needsScrollbarAlong]
 
 end TestsBlock
 end ChromiumLayout
