@@ -484,10 +484,12 @@ A child with `avoid` is moved to the start of the next column when it does not f
 of the current one. It moves at most once, so a child taller than a column still breaks after
 moving. `avoid-page` has no effect without page breaks. Needs a fixed column height (`> 0`). -/
 
-/-- Block-start of a child after the avoid rule. -/
+/-- Block-start of a child after the avoid rule. A child with `break-before: avoid` is not moved by
+its own `break-inside: avoid`: that move is a break before it. Its predecessor is moved instead
+(`childStartsB`), or, when the predecessor may not move either, the child is split. -/
 def shiftedStart (fragH y : Nat) (c : ColChild) : Nat :=
   let r := y % fragH
-  if c.avoid = true ∧ 0 < r ∧ fragH < r + c.height then y + (fragH - r) else y
+  if c.avoid = true ∧ c.breakBeforeAvoid = false ∧ 0 < r ∧ fragH < r + c.height then y + (fragH - r) else y
 
 /-- Block-start of each child, in order, after the avoid rule. -/
 def childStarts (fragH : Nat) : List ColChild → Nat → List (Nat × ColChild)
@@ -515,8 +517,9 @@ def nextColStart (fragH x : Nat) : Nat := (x + fragH - 1) / fragH * fragH
     column start, and it wins over an avoid on that child (`AvoidAndForceBreakBetween`). Otherwise,
     if the next child may not start a column (it is pushed to one by its own avoid, or the child
     before it ends exactly at a column end), the child before it moves to the next column start
-    instead, unless it is at one already. This looks one child ahead; `shiftedStart` decides every
-    other break. -/
+    instead, unless it is at one already or has `break-before: avoid` itself. If that child may not
+    move, the next child is split across the column end (`IgnoreBreakInsideAvoidBecauseBreakBetweenAvoid`).
+    This looks one child ahead; `shiftedStart` decides every other break. -/
 def childStartsB (fragH : Nat) : List ColChild → Nat → List (Nat × ColChild)
   | [], _ => []
   | [c], y => [(shiftedStart fragH y c, c)]
@@ -526,9 +529,10 @@ def childStartsB (fragH : Nat) : List ColChild → Nat → List (Nat × ColChild
       if c.breakAfterColumn = true then
         (s, c) :: childStartsB fragH (n :: cs) (nextColStart fragH after)
       else
-        let nStart := shiftedStart fragH after n
-        let breaksHere := after < nStart ∨ (after % fragH = 0 ∧ 0 < after)
-        let s' := if n.breakBeforeAvoid = true ∧ breaksHere ∧ s % fragH ≠ 0
+        -- where `n` would start if only its own avoid counted, before its break-before rule
+        let nWant := shiftedStart fragH after { n with breakBeforeAvoid := false }
+        let breaksHere := after < nWant ∨ (after % fragH = 0 ∧ 0 < after)
+        let s' := if n.breakBeforeAvoid = true ∧ breaksHere ∧ s % fragH ≠ 0 ∧ c.breakBeforeAvoid = false
                   then s + (fragH - s % fragH) else s
         (s', c) :: childStartsB fragH (n :: cs) (s' + c.height)
 

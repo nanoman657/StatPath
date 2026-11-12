@@ -1279,6 +1279,25 @@ theorem AvoidBreakBeforeBlockReplacedContent_vectors :
     (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(2, 0, 33, 50), (3, 50, 44, 50)] := by
   decide
 
+-- column_layout_algorithm_test.cc:5845: IgnoreBreakInsideAvoidBecauseBreakBetweenAvoid. Four 30px
+-- `break-inside:avoid` children; children 2-4 have `break-before:avoid`, so the whole run of 120px
+-- cannot fit in one 100px column and no break before any child is allowed. The third child may not
+-- move (its own break-before), so the fourth child is split: 10px in column 1 and 20px in column 2.
+def ignoreBreakInsideAvoidBecauseBreakBetweenAvoid_input : Multicol :=
+  { cols := 3, gap := 10, width := 320, height := 100,
+    children := [ { id := 1, width := .px 81, height := 30, avoid := true },
+                  { id := 2, width := .px 82, height := 30, avoid := true, breakBeforeAvoid := true },
+                  { id := 3, width := .px 83, height := 30, avoid := true, breakBeforeAvoid := true },
+                  { id := 4, width := .px 84, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+
+theorem IgnoreBreakInsideAvoidBecauseBreakBetweenAvoid_vectors :
+    let res := layoutMulticolAvoid ignoreBreakInsideAvoidBecauseBreakBetweenAvoid_input
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(1, 0, 81, 30), (2, 30, 82, 30), (3, 60, 83, 30), (4, 90, 84, 10)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(4, 0, 84, 20)] := by
+  decide
+
 -- column_layout_algorithm_test.cc:1174: NestedBreakInsideAvoid
 theorem NestedBreakInsideAvoid_vectors :
     let nodes := [
