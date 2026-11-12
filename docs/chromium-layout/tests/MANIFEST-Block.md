@@ -885,42 +885,42 @@ checks every row against the pinned sources and the Lean modules.
 | outline_rect_collector_test.cc:164 | OutlineRectCollectorRenderingTest.CombineWithAncestor | internal | internal | Blink outline rect collector accumulator check |
 | outline_rect_collector_test.cc:205 | OutlineRectCollectorRenderingTest.UnionCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
 | outline_rect_collector_test.cc:220 | OutlineRectCollectorRenderingTest.VectorCombineWithEmptyRects | internal | internal | Blink outline rect collector accumulator check |
-| scrollbars_test.cc:361 | ScrollbarsTest.DocumentStyleRecalcPreservesScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:386 | ScrollbarsTest.ScrollbarsUpdatedOnOverlaySettingsChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:405 | ScrollbarsTestWithOwnWebViewHelper.ScrollbarSizeF | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:467 | ScrollbarsTest.CustomScrollbarsCauseLayoutOnExistenceChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:518 | ScrollbarsTest.TransparentBackgroundUsesLightOverlayColorScheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:543 | ScrollbarsTest.BodyBackgroundChangesOverlayColorTheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:573 | ScrollbarsTest.OverlayScrollbarChangeToDisplayNoneDynamically | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:643 | ScrollbarsTest.OverlayScrolblarNotCreatedInUnscrollableAxis | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:680 | ScrollbarsTest.HidingScrollbarsOnScrollableAreaDisablesScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:751 | ScrollbarsTest.MouseOverScrollbarInCustomCursorElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:799 | ScrollbarsTest.MouseOverCustomScrollbarInCustomCursorElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:855 | ScrollbarsTest.MouseOverCustomScrollbarWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:908 | ScrollbarsTest.MouseOverCustomScrollbarThumbWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:361 | ScrollbarsTest.DocumentStyleRecalcPreservesScrollbars | behaviour | blocked | scrollbars survive a style-only recalc without layout (Document::updateStyle); the model has no style or invalidation state |
+| scrollbars_test.cc:386 | ScrollbarsTest.ScrollbarsUpdatedOnOverlaySettingsChange | behaviour | blocked | overlay scrollbar theme: IsOverlayScrollbar toggles with ENABLE_OVERLAY_SCROLLBARS; the model has no overlay controller |
+| scrollbars_test.cc:405 | ScrollbarsTestWithOwnWebViewHelper.ScrollbarSizeF | behaviour | blocked | scrollbar thickness from the theme, scaled by device scale factor and read back from visual viewport layers; the model has no theme or visual viewport |
+| scrollbars_test.cc:467 | ScrollbarsTest.CustomScrollbarsCauseLayoutOnExistenceChange | behaviour | blocked | custom ::-webkit-scrollbar sizes plus overlay mode, and an existence change must dirty layout; the model has no custom scrollbar theme or invalidation |
+| scrollbars_test.cc:518 | ScrollbarsTest.TransparentBackgroundUsesLightOverlayColorScheme | behaviour | blocked | overlay scrollbar colour scheme taken from the page background; the model has no overlay theme |
+| scrollbars_test.cc:543 | ScrollbarsTest.BodyBackgroundChangesOverlayColorTheme | behaviour | blocked | overlay scrollbar colour scheme follows a dynamic body background; the model has no overlay theme |
+| scrollbars_test.cc:573 | ScrollbarsTest.OverlayScrollbarChangeToDisplayNoneDynamically | behaviour | blocked | overlay scrollbars with display:none custom scrollbars and empty frame rects; the model has no overlay controller or custom scrollbar theme |
+| scrollbars_test.cc:643 | ScrollbarsTest.OverlayScrolblarNotCreatedInUnscrollableAxis | behaviour | blocked | overlay controller: an overlay scrollbar on an unscrollable axis is not created after a style-only change |
+| scrollbars_test.cc:680 | ScrollbarsTest.HidingScrollbarsOnScrollableAreaDisablesScrollbars | behaviour | blocked | overlay hide state and scrollbar hit-test participation (ShouldParticipateInHitTesting); the model has no hit testing or overlay controller |
+| scrollbars_test.cc:751 | ScrollbarsTest.MouseOverScrollbarInCustomCursorElement | behaviour | blocked | cursor type over a classic scrollbar inside a custom-cursor element; the model has no hit testing or cursor type |
+| scrollbars_test.cc:799 | ScrollbarsTest.MouseOverCustomScrollbarInCustomCursorElement | behaviour | blocked | cursor type over a custom scrollbar thumb inside a custom-cursor element; the model has no hit testing or cursor type |
+| scrollbars_test.cc:855 | ScrollbarsTest.MouseOverCustomScrollbarWithCustomCursor | behaviour | blocked | cursor type over a custom scrollbar that sets its own cursor; the model has no hit testing or cursor type |
+| scrollbars_test.cc:908 | ScrollbarsTest.MouseOverCustomScrollbarThumbWithCustomCursor | behaviour | blocked | per-part hit testing and cursor on custom ::-webkit-scrollbar-thumb (HoveredPart, CursorType); the model has no hit testing or cursor type |
 | scrollbars_test.cc:969 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1052 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceWithoutStyle | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1121 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceBothTrackAndTrackPieceWithoutStyle | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1183 | ScrollbarsTest.MouseOverCustomScrollbarButtonTrackWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1252 | ScrollbarsTest.MouseOverCustomScrollbarCornerTrackWithCustomCursor | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1316 | ScrollbarsTest.MouseOverCustomScrollbarCornerFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1365 | ScrollbarsTest.MouseOverLinkAndOverlayScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1456 | ScrollbarsTest.MouseOverCustomScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1523 | ScrollbarsTest.MouseOverScrollbarAndIFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1613 | ScrollbarsTest.MouseOverScrollbarAndParentElement | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1700 | ScrollbarsTest.MouseOverRootScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1736 | ScrollbarsTest.MouseReleaseUpdatesScrollbarHoveredPart | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1800 | ScrollbarsTest.ContextMenuUpdatesScrollbarPressedPart | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1851 | ScrollbarsTest.CustomScrollbarInOverlayScrollbarThemeWillNotCauseDCHECKFails | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1880 | ScrollbarsTest.CustomScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:1962 | ScrollbarsTest.CustomScrollbarWhenStyleOwnerChange | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2018 | ScrollbarsTestWithVirtualTimer.DISABLED_TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2021 | ScrollbarsTestWithVirtualTimer.TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2133 | ScrollbarAppearanceTest.DISABLED_NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2136 | ScrollbarAppearanceTest.NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2229 | ScrollbarAppearanceTest.ThemeEngineDefinesMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2256 | ScrollbarAppearanceTest.HugeScrollingThumbPosition | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2295 | ScrollbarAppearanceTest.CustomScrollbarUseThemeEngineMinimumThumbLength | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:1052 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceWithoutStyle | behaviour | blocked | per-part hit testing and cursor on a custom track piece without style; the model has no hit testing or cursor type |
+| scrollbars_test.cc:1121 | ScrollbarsTest.MouseOverCustomScrollbarTrackPieceBothTrackAndTrackPieceWithoutStyle | behaviour | blocked | per-part hit testing and cursor on a custom track with a track piece; the model has no hit testing or cursor type |
+| scrollbars_test.cc:1183 | ScrollbarsTest.MouseOverCustomScrollbarButtonTrackWithCustomCursor | behaviour | blocked | per-part hit testing and cursor on a custom scrollbar button; the model has no hit testing or cursor type |
+| scrollbars_test.cc:1252 | ScrollbarsTest.MouseOverCustomScrollbarCornerTrackWithCustomCursor | behaviour | blocked | scroll corner hit testing (IsOverScrollCorner) and cursor on a custom corner; the model has no scroll corner or hit testing |
+| scrollbars_test.cc:1316 | ScrollbarsTest.MouseOverCustomScrollbarCornerFrame | behaviour | blocked | scroll corner hit testing and cursor inside an iframe document; the model has no scroll corner, iframe, or hit testing |
+| scrollbars_test.cc:1365 | ScrollbarsTest.MouseOverLinkAndOverlayScrollbar | behaviour | blocked | link versus overlay scrollbar hit testing with the scrollbar toggled; the model has no hit testing or overlay controller |
+| scrollbars_test.cc:1456 | ScrollbarsTest.MouseOverCustomScrollbar | behaviour | blocked | hover element and custom scrollbar hover state after a hit test; the model has no hit testing or hover state |
+| scrollbars_test.cc:1523 | ScrollbarsTest.MouseOverScrollbarAndIFrame | behaviour | blocked | overlay scrollbar hit testing over an iframe, with the hover element tracked; the model has no hit testing or overlay controller |
+| scrollbars_test.cc:1613 | ScrollbarsTest.MouseOverScrollbarAndParentElement | behaviour | blocked | hover state of the parent element across a classic scrollbar hit test, with the scrollbar disabled by removing overflow; the model has no hit testing or hover state |
+| scrollbars_test.cc:1700 | ScrollbarsTest.MouseOverRootScrollbar | behaviour | blocked | root scrollbar hit testing and html hover; the model has no hit testing or hover state |
+| scrollbars_test.cc:1736 | ScrollbarsTest.MouseReleaseUpdatesScrollbarHoveredPart | behaviour | blocked | scrollbar pressed and hovered part state driven by mouse press, leave and release events; the model has no pointer event state |
+| scrollbars_test.cc:1800 | ScrollbarsTest.ContextMenuUpdatesScrollbarPressedPart | behaviour | blocked | scrollbar pressed part reset by a context-menu event; the model has no pointer event state |
+| scrollbars_test.cc:1851 | ScrollbarsTest.CustomScrollbarInOverlayScrollbarThemeWillNotCauseDCHECKFails | behaviour | blocked | regression test with no assertion: passes if a custom scrollbar under the overlay theme does not hit a DCHECK; the model has no DCHECK or theme state |
+| scrollbars_test.cc:1880 | ScrollbarsTest.CustomScrollbarChangeToMobileByEmulator | behaviour | blocked | device emulation moves the root scrollbar to a visual viewport layer and back; the model has no device emulation or visual viewport layers |
+| scrollbars_test.cc:1962 | ScrollbarsTest.CustomScrollbarWhenStyleOwnerChange | behaviour | blocked | custom scrollbar width comes from the ::-webkit-scrollbar rule of the matching owner, which changes with the class; the model has no custom scrollbar theme |
+| scrollbars_test.cc:2018 | ScrollbarsTestWithVirtualTimer.DISABLED_TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | DISABLED copy of the overlay fade test: mock overlay fade-out delay with mouse enter and exit; the model has no timers, scrollbar fade state, or mouse events |
+| scrollbars_test.cc:2021 | ScrollbarsTestWithVirtualTimer.TestNonCompositedOverlayScrollbarsFade | behaviour | blocked | overlay fade-out delay (5 s mock timer) with mouse enter and exit on a non-composited scroller; the model has no timers, scrollbar fade state, or mouse events |
+| scrollbars_test.cc:2133 | ScrollbarAppearanceTest.DISABLED_NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | device emulation forces the overlay theme and moves the root scrollbar to a visual viewport layer; the model has no emulator or theme |
+| scrollbars_test.cc:2136 | ScrollbarAppearanceTest.NativeScrollbarChangeToMobileByEmulator | behaviour | blocked | device emulation forces the overlay theme and moves the root scrollbar to a visual viewport layer; the model has no emulator or theme |
+| scrollbars_test.cc:2229 | ScrollbarAppearanceTest.ThemeEngineDefinesMinimumThumbLength | behaviour | blocked | thumb minimum length comes from the web theme engine (StubWebThemeEngine kMinimum*Length); the model has no theme engine |
+| scrollbars_test.cc:2256 | ScrollbarAppearanceTest.HugeScrollingThumbPosition | behaviour | blocked | thumb position depends on the theme engine minimum thumb length and scrollbar margin; the model has no theme engine constants |
+| scrollbars_test.cc:2295 | ScrollbarAppearanceTest.CustomScrollbarUseThemeEngineMinimumThumbLength | behaviour | blocked | minimum thumb length for a custom scrollbar follows the Mac theme (26 DIP times device scale); the model has no theme or device scale |
 | scrollbars_test.cc:2343 | ScrollbarsTest.WideBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.WideBodyShouldNotHaveScrollbars_vectors` |
 | scrollbars_test.cc:2367 | ScrollbarsTest.TallBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.TallBodyShouldNotHaveScrollbars_vectors` |
 | scrollbars_test.cc:2392 | ScrollbarsTest.TallAndWideBodyShouldNotHaveScrollbars | behaviour | formalized | `TestsBlock.TallAndWideBodyShouldNotHaveScrollbars_vectors` |
@@ -931,50 +931,50 @@ checks every row against the pinned sources and the Lean modules.
 | scrollbars_test.cc:2520 | ScrollbarsTest.TallPercentageAndWideBodyShouldHaveScrollbar | behaviour | formalized | `TestsBlock.TallPercentageAndWideBodyShouldHaveScrollbar_vectors` |
 | scrollbars_test.cc:2546 | ScrollbarsTest.TallAndWidePercentageBodyShouldHaveScrollbars | behaviour | formalized | `TestsBlock.TallAndWidePercentageBodyShouldHaveScrollbars_vectors` |
 | scrollbars_test.cc:2570 | ScrollbarsTest.MouseOverIFrameScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2622 | ScrollbarsTest.AutosizeTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2690 | ScrollbarsTest.AutosizeHeightOverflowWithOverlayScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2730 | ScrollbarsTest.AutosizeAlmostRemovableScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2770 | ScrollbarsTest.AutosizeExpandingContentScrollable | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2622 | ScrollbarsTest.AutosizeTest | behaviour | blocked | frame autosize fits the frame to content, and subpixel content width is not counted for overflow; the model has no autosize mode |
+| scrollbars_test.cc:2690 | ScrollbarsTest.AutosizeHeightOverflowWithOverlayScrollbar | behaviour | blocked | frame autosize with an overlay scrollbar and scroll-width overflow; the model has no autosize mode or overlay controller |
+| scrollbars_test.cc:2730 | ScrollbarsTest.AutosizeAlmostRemovableScrollbar | behaviour | blocked | frame autosize keeps or drops a nearly removable vertical scrollbar, depending on the scroll-width feature; the model has no autosize mode |
+| scrollbars_test.cc:2770 | ScrollbarsTest.AutosizeExpandingContentScrollable | behaviour | blocked | autosize resize mode (EnableAutoResizeMode 800x600) and UserInputScrollable, which is not the scrollbar presence predicate; the model has neither autosize nor user-input scrollability |
 | scrollbars_test.cc:2801 | ScrollbarsTest.HideTheOverlayScrollbarNotCrashAfterPLSADisposedPaintLayer | internal | internal | Blink crash regression test |
-| scrollbars_test.cc:2846 | ScrollbarsTest.PLSADisposeShouldClearPointerInLayers | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2881 | ScrollbarsTest.OverlayScrollbarHitTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2941 | ScrollbarsTest.RecorderedOverlayScrollbarHitTest | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:2972 | ScrollbarsTest.AllowMiddleButtonPressOnScrollbarWhenDisableMiddleClickAutoScroll | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:2846 | ScrollbarsTest.PLSADisposeShouldClearPointerInLayers | behaviour | blocked | disposing a PaintLayerScrollableArea clears the layer's pointer; the model has no paint layer objects or disposal |
+| scrollbars_test.cc:2881 | ScrollbarsTest.OverlayScrollbarHitTest | behaviour | blocked | overlay scrollbar hit testing across a main frame and an iframe; the model has no hit testing or overlay controller |
+| scrollbars_test.cc:2941 | ScrollbarsTest.RecorderedOverlayScrollbarHitTest | behaviour | blocked | hit testing between a stacked element and an overlay scrollbar, with overlay controls reordered; the model has no paint layers or hit testing |
+| scrollbars_test.cc:2972 | ScrollbarsTest.AllowMiddleButtonPressOnScrollbarWhenDisableMiddleClickAutoScroll | behaviour | blocked | middle button press on a scrollbar when middle-click autoscroll is off; the model has no pointer events or scrollbar press state |
 | scrollbars_test.cc:3007 | ScrollbarsTest.NotAllowMiddleButtonPressOnScrollbarWhenEnableMiddleClickAutoScroll | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3042 | ScrollbarsTest.NotAllowNonLeftButtonPressOnScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3077 | ScrollbarsTest.MiddleDownShouldNotAffectScrollbarPress | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3042 | ScrollbarsTest.NotAllowNonLeftButtonPressOnScrollbar | behaviour | blocked | forward button press on a scrollbar is rejected; the model has no pointer events or scrollbar press state |
+| scrollbars_test.cc:3077 | ScrollbarsTest.MiddleDownShouldNotAffectScrollbarPress | behaviour | blocked | middle button press does not clear a thumb press started on the scrollbar; the model has no pointer events or scrollbar press state |
 | scrollbars_test.cc:3131 | ScrollbarsTest.UseCounterNegativeWhenThumbIsNotScrolledWithMouse | internal | internal | Blink use counter check |
 | scrollbars_test.cc:3218 | ScrollbarsTest.UseCounterPositiveWhenThumbIsScrolledWithMouse | internal | internal | Blink use counter check |
 | scrollbars_test.cc:3260 | ScrollbarsTest.UseCounterNegativeWhenThumbIsNotScrolledWithTouch | internal | internal | Blink use counter check |
 | scrollbars_test.cc:3326 | ScrollbarsTest.UseCounterPositiveWhenThumbIsScrolledWithTouch | internal | internal | Blink use counter check |
 | scrollbars_test.cc:3372 | ScrollbarsTest.UseCounterCustomScrollbarPercentSize | internal | internal | Blink use counter check |
-| scrollbars_test.cc:3416 | ScrollbarsTest.CheckScrollCornerIfThereIsNoScrollbar | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3467 | ScrollbarsTest.NoNeedsBeginFrameForCustomScrollbarAfterBeginFrame | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3508 | ScrollbarsTest.CustomScrollbarHypotheticalThickness | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3416 | ScrollbarsTest.CheckScrollCornerIfThereIsNoScrollbar | behaviour | blocked | scroll corner exists only while a scrollbar exists; the model has no scroll corner object (the presence rule covers the scrollbar only) |
+| scrollbars_test.cc:3467 | ScrollbarsTest.NoNeedsBeginFrameForCustomScrollbarAfterBeginFrame | behaviour | blocked | custom scrollbar part paint invalidation and compositor begin-frame requests; the model has no paint invalidation or compositor |
+| scrollbars_test.cc:3508 | ScrollbarsTest.CustomScrollbarHypotheticalThickness | behaviour | blocked | hypothetical thickness of a custom scrollbar depends on per-orientation ::-webkit-scrollbar selectors; the model has no custom scrollbar theme or CSS selectors |
 | scrollbars_test.cc:3550 | ScrollbarsTestWithVirtualTimer.DISABLED_PressScrollbarButtonOnInfiniteScrolling | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3553 | ScrollbarsTestWithVirtualTimer.PressScrollbarButtonOnInfiniteScrolling | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3746 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhase | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3924 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhaseOnSlottedText | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:3986 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4168 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithWritingMode | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4354 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithMacScrollbarAnimatorImpl | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4468 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsCrossingDocumentBoundaries | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4683 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOutOverlayScrollbarWhenMouseWheelEventWithScrollbarAnimatorImpl | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:3553 | ScrollbarsTestWithVirtualTimer.PressScrollbarButtonOnInfiniteScrolling | behaviour | blocked | button autopress timer that injects scroll gestures while the button is held; the model has no timers, input events, or injected scrolls |
+| scrollbars_test.cc:3746 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhase | behaviour | blocked | fade-in and deferred fade-out counters driven by wheel event phases on the mac animator proxy; the model has no wheel phases or fade state |
+| scrollbars_test.cc:3924 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOverlayScrollbarWhenMouseWheelEventMayBeginPhaseOnSlottedText | behaviour | blocked | fade-in and deferred fade-out counters on slotted text with the mac animator proxy; the model has no scroll chaining, slots, or fade state |
+| scrollbars_test.cc:3986 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbars | behaviour | blocked | fade-in counters across chained overlay scrollbars with the mac animator proxy; the model has no scroll chaining or fade state |
+| scrollbars_test.cc:4168 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithWritingMode | behaviour | blocked | fade-in counters across chained overlay scrollbars in vertical writing modes; the model has no writing mode, scroll chaining, or fade state |
+| scrollbars_test.cc:4354 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsWithMacScrollbarAnimatorImpl | behaviour | blocked | fade-in counters per scroller with the mac scrollbar animator impl and wheel phases; the model has no animator, wheel phases, or fade state |
+| scrollbars_test.cc:4468 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInAllPossiblyChainedOverlayScrollbarsCrossingDocumentBoundaries | behaviour | blocked | fade-in counters across iframe document boundaries with iframe offsets and hit testing; the model has no frames, hit testing, or fade state |
+| scrollbars_test.cc:4683 | ScrollbarsTestWithMacScrollbarAnimatorProxy.FadeInOutOverlayScrollbarWhenMouseWheelEventWithScrollbarAnimatorImpl | behaviour | blocked | fade-in and fade-out counters driven by wheel phases with the mac scrollbar animator impl; the model has no wheel phases or fade state |
 | scrollbars_test.cc:4740 | ScrollbarsTest.ScrollableAreaTraversal | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4811 | ScrollbarsTest.ScrollableAreaTraversalCrossingDocumentBoundary | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4811 | ScrollbarsTest.ScrollableAreaTraversalCrossingDocumentBoundary | behaviour | blocked | scrollable area traversal from a text node through an iframe document to the visual viewport; the model has no frames, text nodes, or traversal order |
 | scrollbars_test.cc:4939 | ScrollbarTrackMarginsTest.CustomScrollbarFractionalMarginsWillNotCauseDCHECKFailure | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4955 | ScrollbarTrackMarginsTest.CustomScrollbarScaledMarginsWillNotCauseDCHECKFailure | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:4979 | ScrollbarColorSchemeTest.ThemeEnginePaint | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5026 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5090 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5154 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5219 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndOverlayScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:4955 | ScrollbarTrackMarginsTest.CustomScrollbarScaledMarginsWillNotCauseDCHECKFailure | behaviour | blocked | scaled custom scrollbar track margin outsets at zoom 1.25 (11, 21, 31, 41 px give 14, 26, 39, 51); the model has no zoom factor or custom scrollbar track |
+| scrollbars_test.cc:4979 | ScrollbarColorSchemeTest.ThemeEnginePaint | behaviour | blocked | painted scrollbar part colour scheme from the stub native theme engine; the model has no theme engine or colour scheme |
+| scrollbars_test.cc:5026 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndClassicScrollbars | behaviour | formalized | `TestsBlock.ScrollbarGutterWithHorizontalTextAndClassicScrollbars_vectors` |
+| scrollbars_test.cc:5090 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndClassicScrollbars | behaviour | formalized | `TestsBlock.ScrollbarGutterWithVerticalTextAndClassicScrollbars_vectors` |
+| scrollbars_test.cc:5154 | ScrollbarsTest.ScrollbarGutterWithHorizontalTextAndOverlayScrollbars | behaviour | formalized | `TestsBlock.ScrollbarGutterWithHorizontalTextAndOverlayScrollbars_vectors` |
+| scrollbars_test.cc:5219 | ScrollbarsTest.ScrollbarGutterWithVerticalTextAndOverlayScrollbars | behaviour | formalized | `TestsBlock.ScrollbarGutterWithVerticalTextAndOverlayScrollbars_vectors` |
 | scrollbars_test.cc:5285 | ScrollbarsTest.ScrollbarGutterBothEdgesKeywordWithClassicScrollbars | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5366 | ScrollbarsTest.ScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5426 | ScrollbarsTest.OverlayScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5476 | ScrollbarsTest.CapturePaintPreviewWithScrollbarsEnabled | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5518 | ScrollbarsTest.CapturePaintPreviewWithOverlayScrollbarsEnabled | behaviour | blocked | model lacks scrollbar theme and overlay controller |
-| scrollbars_test.cc:5563 | ScrollbarsTest.ScrollbarsUsedColorSchemeFollowsOverlayTheme | behaviour | blocked | model lacks scrollbar theme and overlay controller |
+| scrollbars_test.cc:5366 | ScrollbarsTest.ScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | scrollbars removed during paint preview capture and restored on the next lifecycle update; the model has no paint preview, relayout, or paint invalidation |
+| scrollbars_test.cc:5426 | ScrollbarsTest.OverlayScrollbarsRestoredAfterCapturePaintPreview | behaviour | blocked | overlay scrollbars removed during paint preview capture and restored on the next lifecycle update; the model has no paint preview, relayout, or paint invalidation |
+| scrollbars_test.cc:5476 | ScrollbarsTest.CapturePaintPreviewWithScrollbarsEnabled | behaviour | blocked | scrollbars kept during paint preview capture so no relayout is needed; the model has no paint preview or relayout state |
+| scrollbars_test.cc:5518 | ScrollbarsTest.CapturePaintPreviewWithOverlayScrollbarsEnabled | behaviour | blocked | overlay scrollbars kept during paint preview capture so no relayout is needed; the model has no paint preview or relayout state |
+| scrollbars_test.cc:5563 | ScrollbarsTest.ScrollbarsUsedColorSchemeFollowsOverlayTheme | behaviour | blocked | used colour scheme of overlay and classic scrollbars, from the page background and colour-scheme; the model has no colour scheme or overlay theme |
 | scroll_anchor_test.cc:154 | ScrollAnchorTest.VisualViewportAnchors | behaviour | blocked | model lacks scroll anchoring engine |
 | scroll_anchor_test.cc:193 | ScrollAnchorTest.ClearScrollAnchorsOnAncestors | behaviour | blocked | model lacks scroll anchoring engine |
 | scroll_anchor_test.cc:219 | ScrollAnchorTest.AncestorClearingWithSiblingReference | behaviour | blocked | model lacks scroll anchoring engine |

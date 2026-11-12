@@ -54,5 +54,77 @@ theorem TallAndWidePercentageBodyShouldHaveScrollbars_vectors :
     needsScrollbarAlong true 800 (800 * 101 / 100) = true := by
   decide
 
+-- The gutter rows use 100px boxes with no content, so `auto` shows no scrollbar, and a
+-- classic scrollbar is 15px wide (the test's expected value). Each row states the physical
+-- reservation (left, right, top, bottom) and the padding-box size along the inline axis.
+
+-- scrollbars_test.cc:5026: ScrollbarGutterWithHorizontalTextAndClassicScrollbars
+-- horizontal-tb: `stable` reserves the right edge, `stable both-edges` reserves both.
+theorem ScrollbarGutterWithHorizontalTextAndClassicScrollbars_vectors :
+    physicalGutter false (gutterInlineEdges false false false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges false false false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter false (gutterInlineEdges false true false (needsScrollbarAlong true 100 0) 15)
+        = (0, 15, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges false true false (needsScrollbarAlong true 100 0) 15)
+        = 85 ∧
+    physicalGutter false (gutterInlineEdges false true true (needsScrollbarAlong true 100 0) 15)
+        = (15, 15, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges false true true (needsScrollbarAlong true 100 0) 15)
+        = 70 := by
+  decide
+
+-- scrollbars_test.cc:5090: ScrollbarGutterWithVerticalTextAndClassicScrollbars
+-- vertical-rl: the inline axis is vertical, so `stable` reserves the bottom edge.
+theorem ScrollbarGutterWithVerticalTextAndClassicScrollbars_vectors :
+    physicalGutter true (gutterInlineEdges false false false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges false false false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter true (gutterInlineEdges false true false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 15) ∧
+    paddingInline 100 (gutterInlineEdges false true false (needsScrollbarAlong true 100 0) 15)
+        = 85 ∧
+    physicalGutter true (gutterInlineEdges false true true (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 15, 15) ∧
+    paddingInline 100 (gutterInlineEdges false true true (needsScrollbarAlong true 100 0) 15)
+        = 70 := by
+  decide
+
+-- scrollbars_test.cc:5154: ScrollbarGutterWithHorizontalTextAndOverlayScrollbars
+-- Overlay scrollbars take no space, so no gutter is reserved in any mode.
+theorem ScrollbarGutterWithHorizontalTextAndOverlayScrollbars_vectors :
+    physicalGutter false (gutterInlineEdges true false false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true false false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter false (gutterInlineEdges true true false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true true false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter false (gutterInlineEdges true true true (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true true true (needsScrollbarAlong true 100 0) 15)
+        = 100 := by
+  decide
+
+-- scrollbars_test.cc:5219: ScrollbarGutterWithVerticalTextAndOverlayScrollbars
+-- The vertical-rl version of the overlay case: again no reservation in any mode.
+theorem ScrollbarGutterWithVerticalTextAndOverlayScrollbars_vectors :
+    physicalGutter true (gutterInlineEdges true false false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true false false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter true (gutterInlineEdges true true false (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true true false (needsScrollbarAlong true 100 0) 15)
+        = 100 ∧
+    physicalGutter true (gutterInlineEdges true true true (needsScrollbarAlong true 100 0) 15)
+        = (0, 0, 0, 0) ∧
+    paddingInline 100 (gutterInlineEdges true true true (needsScrollbarAlong true 100 0) 15)
+        = 100 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
