@@ -1455,5 +1455,68 @@ theorem AvoidBreakBetweenLinesInsideBreakAvoid_vectors :
     (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.w, s.h)) = [(3, 0, 35, 40), (4, 40, 36, 30)] := by
   decide
 
+-- column_layout_algorithm_test.cc:6136: AvoidBreakBetweenHonorOrphansWidows
+-- Four 20px line boxes (orphans:2, widows:2) and a 30px block with break-inside:avoid and
+-- break-before:avoid, in 100px columns. A break before line j of a block of n lines needs
+-- j-1 >= orphans and n-j+1 >= widows, so only the break before line 3 is allowed. The lines that
+-- may not start a column are break-before:avoid. The line fragments are compared; the wrapper
+-- blocks around the lines are not (as for 5984).
+theorem AvoidBreakBetweenHonorOrphansWidows_vectors :
+    let res := layoutMulticolAvoid
+      { cols := 3, gap := 10, width := 320, height := 100,
+        children := [ { id := 1, height := 20 },
+                      { id := 2, height := 20, breakBeforeAvoid := true },
+                      { id := 3, height := 20 },
+                      { id := 4, height := 20, breakBeforeAvoid := true },
+                      { id := 5, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 20), (2, 20, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) =
+      [(3, 0, 20), (4, 20, 20), (5, 40, 30)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:6182: AvoidBreakBetweenHonorOrphansWidows2
+-- A 40px block, then two 20px line boxes (orphans:2, widows:2) and a 30px block with
+-- break-before:avoid. Two lines cannot be split (orphans + widows = 4 > 2), so the second line is
+-- break-before:avoid and the first line may move with it. The line fragments are compared; the
+-- wrapper block around the lines is not (as for 5984).
+theorem AvoidBreakBetweenHonorOrphansWidows2_vectors :
+    let res := layoutMulticolAvoid
+      { cols := 3, gap := 10, width := 320, height := 100,
+        children := [ { id := 1, height := 40 },
+                      { id := 2, height := 20 },
+                      { id := 3, height := 20, breakBeforeAvoid := true },
+                      { id := 4, height := 30, avoid := true, breakBeforeAvoid := true } ] }
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 40)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) =
+      [(2, 0, 20), (3, 20, 20), (4, 40, 30)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:6225: AvoidBreakBetweenHonorOrphansWidows3
+-- Four 20px line boxes (orphans:2, widows:2), then a block of three lines with break-before:avoid.
+-- The only allowed break in the first block is before line 3. The three lines of the second block
+-- cannot be split (orphans + widows = 4 > 3), so each of them is break-before:avoid, and the
+-- second block is break-before:avoid itself. The line fragments are compared; the wrapper blocks
+-- are not (as for 5984).
+theorem AvoidBreakBetweenHonorOrphansWidows3_vectors :
+    let res := layoutMulticolAvoid
+      { cols := 3, gap := 10, width := 320, height := 100,
+        children := [ { id := 1, height := 20 },
+                      { id := 2, height := 20, breakBeforeAvoid := true },
+                      { id := 3, height := 20 },
+                      { id := 4, height := 20, breakBeforeAvoid := true },
+                      { id := 5, height := 20, breakBeforeAvoid := true },
+                      { id := 6, height := 20, breakBeforeAvoid := true },
+                      { id := 7, height := 20, breakBeforeAvoid := true } ] }
+    res.columns.length = 2 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 20), (2, 20, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) =
+      [(3, 0, 20), (4, 20, 20), (5, 40, 20), (6, 60, 20), (7, 80, 20)] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
