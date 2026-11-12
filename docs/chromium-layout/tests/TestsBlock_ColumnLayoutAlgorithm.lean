@@ -1544,5 +1544,38 @@ theorem AvoidBreakBetweenIgnoreOrphansWidows_vectors :
     (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(3, 0, 20), (4, 20, 30)] := by
   decide
 
+-- Balancing over unbreakable atoms: 20px line boxes and a 60px break-inside:avoid block of three
+-- lines. The even split (40) would divide the avoid block, so the balanced height is 60. The
+-- checks are on column offsets, heights and block placement; the lines inside the avoid block
+-- are not separate slices.
+def avoidLines6_items : List MulticolItem :=
+  [ { id := 1, height := 20 }, { id := 2, height := 60 },
+    { id := 3, height := 20 }, { id := 4, height := 20 } ]
+
+def avoidLines5_items : List MulticolItem :=
+  [ { id := 1, height := 20 }, { id := 2, height := 60 }, { id := 3, height := 20 } ]
+
+-- column_layout_algorithm_test.cc:3506: ColumnBalancingLinesAvoidBreakInside
+theorem ColumnBalancingLinesAvoidBreakInside_vectors :
+    let res := layoutMulticolBalancedItems 3 10 320 avoidLines6_items
+    res.h = 60 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧ (res.columns[2]!).relX = 220 ∧
+    (res.columns[0]!).h = 60 ∧ (res.columns[1]!).h = 60 ∧ (res.columns[2]!).h = 60 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(2, 0, 60)] ∧
+    (res.columns[2]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(3, 0, 20), (4, 20, 20)] := by
+  decide
+
+-- column_layout_algorithm_test.cc:3552: ColumnBalancingLinesAvoidBreakInside2
+theorem ColumnBalancingLinesAvoidBreakInside2_vectors :
+    let res := layoutMulticolBalancedItems 3 10 320 avoidLines5_items
+    res.h = 60 ∧ res.columns.length = 3 ∧
+    (res.columns[0]!).relX = 0 ∧ (res.columns[1]!).relX = 110 ∧ (res.columns[2]!).relX = 220 ∧
+    (res.columns[0]!).h = 60 ∧ (res.columns[1]!).h = 60 ∧ (res.columns[2]!).h = 60 ∧
+    (res.columns[0]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(1, 0, 20)] ∧
+    (res.columns[1]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(2, 0, 60)] ∧
+    (res.columns[2]!).slices.map (fun s => (s.id, s.relY, s.h)) = [(3, 0, 20)] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

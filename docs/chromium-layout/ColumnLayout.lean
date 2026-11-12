@@ -456,6 +456,22 @@ def layoutMulticolBalancedAll (numCols gap width minH : Nat) (fixedH maxH : Opti
   else
     layoutMulticolBalanced numCols gap width minH fixedH maxH children
 
+/-- Balanced multicol over unbreakable items (`column-fill: balance` with `break-inside: avoid`,
+CSS Fragmentation 3 `break-inside`). Each item is an atom that is never split: a breakable block
+is given as its line boxes, and a `break-inside: avoid` block as one item. The column height is
+the least one that holds the items in `numCols` columns with no atom split (`balanceRowHeight`),
+so it can exceed the even split of the content. Items are packed in order into those columns
+(`packColumnSlices`). The container's `height`, `min-height` and `max-height` are not modelled. -/
+def layoutMulticolBalancedItems (numCols gap width : Nat) (items : List MulticolItem) :
+    MulticolResult :=
+  let h := balanceRowHeight numCols items
+  let colW := usedWidth numCols 0 gap width
+  let slices := packColumnSlices numCols colW h items
+  { w := width, h := h, colWidth := colW,
+    columns := (List.range numCols).map (fun k =>
+      ({ colIdx := k, relX := columnInlineOffset k colW gap, relY := 0, w := colW, h := h,
+         slices := slices.getD k [] } : ColFrag)) }
+
 /-- The balanced height holds the content in `numCols` columns. -/
 theorem balancedColumnHeight_fits (n c : Nat) (hn : 0 < n) :
     c ≤ n * balancedColumnHeight n c := by
