@@ -64,5 +64,24 @@ theorem GridLanesGapGeometryRowStackingAxisOverflow_vectors :
     5 + gridContentSize 6 [40, 40] = 91 := by
   decide
 
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:662: BuildIntrinsicTrackSizes
+-- Columns min-content and max-content in a 100px container. Item text widths (10px glyphs): "XX XX"
+-- has min-content 20 and max-content 50; "XXX XXXXXX XXXXXXXXX" has min-content 90 and
+-- max-content 200. The steps give column 1 base 30 and column 2 base 170.
+theorem GridLanesBuildIntrinsicTrackSizes_vectors :
+    intrinsicTrackSizes 100 [.single .minContent, .single .maxContent]
+      [⟨0, 1, 20, 50⟩, ⟨1, 1, 20, 50⟩, ⟨0, 2, 90, 200⟩] = some [30, 170] := by
+  decide
+
+-- grid_lanes/grid_lanes_layout_algorithm_test.cc:697: MaximizeAndStretchAutoTracks
+-- Columns minmax(15px, min-content), max-content and auto in a 100px container. Item text widths
+-- (10px glyphs): "XXX XXX" has min-content 30 and max-content 70; "X XX X" has min-content 20 and
+-- max-content 60. The maximize step leaves column 1 at base 30 and the auto column is stretched to 25.
+theorem GridLanesMaximizeAndStretchAutoTracks_vectors :
+    intrinsicTrackSizes 100
+      [.minmax (.fixed 15) .minContent, .single .maxContent, .single .auto]
+      [⟨0, 1, 30, 70⟩, ⟨0, 2, 20, 60⟩] = some [30, 45, 25] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

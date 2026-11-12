@@ -285,5 +285,255 @@ theorem stretchedAutoSize_total_le (box gap n : Nat) :
   · simp
   · exact Nat.le_trans (Nat.div_mul_le_self _ _) (Nat.sub_le _ _)
 
+/-! ### Intrinsic track sizing
+
+Resolution of intrinsic track sizes for one axis, as the grid track sizing algorithm applies it
+(shared with grid-lanes lanes): items are processed in groups of equal span size (CSS Grid 2
+`#algo-spanning-items`), each group in five contribution steps. An item's extra space is shared
+among the sets it spans (`#extra-space`); the planned increases of a step are applied once the
+group is done. Then free space is maximized (`#algo-grow-tracks`) and auto tracks are stretched
+(`#algo-stretch`). Sizes are whole pixels; the remainder of a division is dropped. Percentage,
+flexible and fit-content tracks are not modelled: `trackBounds` returns `none` for them. Item
+min-content and max-content contributions are inputs supplied by the test. -/
+
+/-- Sizing function of one side (minimum or maximum) of a normalized track. -/
+inductive IntrinsicSz where
+  | fixed (px : Nat)
+  | auto
+  | minContent
+  | maxContent
+  deriving DecidableEq, Repr
+
+/-- Converts a normalized track side; `none` for percentage, flexible and fit-content lengths. -/
+def toIntrinsic : TrackSz → Option IntrinsicSz
+  | .fixed px => some (.fixed px)
+  | .auto => some .auto
+  | .minContent => some .minContent
+  | .maxContent => some .maxContent
+  | _ => none
+
+/-- Normalized (minimum, maximum) of a track definition in a definite container. -/
+def trackBounds (t : TrackDef) : Option (IntrinsicSz × IntrinsicSz) :=
+  let p := normalizeTrack true t
+  match toIntrinsic p.1, toIntrinsic p.2 with
+  | some lo, some hi => some (lo, hi)
+  | _, _ => none
+
+/-- A grid item: the first track it spans, its span, and its min-content and max-content
+    contributions in pixels. -/
+structure IntrinsicItem where
+  start : Nat
+  span : Nat
+  minContent : Nat
+  maxContent : Nat
+
+/-- A track set during resolution: its sizing functions, base size, growth limit (`none` is
+    infinite), whether its growth limit became finite in the last intrinsic maximum step and is
+    therefore infinitely growable for the next step, and the planned increase of the current step
+    (`none` when the step did not accommodate an item). -/
+structure IntrinsicSet where
+  lo : IntrinsicSz
+  hi : IntrinsicSz
+  base : Nat
+  growth : Option Nat
+  infGrowable : Bool
+  planned : Option Nat
+
+/-- The contribution steps of one span-size group, in the order they are applied. -/
+inductive IntrinsicStep where
+  | intrinsicMin
+  | contentMin
+  | maxContentMin
+  | intrinsicMax
+  | maxContentMax
+
+/-- Minimum steps grow base sizes; maximum steps grow growth limits. -/
+def IntrinsicStep.isMin : IntrinsicStep → Bool
+  | .intrinsicMin | .contentMin | .maxContentMin => true
+  | .intrinsicMax | .maxContentMax => false
+
+/-- Intrinsic (min-content, max-content or auto) sizing function. -/
+def isIntrinsic : IntrinsicSz → Bool
+  | .fixed _ => false
+  | _ => true
+
+/-- Min-content or max-content minimum. -/
+def hasContentMin : IntrinsicSz → Bool
+  | .minContent | .maxContent => true
+  | _ => false
+
+/-- Max-content minimum. -/
+def hasMaxContentMin : IntrinsicSz → Bool
+  | .maxContent => true
+  | _ => false
+
+/-- Max-content or auto maximum. -/
+def hasMaxContentOrAutoMax : IntrinsicSz → Bool
+  | .maxContent | .auto => true
+  | _ => false
+
+/-- Whether a set takes part in a step (it accommodates the item). -/
+def stepApplies : IntrinsicStep → IntrinsicSet → Bool
+  | .intrinsicMin, s => isIntrinsic s.lo
+  | .contentMin, s => hasContentMin s.lo
+  | .maxContentMin, s => hasMaxContentMin s.lo
+  | .intrinsicMax, s => isIntrinsic s.hi
+  | .maxContentMax, s => hasMaxContentOrAutoMax s.hi
+
+/-- Whether a step may grow a set beyond its limit once the within-limit share is used up. -/
+def stepGrowsBeyond : IntrinsicStep → IntrinsicSet → Bool
+  | .intrinsicMin, s => isIntrinsic s.hi
+  | .contentMin, s => isIntrinsic s.hi
+  | .maxContentMin, s => hasMaxContentOrAutoMax s.hi
+  | _, _ => false
+
+/-- Contribution of an item to a step: max-content for the max-content steps, else min-content. -/
+def stepContribution : IntrinsicStep → IntrinsicItem → Nat
+  | .maxContentMin, it => it.maxContent
+  | .maxContentMax, it => it.maxContent
+  | _, it => it.minContent
+
+/-- Size a step increases: the base size for minimum steps, the definite growth limit for maximum
+    steps. -/
+def stepAffected (st : IntrinsicStep) (s : IntrinsicSet) : Nat :=
+  if st.isMin then s.base else s.growth.getD s.base
+
+/-- Growth potential of a set in a step; `none` is infinite. For minimum steps this is the growth
+    limit minus the base; for maximum steps it is infinite when the growth limit is infinite or
+    infinitely growable, and zero otherwise. -/
+def stepPotential (st : IntrinsicStep) (s : IntrinsicSet) : Option Nat :=
+  if st.isMin then s.growth.map (· - s.base)
+  else match s.growth with
+    | none => none
+    | some _ => if s.infGrowable then none else some 0
+
+/-- Ascending order of growth potentials, infinite last. -/
+def potLe : Option Nat → Option Nat → Bool
+  | none, none => true
+  | none, some _ => false
+  | some _, none => true
+  | some a, some b => Nat.ble a b
+
+/-- Insertion of a (track, potential) pair into a list sorted by potential. -/
+def insertByPot (x : Nat × Option Nat) : List (Nat × Option Nat) → List (Nat × Option Nat)
+  | [] => [x]
+  | y :: ys => if potLe x.2 y.2 then x :: y :: ys else y :: insertByPot x ys
+
+/-- Sorts (track, potential) pairs by potential. -/
+def sortByPot : List (Nat × Option Nat) → List (Nat × Option Nat)
+  | [] => []
+  | x :: xs => insertByPot x (sortByPot xs)
+
+/-- Equal distribution of `rem` pixels over sets in ascending potential order: each set takes the
+    smaller of its potential and an equal share of the space still left (CSS Grid 2
+    `#extra-space`). -/
+def fillSorted : Nat → List (Nat × Option Nat) → List (Nat × Nat)
+  | _, [] => []
+  | rem, (i, p) :: rest =>
+    let share := rem / (rest.length + 1)
+    let give := match p with
+      | none => share
+      | some q => Nat.min q share
+    (i, give) :: fillSorted (rem - give) rest
+
+/-- Placeholder for an index outside the track list; it takes part in no step. -/
+def dummySet : IntrinsicSet := ⟨.auto, .auto, 0, none, false, none⟩
+
+/-- Shares of one item's extra space among the sets it spans in a step, as (track, increase)
+    pairs. The shares are computed against the sets before the step. An item with no extra space,
+    or no set taking part, produces no pairs. Space left after the within-limit shares goes equally
+    to the sets allowed to grow beyond their limits (all taking-part sets when there are none). -/
+def itemShares (st : IntrinsicStep) (sets : List IntrinsicSet) (it : IntrinsicItem) :
+    List (Nat × Nat) :=
+  let idxs := (List.range it.span).map (fun k => it.start + k)
+  let getS := fun (i : Nat) => sets.getD i dummySet
+  let spanned := idxs.foldl (fun acc i => acc + stepAffected st (getS i)) 0
+  let extra := stepContribution st it - spanned
+  let applied := idxs.filter (fun i => stepApplies st (getS i))
+  if extra == 0 || applied.isEmpty then []
+  else
+    let within := fillSorted extra (sortByPot (applied.map (fun i => (i, stepPotential st (getS i)))))
+    let leftover := extra - (within.map (·.2)).foldl (· + ·) 0
+    let beyond := match applied.filter (fun i => stepGrowsBeyond st (getS i)) with
+      | [] => applied
+      | b => b
+    let beyondShare := leftover / beyond.length
+    applied.map (fun i =>
+      (i, (within.lookup i).getD 0 + (if beyond.contains i then beyondShare else 0)))
+
+/-- Grows a set by its planned increase: a base size for minimum steps; for maximum steps, the
+    growth limit becomes the definite growth limit plus the increase, and the set is infinitely
+    growable when its growth limit was infinite. -/
+def growSet (st : IntrinsicStep) (s : IntrinsicSet) (p : Nat) : IntrinsicSet :=
+  if st.isMin then { s with base := s.base + p, infGrowable := false, planned := none }
+  else { s with infGrowable := s.growth.isNone,
+                growth := some (s.growth.getD s.base + p), planned := none }
+
+/-- One contribution step over a group of items. The shares of all items are computed against the
+    sets as they were before the step; each set's planned increase is the largest share it
+    received, and the planned increases are applied after the whole group. -/
+def groupStep (st : IntrinsicStep) (items : List IntrinsicItem) (sets : List IntrinsicSet) :
+    List IntrinsicSet :=
+  let ups := items.flatMap (itemShares st sets)
+  (List.range sets.length).map (fun i =>
+    let s := sets.getD i dummySet
+    match (ups.filter (fun u => u.1 == i)).map (·.2) with
+    | [] => s
+    | v :: vs => growSet st s (vs.foldl max v))
+
+/-- Resolves the items of one span size: the five steps, in order. -/
+def resolveSpan (items : List IntrinsicItem) (sets : List IntrinsicSet) (span : Nat) :
+    List IntrinsicSet :=
+  let group := items.filter (fun it => it.span == span)
+  [IntrinsicStep.intrinsicMin, .contentMin, .maxContentMin, .intrinsicMax, .maxContentMax].foldl
+    (fun acc st => groupStep st group acc) sets
+
+/-- Resolves intrinsic track sizes for span sizes `1 .. maxSpan`, in increasing span order. -/
+def resolveIntrinsic (items : List IntrinsicItem) (maxSpan : Nat) (sets : List IntrinsicSet) :
+    List IntrinsicSet :=
+  (List.range maxSpan).foldl (fun acc k => resolveSpan items acc (k + 1)) sets
+
+/-- Initial set of a track: base size from a fixed minimum (else zero), growth limit from a fixed
+    maximum (else infinite). -/
+def initSet (lo hi : IntrinsicSz) : IntrinsicSet :=
+  { lo := lo, hi := hi,
+    base := (match lo with | .fixed px => px | _ => 0),
+    growth := (match hi with | .fixed px => some px | _ => none),
+    infGrowable := false, planned := none }
+
+/-- Sum of the base sizes. -/
+def sumBase (sets : List IntrinsicSet) : Nat :=
+  sets.foldl (fun acc s => acc + s.base) 0
+
+/-- Maximize tracks (CSS Grid 2 `#algo-grow-tracks`): infinite growth limits become base sizes,
+    then the free space left in the container is shared equally up to the growth limits. -/
+def maximizeSets (container : Nat) (sets0 : List IntrinsicSet) : List IntrinsicSet :=
+  let sets := sets0.map (fun s => { s with growth := some (s.growth.getD s.base) })
+  let free := container - sumBase sets
+  let pots := (List.range sets.length).map (fun i =>
+    let s := sets.getD i dummySet
+    (i, some (s.growth.getD s.base - s.base)))
+  let shares := fillSorted free (sortByPot pots)
+  (List.range sets.length).map (fun i =>
+    let s := sets.getD i dummySet
+    { s with base := s.base + (shares.lookup i).getD 0 })
+
+/-- Stretch auto tracks (CSS Grid 2 `#algo-stretch`): the free space left after the base sizes is
+    shared equally among the tracks whose maximum is `auto`. -/
+def stretchSets (container : Nat) (sets : List IntrinsicSet) : List Nat :=
+  let free := container - sumBase sets
+  let autos := (sets.filter (fun s => s.hi == IntrinsicSz.auto)).length
+  let share := if autos == 0 then 0 else free / autos
+  sets.map (fun s => if s.hi == IntrinsicSz.auto then s.base + share else s.base)
+
+/-- Intrinsic track sizes of one axis: the base sizes after resolution, maximization and
+    stretching. `none` when a track is percentage, flexible or fit-content sized. -/
+def intrinsicTrackSizes (container : Nat) (tracks : List TrackDef) (items : List IntrinsicItem) :
+    Option (List Nat) := do
+  let bounds ← tracks.mapM trackBounds
+  let sets := bounds.map (fun b => initSet b.1 b.2)
+  let resolved := resolveIntrinsic items tracks.length sets
+  return stretchSets container (maximizeSets container resolved)
+
 end GridLayout
 end ChromiumLayout
