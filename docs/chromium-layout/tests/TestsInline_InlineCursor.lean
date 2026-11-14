@@ -266,9 +266,9 @@ theorem inlineCursor_firstLastLogicalLeafWithImages :
 /-- Test: IsEmptyLineBox (inline_cursor_test.cc:554)
     CSS 2.1 §9.4.2: Line box with text is non-empty; line box with empty inline and margin is empty. -/
 theorem inlineCursor_isEmptyLineBox :
-    let line1 : CursorNode := { name := "#linebox", type := .line, isEmptyLine := false }
-    let line2 : CursorNode := { name := "#linebox", type := .line, isEmptyLine := true }
-    line1.isEmptyLine = false ∧ line2.isEmptyLine = true := by
+    let line1Items : List CursorNode := [{ name := "abc", type := .text }]
+    let line2Items : List CursorNode := [{ name := "b", type := .box }]
+    isLineBoxEmpty line1Items = false ∧ isLineBoxEmpty line2Items = true := by
   decide
 
 /-- Test: LastChild (inline_cursor_test.cc:565)

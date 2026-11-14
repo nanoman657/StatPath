@@ -53,12 +53,13 @@ theorem fragmentItem_caretInlinePositionForOffset_TextFit :
   decide
 
 /-- Test `FragmentItemTest.IsRubyAnnotationLine` (`inline/fragment_item_test.cc:952`).
-    Ruby block produces base line (not annotation) and ruby annotation line (is annotation). -/
+    CSS Ruby 1 §3: Ruby container produces a base line (isRubyAnnotationLine = false)
+    and an annotation line (isRubyAnnotationLine = true). -/
 theorem fragmentItem_isRubyAnnotationLine :
-    let baseLine : FragmentItem := { type := .line, isRubyAnnotationLine := false }
-    let rtLine : FragmentItem := { type := .line, isRubyAnnotationLine := true }
-    (baseLine.isRubyAnnotationLine = false) ∧
-    (rtLine.isRubyAnnotationLine = true) := by
+    let lines := classifyRubyLineFragments true true
+    (lines.length = 2) ∧
+    (lines[0]! = (.line, false)) ∧
+    (lines.any (fun (_, isAnn) => isAnn) = true) := by
   decide
 
 /-- Test `FragmentItemsTest.IsContainerForCulledInline` (`inline/fragment_items_test.cc:46`).
@@ -104,38 +105,34 @@ theorem fragmentItems_isContainerForCulledInline :
     CSS Writing Modes 3 §3.1 & UAX #9: Mixed-directional RTL text splits into visual runs;
     first-for-node and last-for-node sequence flags track the whole layout object. -/
 theorem fragmentItem_rtlText :
-    let spanItems : List FragmentItem := [
-      { nodeId := 1, type := .box, isFirstForNode := true, isLastForNode := false },
-      { nodeId := 1, type := .box, isFirstForNode := false, isLastForNode := true }
-    ]
-    let textItems : List (String × FragmentItem) := [
-      (".", { nodeId := 2, type := .text, isFirstForNode := true, isLastForNode := false }),
-      ("11111", { nodeId := 2, type := .text, isFirstForNode := false, isLastForNode := false }),
-      (".", { nodeId := 2, type := .text, isFirstForNode := false, isLastForNode := false }),
-      ("22222", { nodeId := 2, type := .text, isFirstForNode := false, isLastForNode := true })
-    ]
-    (spanItems.length = 2) ∧
-    (spanItems[0]!.isFirstForNode = true ∧ spanItems[0]!.isLastForNode = false) ∧
-    (spanItems[1]!.isFirstForNode = false ∧ spanItems[1]!.isLastForNode = true) ∧
-    (textItems.length = 4) ∧
-    (textItems[0]!.1 = "." ∧ textItems[0]!.2.isFirstForNode = true ∧ textItems[0]!.2.isLastForNode = false) ∧
-    (textItems[1]!.1 = "11111" ∧ textItems[1]!.2.isFirstForNode = false ∧ textItems[1]!.2.isLastForNode = false) ∧
-    (textItems[2]!.1 = "." ∧ textItems[2]!.2.isFirstForNode = false ∧ textItems[2]!.2.isLastForNode = false) ∧
-    (textItems[3]!.1 = "22222" ∧ textItems[3]!.2.isFirstForNode = false ∧ textItems[3]!.2.isLastForNode = true) := by
+    let visualRuns := bidiVisualFragmentRunsRtl [("11111", "."), ("22222", ".")]
+    let spanFlags0 := deriveFragmentSequenceFlags 2 0
+    let spanFlags1 := deriveFragmentSequenceFlags 2 1
+    let textFlags0 := deriveFragmentSequenceFlags 4 0
+    let textFlags1 := deriveFragmentSequenceFlags 4 1
+    let textFlags2 := deriveFragmentSequenceFlags 4 2
+    let textFlags3 := deriveFragmentSequenceFlags 4 3
+    (visualRuns = [".", "11111", ".", "22222"]) ∧
+    (spanFlags0 = (true, false)) ∧
+    (spanFlags1 = (false, true)) ∧
+    (textFlags0 = (true, false)) ∧
+    (textFlags1 = (false, false)) ∧
+    (textFlags2 = (false, false)) ∧
+    (textFlags3 = (false, true)) := by
   decide
 
 /-- Test `FragmentItemTest.StartOffsetInContainer` (`inline/fragment_item_test.cc:357`).
     CSS Text 3 §5.2: Soft hyphen line breaks generate hyphen items with start offsets in container. -/
 theorem fragmentItem_startOffsetInContainer :
-    let hyphenOffsets := [4, 8, 12]
-    hyphenOffsets = [4, 8, 12] := by
-  rfl
+    let segmentLengths := [3, 3, 3]
+    computeHyphenOffsetsInContainer segmentLengths = [4, 8, 12] := by
+  decide
 
 /-- Test `FragmentItemTest.EllipsizedAtomicInline` (`inline/fragment_item_test.cc:383`).
-    CSS Overflow 3 §4.4: When atomic inline is ellipsized, it is marked as the last box item for the node. -/
+    CSS Overflow 3 §4.4: When atomic inline overflows container under text-overflow: ellipsis,
+    it is marked as the last box item for the node. -/
 theorem fragmentItem_ellipsizedAtomicInline :
-    let atomicItem : FragmentItem := { type := .box, isLastForNode := true }
-    (atomicItem.type = .box) ∧ (atomicItem.isLastForNode = true) := by
+    classifyEllipsizedAtomicInlineFragments 200 100 = some (.box, true) := by
   decide
 
 end ChromiumLayout.TestsInline

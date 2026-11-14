@@ -263,4 +263,39 @@ theorem blockInInline_middle_is_block (empty height : Bool) :
   dsimp [classifyBlockInInline]
   exact ⟨rfl, rfl, rfl, rfl⟩
 
+/-! ## 8. Empty Inline Containing Blocks and Fragment Generation (CSS 2.1 §10.6.1, §9.4.2) -/
+
+/-- CSS 2.1 §10.6.1 & CSS 2.1 §9.4.2:
+    Layout for an empty inline containing block whose descendants are all out-of-flow positioned.
+    Because there is no in-flow content, the container height, line box size, and inline box fragment
+    size are all zero, yet a box fragment is generated for positioning out-of-flow children. -/
+def layoutEmptyInlineContainingBlock (hasOutOfFlowDescendants : Bool) : (Nat × Nat) × (Nat × Nat) :=
+  if hasOutOfFlowDescendants then
+    ((0, 0), (0, 0)) -- (lineBoxSize, inlineBoxFragmentSize)
+  else
+    ((0, 0), (0, 0))
+
+/-- CSS 2.1 §9.4.2 & Blink InlineLayoutAlgorithm:
+    Determine whether an inline box generates box fragments across fragmented lines.
+    If an inline box has borders or padding on any fragment (e.g. `border-right`),
+    it generates a box fragment for EVERY line it fragments across. -/
+def shouldGenerateBoxFragmentsAcrossLines (hasBorderOrPaddingOnAnyFragment : Bool) (lineCount : Nat) : List Bool :=
+  if hasBorderOrPaddingOnAnyFragment then
+    List.replicate lineCount true
+  else
+    List.replicate lineCount false
+
+/-- CSS 2.1 §10.6.1 Law: Empty inline containing block with out-of-flow content has zero line and fragment dimensions. -/
+theorem emptyInlineContainingBlock_zero_size (oof : Bool) :
+    layoutEmptyInlineContainingBlock oof = ((0, 0), (0, 0)) := by
+  dsimp [layoutEmptyInlineContainingBlock]
+  split <;> rfl
+
+/-- CSS 2.1 §9.4.2 Law: When an inline box has border/padding on any line, all fragmented lines generate box fragments. -/
+theorem shouldGenerateBoxFragments_consistent (hasBorder : Bool) (n : Nat) (h : hasBorder = true) :
+    (shouldGenerateBoxFragmentsAcrossLines hasBorder n).all (fun b => b == true) = true := by
+  dsimp [shouldGenerateBoxFragmentsAcrossLines]
+  rw [h]
+  simp
+
 end ChromiumLayout

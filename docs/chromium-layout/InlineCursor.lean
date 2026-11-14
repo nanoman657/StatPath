@@ -560,4 +560,18 @@ theorem positionForPointInChild_ltr_start (isVertical : Bool) (fragmentOffset po
   dsimp [positionForPointInChild, visualInlineOffsetToCharIndex]
   simp [hCoord]
 
+/-- CSS 2.1 §9.4.2 & Blink InlineCursor::IsEmptyLineBox:
+    A line box is empty if it contains no text fragments and no atomic inlines,
+    even if it contains empty inline boxes with margins. -/
+def isLineBoxEmpty (items : List CursorNode) : Bool :=
+  ¬ items.any (fun it => it.type == .text || it.isAtomic)
+
+/-- General Law: A line without text or atomic inlines is empty. -/
+theorem isLineBoxEmpty_no_text_or_atomic (items : List CursorNode)
+    (h : items.any (fun it => it.type == .text || it.isAtomic) = false) :
+    isLineBoxEmpty items = true := by
+  dsimp [isLineBoxEmpty]
+  rw [h]
+  rfl
+
 end ChromiumLayout

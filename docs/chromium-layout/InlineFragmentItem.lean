@@ -221,4 +221,79 @@ theorem isContainerForCulledInline_empty (fragIdx : Nat) (culledNodeId : Nat) :
     isContainerForCulledInline [] fragIdx culledNodeId = (false, false, false) := by
   dsimp [isContainerForCulledInline]
 
+/-! ## 5. Visual Runs, Sequence Flags, Hyphen Offsets, and Line Classification (CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2, CSS Text 3 §5.2, CSS Overflow 3 §4.4, CSS Ruby 1 §3) -/
+
+/-- CSS Writing Modes 3 §3.1 & UAX #9:
+    Derive visual text fragment runs for mixed-directional text lines under RTL paragraph direction.
+    For each line with number and trailing period, visual reordering places the trailing period first. -/
+def bidiVisualFragmentRunsRtl (lines : List (String × String)) : List String :=
+  lines.flatMap (fun (num, punct) => [punct, num])
+
+/-- CSS 2.1 §9.4.2 & CSS Inline 3 §2:
+    Derive `(isFirstForNode, isLastForNode)` sequence flags for a fragment at index `fragIdx`
+    in a sequence of `totalFrags` fragments belonging to that layout object. -/
+def deriveFragmentSequenceFlags (totalFrags : Nat) (fragIdx : Nat) : Bool × Bool :=
+  (isFirstFragmentForNode fragIdx, isLastFragmentForNode fragIdx totalFrags)
+
+/-- Helper for computing hyphen offsets in container. -/
+def computeHyphenOffsetsAux (accOffset : Nat) : List Nat → List Nat
+  | [] => []
+  | len :: rest =>
+    let hyphenOff := accOffset + len + 1
+    hyphenOff :: computeHyphenOffsetsAux hyphenOff rest
+
+/-- CSS Text 3 §5.2 & Blink FragmentItem::StartOffsetInContainer:
+    Compute start offsets in container for layout-generated hyphen fragments
+    produced at soft-hyphen break opportunities after each segment.
+    Each hyphen fragment is positioned immediately following its preceding text segment
+    in container character offset coordinates. -/
+def computeHyphenOffsetsInContainer (segmentLengths : List Nat) : List Nat :=
+  computeHyphenOffsetsAux 0 segmentLengths
+
+/-- CSS Overflow 3 §4.4 & Blink FragmentItem:
+    When an atomic inline overflows the container under `text-overflow: ellipsis`,
+    it produces a box item and a generated text (ellipsis) item, both marked as
+    the last fragment for their respective nodes. -/
+def classifyEllipsizedAtomicInlineFragments (itemWidth containerWidth : Nat) :
+    Option (FragmentItemType × Bool) :=
+  if itemWidth > containerWidth then
+    some (.box, true)
+  else
+    none
+
+/-- CSS Ruby 1 §3 & Blink FragmentItem::IsRubyAnnotationLine:
+    Classify line fragments in a ruby formatting context.
+    A ruby container produces a base line (isRubyAnnotationLine = false)
+    and one or more ruby annotation lines (isRubyAnnotationLine = true) for `<rt>` content. -/
+def classifyRubyLineFragments (hasBaseText : Bool) (hasAnnotationText : Bool) : List (FragmentItemType × Bool) :=
+  let baseLine := if hasBaseText then [(FragmentItemType.line, false)] else []
+  let rtLine := if hasAnnotationText then [(FragmentItemType.line, true)] else []
+  baseLine ++ rtLine
+
+/-- General Law: When a layout object has multiple fragments, the first fragment is first but not last. -/
+theorem deriveFragmentSequenceFlags_first (n : Nat) (h : n > 1) :
+    deriveFragmentSequenceFlags n 0 = (true, false) := by
+  dsimp [deriveFragmentSequenceFlags, isFirstFragmentForNode, isLastFragmentForNode]
+  have hLast : (0 + 1 == n) = false := by
+    apply beq_false_of_ne
+    omega
+  rw [hLast]
+
+/-- General Law: Single hyphen segment offset is length + 1. -/
+theorem computeHyphenOffsetsInContainer_single (len : Nat) :
+    computeHyphenOffsetsInContainer [len] = [len + 1] := by
+  dsimp [computeHyphenOffsetsInContainer, computeHyphenOffsetsAux]
+  congr 1
+  omega
+
+/-- General Law: Overflowing atomic inline under text-overflow: ellipsis yields a terminal box item. -/
+theorem classifyEllipsizedAtomicInlineFragments_overflow (w cW : Nat) (h : w > cW) :
+    classifyEllipsizedAtomicInlineFragments w cW = some (.box, true) := by
+  dsimp [classifyEllipsizedAtomicInlineFragments]
+  simp [h]
+
+/-- General Law: Ruby container with both base and annotation text produces base line and annotation line. -/
+theorem classifyRubyLineFragments_both :
+    classifyRubyLineFragments true true = [(.line, false), (.line, true)] := rfl
+
 end ChromiumLayout

@@ -217,4 +217,25 @@ theorem inlineLayoutAlgorithm_rubyTextEmphasisHeight :
     (p1Height = p3Height) := by
   decide
 
+/-- Test `InlineLayoutAlgorithmTest.EmptyLineWithOutOfFlowInInlineContainingBlock` (`inline/inline_layout_algorithm_test.cc:245`).
+    CSS 2.1 §10.6.1 & §9.4.2:
+    Empty inline containing block with only out-of-flow descendants generates zero-height container,
+    zero-size line box, and zero-size box fragment. -/
+theorem inlineLayoutAlgorithm_emptyLineWithOutOfFlowInInlineContainingBlock :
+    let (lineBoxSize, boxFragmentSize) := layoutEmptyInlineContainingBlock true
+    (lineBoxSize = (0, 0)) ∧ (boxFragmentSize = (0, 0)) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.BoxForEndMargin` (`inline/inline_layout_algorithm_test.cc:291`).
+    CSS 2.1 §9.4.2:
+    Fragmented inline box with border on end fragment generates box fragments across all fragmented lines. -/
+theorem inlineLayoutAlgorithm_boxForEndMargin :
+    let lineCount := 2
+    let hasEndBorder := true
+    let fragmentsGenerated := shouldGenerateBoxFragmentsAcrossLines hasEndBorder lineCount
+    (fragmentsGenerated.length = 2) ∧
+    (fragmentsGenerated[0]! = true) ∧
+    (fragmentsGenerated[1]! = true) := by
+  decide
+
 end ChromiumLayout.TestsInline
