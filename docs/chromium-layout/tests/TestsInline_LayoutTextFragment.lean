@@ -22,6 +22,7 @@ import LayoutInline
 import InlineItemBuilder
 import InlineOffsetMapping
 import InlineFirstLetter
+import InlineBidi
 
 namespace ChromiumLayout
 
@@ -329,6 +330,31 @@ theorem layoutTextFragment_isBeforeAfterNonCollapsedCharacterNoLineWrap :
     (fragmentIsBeforeNonCollapsed u4 r4 3 = false) ∧
     (fragmentIsAfterNonCollapsed u4 r4 3 = false) ∧
     (fragmentIsAfterNonCollapsed u4 r4 4 = false) := by
+  decide
+
+/-! ## 12. Text-Transform Capitalization (`layout_text_fragment_test.cc:61`) -/
+
+/-- Test `LayoutTextFragmentTest, TransformedTextWithCapitalizationAfterSupplementaryCharacter` (`layout_text_fragment_test.cc:61`).
+    CSS Text 3 §2.1: First-letter supplementary character leaves 'bc' lowercase and capitalizes 'def' to 'Def'. -/
+theorem layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter :
+    String.mk (applyCapitalizeTransform true "bc def".toList) = "bc Def" := by
+  decide
+
+/-! ## 13. IsBeforeAfterNonCollapsedLineWrapSpace (`layout_text_fragment_test.cc:356`) -/
+
+/-- Test `LayoutTextFragmentTest, IsBeforeAfterNonCollapsedLineWrapSpace` (`layout_text_fragment_test.cc:356`).
+    CSS Text 3 §4.1: Line-wrapping space in remaining text allows caret before wrap and after wrap. -/
+theorem layoutTextFragment_isBeforeAfterNonCollapsedLineWrapSpace :
+    let s1 := "xx xx"
+    let u1 := buildDomOffsetMapping [DomNode.text 0 s1 .normal]
+    let (_, r1) := splitFirstLetter s1
+    let s2 := "(x xx"
+    let u2 := buildDomOffsetMapping [DomNode.text 0 s2 .normal]
+    let (_, r2) := splitFirstLetter s2
+    (fragmentIsBeforeNonCollapsed u1 r1 1 = true) ∧
+    (fragmentIsAfterNonCollapsed u1 r1 2 = true) ∧
+    (fragmentIsBeforeNonCollapsed u2 r2 0 = true) ∧
+    (fragmentIsAfterNonCollapsed u2 r2 1 = true) := by
   decide
 
 end ChromiumLayout

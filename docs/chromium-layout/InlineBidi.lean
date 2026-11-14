@@ -128,6 +128,27 @@ def applyTextTransform (uppercase : Bool) : List Char → List Char
   | 'ß' :: rest => if uppercase then 'S' :: 'S' :: applyTextTransform uppercase rest else 'ß' :: applyTextTransform uppercase rest
   | c :: rest => if uppercase then c.toUpper :: applyTextTransform uppercase rest else c :: applyTextTransform uppercase rest
 
+/-- CSS Text 3 §2.1: Apply `text-transform: capitalize` considering preceding inline context.
+    If `prevIsLetter` is true, the current run continues an existing word, so its leading
+    letter is not capitalized. -/
+def capitalizeChars (inWord : Bool) : List Char → List Char
+  | [] => []
+  | ' ' :: rest => ' ' :: capitalizeChars false rest
+  | c :: rest =>
+    if inWord then c :: capitalizeChars true rest
+    else c.toUpper :: capitalizeChars true rest
+
+def applyCapitalizeTransform (prevIsLetter : Bool) (chars : List Char) : List Char :=
+  capitalizeChars prevIsLetter chars
+
+/-- CSS Text 3 §2.1 Law: Empty text transforms to empty under capitalization for all inputs. -/
+theorem applyCapitalize_empty (prev : Bool) :
+    applyCapitalizeTransform prev [] = [] := rfl
+
+/-- CSS Text 3 §2.1 Law: Space resets word state to false for all following characters. -/
+theorem capitalizeChars_space (w : Bool) (rest : List Char) :
+    capitalizeChars w (' ' :: rest) = ' ' :: capitalizeChars false rest := rfl
+
 /-! ## 5. Visual Run Reordering (UAX #9 L2, CSS Writing Modes 3 §3.1) -/
 
 /-- CSS Writing Modes 3 §3.1 & UAX #9 L2:

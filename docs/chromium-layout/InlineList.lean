@@ -250,4 +250,22 @@ theorem buildListMarkerBox_children (pos : ListStylePosition) (content : ListMar
     (buildListMarkerBox pos content).children = [content] := by
   rfl
 
+/-! ## 6. Outside List Marker Inline Margins (CSS Lists 3 §3) -/
+
+/-- CSS Lists 3 §3 & Blink ListMarker::InlineMarginsForOutside:
+    Compute start and end inline margins for outside list marker.
+    Start margin equals negative marker width (saturating at LayoutUnit::Min),
+    and end margin is 0. -/
+def inlineMarginsForOutside (markerWidth : Int) (isSaturated : Bool) : Int × Int :=
+  if isSaturated then
+    (-1073741824, 0)
+  else
+    (-markerWidth, 0)
+
+/-- CSS Lists 3 §3 Law: End margin for outside list marker is always 0. -/
+theorem inlineMarginsForOutside_end_zero (w : Int) (sat : Bool) :
+    (inlineMarginsForOutside w sat).2 = 0 := by
+  dsimp [inlineMarginsForOutside]
+  split <;> rfl
+
 end ChromiumLayout

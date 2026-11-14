@@ -196,4 +196,19 @@ theorem lineBox_normal_cons (rest : List LineItemKind) :
     hasPropagatedDescendants (.normalFlow :: rest) = hasPropagatedDescendants rest := by
   rfl
 
+/-! ## 5. Empty Inline Bounding Box (CSS 2.1 §9.4.2 & §10.8) -/
+
+/-- CSS 2.1 §9.4.2 & §10.8:
+    Absolute bounding box rect handling empty inline elements (`LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline`).
+    An empty inline element has 0 width and 0 height, positioned at the start of its containing line. -/
+def emptyInlineAbsoluteBoundingBox (bodyMarginX bodyMarginY : Nat) (lineHeight : Nat) (lineIdx : Nat) : PhysicalRect :=
+  { x := bodyMarginX, y := bodyMarginY + lineIdx * lineHeight, width := 0, height := 0 }
+
+/-- CSS 2.1 §9.4.2 Law: Empty inline bounding box always has 0 width and 0 height for any margin or line index. -/
+theorem emptyInline_dimensions_zero (mx my lh idx : Nat) :
+    (emptyInlineAbsoluteBoundingBox mx my lh idx).width = 0 ∧
+    (emptyInlineAbsoluteBoundingBox mx my lh idx).height = 0 := by
+  dsimp [emptyInlineAbsoluteBoundingBox]
+  exact ⟨rfl, rfl⟩
+
 end ChromiumLayout

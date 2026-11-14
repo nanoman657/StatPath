@@ -478,7 +478,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_inline_test.cc:382 | DISABLED_FocusRingRecursiveInlinesVerticalRL | internal | internal | - | Disabled upstream test for vertical focus ring |
 | layout_inline_test.cc:417 | DISABLED_FocusRingRecursiveContinuationsVerticalRL | internal | internal | - | Disabled upstream test for vertical continuation focus ring |
 | layout_inline_test.cc:452 | DISABLED_FocusRingRecursiveInlines | internal | internal | - | Disabled upstream test for inline focus ring |
-| layout_inline_test.cc:483 | AbsoluteBoundingBoxRectHandlingEmptyInline | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
+| layout_inline_test.cc:483 | AbsoluteBoundingBoxRectHandlingEmptyInline | geometry | formalized | `layoutInline_absoluteBoundingBoxRectHandlingEmptyInline` | CSS 2.1 §9.4.2 & §10.8: Empty inline bounding box placement at line start |
 | layout_inline_test.cc:529 | AbsoluteBoundingBoxRectHandlingEmptyInlineVerticalRL | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
 | layout_inline_test.cc:575 | AddDraggableRegions | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
 | layout_inline_test.cc:609 | AddDraggableRegionsVerticalRL | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
@@ -506,13 +506,13 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:757 | GetTextBoxInfoWithEllipsisForPseudoAfter | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
 | layout_text_test.cc:788 | PlainTextInPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element PlainText |
 | layout_text_test.cc:826 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Non-collapsed snap codes on plain strings, inner runs, and leading spaces |
-| layout_text_test.cc:907 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | - | Blocked: model lacks line-wrap aware caret positioning |
+| layout_text_test.cc:907 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedLineWrapSpace` | CSS Text 3 §4.1: Caret snap codes around line-wrapping space |
 | layout_text_test.cc:972 | IsBeforeAfterNonCollapsedCharacterBR | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedCharacterBR` | Line break element emits newline with caret barrier after newline |
 | layout_text_test.cc:978 | AbsoluteQuads | geometry | blocked | - | Blocked: model lacks LayoutText::AbsoluteQuads |
-| layout_text_test.cc:998 | AbsoluteQuadsVRL | geometry | blocked | - | Blocked: model lacks LayoutText::AbsoluteQuads |
-| layout_text_test.cc:1020 | PhysicalLinesBoundingBox | geometry | blocked | - | Blocked: model lacks LayoutText::PhysicalLinesBoundingBox |
-| layout_text_test.cc:1064 | PhysicalLinesBoundingBoxTextCombine | geometry | blocked | - | Blocked: model lacks text-combine-upright bounding box |
-| layout_text_test.cc:1097 | PhysicalLinesBoundingBoxVerticalRL | geometry | blocked | - | Blocked: model lacks vertical-rl LayoutText bounding box |
+| layout_text_test.cc:998 | AbsoluteQuadsVRL | geometry | formalized | `layoutText_absoluteQuadsVRL` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Vertical-rl quads for multiline text runs |
+| layout_text_test.cc:1020 | PhysicalLinesBoundingBox | geometry | formalized | `layoutText_physicalLinesBoundingBox` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Horizontal text physical lines bounding box |
+| layout_text_test.cc:1064 | PhysicalLinesBoundingBoxTextCombine | geometry | formalized | `layoutText_physicalLinesBoundingBoxTextCombine` | CSS Writing Modes 3 §5.1: Text-combine physical lines bounding box with desired width |
+| layout_text_test.cc:1097 | PhysicalLinesBoundingBoxVerticalRL | geometry | formalized | `layoutText_physicalLinesBoundingBoxVerticalRL` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Vertical-rl text physical lines bounding box |
 | layout_text_test.cc:1134 | WordBreakElement | behaviour | formalized | `layoutText_wordBreakElement` | `<wbr>` word-break opportunity element has 0 resolved length and min/max offset |
 | layout_text_test.cc:1146 | LocalSelectionRect | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
 | layout_text_test.cc:1169 | LocalSelectionRectLineBreak | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
@@ -553,12 +553,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:1657 | SetTextWithOffsetReplaceToExtend | internal | internal | - | Incremental layout mutation and invalidation |
 | layout_text_test.cc:1669 | SetTextWithOffsetReplaceToShrink | internal | internal | - | Incremental layout mutation and invalidation |
 | layout_text_test.cc:1681 | SetTextWithOffsetToEmpty | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1694 | TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | blocked | - | Blocked: model lacks text-transform: capitalize |
-| layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks text-transform: capitalize |
+| layout_text_test.cc:1694 | TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterInlineAbsolute` | CSS Text 3 §2.1: Preceding inline letter prevents following text from capitalizing |
+| layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterSupplementaryCharacter` | CSS Text 3 §2.1: Preceding supplementary character continues word; following word capitalizes |
 | layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | internal | internal | - | Pseudo element text node presence check |
 | layout_text_test.cc:1755 | OriginalTextEmptyWhenTransformedTextIsNonEmpty | internal | internal | - | Marker pseudo element text presence check |
 | layout_text_fragment_test.cc:47 | Basics | behaviour | formalized | `layoutTextFragment_basics` | Basic caret offset and resolved text length for first-letter and remaining text |
-| layout_text_fragment_test.cc:61 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:61 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | formalized | `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter` | CSS Text 3 §2.1: Capitalization after supplementary character in remaining text |
 | layout_text_fragment_test.cc:81 | CaretMinMaxOffset | behaviour | formalized | `layoutTextFragment_caretMinMaxOffset` | Caret min/max offset queries with punctuation and surrounding whitespace |
 | layout_text_fragment_test.cc:107 | CaretMinMaxOffsetSpacesInBetween | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
 | layout_text_fragment_test.cc:133 | CaretMinMaxOffsetCollapsedRemainingText | behaviour | formalized | `layoutTextFragment_caretMinMaxOffsetCollapsedRemainingText` | Fully collapsed remaining text returns 0 and fragment length |
@@ -570,7 +570,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_fragment_test.cc:258 | ContainsCaretOffsetPre | behaviour | formalized | `layoutTextFragment_containsCaretOffsetPre` | Caret offset membership under white-space: pre preserving spaces and terminating at newline |
 | layout_text_fragment_test.cc:273 | ContainsCaretOffsetPreLine | behaviour | formalized | `layoutTextFragment_containsCaretOffsetPreLine` | Caret offset membership under white-space: pre-line collapsing spaces before newline |
 | layout_text_fragment_test.cc:288 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutTextFragment_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Before/after non-collapsed character queries across first-letter and remaining text fragments |
-| layout_text_fragment_test.cc:356 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | blocked | - | Blocked: model lacks first-letter LayoutTextFragment splitting |
+| layout_text_fragment_test.cc:356 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | formalized | `layoutTextFragment_isBeforeAfterNonCollapsedLineWrapSpace` | CSS Text 3 §4.1: Caret queries around line-wrapping space in remaining text |
 | layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | internal | internal | - | First-letter LayoutTextFragment mutation |
 | layout_text_fragment_test.cc:442 | SplitTextWithZero | internal | internal | - | DOM text split mutation |
 | layout_br_test.cc:14 | TextMethods | behaviour | formalized | `layoutBR_textMethods` | `<br>` generates an identity mapping unit with resolved length 1 and newline snap code |

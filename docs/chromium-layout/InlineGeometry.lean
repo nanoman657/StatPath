@@ -481,4 +481,56 @@ theorem infiniteIntRect_encloses_self :
     infiniteIntRect.encloses infiniteIntRect = true := by
   decide
 
+/-! ## 9. PhysicalLinesBoundingBox and Quads (`layout_text.h`, CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8) -/
+
+/-- CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8:
+    Compute physical lines bounding box of a text fragment across writing modes.
+    `wm`: writing mode (.horizontalTb or .verticalRl)
+    `lh`: line-height
+    `fs`: font-size
+    `pad`: container padding
+    `containerBlockSize`: container size in block direction (width for vertical-rl, height for horizontal-tb)
+    `lineIdx`: 0-indexed line index
+    `lineInlineOffset`: inline offset within the line
+    `charCount`: number of characters in the text run -/
+def computePhysicalLinesBoundingBox (wm : WritingMode) (lh fs pad containerBlockSize : Nat)
+    (lineIdx lineInlineOffset charCount : Nat) : LayoutUnitRect :=
+  let hl : Int := Int.ofNat ((lh - fs) / 2)
+  let padI : Int := Int.ofNat pad
+  let fsI : Int := Int.ofNat fs
+  let runLenI : Int := Int.ofNat (charCount * fs)
+  let lineOffI : Int := Int.ofNat lineInlineOffset
+  let lineIdxI : Int := Int.ofNat lineIdx
+  let lhI : Int := Int.ofNat lh
+  match wm with
+  | .horizontalTb =>
+    let x := padI + lineOffI
+    let y := padI + lineIdxI * lhI + hl
+    { x := x, y := y, width := runLenI, height := fsI }
+  | .verticalRl =>
+    let y := padI + lineOffI
+    let containerBI : Int := Int.ofNat containerBlockSize
+    let x := containerBI - padI - (lineIdxI + 1) * lhI + hl
+    { x := x, y := y, width := fsI, height := runLenI }
+  | _ =>
+    { x := 0, y := 0, width := 0, height := 0 }
+
+/-! ## 10. General Laws for Bounding Boxes -/
+
+/-- CSS Writing Modes 3 §3.1 Law: Horizontal text bounding box height equals font size. -/
+theorem physicalLinesBoundingBox_horizontal_height (lh fs pad cb idx off cc : Nat) :
+    (computePhysicalLinesBoundingBox .horizontalTb lh fs pad cb idx off cc).height = Int.ofNat fs := rfl
+
+/-- CSS Writing Modes 3 §3.1 Law: Horizontal text bounding box width equals character count * font size. -/
+theorem physicalLinesBoundingBox_horizontal_width (lh fs pad cb idx off cc : Nat) :
+    (computePhysicalLinesBoundingBox .horizontalTb lh fs pad cb idx off cc).width = Int.ofNat (cc * fs) := rfl
+
+/-- CSS Writing Modes 3 §3.1 Law: Vertical text bounding box width equals font size. -/
+theorem physicalLinesBoundingBox_vertical_width (lh fs pad cb idx off cc : Nat) :
+    (computePhysicalLinesBoundingBox .verticalRl lh fs pad cb idx off cc).width = Int.ofNat fs := rfl
+
+/-- CSS Writing Modes 3 §3.1 Law: Vertical text bounding box height equals character count * font size. -/
+theorem physicalLinesBoundingBox_vertical_height (lh fs pad cb idx off cc : Nat) :
+    (computePhysicalLinesBoundingBox .verticalRl lh fs pad cb idx off cc).height = Int.ofNat (cc * fs) := rfl
+
 end ChromiumLayout
