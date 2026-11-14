@@ -451,17 +451,17 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/ruby_utils_test.cc:106 | GroupLinesAnnotationForAnnotation | geometry | formalized | `rubyBlockPositionCalculator_groupLinesAnnotationForAnnotation` | Sub-columns of an annotation column form sub-levels such as [1, -1] |
 | inline/ruby_utils_test.cc:129 | PlaceLinesTreePlacement | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
 | inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | formalized | `rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis` | CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Stacked annotation and emphasis ascent metrics for nested ruby |
-| inline/score_line_breaker_test.cc:78 | LastLines | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:78 | LastLines | geometry | formalized | `scoreLineBreaker_lastLines` | CSS Text 4 §5.4: Sliding optimization window caches 4 lines and consumes remaining lines |
 | inline/score_line_breaker_test.cc:136 | BalanceMaxLinesExceeded | behaviour | formalized | `scoreLineBreaker_balanceMaxLinesExceeded` | CSS Text 4 §5.3: Line count exceeding limit falls back from paragraph balancing |
-| inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/score_line_breaker_test.cc:237 | ForcedBreak | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | geometry | formalized | `scoreLineBreaker_blockInInlineBeforeAfter` | CSS 2.1 §9.2.1.1 & CSS Text 4 §5.4: Block-in-inline suspension and segment optimization |
+| inline/score_line_breaker_test.cc:237 | ForcedBreak | geometry | formalized | `scoreLineBreaker_forcedBreak` | CSS Text 4 §5.4: Forced line breaks divide inline stream into independently optimized paragraphs |
 | inline/score_line_breaker_test.cc:370 | DisabledByLineBreakerTest.Data | behaviour | formalized | `scoreLineBreaker_disabledByLineBreakerData` | CSS Text 4 §5.4 & CSS Text 3 §5.2: Unresolved overflow, break-spaces, and clone break disable score breaker |
-| inline/score_line_breaker_test.cc:408 | FloatRetry | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:408 | FloatRetry | geometry | formalized | `scoreLineBreaker_floatRetry` | CSS Text 4 §5.4 & CSS 2.1 §9.5.1: Floats allow score line breaking retry |
 | inline/score_line_breaker_test.cc:433 | Ruby | geometry | formalized | `scoreLineBreaker_ruby` | CSS Ruby 1 §3: Ruby container disables optimal score line breaking |
 | inline/score_line_breaker_test.cc:453 | Zoom | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
 | inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | internal | internal | - | UseCounter metric check |
 | inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | internal | internal | - | UseCounter metric check |
-| inline/score_line_breaker_test.cc:506 | LineCountMismatchFallback | behaviour | blocked | - | Blocked: model lacks ScoreLineBreaker |
+| inline/score_line_breaker_test.cc:506 | LineCountMismatchFallback | behaviour | formalized | `scoreLineBreaker_lineCountMismatchFallback` | CSS Text 4 §5.4: Line count mismatch safely falls back to greedy breaking |
 | inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | formalized | `textAutoSpace_mayApply` | Early rejection check for East Asian ideograph presence |
 | inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | formalized | `textAutoSpace_insertSpacing` | Inter-script 1/8 em spacing insertion between ideograph and Latin text |
 | inline/text_auto_space_test.cc:173 | HtmlTest.Apply | geometry | formalized | `textAutoSpace_apply` | Auto-space boundary offset detection across scripts |

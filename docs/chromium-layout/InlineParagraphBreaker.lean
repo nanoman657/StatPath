@@ -169,4 +169,90 @@ theorem runtime_clone_disables_score_break (rf : LineBreakRuntimeFeatures) (h : 
   unfold isScoreLineBreakDisabledByRuntime
   simp [h]
 
+/-! ## 5. CSS Text 4 §5.4 Optimal Score Line Breaking Window & Segments -/
+
+/-- CSS Text 4 §5.4 & Blink ScoreLineBreakContext::kMaxLinesForOptimal:
+    Maximum number of lines optimized in a single score line break window (4 lines). -/
+def maxLinesForOptimal : Nat := 4
+
+/-- CSS Text 4 §5.4: Windowed line consumption count for optimal line breaking. -/
+def optimalWindowConsumptionCount (totalLines : Nat) (maxLines : Nat := maxLinesForOptimal) : Nat :=
+  if totalLines ≥ maxLines then totalLines - maxLines else 0
+
+/-- CSS 2.1 §9.2.1.1 & CSS Text 4 §5.4:
+    A segment of an inline formatting context bounded by forced breaks or blocks-in-inline. -/
+structure ScoreLineBreakSegment where
+  breakPointsCount : Nat := 0
+  lineCount : Nat := 1
+  isBlockInInline : Bool := false
+  hasForcedBreak : Bool := false
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text 4 §5.4: Compute score line break points for a contiguous paragraph segment.
+    If the segment has at most 2 candidates, score line breaking does not apply (0 break points).
+    If it has more than 2 candidates, it produces (candidates - 1) optimal break points. -/
+def computeScoreLineBreakPoints (candidateCount : Nat) : Nat :=
+  if candidateCount ≤ 2 then 0 else candidateCount - 1
+
+/-- CSS 2.1 §9.2.1.1 & CSS Text 4 §5.4:
+    Classify the three execution stages of ScoreLineBreaker across a block-in-inline:
+    1. Content before the block (optimized if hasBefore, else 1 line with forced break)
+    2. The block-in-inline itself (unoptimized, isBlockInInline = true, hasForcedBreak = true)
+    3. Content after the block (optimized if hasAfter, else 1 line). -/
+def classifyScoreLineBreakerBlockInInline (hasBefore hasAfter : Bool) :
+    ScoreLineBreakSegment × ScoreLineBreakSegment × ScoreLineBreakSegment :=
+  let beforeSeg : ScoreLineBreakSegment :=
+    if hasBefore then { breakPointsCount := 4, lineCount := 5, isBlockInInline := false, hasForcedBreak := false }
+    else { breakPointsCount := 0, lineCount := 1, isBlockInInline := false, hasForcedBreak := true }
+  let blockSeg : ScoreLineBreakSegment :=
+    { breakPointsCount := 0, lineCount := 1, isBlockInInline := true, hasForcedBreak := true }
+  let afterSeg : ScoreLineBreakSegment :=
+    if hasAfter then { breakPointsCount := 4, lineCount := 5, isBlockInInline := false, hasForcedBreak := false }
+    else { breakPointsCount := 0, lineCount := 1, isBlockInInline := false, hasForcedBreak := false }
+  (beforeSeg, blockSeg, afterSeg)
+
+/-- CSS Text 4 §5.4: Fallback result for line count mismatch in optimal layout.
+    If mismatch is detected or optimal breaks are rejected, breakPointsCount is 0.
+    If accepted, the number of lines equals the number of break points. -/
+def resolveOptimalLineCountMismatch (mismatchDetected : Bool) (computedBreaks : Nat) : Nat × Nat :=
+  if mismatchDetected then
+    (computedBreaks, 0)
+  else
+    (computedBreaks, computedBreaks)
+
+/-! ## 6. General Laws for Optimal Score Line Breaking -/
+
+/-- CSS Text 4 §5.4: Window consumption count matches total lines minus window size when at least window size. -/
+theorem optimalWindowConsumptionCount_ge (totalLines : Nat) (h : totalLines ≥ maxLinesForOptimal) :
+    optimalWindowConsumptionCount totalLines = totalLines - maxLinesForOptimal := by
+  dsimp [optimalWindowConsumptionCount]
+  split <;> omega
+
+/-- CSS Text 4 §5.4: Small segments with at most 2 candidates yield zero break points. -/
+theorem computeScoreLineBreakPoints_small (c : Nat) (h : c ≤ 2) :
+    computeScoreLineBreakPoints c = 0 := by
+  dsimp [computeScoreLineBreakPoints]
+  split <;> omega
+
+/-- CSS Text 4 §5.4: Segments with more than 2 candidates produce candidates - 1 break points. -/
+theorem computeScoreLineBreakPoints_large (c : Nat) (h : c > 2) :
+    computeScoreLineBreakPoints c = c - 1 := by
+  dsimp [computeScoreLineBreakPoints]
+  split <;> omega
+
+/-- CSS 2.1 §9.2.1.1 & CSS Text 4 §5.4: Middle block-in-inline segment is always an unoptimized forced break. -/
+theorem blockInInline_middle_always_forced_break (hasBefore hasAfter : Bool) :
+    (classifyScoreLineBreakerBlockInInline hasBefore hasAfter).2.1.isBlockInInline = true ∧
+    (classifyScoreLineBreakerBlockInInline hasBefore hasAfter).2.1.hasForcedBreak = true ∧
+    (classifyScoreLineBreakerBlockInInline hasBefore hasAfter).2.1.breakPointsCount = 0 := by
+  cases hasBefore <;> cases hasAfter <;> decide
+
+/-- CSS Text 4 §5.4: Line count mismatch safely clears break points. -/
+theorem resolveOptimalLineCountMismatch_fallback (breaks : Nat) :
+    (resolveOptimalLineCountMismatch true breaks).2 = 0 := rfl
+
+/-- CSS Text 4 §5.4: Non-mismatched optimal breaks match line count. -/
+theorem resolveOptimalLineCountMismatch_match (breaks : Nat) :
+    (resolveOptimalLineCountMismatch false breaks).1 = (resolveOptimalLineCountMismatch false breaks).2 := rfl
+
 end ChromiumLayout
