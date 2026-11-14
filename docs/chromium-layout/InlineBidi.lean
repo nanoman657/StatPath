@@ -162,4 +162,44 @@ def reorderBidiRunsVisual (baseDir : TextDirection) (runs : List (String × Nat)
 theorem rtl_visual_reorder_is_reverse (runs : List (String × Nat)) :
     reorderBidiRunsVisual .rtl runs = runs.reverse := rfl
 
+/-! ## 6. Whitespace Collapsing First/Last Character (CSS Text 3 §4.1) -/
+
+/-- Loop over characters, collapsing multiple spaces and trailing spaces. -/
+def collapseCharsLoop (prevSpace : Bool) (preserveTrailing : Bool) : List Char → List Char
+  | [] => []
+  | ' ' :: cs =>
+    if prevSpace then collapseCharsLoop true preserveTrailing cs
+    else
+      if !preserveTrailing && cs.all (· == ' ') then []
+      else ' ' :: collapseCharsLoop true preserveTrailing cs
+  | c :: cs => c :: collapseCharsLoop false preserveTrailing cs
+
+/-- CSS Text 3 §4.1: Compute characters of an inline text run after whitespace collapsing. -/
+def collapseRunChars (precededBySpace : Bool) (followedByNonSpace : Bool) (chars : List Char) : List Char :=
+  let nonLeading := if precededBySpace then chars.dropWhile (· == ' ') else chars
+  collapseCharsLoop false followedByNonSpace nonLeading
+
+/-- Compute (firstChar, lastChar) after collapsing, or none if fully collapsed. -/
+def firstAndLastCharAfterCollapsing (precededBySpace : Bool) (followedByNonSpace : Bool) (s : String) : Option (Char × Char) :=
+  let cs := collapseRunChars precededBySpace followedByNonSpace s.toList
+  match cs with
+  | [] => none
+  | c :: rest =>
+    let last := match rest.reverse with
+      | [] => c
+      | r :: _ => r
+    some (c, last)
+
+/-- CSS Text 3 §4.1 Law: Empty text always yields none after collapsing for all preceding contexts. -/
+theorem firstAndLastCharAfterCollapsing_empty (p f : Bool) :
+    firstAndLastCharAfterCollapsing p f "" = none := by
+  dsimp [firstAndLastCharAfterCollapsing, collapseRunChars]
+  cases p <;> rfl
+
+/-- CSS Text 3 §4.1 Law: All-space text preceded by space collapses to empty (none). -/
+theorem firstAndLastCharAfterCollapsing_space_preceded (f : Bool) :
+    firstAndLastCharAfterCollapsing true f " " = none := by
+  dsimp [firstAndLastCharAfterCollapsing, collapseRunChars]
+  rfl
+
 end ChromiumLayout

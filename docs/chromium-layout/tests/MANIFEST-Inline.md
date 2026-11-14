@@ -488,8 +488,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:166 | PrewarmFamily | internal | internal | - | Font prewarming plumbing |
 | layout_text_test.cc:184 | PrewarmFontFace | internal | internal | - | Font prewarming plumbing |
 | layout_text_test.cc:212 | PrewarmGenericFamily | internal | internal | - | Font prewarming plumbing |
-| layout_text_test.cc:265 | MapDOMOffsetToTextContentOffset.Basic | behaviour | blocked | - | Blocked: model lacks parameterized multi-node DOM-to-text mapping |
-| layout_text_test.cc:282 | CharacterAfterWhitespaceCollapsing | behaviour | blocked | - | Blocked: model lacks multi-element whitespace context |
+| layout_text_test.cc:265 | MapDOMOffsetToTextContentOffset.Basic | behaviour | formalized | `layoutText_mapDOMOffsetToTextContentOffset` | CSS Text 3 §4: Parameterized mapping of DOM ranges to text content ranges through offset mapping |
+| layout_text_test.cc:282 | CharacterAfterWhitespaceCollapsing | behaviour | formalized | `layoutText_characterAfterWhitespaceCollapsing` | CSS Text 3 §4.1: First and last characters after whitespace collapsing across inline element boundaries |
 | layout_text_test.cc:326 | CaretMinMaxOffset | behaviour | formalized | `layoutText_caretMinMaxOffset` | DOM caret minimum and maximum offsets under CSS whitespace collapsing |
 | layout_text_test.cc:344 | ResolvedTextLength | behaviour | formalized | `layoutText_resolvedTextLength` | Resolved non-collapsed text length for normal whitespace |
 | layout_text_test.cc:358 | ContainsCaretOffset | behaviour | formalized | `layoutText_containsCaretOffset` | Caret snap codes at all offsets of whitespace-collapsed text |
@@ -499,11 +499,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:541 | ContainsCaretOffsetWithTrailingSpace1 | behaviour | formalized | `layoutText_containsCaretOffsetWithTrailingSpace1` | Caret snap codes with collapsed trailing and leading spaces around BR |
 | layout_text_test.cc:568 | ContainsCaretOffsetWithTrailingSpace2 | behaviour | formalized | `layoutText_containsCaretOffsetWithTrailingSpace2` | Caret snap codes with multiple collapsed spaces around BR |
 | layout_text_test.cc:599 | ContainsCaretOffsetWithTrailingSpace3 | behaviour | blocked | - | Blocked: model lacks multi-sibling trailing space caret resolution |
-| layout_text_test.cc:625 | GetTextBoxInfoWithCollapsedWhiteSpace | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
-| layout_text_test.cc:654 | GetTextBoxInfoWithGeneratedContent | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
-| layout_text_test.cc:696 | GetTextBoxInfoWithHidden | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
-| layout_text_test.cc:726 | GetTextBoxInfoWithEllipsis | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
-| layout_text_test.cc:757 | GetTextBoxInfoWithEllipsisForPseudoAfter | geometry | blocked | - | Blocked: model lacks LayoutText::GetTextBoxInfo |
+| layout_text_test.cc:625 | GetTextBoxInfoWithCollapsedWhiteSpace | geometry | formalized | `layoutText_getTextBoxInfoWithCollapsedWhiteSpace` | CSS 2.1 §9.4.2 & CSS Text 3 §4: Text box info for pre-line text with collapsed spaces and preserved newline |
+| layout_text_test.cc:654 | GetTextBoxInfoWithGeneratedContent | geometry | formalized | `layoutText_getTextBoxInfoWithGeneratedContent` | CSS 2.1 §9.4.2: Text box info for generated ::before content split by ::first-letter |
+| layout_text_test.cc:696 | GetTextBoxInfoWithHidden | geometry | formalized | `layoutText_getTextBoxInfoWithHidden` | CSS 2.1 §9.4.2 & CSS Overflow 3 §3: Hidden overflow retains full unclipped legacy text boxes |
+| layout_text_test.cc:726 | GetTextBoxInfoWithEllipsis | geometry | formalized | `layoutText_getTextBoxInfoWithEllipsis` | CSS Overflow 3 §4.3: Text-overflow ellipsis does not alter or truncate original legacy text boxes |
+| layout_text_test.cc:757 | GetTextBoxInfoWithEllipsisForPseudoAfter | geometry | formalized | `layoutText_getTextBoxInfoWithEllipsisForPseudoAfter` | CSS 2.1 §9.4.2 & CSS Pseudo 4 §7.2: Text box info for ::after pseudo-element text following inline sibling |
 | layout_text_test.cc:788 | PlainTextInPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element PlainText |
 | layout_text_test.cc:826 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Non-collapsed snap codes on plain strings, inner runs, and leading spaces |
 | layout_text_test.cc:907 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | formalized | `layoutText_isBeforeAfterNonCollapsedLineWrapSpace` | CSS Text 3 §4.1: Caret snap codes around line-wrapping space |
@@ -514,17 +514,17 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:1064 | PhysicalLinesBoundingBoxTextCombine | geometry | formalized | `layoutText_physicalLinesBoundingBoxTextCombine` | CSS Writing Modes 3 §5.1: Text-combine physical lines bounding box with desired width |
 | layout_text_test.cc:1097 | PhysicalLinesBoundingBoxVerticalRL | geometry | formalized | `layoutText_physicalLinesBoundingBoxVerticalRL` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Vertical-rl text physical lines bounding box |
 | layout_text_test.cc:1134 | WordBreakElement | behaviour | formalized | `layoutText_wordBreakElement` | `<wbr>` word-break opportunity element has 0 resolved length and min/max offset |
-| layout_text_test.cc:1146 | LocalSelectionRect | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1169 | LocalSelectionRectLineBreak | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1177 | LocalSelectionRectLineBreakPre | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1187 | LocalSelectionRectRTL | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1199 | LocalSelectionRectVertical | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1211 | LocalSelectionRectVerticalRTL | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1224 | LocalSelectionRectLineHeight | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1237 | LocalSelectionRectNegativeLeading | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
-| layout_text_test.cc:1253 | LocalSelectionRectLineHeightVertical | geometry | blocked | - | Blocked: model lacks LocalSelectionVisualRect |
+| layout_text_test.cc:1146 | LocalSelectionRect | geometry | formalized | `layoutText_localSelectionRect` | CSS 2.1 §10.8: Local selection visual rects across single-line, multi-line, line break, and pseudo elements |
+| layout_text_test.cc:1169 | LocalSelectionRectLineBreak | geometry | formalized | `layoutText_localSelectionRectLineBreak` | CSS 2.1 §10.8: Local selection visual rects for line breaks on first and subsequent lines |
+| layout_text_test.cc:1177 | LocalSelectionRectLineBreakPre | geometry | formalized | `layoutText_localSelectionRectLineBreakPre` | CSS Text 3 §5.1: Local selection visual rects for pre-wrap preserved newlines |
+| layout_text_test.cc:1187 | LocalSelectionRectRTL | geometry | formalized | `layoutText_localSelectionRectRTL` | CSS Writing Modes 3 §3.1: Selection visual rects under RTL vs LTR line wrapping |
+| layout_text_test.cc:1199 | LocalSelectionRectVertical | geometry | formalized | `layoutText_localSelectionRectVertical` | CSS Writing Modes 3 §3.1: Vertical-lr and vertical-rl selection visual rects |
+| layout_text_test.cc:1211 | LocalSelectionRectVerticalRTL | geometry | formalized | `layoutText_localSelectionRectVerticalRTL` | CSS Writing Modes 3 §3.1: Vertical-lr and vertical-rl with dir=rtl selection visual rects |
+| layout_text_test.cc:1224 | LocalSelectionRectLineHeight | geometry | formalized | `layoutText_localSelectionRectLineHeight` | CSS 2.1 §10.8: Local selection visual rects expand to custom line-height (50px) |
+| layout_text_test.cc:1237 | LocalSelectionRectNegativeLeading | geometry | formalized | `layoutText_localSelectionRectNegativeLeading` | CSS 2.1 §10.8: Negative half-leading (-5px) shifts selection visual rect origin upwards |
+| layout_text_test.cc:1253 | LocalSelectionRectLineHeightVertical | geometry | formalized | `layoutText_localSelectionRectLineHeightVertical` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Custom line-height (50px) expands block axis of vertical selection rects |
 | layout_text_test.cc:1269 | PositionForPointAtLeading | behaviour | blocked | - | Blocked: model lacks LayoutText::PositionForPoint |
-| layout_text_test.cc:1321 | FloatFirstLetterPlainText | behaviour | blocked | - | Blocked: model lacks first-letter layout |
+| layout_text_test.cc:1321 | FloatFirstLetterPlainText | behaviour | formalized | `layoutText_floatFirstLetterPlainText` | CSS Pseudo-Elements 4 §2.2: PlainText reconstructs unified string from floating first-letter and remaining parts |
 | layout_text_test.cc:1334 | SetTextWithOffsetAppendBidi | internal | internal | - | Incremental layout mutation and invalidation |
 | layout_text_test.cc:1345 | SetTextWithOffsetAppendControl | internal | internal | - | Incremental layout mutation and invalidation |
 | layout_text_test.cc:1357 | SetTextWithOffsetAppendCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |

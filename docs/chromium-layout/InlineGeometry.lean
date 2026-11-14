@@ -533,4 +533,54 @@ theorem physicalLinesBoundingBox_vertical_width (lh fs pad cb idx off cc : Nat) 
 theorem physicalLinesBoundingBox_vertical_height (lh fs pad cb idx off cc : Nat) :
     (computePhysicalLinesBoundingBox .verticalRl lh fs pad cb idx off cc).height = Int.ofNat (cc * fs) := rfl
 
+/-- Rectangle union for LayoutUnitRect (`PhysicalRect::Unite`). -/
+def LayoutUnitRect.union (r1 r2 : LayoutUnitRect) : LayoutUnitRect :=
+  if r1.width == 0 && r1.height == 0 then r2
+  else if r2.width == 0 && r2.height == 0 then r1
+  else
+    let minX := min r1.x r2.x
+    let minY := min r1.y r2.y
+    let maxX := max (r1.x + r1.width) (r2.x + r2.width)
+    let maxY := max (r1.y + r1.height) (r2.y + r2.height)
+    { x := minX, y := minY, width := maxX - minX, height := maxY - minY }
+
+/-! ## 11. Local Selection Visual Rect (CSS 2.1 §10.8 & CSS Writing Modes 3 §3.1) -/
+
+/-- Build a selection slice from horizontal line selection parameters:
+    `lineIdx`, `startGlyph`, `glyphCount`, `hasTrailingBreak` (+1 space), `negativeLeading`, `fontSize`, `lineHeight`. -/
+def horizontalSelectionSlice (lineIdx : Int) (startGlyph glyphCount : Int) (hasTrailingBreak : Bool)
+    (negativeLeading : Int) (fontSize lineHeight : Int) (startX : Int := 0) : LayoutUnitRect :=
+  let inlineOffset := startX + startGlyph * fontSize
+  let extra := if hasTrailingBreak then fontSize else 0
+  let inlineSize := glyphCount * fontSize + extra
+  { x := inlineOffset,
+    y := lineIdx * lineHeight + negativeLeading,
+    width := inlineSize,
+    height := lineHeight }
+
+/-- Build a selection slice from vertical line selection parameters:
+    block axis is X (lineIdx * lineHeight), inline axis is Y (startGlyph * fontSize). -/
+def verticalSelectionSlice (colIdx : Int) (startGlyph glyphCount : Int) (fontSize lineHeight : Int)
+    (startY : Int := 0) : LayoutUnitRect :=
+  let inlineOffset := startY + startGlyph * fontSize
+  let inlineSize := glyphCount * fontSize
+  { x := colIdx * lineHeight,
+    y := inlineOffset,
+    width := lineHeight,
+    height := inlineSize }
+
+/-- Compute the united selection visual rectangle from a list of selection slices. -/
+def computeSelectionVisualRect (slices : List LayoutUnitRect) : LayoutUnitRect :=
+  match slices with
+  | [] => { x := 0, y := 0, width := 0, height := 0 }
+  | r :: rs => rs.foldl LayoutUnitRect.union r
+
+/-- CSS 2.1 §10.8 Law: Empty selection slices yield zero rect. -/
+theorem computeSelectionVisualRect_nil :
+    computeSelectionVisualRect [] = { x := 0, y := 0, width := 0, height := 0 } := rfl
+
+/-- CSS 2.1 §10.8 Law: Single selection slice yields exactly that slice. -/
+theorem computeSelectionVisualRect_singleton (r : LayoutUnitRect) :
+    computeSelectionVisualRect [r] = r := rfl
+
 end ChromiumLayout

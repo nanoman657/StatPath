@@ -137,4 +137,17 @@ theorem splitFirstLetter_empty :
     splitFirstLetter "" = ({ start := 0, fragmentLength := 0 }, { start := 0, fragmentLength := 0 }) := by
   rfl
 
+/-! ## 5. PlainText Reconstruction with First-Letter (CSS Pseudo-Elements 4 §2.2) -/
+
+/-- CSS Pseudo-Elements 4 §2.2 & Blink LayoutText::PlainText:
+    Reconstruct full plain text of an element whose first letter was split into a pseudo-element. -/
+def reconstructFirstLetterPlainText (firstLetter remaining : String) : String :=
+  firstLetter ++ remaining
+
+/-- CSS Pseudo-Elements 4 §2.2 Law: Reconstructed plain text length equals sum of parts. -/
+theorem reconstructFirstLetterPlainText_length (f r : String) :
+    (reconstructFirstLetterPlainText f r).length = f.length + r.length := by
+  dsimp [reconstructFirstLetterPlainText]
+  exact String.length_append f r
+
 end ChromiumLayout

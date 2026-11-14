@@ -211,4 +211,61 @@ theorem emptyInline_dimensions_zero (mx my lh idx : Nat) :
   dsimp [emptyInlineAbsoluteBoundingBox]
   exact ⟨rfl, rfl⟩
 
+/-! ## 6. Legacy Text Box Information (CSS 2.1 §9.4.2 & CSS Text 3 §4) -/
+
+/-- Legacy TextBoxInfo representation (`LayoutText::TextBoxInfo`).
+    Represents an uncollapsed text fragment's local rectangle, DOM start offset, and DOM length. -/
+structure TextBoxInfo where
+  localRect : LayoutUnitRect
+  domStartOffset : Nat
+  domLength : Nat
+  deriving Repr, DecidableEq, Inhabited
+
+/-- Specification of an uncollapsed text run on a line. -/
+structure TextBoxRun where
+  domOffset : Nat
+  domLength : Nat
+  glyphCount : Nat
+  isNewline : Bool := false
+  lineIndex : Nat := 0
+  deriving Repr, DecidableEq, Inhabited
+
+/-- Compute legacy TextBoxInfo from a run and line layout parameters. -/
+def computeTextBoxInfoRun (fontSize lineHeight lineStartX : Int) (run : TextBoxRun) : TextBoxInfo :=
+  let width := if run.isNewline then 0 else (run.glyphCount : Int) * fontSize
+  let height := lineHeight
+  let x := lineStartX
+  let y := (run.lineIndex : Int) * lineHeight
+  { localRect := { x := x, y := y, width := width, height := height },
+    domStartOffset := run.domOffset,
+    domLength := run.domLength }
+
+/-- Compute a sequence of legacy text boxes along a line. -/
+def computeLineTextBoxes (fontSize lineHeight startX : Int) (runs : List TextBoxRun) : List TextBoxInfo :=
+  let rec loop (currX : Int) : List TextBoxRun → List TextBoxInfo
+    | [] => []
+    | r :: rs =>
+      let info := computeTextBoxInfoRun fontSize lineHeight currX r
+      let nextX := currX + (if r.isNewline then 0 else (r.glyphCount : Int) * fontSize)
+      info :: loop nextX rs
+  loop startX runs
+
+/-- CSS 2.1 §9.4.2 Law: Newline text boxes have zero width. -/
+theorem textBoxInfo_newline_width_zero (fs lh sx : Int) (r : TextBoxRun) (h : r.isNewline = true) :
+    (computeTextBoxInfoRun fs lh sx r).localRect.width = 0 := by
+  dsimp [computeTextBoxInfoRun]
+  rw [h]
+  rfl
+
+/-- CSS 2.1 §9.4.2 Law: Non-newline text box width equals glyphCount * fontSize. -/
+theorem textBoxInfo_glyph_width (fs lh sx : Int) (r : TextBoxRun) (h : r.isNewline = false) :
+    (computeTextBoxInfoRun fs lh sx r).localRect.width = (r.glyphCount : Int) * fs := by
+  dsimp [computeTextBoxInfoRun]
+  rw [h]
+  rfl
+
+/-- CSS 2.1 §9.4.2 Law: Empty run list produces empty text boxes. -/
+theorem computeLineTextBoxes_empty (fs lh sx : Int) :
+    computeLineTextBoxes fs lh sx [] = [] := rfl
+
 end ChromiumLayout

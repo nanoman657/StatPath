@@ -725,4 +725,16 @@ theorem buildPreWrapReusedUnits_gap (nodeId : Nat) :
   dsimp [buildPreWrapReusedUnits]
   exact ⟨rfl, rfl⟩
 
+/-! ## 14. DOM Range to Text Content Mapping (CSS Text 3 §4) -/
+
+/-- CSS Text 3 §4 & Blink LayoutText::MapDOMOffsetToTextContentOffset:
+    Map a DOM offset range [domStart, domEnd) to a text content range [textStart, textEnd). -/
+def mapDOMRangeToTextContent (units : List OffsetMappingUnit) (nodeId : Nat) (domStart domEnd : Nat) : Nat × Nat :=
+  (domToTextContentOffset units nodeId domStart, domToTextContentOffset units nodeId domEnd)
+
+/-- CSS Text 3 §4 Law: An empty DOM range [x, x) maps to an empty text content range [y, y). -/
+theorem mapDOMRangeToTextContent_refl (units : List OffsetMappingUnit) (nodeId : Nat) (x : Nat) :
+    (mapDOMRangeToTextContent units nodeId x x).1 = (mapDOMRangeToTextContent units nodeId x x).2 := by
+  rfl
+
 end ChromiumLayout

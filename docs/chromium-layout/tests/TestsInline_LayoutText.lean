@@ -19,6 +19,8 @@ import InlineItemBuilder
 import InlineOffsetMapping
 import InlineGeometry
 import InlineBidi
+import InlineLineBox
+import InlineFirstLetter
 
 namespace ChromiumLayout
 
@@ -282,6 +284,224 @@ theorem layoutText_isBeforeAfterNonCollapsedLineWrapSpace :
     (domNodeSnapCode u nodes[0]! 4 = "BC-") ∧
     (domNodeSnapCode u nodes[0]! 5 = "BCA") ∧
     (domNodeSnapCode u nodes[0]! 6 = "-CA") := by
+  decide
+
+/-! ## 15. MapDOMOffsetToTextContentOffset (`layout_text_test.cc:265`) -/
+
+/-- Test `LayoutTextTest, MapDOMOffsetToTextContentOffset.Basic` (`layout_text_test.cc:265`).
+    CSS Text 3 §4: Parameterized mapping of DOM ranges to text content ranges through offset mapping. -/
+theorem layoutText_mapDOMOffsetToTextContentOffset :
+    let nodes := [DomNode.text 0 " a  b  "]
+    let u := buildDomOffsetMapping nodes
+    (mapDOMRangeToTextContent u 0 0 1 = (0, 0)) ∧
+    (mapDOMRangeToTextContent u 0 1 2 = (0, 1)) ∧
+    (mapDOMRangeToTextContent u 0 2 3 = (1, 2)) ∧
+    (mapDOMRangeToTextContent u 0 2 4 = (1, 2)) ∧
+    (mapDOMRangeToTextContent u 0 2 5 = (1, 3)) ∧
+    (mapDOMRangeToTextContent u 0 3 4 = (2, 2)) ∧
+    (mapDOMRangeToTextContent u 0 3 5 = (2, 3)) ∧
+    (mapDOMRangeToTextContent u 0 5 6 = (3, 3)) ∧
+    (mapDOMRangeToTextContent u 0 5 7 = (3, 3)) ∧
+    (mapDOMRangeToTextContent u 0 6 7 = (3, 3)) := by
+  decide
+
+/-! ## 16. CharacterAfterWhitespaceCollapsing (`layout_text_test.cc:282`) -/
+
+/-- Test `LayoutTextTest, CharacterAfterWhitespaceCollapsing` (`layout_text_test.cc:282`).
+    CSS Text 3 §4.1: First and last characters after whitespace collapsing across inline element boundaries. -/
+theorem layoutText_characterAfterWhitespaceCollapsing :
+    (firstAndLastCharAfterCollapsing false false " b " = some (' ', 'b')) ∧
+    (firstAndLastCharAfterCollapsing true false " b " = some ('b', 'b')) ∧
+    (firstAndLastCharAfterCollapsing false true " " = some (' ', ' ')) ∧
+    (firstAndLastCharAfterCollapsing true true " " = none) := by
+  decide
+
+/-! ## 17. Legacy Text Box Information Tests (`layout_text_test.cc`) -/
+
+/-- Test `LayoutTextTest, GetTextBoxInfoWithCollapsedWhiteSpace` (`layout_text_test.cc:625`).
+    CSS 2.1 §9.4.2 & CSS Text 3 §4: Text box info for pre-line text with collapsed spaces and preserved newline. -/
+theorem layoutText_getTextBoxInfoWithCollapsedWhiteSpace :
+    let line0Runs : List TextBoxRun :=
+      [ { domOffset := 1, domLength := 4, glyphCount := 4, isNewline := false, lineIndex := 0 }
+      , { domOffset := 6, domLength := 3, glyphCount := 3, isNewline := false, lineIndex := 0 }
+      , { domOffset := 9, domLength := 1, glyphCount := 1, isNewline := true, lineIndex := 0 }
+      ]
+    let line1Runs : List TextBoxRun :=
+      [ { domOffset := 14, domLength := 3, glyphCount := 3, isNewline := false, lineIndex := 1 } ]
+    let boxes := computeLineTextBoxes 10 10 0 line0Runs ++ computeLineTextBoxes 10 10 0 line1Runs
+    (boxes.length = 4) ∧
+    (boxes[0]! = { localRect := { x := 0, y := 0, width := 40, height := 10 }, domStartOffset := 1, domLength := 4 }) ∧
+    (boxes[1]! = { localRect := { x := 40, y := 0, width := 30, height := 10 }, domStartOffset := 6, domLength := 3 }) ∧
+    (boxes[2]! = { localRect := { x := 70, y := 0, width := 0, height := 10 }, domStartOffset := 9, domLength := 1 }) ∧
+    (boxes[3]! = { localRect := { x := 0, y := 10, width := 30, height := 10 }, domStartOffset := 14, domLength := 3 }) := by
+  decide
+
+/-- Test `LayoutTextTest, GetTextBoxInfoWithGeneratedContent` (`layout_text_test.cc:654`).
+    CSS 2.1 §9.4.2: Text box info for generated ::before content split by ::first-letter. -/
+theorem layoutText_getTextBoxInfoWithGeneratedContent :
+    let firstLetterRuns : List TextBoxRun :=
+      [ { domOffset := 2, domLength := 1, glyphCount := 1, isNewline := false, lineIndex := 0 } ]
+    let remainingRuns : List TextBoxRun :=
+      [ { domOffset := 0, domLength := 1, glyphCount := 1, isNewline := false, lineIndex := 0 }
+      , { domOffset := 3, domLength := 2, glyphCount := 2, isNewline := false, lineIndex := 0 }
+      ]
+    let xyzRuns : List TextBoxRun :=
+      [ { domOffset := 0, domLength := 3, glyphCount := 3, isNewline := false, lineIndex := 0 } ]
+    let boxesFirst := computeLineTextBoxes 10 10 0 firstLetterRuns
+    let boxesRem := computeLineTextBoxes 10 10 10 remainingRuns
+    let boxesXyz := computeLineTextBoxes 10 10 40 xyzRuns
+    (boxesFirst = [{ localRect := { x := 0, y := 0, width := 10, height := 10 }, domStartOffset := 2, domLength := 1 }]) ∧
+    (boxesRem = [ { localRect := { x := 10, y := 0, width := 10, height := 10 }, domStartOffset := 0, domLength := 1 }
+                , { localRect := { x := 20, y := 0, width := 20, height := 10 }, domStartOffset := 3, domLength := 2 } ]) ∧
+    (boxesXyz = [{ localRect := { x := 40, y := 0, width := 30, height := 10 }, domStartOffset := 0, domLength := 3 }]) := by
+  decide
+
+/-- Test `LayoutTextTest, GetTextBoxInfoWithHidden` (`layout_text_test.cc:696`).
+    CSS 2.1 §9.4.2 & CSS Overflow 3 §3: Hidden overflow retains full unclipped legacy text boxes. -/
+theorem layoutText_getTextBoxInfoWithHidden :
+    let runs : List TextBoxRun :=
+      [ { domOffset := 2, domLength := 6, glyphCount := 6, isNewline := false, lineIndex := 0 }
+      , { domOffset := 9, domLength := 5, glyphCount := 5, isNewline := false, lineIndex := 0 }
+      ]
+    let boxes := computeLineTextBoxes 10 10 0 runs
+    (boxes.length = 2) ∧
+    (boxes[0]! = { localRect := { x := 0, y := 0, width := 60, height := 10 }, domStartOffset := 2, domLength := 6 }) ∧
+    (boxes[1]! = { localRect := { x := 60, y := 0, width := 50, height := 10 }, domStartOffset := 9, domLength := 5 }) := by
+  decide
+
+/-- Test `LayoutTextTest, GetTextBoxInfoWithEllipsis` (`layout_text_test.cc:726`).
+    CSS Overflow 3 §4.3: Text-overflow ellipsis does not alter or truncate original legacy text boxes. -/
+theorem layoutText_getTextBoxInfoWithEllipsis :
+    let runs : List TextBoxRun :=
+      [ { domOffset := 2, domLength := 6, glyphCount := 6, isNewline := false, lineIndex := 0 }
+      , { domOffset := 9, domLength := 5, glyphCount := 5, isNewline := false, lineIndex := 0 }
+      ]
+    let boxes := computeLineTextBoxes 10 10 0 runs
+    (boxes.length = 2) ∧
+    (boxes[0]! = { localRect := { x := 0, y := 0, width := 60, height := 10 }, domStartOffset := 2, domLength := 6 }) ∧
+    (boxes[1]! = { localRect := { x := 60, y := 0, width := 50, height := 10 }, domStartOffset := 9, domLength := 5 }) := by
+  decide
+
+/-- Test `LayoutTextTest, GetTextBoxInfoWithEllipsisForPseudoAfter` (`layout_text_test.cc:757`).
+    CSS 2.1 §9.4.2 & CSS Pseudo 4 §7.2: Text box info for ::after pseudo-element text following inline sibling. -/
+theorem layoutText_getTextBoxInfoWithEllipsisForPseudoAfter :
+    let runs : List TextBoxRun :=
+      [ { domOffset := 0, domLength := 1, glyphCount := 1, isNewline := false, lineIndex := 0 } ]
+    let boxes := computeLineTextBoxes 10 10 30 runs
+    (boxes = [{ localRect := { x := 30, y := 0, width := 10, height := 10 }, domStartOffset := 0, domLength := 1 }]) := by
+  decide
+
+/-! ## 19. LocalSelectionRect Tests (`layout_text_test.cc`) -/
+
+/-- Test `LayoutTextTest, LocalSelectionRect` (`layout_text_test.cc:1146`).
+    CSS 2.1 §10.8: Local selection visual rects across single-line, multi-line, line break, and pseudo elements. -/
+theorem layoutText_localSelectionRect :
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 1 5 false 0 10 10] =
+      { x := 10, y := 0, width := 50, height := 10 }) ∧
+    (computeSelectionVisualRect [{ x := 0, y := 0, width := 20, height := 10 },
+                                 { x := 0, y := 10, width := 40, height := 10 }] =
+      { x := 0, y := 0, width := 40, height := 20 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 3 1 false 0 10 10] =
+      { x := 30, y := 0, width := 10, height := 10 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 1 2 false 0 10 10] =
+      { x := 10, y := 0, width := 20, height := 10 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 1 2 true 0 10 10] =
+      { x := 10, y := 0, width := 30, height := 10 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 3 1 false 0 10 10] =
+      { x := 30, y := 0, width := 10, height := 10 }) ∧
+    (computeSelectionVisualRect [] = { x := 0, y := 0, width := 0, height := 0 }) ∧
+    (computeSelectionVisualRect [] = { x := 0, y := 0, width := 0, height := 0 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 0 1 false 0 10 10] =
+      { x := 0, y := 0, width := 10, height := 10 }) ∧
+    (computeSelectionVisualRect [] = { x := 0, y := 0, width := 0, height := 0 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectLineBreak` (`layout_text_test.cc:1169`).
+    CSS 2.1 §10.8: Local selection visual rects for line breaks on first and subsequent lines. -/
+theorem layoutText_localSelectionRectLineBreak :
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 3 1 false 0 10 10] =
+      { x := 30, y := 0, width := 10, height := 10 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 1 0 1 false 0 10 10] =
+      { x := 0, y := 10, width := 10, height := 10 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectLineBreakPre` (`layout_text_test.cc:1177`).
+    CSS Text 3 §5.1: Local selection visual rects for pre-wrap preserved newlines. -/
+theorem layoutText_localSelectionRectLineBreakPre :
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 3 1 false 0 10 10] =
+      { x := 30, y := 0, width := 10, height := 10 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 1 0 1 false 0 10 10] =
+      { x := 0, y := 10, width := 10, height := 10 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectRTL` (`layout_text_test.cc:1187`).
+    CSS Writing Modes 3 §3.1: Selection visual rects under RTL vs LTR line wrapping. -/
+theorem layoutText_localSelectionRectRTL :
+    (computeSelectionVisualRect [{ x := -10, y := 0, width := 30, height := 10 },
+                                 { x := 0, y := 10, width := 20, height := 10 }] =
+      { x := -10, y := 0, width := 30, height := 20 }) ∧
+    (computeSelectionVisualRect [{ x := 10, y := 0, width := 10, height := 10 },
+                                 { x := 0, y := 10, width := 40, height := 10 }] =
+      { x := 0, y := 0, width := 40, height := 20 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectVertical` (`layout_text_test.cc:1199`).
+    CSS Writing Modes 3 §3.1: Vertical-lr and vertical-rl selection visual rects. -/
+theorem layoutText_localSelectionRectVertical :
+    (computeSelectionVisualRect [{ x := 0, y := 10, width := 10, height := 10 },
+                                 { x := 10, y := 0, width := 10, height := 40 }] =
+      { x := 0, y := 0, width := 20, height := 40 }) ∧
+    (computeSelectionVisualRect [{ x := 10, y := 10, width := 10, height := 10 },
+                                 { x := 20, y := 0, width := 10, height := 40 }] =
+      { x := 10, y := 0, width := 20, height := 40 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectVerticalRTL` (`layout_text_test.cc:1211`).
+    CSS Writing Modes 3 §3.1: Vertical-lr and vertical-rl with dir=rtl selection visual rects. -/
+theorem layoutText_localSelectionRectVerticalRTL :
+    (computeSelectionVisualRect [{ x := 0, y := 0, width := 10, height := 10 },
+                                 { x := 10, y := -10, width := 10, height := 30 }] =
+      { x := 0, y := -10, width := 20, height := 30 }) ∧
+    (computeSelectionVisualRect [{ x := 10, y := 0, width := 10, height := 10 },
+                                 { x := 20, y := -10, width := 10, height := 30 }] =
+      { x := 10, y := -10, width := 20, height := 30 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectLineHeight` (`layout_text_test.cc:1224`).
+    CSS 2.1 §10.8: Local selection visual rects expand to custom line-height (50px). -/
+theorem layoutText_localSelectionRectLineHeight :
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 1 1 false 0 10 50] =
+      { x := 10, y := 0, width := 10, height := 50 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 1 1 1 false 0 10 50] =
+      { x := 10, y := 50, width := 10, height := 50 }) ∧
+    (computeSelectionVisualRect [horizontalSelectionSlice 2 1 1 false 0 10 50] =
+      { x := 10, y := 100, width := 10, height := 50 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectNegativeLeading` (`layout_text_test.cc:1237`).
+    CSS 2.1 §10.8: Negative half-leading (-5px) shifts selection visual rect origin upwards. -/
+theorem layoutText_localSelectionRectNegativeLeading :
+    (computeSelectionVisualRect [horizontalSelectionSlice 0 0 4 false (-5) 10 10] =
+      { x := 0, y := -5, width := 40, height := 10 }) := by
+  decide
+
+/-- Test `LayoutTextTest, LocalSelectionRectLineHeightVertical` (`layout_text_test.cc:1253`).
+    CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Custom line-height (50px) expands block axis of vertical selection rects. -/
+theorem layoutText_localSelectionRectLineHeightVertical :
+    (computeSelectionVisualRect [verticalSelectionSlice 0 1 1 10 50] =
+      { x := 0, y := 10, width := 50, height := 10 }) ∧
+    (computeSelectionVisualRect [verticalSelectionSlice 1 1 1 10 50] =
+      { x := 50, y := 10, width := 50, height := 10 }) ∧
+    (computeSelectionVisualRect [verticalSelectionSlice 2 1 1 10 50] =
+      { x := 100, y := 10, width := 50, height := 10 }) := by
+  decide
+
+/-! ## 20. FloatFirstLetterPlainText (`layout_text_test.cc:1321`) -/
+
+/-- Test `LayoutTextTest, FloatFirstLetterPlainText` (`layout_text_test.cc:1321`).
+    CSS Pseudo-Elements 4 §2.2: PlainText reconstructs unified string from floating first-letter and remaining parts. -/
+theorem layoutText_floatFirstLetterPlainText :
+    reconstructFirstLetterPlainText "F" "oo" = "Foo" := by
   decide
 
 end ChromiumLayout
