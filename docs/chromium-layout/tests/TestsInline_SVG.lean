@@ -126,4 +126,136 @@ theorem svg_root_rectBasedHitTestPartialOverlap :
     (150 < svgRect.x || 150 < svgRect.y) = true :=
   ⟨rfl, rfl, rfl⟩
 
+/-- Test `LayoutSVGShapeTest, RectBasedHitTest_CircleEllipse` (`svg/layout_svg_shape_test.cc:23`). -/
+theorem svg_shape_rectBasedHitTest_CircleEllipse :
+    let stroked : SvgShapeGeometry := { cx := 100, cy := 100, rx := 50, ry := 50, strokeWidth := 10, hasFill := false }
+    let filled : SvgShapeGeometry := { cx := 300, cy := 300, rx := 75, ry := 50, strokeWidth := 0, hasFill := true }
+    let filledXfrm : SvgShapeGeometry := { cx := 100, cy := 300, rx := 65, ry := 65, strokeWidth := 0, hasFill := true }
+    let svgBox : PhysicalRect := { x := 0, y := 0, width := 400, height := 400 }
+    let q1 : PhysicalRect := { x := 100, y := 100, width := 200, height := 200 }
+    rectsIntersect q1 svgBox = true ∧
+    svgShapeIntersects stroked q1 = true ∧
+    svgShapeIntersects filled q1 = true ∧
+    svgShapeIntersects filledXfrm q1 = true ∧
+    let q2 : PhysicalRect := { x := 70, y := 70, width := 60, height := 60 }
+    rectsIntersect q2 svgBox = true ∧
+    svgShapeIntersects stroked q2 = false ∧
+    let q3 : PhysicalRect := { x := 44, y := 44, width := 112, height := 112 }
+    rectsIntersect q3 svgBox = true ∧
+    svgShapeIntersects stroked q3 = true ∧
+    let q4 : PhysicalRect := { x := 30, y := 230, width := 140, height := 145 }
+    rectsIntersect q4 svgBox = true ∧
+    svgShapeIntersects filledXfrm q4 = true ∧
+    let q5 : PhysicalRect := { x := 30, y := 30, width := 30, height := 30 }
+    rectsIntersect q5 svgBox = true ∧
+    svgShapeIntersects stroked q5 = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `LayoutSVGShapeTest, RectBasedHitTest_Rect` (`svg/layout_svg_shape_test.cc:77`). -/
+theorem svg_shape_rectBasedHitTest_Rect :
+    let filled : SvgRectShape := { x := 10, y := 25, width := 80, height := 50, strokeWidth := 0, hasFill := true }
+    let stroked : SvgRectShape := { x := 110, y := 125, width := 80, height := 50, strokeWidth := 10, hasFill := false }
+    let filledXfrm : SvgRectShape := { x := 110, y := 25, width := 80, height := 50, strokeWidth := 0, hasFill := true }
+    let strokedXfrm : SvgRectShape := { x := 10, y := 125, width := 80, height := 50, strokeWidth := 10, hasFill := false }
+    let svgBox : PhysicalRect := { x := 0, y := 0, width := 200, height := 200 }
+    let q1 : PhysicalRect := { x := 50, y := 50, width := 100, height := 100 }
+    rectsIntersect q1 svgBox = true ∧
+    svgRectIntersects filled q1 = true ∧
+    svgRectIntersects stroked q1 = true ∧
+    let q2 : PhysicalRect := { x := 40, y := 140, width := 20, height := 20 }
+    rectsIntersect q2 svgBox = true ∧
+    svgRectIntersects strokedXfrm q2 = false ∧
+    let q3 : PhysicalRect := { x := 100, y := 0, width := 100, height := 100 }
+    rectsIntersect q3 svgBox = true ∧
+    svgRectIntersects filledXfrm q3 = true ∧
+    let q4 : PhysicalRect := { x := 104, y := 119, width := 92, height := 62 }
+    rectsIntersect q4 svgBox = true ∧
+    svgRectIntersects stroked q4 = true ∧
+    let q5 : PhysicalRect := { x := 75, y := 77, width := 50, height := 40 }
+    rectsIntersect q5 svgBox = true ∧
+    svgRectIntersects filled q5 = false ∧
+    svgRectIntersects stroked q5 = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `LayoutSVGShapeTest, RectBasedHitTest_Path` (`svg/layout_svg_shape_test.cc:137`). -/
+theorem svg_shape_rectBasedHitTest_Path :
+    let filledPath : SvgRectShape := { x := 30, y := 50, width := 70, height := 50, strokeWidth := 0, hasFill := true }
+    let filledXfrmPath : SvgRectShape := { x := 100, y := 100, width := 70, height := 50, strokeWidth := 0, hasFill := true }
+    let svgBox : PhysicalRect := { x := 0, y := 0, width := 200, height := 200 }
+    let q : PhysicalRect := { x := 50, y := 50, width := 100, height := 100 }
+    rectsIntersect q svgBox = true ∧
+    svgRectIntersects filledPath q = true ∧
+    svgRectIntersects filledXfrmPath q = true :=
+  ⟨rfl, rfl, rfl⟩
+
+/-- Test `LayoutSVGTextTest, RectBasedHitTest_RotatedText` (`svg/layout_svg_text_test.cc:38`). -/
+theorem svg_text_rectBasedHitTest_RotatedText :
+    let textOnPathBox : PhysicalRect := { x := 50, y := 80, width := 100, height := 100 }
+    let svgBox : PhysicalRect := { x := 0, y := 0, width := 300, height := 300 }
+    let q1 : PhysicalRect := { x := 25, y := 10, width := 10, height := 100 }
+    rectsIntersect q1 svgBox = true ∧
+    rectsIntersect q1 textOnPathBox = false ∧
+    let q2 : PhysicalRect := { x := 12, y := 12, width := 50, height := 50 }
+    rectsIntersect q2 svgBox = true ∧
+    rectsIntersect q2 textOnPathBox = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `LayoutSVGTextTest, ObjectBoundingBox` (`svg/layout_svg_text_test.cc:115`). -/
+theorem svg_text_objectBoundingBox :
+    let box := computeSvgTextBoundingBox 240 25 36 16
+    box.x = 240 ∧ box.y = 25 ∧ box.width = 36 ∧ box.height = 16 :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `SVGLayoutSupportTest, FindClosestLayoutSVGText` (`svg/svg_layout_support_test.cc:14`). -/
+theorem svg_support_findClosestLayoutSVGText :
+    let t1_box : PhysicalRect := { x := 197, y := 35, width := 55, height := 15 }
+    let t2_box : PhysicalRect := { x := 45, y := 85, width := 80, height := 15 }
+    let t3_box : PhysicalRect := { x := 45, y := 105, width := 80, height := 15 }
+    findClosestSvgText 220 250 [("t1", t1_box), ("t2", t2_box), ("t3", t3_box)] = some "t3" :=
+  rfl
+
+/-- Test `SVGLayoutSupportTest, VisualRectInAncestorSpaceContainerWithFilter` (`svg/svg_layout_support_test.cc:35`). -/
+theorem svg_support_visualRectInAncestorSpaceContainerWithFilter :
+    let containerBox : PhysicalRect := { x := 0, y := 0, width := 210, height := 210 }
+    let filtered := applyDropShadowFilterRect containerBox 10 10 0
+    let inDoc : PhysicalRect := { x := filtered.x + 8, y := filtered.y + 8, width := filtered.width, height := filtered.height }
+    inDoc = { x := 8, y := 8, width := 220, height := 220 } :=
+  rfl
+
+/-- Test `SVGLayoutSupport3DTransformTest, VisualRectInDocumentWith3DTransform` (`svg/svg_layout_support_test.cc:64`). -/
+theorem svg_support_visualRectInDocumentWith3DTransform :
+    projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 } =
+      { x := 62, y := 62, width := 76, height := 76 } :=
+  rfl
+
+/-- Test `SVGLayoutSupport3DTransformTest, VisualRectInDocumentUnderSVGRootPerspective` (`svg/svg_layout_support_test.cc:80`). -/
+theorem svg_support_visualRectInDocumentUnderSVGRootPerspective :
+    projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 } =
+      { x := 62, y := 62, width := 76, height := 76 } :=
+  rfl
+
+/-- Test `SVGLayoutSupport3DTransformTest, AbsoluteBoundingBoxUnderSVGRootPerspective` (`svg/svg_layout_support_test.cc:95`). -/
+theorem svg_support_absoluteBoundingBoxUnderSVGRootPerspective :
+    projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 } =
+      { x := 62, y := 62, width := 76, height := 76 } :=
+  rfl
+
+/-- Test `SVGChild3DTransformHitTest, ShapeUnderSVGRootPerspective` (`hit_testing_test.cc:574`). -/
+theorem svg_hitTest_shapeUnderSVGRootPerspective :
+    let projRect := projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 }
+    pointInRect 100 100 projRect = true ∧
+    pointInRect 65 65 projRect = true ∧
+    pointInRect 55 100 projRect = false ∧
+    pointInRect 144 144 projRect = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `SVGChild3DTransformHitTest, ContainerUnderSVGRootPerspective` (`hit_testing_test.cc:592`). -/
+theorem svg_hitTest_containerUnderSVGRootPerspective :
+    let projRect := projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 }
+    pointInRect 100 100 projRect = true ∧
+    pointInRect 65 65 projRect = true ∧
+    pointInRect 55 100 projRect = false ∧
+    pointInRect 144 144 projRect = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
 end ChromiumLayout

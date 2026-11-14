@@ -108,6 +108,156 @@ def rectsIntersect (r1 r2 : PhysicalRect) : Bool :=
   r1.x < r2.x + r2.width && r2.x < r1.x + r1.width &&
   r1.y < r2.y + r2.height && r2.y < r1.y + r1.height
 
+/-- Integer floor division for arbitrary integers. -/
+def intFloorDiv (a b : Int) : Int :=
+  if (a >= 0 && b > 0) || (a <= 0 && b < 0) then a / b
+  else -((-a + b - 1) / b)
+
+/-- Integer ceil division for arbitrary integers. -/
+def intCeilDiv (a b : Int) : Int :=
+  if a > 0 && b > 0 then (a + b - 1) / b
+  else a / b
+
+/-- Project 1D coordinate under perspective distance `d` and z-translation `z` relative to `origin` (CSS Transforms 2 §4).
+    Scale factor is `d / (d - z)`. -/
+def projectPerspectiveCoord (origin : Int) (d : Nat) (z : Int) (coord : Int) (ceil : Bool) : Int :=
+  if (d : Int) <= z then coord
+  else
+    let denom : Int := (d : Int) - z
+    let num : Int := (coord - origin) * (d : Int)
+    if ceil then origin + intCeilDiv num denom
+    else origin + intFloorDiv num denom
+
+/-- Compute 2D axis-aligned enclosing rect after 3D perspective projection and translateZ (CSS Transforms 2 §4).
+    `origin` is perspective origin (default center). `d` is perspective distance. `z` is translateZ. -/
+def projectPerspectiveRect (origin : Int × Int) (d : Nat) (z : Int) (r : PhysicalRect) : PhysicalRect :=
+  let (ox, oy) := origin
+  let left := projectPerspectiveCoord ox d z (r.x : Int) false
+  let right := projectPerspectiveCoord ox d z ((r.x + r.width : Nat) : Int) true
+  let top := projectPerspectiveCoord oy d z (r.y : Int) false
+  let bottom := projectPerspectiveCoord oy d z ((r.y + r.height : Nat) : Int) true
+  { x := left.toNat
+  , y := top.toNat
+  , width := (right - left).toNat
+  , height := (bottom - top).toNat }
+
+/-- Squared Euclidean distance from a 2D point to the closest point of an axis-aligned box (CSSOM View §8, SVG 2 §11.4). -/
+def distanceToBoxSquared (px py : Int) (r : PhysicalRect) : Nat :=
+  let rx := (r.x : Int)
+  let rw := (r.width : Int)
+  let ry := (r.y : Int)
+  let rh := (r.height : Int)
+  let dx : Nat :=
+    if px < rx then (rx - px).toNat
+    else if px > rx + rw then (px - (rx + rw)).toNat
+    else 0
+  let dy : Nat :=
+    if py < ry then (ry - py).toNat
+    else if py > ry + rh then (py - (ry + rh)).toNat
+    else 0
+  dx * dx + dy * dy
+
+/-- Point containment test in a PhysicalRect (CSSOM View §8). -/
+def pointInRect (px py : Int) (r : PhysicalRect) : Bool :=
+  (r.x : Int) <= px && px < (r.x + r.width : Int) &&
+  (r.y : Int) <= py && py < (r.y + r.height : Int)
+
+/-- Compute visual rect including feDropShadow filter (SVG 2 §15, CSS Filter Effects 1 §3.1).
+    Expands container visual rect by drop shadow offsets and blur radius. -/
+def applyDropShadowFilterRect (contentRect : PhysicalRect) (dx dy stdDev : Nat) : PhysicalRect :=
+  let filterMargin := 3 * stdDev
+  let minX := contentRect.x - filterMargin
+  let minY := contentRect.y - filterMargin
+  let maxX := contentRect.x + contentRect.width + dx + filterMargin
+  let maxY := contentRect.y + contentRect.height + dy + filterMargin
+  { x := minX, y := minY, width := maxX - minX, height := maxY - minY }
+
+/-- Annular shape specification: circle or ellipse with center, radii, stroke width, and fill flag (SVG 2 §13.2). -/
+structure SvgShapeGeometry where
+  cx : Int
+  cy : Int
+  rx : Nat
+  ry : Nat
+  strokeWidth : Nat
+  hasFill : Bool
+  deriving Repr, DecidableEq
+
+/-- Check if a query rect intersects an SVG shape geometry (SVG 2 §13.2, CSSOM View §8). -/
+def svgShapeIntersects (shape : SvgShapeGeometry) (query : PhysicalRect) : Bool :=
+  let outerRx := shape.rx + (shape.strokeWidth + 1) / 2
+  let outerRy := shape.ry + (shape.strokeWidth + 1) / 2
+  let outerBox : PhysicalRect := {
+    x := (shape.cx - (outerRx : Int)).toNat,
+    y := (shape.cy - (outerRy : Int)).toNat,
+    width := 2 * outerRx,
+    height := 2 * outerRy
+  }
+  if !rectsIntersect query outerBox then false
+  else
+    let minDx := if (query.x : Int) > shape.cx then (query.x : Int) - shape.cx
+                 else if (query.x + query.width : Int) < shape.cx then shape.cx - (query.x + query.width : Int)
+                 else 0
+    let minDy := if (query.y : Int) > shape.cy then (query.y : Int) - shape.cy
+                 else if (query.y + query.height : Int) < shape.cy then shape.cy - (query.y + query.height : Int)
+                 else 0
+    let minDistSq := minDx.natAbs * minDx.natAbs + minDy.natAbs * minDy.natAbs
+    if minDistSq > outerRx * outerRx then false
+    else if shape.hasFill then true
+    else
+      let innerRx := if shape.rx > shape.strokeWidth / 2 then shape.rx - shape.strokeWidth / 2 else 0
+      let c1 := (query.x : Int) - shape.cx
+      let c2 := (query.x + query.width : Int) - shape.cx
+      let c3 := (query.y : Int) - shape.cy
+      let c4 := (query.y + query.height : Int) - shape.cy
+      let maxDx := Nat.max c1.natAbs c2.natAbs
+      let maxDy := Nat.max c3.natAbs c4.natAbs
+      if innerRx > 0 && maxDx * maxDx + maxDy * maxDy < innerRx * innerRx then false
+      else true
+
+/-- Rectangular stroked/filled shape for hit testing (SVG 2 §13.2, CSSOM View §8). -/
+structure SvgRectShape where
+  x : Int
+  y : Int
+  width : Nat
+  height : Nat
+  strokeWidth : Nat
+  hasFill : Bool
+  deriving Repr, DecidableEq
+
+/-- Check if a query rect intersects an SVG rect shape (SVG 2 §13.2, CSSOM View §8). -/
+def svgRectIntersects (s : SvgRectShape) (query : PhysicalRect) : Bool :=
+  let sw := (s.strokeWidth + 1) / 2
+  let outerBox : PhysicalRect := {
+    x := (s.x - (sw : Int)).toNat,
+    y := (s.y - (sw : Int)).toNat,
+    width := s.width + 2 * sw,
+    height := s.height + 2 * sw
+  }
+  if !rectsIntersect query outerBox then false
+  else if s.hasFill then true
+  else
+    let innerLeft := s.x + (s.strokeWidth / 2 : Int)
+    let innerTop := s.y + (s.strokeWidth / 2 : Int)
+    let innerRight := s.x + (s.width : Int) - (s.strokeWidth / 2 : Int)
+    let innerBottom := s.y + (s.height : Int) - (s.strokeWidth / 2 : Int)
+    let qLeft := (query.x : Int)
+    let qTop := (query.y : Int)
+    let qRight := (query.x + query.width : Int)
+    let qBottom := (query.y + query.height : Int)
+    if innerLeft <= qLeft && qRight <= innerRight && innerTop <= qTop && qBottom <= innerBottom then false
+    else true
+
+/-- Find the closest SVG text layout candidate to a query point by box distance (SVG 2 §11.4). -/
+def findClosestSvgText (px py : Int) (candidates : List (String × PhysicalRect)) : Option String :=
+  match candidates with
+  | [] => none
+  | (name, r) :: rest =>
+    let dist := distanceToBoxSquared px py r
+    some (rest.foldl (fun (bestName, bestDist) (n, rect) =>
+      let d := distanceToBoxSquared px py rect
+      if d < bestDist then (n, d) else (bestName, bestDist)
+    ) (name, dist)).1
+
 /-- General Law: Root SVG never has transformAffectsVectorEffect (SVG 2 §13.3). -/
 theorem svg_root_never_affects_vector_effect (children : List SvgNode) :
     transformAffectsVectorEffect (SvgNode.root children) = false := by
@@ -133,6 +283,43 @@ theorem svg_textpath_disallowed_with_textpath_ancestor (p : SvgTag) (ancs : List
     isSvgChildAllowed p ancs SvgTag.textPath = false := by
   dsimp [isSvgChildAllowed]
   rw [h_anc]
+  rfl
+
+/-- General Law: Perspective projection is clamped to coord when perspective distance is <= z (CSS Transforms 2 §4). -/
+theorem svg_perspective_clamped_when_z_ge (ox : Int) (d : Nat) (z : Int) (coord : Int) (c : Bool)
+    (h : (d : Int) ≤ z) :
+    projectPerspectiveCoord ox d z coord c = coord := by
+  dsimp [projectPerspectiveCoord]
+  split
+  · rfl
+  · rename_i hnot
+    omega
+
+/-- General Law: Distance from rect origin (top-left) to rect is always zero (CSSOM View §8, SVG 2 §11.4). -/
+theorem svg_distance_to_box_origin (r : PhysicalRect) :
+    distanceToBoxSquared (r.x : Int) (r.y : Int) r = 0 := by
+  dsimp [distanceToBoxSquared]
+  split
+  · rename_i h; omega
+  · split
+    · rename_i _ h; omega
+    · split
+      · rename_i h; omega
+      · split
+        · rename_i _ h; omega
+        · rfl
+
+/-- General Law: Zero filter margin preserves input content rect (SVG 2 §15, CSS Filter Effects 1 §3.1). -/
+theorem svg_drop_shadow_zero (r : PhysicalRect) :
+    applyDropShadowFilterRect r 0 0 0 = r := by
+  dsimp [applyDropShadowFilterRect]
+  cases r
+  dsimp
+  congr 1 <;> omega
+
+/-- General Law: Text bounding box width matches specified textLength for all inputs (SVG 2 §11.4). -/
+theorem svg_text_bounding_box_width (x y len h : Nat) :
+    (computeSvgTextBoundingBox x y len h).width = len := by
   rfl
 
 end ChromiumLayout

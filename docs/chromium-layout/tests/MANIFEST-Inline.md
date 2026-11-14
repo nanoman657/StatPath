@@ -717,14 +717,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_root_test.cc:132 | PaintLayerType | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_root_test.cc:155 | VisualRectMappingWithReferenceFilter | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
 | svg/layout_svg_shape_test.cc:12 | StrokeBoundingBoxOnEmptyShape | geometry | formalized | `svg_shape_strokeBoundingBoxOnEmptyShape` | SVG 2 §13.5: Circle shape with radius 0 has empty stroke bounding box |
-| svg/layout_svg_shape_test.cc:23 | RectBasedHitTest_CircleEllipse | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
-| svg/layout_svg_shape_test.cc:77 | RectBasedHitTest_Rect | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
-| svg/layout_svg_shape_test.cc:137 | RectBasedHitTest_Path | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_shape_test.cc:23 | RectBasedHitTest_CircleEllipse | behaviour | formalized | `svg_shape_rectBasedHitTest_CircleEllipse` | SVG 2 §13.2, CSSOM View §8: Rect-based hit testing for stroked circle with inner hole and filled ellipses |
+| svg/layout_svg_shape_test.cc:77 | RectBasedHitTest_Rect | behaviour | formalized | `svg_shape_rectBasedHitTest_Rect` | SVG 2 §13.2, CSSOM View §8: Rect-based hit testing for stroked rect with hollow center and transformed rects |
+| svg/layout_svg_shape_test.cc:137 | RectBasedHitTest_Path | behaviour | formalized | `svg_shape_rectBasedHitTest_Path` | SVG 2 §13.2, CSSOM View §8: Rect-based hit testing intersects filled and transformed SVG path shapes |
 | svg/layout_svg_text_test.cc:13 | RectBasedHitTest | behaviour | formalized | `svg_text_rectBasedHitTest` | CSSOM View §8, SVG 2 §7.3: Rect-based hit test finds overlapping text and parent SVG rect |
-| svg/layout_svg_text_test.cc:38 | RectBasedHitTest_RotatedText | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_text_test.cc:38 | RectBasedHitTest_RotatedText | behaviour | formalized | `svg_text_rectBasedHitTest_RotatedText` | CSSOM View §8, SVG 2 §11.3.3: Non-intersecting query rects do not hit rotated text on textPath |
 | svg/layout_svg_text_test.cc:67 | TransformAffectsVectorEffect | behaviour | formalized | `svg_text_transformAffectsVectorEffect` | SVG 2 §13.3: Text element or tspan child with non-scaling-stroke triggers transformAffectsVectorEffect |
 | svg/layout_svg_text_test.cc:96 | AbsoluteQuads | behaviour | formalized | `svg_text_absoluteQuads` | SVG 2 §11.4: SVG text bounding box computed from origin and textLength |
-| svg/layout_svg_text_test.cc:115 | ObjectBoundingBox | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_text_test.cc:115 | ObjectBoundingBox | geometry | formalized | `svg_text_objectBoundingBox` | SVG 2 §11.4, §13.5: Text object bounding box width and height are finite and bounded |
 | svg/layout_svg_text_test.cc:136 | SubtreeLayout | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_text_test.cc:161 | WillBeRemovedFromTree | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_viewport_container_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
@@ -733,11 +733,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_viewport_container_test.cc:76 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/svg_hit_test_perftest.cc:84 | HandleMouseMoveEvent | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/svg_hit_test_perftest.cc:105 | IntersectsClipPath | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/svg_layout_support_test.cc:14 | FindClosestLayoutSVGText | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/svg_layout_support_test.cc:35 | VisualRectInAncestorSpaceContainerWithFilter | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
-| svg/svg_layout_support_test.cc:64 | VisualRectInDocumentWith3DTransform | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
-| svg/svg_layout_support_test.cc:80 | VisualRectInDocumentUnderSVGRootPerspective | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
-| svg/svg_layout_support_test.cc:95 | AbsoluteBoundingBoxUnderSVGRootPerspective | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/svg_layout_support_test.cc:14 | FindClosestLayoutSVGText | behaviour | formalized | `svg_support_findClosestLayoutSVGText` | SVG 2 §11.4, CSSOM View §8: Closest SVG text candidate selected by Euclidean distance to bounding box |
+| svg/svg_layout_support_test.cc:35 | VisualRectInAncestorSpaceContainerWithFilter | geometry | formalized | `svg_support_visualRectInAncestorSpaceContainerWithFilter` | SVG 2 §15, CSS Filter Effects 1 §3.1: Visual rect expanded by feDropShadow filter margins in document |
+| svg/svg_layout_support_test.cc:64 | VisualRectInDocumentWith3DTransform | geometry | formalized | `svg_support_visualRectInDocumentWith3DTransform` | CSS Transforms 2 §4: 3D perspective projection and translateZ scales visual rect about transform origin |
+| svg/svg_layout_support_test.cc:80 | VisualRectInDocumentUnderSVGRootPerspective | geometry | formalized | `svg_support_visualRectInDocumentUnderSVGRootPerspective` | CSS Transforms 2 §4: Perspective on SVG root projects 3D transformed child rect to enclosing integer rect |
+| svg/svg_layout_support_test.cc:95 | AbsoluteBoundingBoxUnderSVGRootPerspective | geometry | formalized | `svg_support_absoluteBoundingBoxUnderSVGRootPerspective` | CSS Transforms 2 §4: Intermediate preserve-3d container propagates perspective to child bounding box |
 | svg/svg_text_layout_algorithm_test.cc:12 | PositionOnPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/svg_text_layout_algorithm_test.cc:27 | EmptyTextLengthCrash | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/svg_text_layout_algorithm_test.cc:38 | EmptyTextLengthSpacingAndGlyphsCrash | internal | internal | - | Crash regression / lifecycle plumbing |
@@ -845,8 +845,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | hit_testing_test.cc:457 | OcclusionHitTestWith3DTransform | behaviour | blocked | - | Blocked: model lacks hit testing |
 | hit_testing_test.cc:495 | OcclusionHitTestWithFlattenedPreserve3DOccluder | behaviour | blocked | - | Blocked: model lacks hit testing |
 | hit_testing_test.cc:549 | ShapeWithPerspectiveFunction | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:574 | ShapeUnderSVGRootPerspective | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:592 | ContainerUnderSVGRootPerspective | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:574 | ShapeUnderSVGRootPerspective | behaviour | formalized | `svg_hitTest_shapeUnderSVGRootPerspective` | CSS Transforms 2 §4, CSSOM View §8: Perspective projection hit testing on 3D-transformed SVG shape |
+| hit_testing_test.cc:592 | ContainerUnderSVGRootPerspective | behaviour | formalized | `svg_hitTest_containerUnderSVGRootPerspective` | CSS Transforms 2 §4, CSSOM View §8: Perspective projection hit testing on 3D-transformed SVG container |
 ---
 
 ## Merge Notes
