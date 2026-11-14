@@ -801,14 +801,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | forms/layout_text_control_test.cc:126 | RemovingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
 | forms/layout_text_control_test.cc:142 | RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
 | forms/layout_text_control_test.cc:158 | HitTestSearchInput | behaviour | blocked | - | Blocked: model lacks text control layout |
-| shapes/box_shape_test.cc:82 | zeroRadii | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/box_shape_test.cc:143 | getIntervals | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/ellipse_shape_test.cc:32 | ZeroRadii | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/ellipse_shape_test.cc:41 | ZeroRadiusX | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/ellipse_shape_test.cc:50 | ZeroRadiusY | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/ellipse_shape_test.cc:59 | ZeroRadiiWithMargin | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/box_shape_test.cc:82 | zeroRadii | geometry | formalized | `boxShape_zeroRadii` | CSS Shapes 1 §3.1: Box shape bounding box and line overlap tests with shape-margin 10 |
+| shapes/box_shape_test.cc:143 | getIntervals | geometry | formalized | `boxShape_getIntervals` | CSS Shapes 1 §3.1: Excluded intervals across lines on 100x100 box shape with zero margin |
+| shapes/ellipse_shape_test.cc:32 | ZeroRadii | geometry | formalized | `ellipseShape_zeroRadii` | CSS Shapes 1 §3.2: Ellipse shape with 0,0 radii is empty with zero bounding box |
+| shapes/ellipse_shape_test.cc:41 | ZeroRadiusX | geometry | formalized | `ellipseShape_zeroRadiusX` | CSS Shapes 1 §3.2: Ellipse shape with 0 inline radius is empty |
+| shapes/ellipse_shape_test.cc:50 | ZeroRadiusY | geometry | formalized | `ellipseShape_zeroRadiusY` | CSS Shapes 1 §3.2: Ellipse shape with 0 block radius is empty |
+| shapes/ellipse_shape_test.cc:59 | ZeroRadiiWithMargin | geometry | formalized | `ellipseShape_zeroRadiiWithMargin` | CSS Shapes 1 §3.2: Ellipse shape with 0 base radii but positive shape-margin (5) expands to 10x10 |
 | shapes/ellipse_shape_test.cc:87 | NonZeroRadiiWithMargin | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
-| shapes/ellipse_shape_test.cc:115 | ShapeMarginLogicalBoundingBoxWithFloatValues | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
+| shapes/ellipse_shape_test.cc:115 | ShapeMarginLogicalBoundingBoxWithFloatValues | geometry | formalized | `ellipseShape_shapeMarginLogicalBoundingBoxWithFloatValues` | CSS Shapes 1 §3.2: Ellipse bounding box in LayoutUnits |
 | exclusions/exclusion_space_test.cc:92 | Empty | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
 | exclusions/exclusion_space_test.cc:122 | LineLayoutOpportunityClampsNonDominantSide | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
 | exclusions/exclusion_space_test.cc:169 | SingleExclusion | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
