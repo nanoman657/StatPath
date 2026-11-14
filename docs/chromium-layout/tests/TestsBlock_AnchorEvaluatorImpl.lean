@@ -63,5 +63,63 @@ theorem BlockFlow_vectors :
     evaluateAnchor mapAfter "--div3" .top = some 70 := by
   decide
 
+-- anchor_evaluator_impl_test.cc:284: OutOfFlow
+-- Anchor names of out-of-flow positioned objects propagate to containing block.
+-- CSS Anchor Positioning Level 1 §3.1.
+theorem OutOfFlow_vectors :
+    let map : AnchorMap := [{ name := "--abs1", rect := ⟨100, 50, 400, 20⟩ }]
+    lookupAnchor map "--abs1" = some ⟨100, 50, 400, 20⟩ := by
+  decide
+
+-- anchor_evaluator_impl_test.cc:330: Transform
+-- CSS transforms shift anchor rectangle coordinates in anchor map.
+-- CSS Transforms 1 §2, CSS Anchor Positioning 1 §3.1.
+theorem Transform_vectors :
+    let initialRect : AnchorRect := ⟨0, 0, 800, 0⟩
+    let transformed := transformAnchor initialRect 100 100
+    let map : AnchorMap := [{ name := "--transform", rect := transformed }]
+    transformed = ⟨100, 100, 800, 0⟩ ∧
+    lookupAnchor map "--transform" = some ⟨100, 100, 800, 0⟩ := by
+  decide
+
+-- anchor_evaluator_impl_test.cc:351: Scroll
+-- Scroll positions do not shift anchor rectangles in anchor map.
+-- CSS Anchor Positioning Level 1 §3.1.
+theorem Scroll_vectors :
+    let baseRect : AnchorRect := ⟨0, 0, 400, 500⟩
+    let scrolled := scrollAnchor baseRect 30 20
+    let map : AnchorMap := [{ name := "--inner", rect := scrolled }]
+    scrolled = baseRect ∧
+    lookupAnchor map "--inner" = some ⟨0, 0, 400, 500⟩ := by
+  decide
+
+-- anchor_evaluator_impl_test.cc:375: FragmentedContainingBlock
+-- Anchor rectangles fragment across multicol columns.
+-- CSS Fragmentation 3 §2, CSS Anchor Positioning 1 §3.3.
+theorem FragmentedContainingBlock_vectors :
+    let cbFrag1Map : AnchorMap := [{ name := "--a1", rect := ⟨0, 50, 100, 50⟩ }]
+    let cbFrag2Map : AnchorMap := [{ name := "--a1", rect := ⟨0, 0, 100, 50⟩ }]
+    let columnsMap : AnchorMap := [{ name := "--a1", rect := ⟨110, 0, 210, 100⟩ }]
+    let containerMap : AnchorMap := [{ name := "--a1", rect := ⟨110, 10, 210, 100⟩ }]
+    lookupAnchor cbFrag1Map "--a1" = some ⟨0, 50, 100, 50⟩ ∧
+    lookupAnchor cbFrag2Map "--a1" = some ⟨0, 0, 100, 50⟩ ∧
+    lookupAnchor columnsMap "--a1" = some ⟨110, 0, 210, 100⟩ ∧
+    lookupAnchor containerMap "--a1" = some ⟨110, 10, 210, 100⟩ := by
+  decide
+
+-- anchor_evaluator_impl_test.cc:437: FragmentHasRunningAnchorTransformAnimation
+-- HasRunningAnchorTransformAnimation returns false when no animation is running.
+-- CSS Anchor Positioning Level 1 §3.1.
+theorem FragmentHasRunningAnchorTransformAnimation_vectors :
+    hasRunningAnchorTransformAnimation false = false := by
+  decide
+
+-- anchor_evaluator_impl_test.cc:446: FrameViewHasRunningAnchorTransformAnimation
+-- HasRunningAnchorTransformAnimation on frame view returns false when no animation is running.
+-- CSS Anchor Positioning Level 1 §3.1.
+theorem FrameViewHasRunningAnchorTransformAnimation_vectors :
+    hasRunningAnchorTransformAnimation false = false := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

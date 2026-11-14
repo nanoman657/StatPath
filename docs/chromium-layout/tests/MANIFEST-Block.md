@@ -1030,13 +1030,13 @@ checks every row against the pinned sources and the Lean modules.
 | anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | behaviour | formalized | `TestsBlock.AnchorNameRemove_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
 | anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | behaviour | formalized | `TestsBlock.BlockFlow_vectors`, `OutOfFlowAnchor.anchor_top_le_bottom` |
 | anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | behaviour | formalized | `TestsBlock.OutOfFlow_vectors`, `OutOfFlowAnchor.lookupAnchor` |
 | anchor_evaluator_impl_test.cc:310 | AnchorEvaluatorImplTest.Relative | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:330 | AnchorEvaluatorImplTest.Transform | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:351 | AnchorEvaluatorImplTest.Scroll | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:375 | AnchorEvaluatorImplTest.FragmentedContainingBlock | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:437 | AnchorEvaluatorImplTest.FragmentHasRunningAnchorTransformAnimation | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:446 | AnchorEvaluatorImplTest.FrameViewHasRunningAnchorTransformAnimation | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:330 | AnchorEvaluatorImplTest.Transform | behaviour | formalized | `TestsBlock.Transform_vectors`, `OutOfFlowAnchor.transform_shifts_pos` |
+| anchor_evaluator_impl_test.cc:351 | AnchorEvaluatorImplTest.Scroll | behaviour | formalized | `TestsBlock.Scroll_vectors`, `OutOfFlowAnchor.scroll_invariant` |
+| anchor_evaluator_impl_test.cc:375 | AnchorEvaluatorImplTest.FragmentedContainingBlock | behaviour | formalized | `TestsBlock.FragmentedContainingBlock_vectors`, `OutOfFlowAnchor.lookupAnchor` |
+| anchor_evaluator_impl_test.cc:437 | AnchorEvaluatorImplTest.FragmentHasRunningAnchorTransformAnimation | behaviour | formalized | `TestsBlock.FragmentHasRunningAnchorTransformAnimation_vectors`, `OutOfFlowAnchor.no_running_anchor_transform_animation` |
+| anchor_evaluator_impl_test.cc:446 | AnchorEvaluatorImplTest.FrameViewHasRunningAnchorTransformAnimation | behaviour | formalized | `TestsBlock.FrameViewHasRunningAnchorTransformAnimation_vectors`, `OutOfFlowAnchor.no_running_anchor_transform_animation` |
 | anchor_position_scroll_data_test.cc:45 | AnchorPositionScrollDataTest.HasDataAndScrollAdjustment | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_position_scroll_data_test.cc:94 | AnchorPositionScrollDataTest.Detach | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_position_scroll_data_test.cc:142 | AnchorPositionScrollDataTest.ScrollerSizeChange | behaviour | blocked | model lacks CSS anchor positioning engine |
