@@ -322,4 +322,74 @@ theorem svg_text_bounding_box_width (x y len h : Nat) :
     (computeSvgTextBoundingBox x y len h).width = len := by
   rfl
 
+/-! ## ForeignObject Layout and Hit Testing (SVG 2 §13.2, §14, CSSOM View §8) -/
+
+/-- ForeignObject representation with 2D bounds and optional transform (SVG 2 §13.2). -/
+structure SvgForeignObject where
+  x : Nat
+  y : Nat
+  width : Nat
+  height : Nat
+  transformX : Int := 0
+  transformY : Int := 0
+  deriving Repr, DecidableEq
+
+/-- Compute object bounding box for foreignObject (SVG 2 §13.2). -/
+def svgForeignObjectBoundingBox (fo : SvgForeignObject) : Nat × Nat × Nat × Nat :=
+  (fo.x, fo.y, fo.width, fo.height)
+
+/-- Compute decorated bounding box under zoom factor (SVG 2 §13.2, CSSOM View §8). -/
+def svgForeignObjectDecoratedBoundingBox (fo : SvgForeignObject) (zoom : Nat) : Nat × Nat × Nat × Nat :=
+  (fo.x * zoom, fo.y * zoom, fo.width * zoom, fo.height * zoom)
+
+/-- Check if an integer point is inside a 2D bounding box (CSSOM View §8). -/
+def svgPointInBox (px py : Int) (x y w h : Nat) : Bool :=
+  px >= (x : Int) && px < (x : Int) + (w : Int) &&
+  py >= (y : Int) && py < (y : Int) + (h : Int)
+
+/-- Hit test an SVG container with a hierarchy of nested boxes (CSSOM View §8, SVG 2 §13.2).
+    Traverses candidate boxes from outer to innermost and returns the deepest matching element name. -/
+def svgHitTestHierarchy (svgW svgH : Nat) (boxes : List (String × Nat × Nat × Nat × Nat)) (px py : Int) : String :=
+  let rec findInnermost : List (String × Nat × Nat × Nat × Nat) → Option String
+    | [] => none
+    | (name, x, y, w, h) :: rest =>
+      match findInnermost rest with
+      | some inner => some inner
+      | none =>
+        if svgPointInBox px py x y w h then some name
+        else none
+  if !svgPointInBox px py 0 0 svgW svgH then ""
+  else (findInnermost boxes).getD "svg"
+
+/-- Circular clip path hit testing (SVG 2 §14, CSS Masking 1 §3, CSSOM View §8).
+    Returns target when inside circle; fallback otherwise. -/
+def svgClipPathCircleHitTest (cx cy r : Nat) (px py : Int) (target fallback : String) : String :=
+  let dx := px - (cx : Int)
+  let dy := py - (cy : Int)
+  if dx * dx + dy * dy <= (r : Int) * (r : Int) then target
+  else fallback
+
+/-- General Law: ForeignObject bounding box at origin matches its width and height (SVG 2 §13.2). -/
+theorem svg_foreign_object_bbox_origin (w h : Nat) :
+    svgForeignObjectBoundingBox { x := 0, y := 0, width := w, height := h } = (0, 0, w, h) := by
+  rfl
+
+/-- General Law: ForeignObject decorated bounding box under zoom 1 equals its unzoomed box (SVG 2 §13.2). -/
+theorem svg_foreign_object_zoom_one (fo : SvgForeignObject) :
+    svgForeignObjectDecoratedBoundingBox fo 1 = (fo.x, fo.y, fo.width, fo.height) := by
+  dsimp [svgForeignObjectDecoratedBoundingBox]
+  simp
+
+/-- General Law: Circular clip-path test at the circle center always hits the target (SVG 2 §14, CSS Masking 1 §3). -/
+theorem svg_clip_path_center_hits (cx cy r : Nat) (target fallback : String) :
+    svgClipPathCircleHitTest cx cy r (cx : Int) (cy : Int) target fallback = target := by
+  dsimp [svgClipPathCircleHitTest]
+  have hcast : (r : Int) * (r : Int) = ((r * r : Nat) : Int) := by rfl
+  have hpos : 0 ≤ ((r * r : Nat) : Int) := by omega
+  rw [hcast]
+  split
+  · rfl
+  · rename_i hnot
+    omega
+
 end ChromiumLayout

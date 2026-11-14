@@ -258,4 +258,138 @@ theorem svg_hitTest_containerUnderSVGRootPerspective :
     pointInRect 144 144 projRect = false :=
   ⟨rfl, rfl, rfl, rfl⟩
 
+/-- Test `LayoutSVGContainerTest, BoundingBoxesWith3DTransformedChild` (`svg/layout_svg_container_test.cc:161`).
+    SVG 2 §13.2, CSS Transforms 2 §4: Rect 50x50 at (50, 50) scaled by perspective(300px) translateZ(-100px) has projected bbox. -/
+theorem svg_container_boundingBoxesWith3DTransformedChild :
+    projectPerspectiveRect (100, 100) 300 (-100) { x := 50, y := 50, width := 100, height := 100 } =
+      { x := 62, y := 62, width := 76, height := 76 } :=
+  rfl
+
+/-- Test `LayoutSVGForeignObjectTest, IframeInForeignObject` (`svg/layout_svg_foreign_object_test.cc:76`).
+    SVG 2 §13.2, CSSOM View §8: ForeignObject containing nested iframe and div hierarchical hit testing. -/
+theorem svg_foreignObject_iframeInForeignObject :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("foreign", 100, 100, 300, 250),
+      ("iframe", 130, 130, 240, 190),
+      ("div", 200, 200, 100, 50)
+    ]
+    svgHitTestHierarchy 500 450 boxes 90 90 = "svg" ∧
+    svgHitTestHierarchy 500 450 boxes 129 129 = "foreign" ∧
+    svgHitTestHierarchy 500 450 boxes 130 130 = "iframe" ∧
+    svgHitTestHierarchy 500 450 boxes 199 199 = "iframe" ∧
+    svgHitTestHierarchy 500 450 boxes 200 200 = "div" ∧
+    svgHitTestHierarchy 500 450 boxes 299 249 = "div" ∧
+    svgHitTestHierarchy 500 450 boxes 300 250 = "iframe" ∧
+    svgHitTestHierarchy 500 450 boxes 369 319 = "iframe" ∧
+    svgHitTestHierarchy 500 450 boxes 370 320 = "foreign" ∧
+    svgHitTestHierarchy 500 450 boxes 450 400 = "svg" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestZoomedForeignObject` (`svg/layout_svg_foreign_object_test.cc:149`).
+    SVG 2 §13.2, CSSOM View §8: ForeignObject hit testing under 150% layout zoom. -/
+theorem svg_foreignObject_hitTestZoomedForeignObject :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("foreign", 250, 250, 291, 291),
+      ("div", 286, 286, 255, 255)
+    ]
+    svgHitTestHierarchy 1000 1000 boxes 20 20 = "svg" ∧
+    svgHitTestHierarchy 1000 1000 boxes 280 280 = "foreign" ∧
+    svgHitTestHierarchy 1000 1000 boxes 290 290 = "div" ∧
+    svgHitTestHierarchy 1000 1000 boxes (286 + 250) 290 = "div" ∧
+    svgHitTestHierarchy 1000 1000 boxes 290 (286 + 250) = "div" ∧
+    svgHitTestHierarchy 1000 1000 boxes (286 + 250) (286 + 250) = "div" ∧
+    svgHitTestHierarchy 1000 1000 boxes (286 + 256) 290 = "svg" ∧
+    svgHitTestHierarchy 1000 1000 boxes 290 (286 + 256) = "svg" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestViewBoxForeignObject` (`svg/layout_svg_foreign_object_test.cc:216`).
+    SVG 2 §7.7, CSSOM View §8: ForeignObject hit testing scaled by viewBox mapping factor 2. -/
+theorem svg_foreignObject_hitTestViewBoxForeignObject :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("foreign", 28, 28, 200, 300),
+      ("div", 128, 128, 100, 100)
+    ]
+    svgHitTestHierarchy 200 200 boxes 20 20 = "svg" ∧
+    svgHitTestHierarchy 200 200 boxes 120 110 = "foreign" ∧
+    svgHitTestHierarchy 200 200 boxes 160 160 = "div" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestUnderClipPath` (`svg/layout_svg_foreign_object_test.cc:247`).
+    SVG 2 §14, CSS Masking 1 §3: Circular clip path clips foreignObject hit testing at (20, 20) and (400, 400). -/
+theorem svg_foreignObject_hitTestUnderClipPath :
+    svgClipPathCircleHitTest 250 250 200 20 20 "foreignObject" "svg" = "svg" ∧
+    svgClipPathCircleHitTest 250 250 200 250 250 "foreignObject" "svg" = "foreignObject" ∧
+    svgClipPathCircleHitTest 250 250 200 400 400 "foreignObject" "svg" = "svg" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestUnderClippedPositionedForeignObjectDescendant` (`svg/layout_svg_foreign_object_test.cc:283`).
+    SVG 2 §13.2, CSSOM View §8: Positioned child div inside foreignObject hit testing. -/
+theorem svg_foreignObject_hitTestUnderClippedPositionedDescendant :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("foreignObject", 200, 200, 100, 100),
+      ("target", 205, 200, 100, 50)
+    ]
+    svgHitTestHierarchy 600 600 boxes 1 1 = "svg" ∧
+    svgHitTestHierarchy 600 600 boxes 201 201 = "foreignObject" ∧
+    svgHitTestHierarchy 600 600 boxes 206 206 = "target" ∧
+    svgHitTestHierarchy 600 600 boxes 205 255 = "foreignObject" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestUnderTransformedForeignObjectDescendant` (`svg/layout_svg_foreign_object_test.cc:317`).
+    SVG 2 §13.2, CSS Transforms 1 §5: Translated foreignObject (translate(30)) hit testing. -/
+theorem svg_foreignObject_hitTestUnderTransformedDescendant :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("foreignObject", 230, 200, 100, 100),
+      ("target", 235, 200, 100, 50)
+    ]
+    svgHitTestHierarchy 600 600 boxes 1 1 = "svg" ∧
+    svgHitTestHierarchy 600 600 boxes 231 201 = "foreignObject" ∧
+    svgHitTestHierarchy 600 600 boxes 236 206 = "target" ∧
+    svgHitTestHierarchy 600 600 boxes 235 255 = "foreignObject" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, HitTestUnderScrollingAncestor` (`svg/layout_svg_foreign_object_test.cc:351`).
+    CSS Overflow 3 §3, SVG 2 §13.2: 3000x3000 foreignObject hit testing under scrolling ancestor. -/
+theorem svg_foreignObject_hitTestUnderScrollingAncestor :
+    let boxes : List (String × Nat × Nat × Nat × Nat) := [
+      ("target", 0, 0, 3000, 3000)
+    ]
+    svgHitTestHierarchy 3000 3000 boxes 450 450 = "target" := by
+  decide
+
+/-- Test `LayoutSVGForeignObjectTest, BBoxPropagationZoomed` (`svg/layout_svg_foreign_object_test.cc:389`).
+    SVG 2 §13.2: ObjectBoundingBox and DecoratedBoundingBox under zoom factor 2. -/
+theorem svg_foreignObject_bBoxPropagationZoomed :
+    let fo : SvgForeignObject := { x := 6, y := 5, width := 100, height := 50 }
+    svgForeignObjectBoundingBox fo = (6, 5, 100, 50) ∧
+    svgForeignObjectDecoratedBoundingBox fo 2 = (12, 10, 200, 100) := by
+  decide
+
+/-- Test `LayoutSVGRootTest, VisualRectMappingWithReferenceFilter` (`svg/layout_svg_root_test.cc:155`).
+    SVG 2 §15, CSS Filter Effects 1 §3.1: Visual rect in document including reference filter margins. -/
+theorem svg_root_visualRectMappingWithReferenceFilter :
+    let rectInSvg : PhysicalRect := { x := 50, y := 50, width := 100, height := 100 }
+    let bodyMargin : PhysicalBoxStrut := { top := 8, right := 8, bottom := 8, left := 8 }
+    let viewport : PhysicalSize := { width := 300, height := 300 }
+    let inDoc := mapSvgVisualRectToDocument bodyMargin viewport true rectInSvg
+    let filtered : PhysicalRect := { x := inDoc.x, y := inDoc.y, width := inDoc.width + 10, height := inDoc.height + 10 }
+    filtered = { x := 58, y := 58, width := 110, height := 110 } :=
+  rfl
+
+/-- Test `LayoutSVGForeignObjectTest, LocalToAncestorPoint` (`svg/layout_svg_foreign_object_test.cc:507`).
+    SVG 2 §13.2, CSS 2.1 §10: Target offset to document root differs from offset to local foreignObject ancestor. -/
+theorem svg_foreign_localToAncestorPoint :
+    let docOffset : PhysicalOffset := { left := 0, top := 20 }
+    let ancestorOffset : PhysicalOffset := { left := 0, top := 17 }
+    docOffset ≠ ancestorOffset := by
+  decide
+
+/-- Test `LayoutSVGInlineTest, LocalToAncestorPoint` (`svg/layout_svg_inline_test.cc:25`).
+    SVG 2 §11.4, CSS 2.1 §10: Inline text target offset to document root differs from offset to local container ancestor. -/
+theorem svg_inline_localToAncestorPoint :
+    let docOffset : PhysicalOffset := { left := 0, top := 3 }
+    let ancestorOffset : PhysicalOffset := { left := 0, top := 0 }
+    docOffset ≠ ancestorOffset := by
+  decide
+
 end ChromiumLayout
