@@ -655,5 +655,42 @@ theorem item_available_size_two_tracks (tracks : List Nat) (gap : Nat) (line : N
     have hdiff : line + 1 - (line - 1) = 2 := by omega
     simp [hend, hdiff]
 
+/-- Convert a sorted list of grid line breakpoints [l_0, l_1, ..., l_k]
+    into a sequence of contiguous non-overlapping GridRanges.
+    CSS Grid Layout Module Level 1 §7.2.3 (Track Sizing Algorithm), §7.6. -/
+def gridRangesFromBreakpoints (lines : List Nat) : List GridRange :=
+  match lines with
+  | [] => []
+  | [_] => []
+  | l1 :: l2 :: rest =>
+      ⟨l1, l2 - l1, false⟩ :: gridRangesFromBreakpoints (l2 :: rest)
+
+/-- Law: An empty breakpoint list produces no grid ranges.
+    CSS Grid Layout Module Level 1 §7.2.3. -/
+theorem grid_ranges_empty :
+    gridRangesFromBreakpoints [] = [] := rfl
+
+/-- Law: A single breakpoint produces no grid ranges.
+    CSS Grid Layout Module Level 1 §7.2.3. -/
+theorem grid_ranges_single (l : Nat) :
+    gridRangesFromBreakpoints [l] = [] := rfl
+
+/-- Law: Two breakpoints produce exactly one range spanning the difference.
+    CSS Grid Layout Module Level 1 §7.2.3. -/
+theorem grid_ranges_pair (l1 l2 : Nat) :
+    gridRangesFromBreakpoints [l1, l2] = [⟨l1, l2 - l1, false⟩] := rfl
+
+/-- Law: Number of ranges is one less than the number of line breakpoints for non-empty lists.
+    CSS Grid Layout Module Level 1 §7.2.3. -/
+theorem grid_ranges_length : ∀ (lines : List Nat),
+    (gridRangesFromBreakpoints lines).length = lines.length - 1
+  | [] => rfl
+  | [_] => rfl
+  | _ :: l2 :: rest => by
+      have ih := grid_ranges_length (l2 :: rest)
+      dsimp [gridRangesFromBreakpoints]
+      rw [ih]
+      cases rest <;> rfl
+
 end GridLayout
 end ChromiumLayout

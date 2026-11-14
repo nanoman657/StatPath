@@ -188,5 +188,59 @@ theorem GridLayoutAlgorithmAvailableRowSizes_vectors :
     itemAvailableTrackSize tracks gap 4 6 = 110 := by
   exact ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+-- grid_layout_algorithm_test.cc:603: GridLayoutAlgorithmTest.GridLayoutAlgorithmRanges
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6.
+theorem GridLayoutAlgorithmRanges_vectors :
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 1000]
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2, 3, 4, 8]
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 999, false⟩] ∧
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩, ⟨2, 1, false⟩, ⟨3, 1, false⟩, ⟨4, 4, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:650: GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesWithAutoRepeater
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6.
+theorem GridLayoutAlgorithmRangesWithAutoRepeater_vectors :
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 20, 21, 22]
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2, 3, 4, 5, 6, 7]
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 19, false⟩, ⟨20, 1, false⟩, ⟨21, 1, false⟩] ∧
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩, ⟨2, 1, false⟩, ⟨3, 1, false⟩, ⟨4, 1, false⟩, ⟨5, 1, false⟩, ⟨6, 1, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:701: GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicit
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6.
+theorem GridLayoutAlgorithmRangesImplicit_vectors :
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2, 4]
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 2]
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩, ⟨2, 2, false⟩] ∧
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:764: GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoColumns
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6.
+theorem GridLayoutAlgorithmRangesImplicitAutoColumns_vectors :
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2]
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 2]
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩] ∧
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:822: GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoRows
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6.
+theorem GridLayoutAlgorithmRangesImplicitAutoRows_vectors :
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2, 4]
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 2]
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩, ⟨2, 2, false⟩] ∧
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:1159: GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions
+-- CSS Grid Layout Module Level 1 §7.2.3, §7.6, §8.3.
+theorem GridLayoutAlgorithmGridPositions_vectors :
+    let colRanges := gridRangesFromBreakpoints [0, 1, 2]
+    let rowRanges := gridRangesFromBreakpoints [0, 1, 3, 4, 5, 6]
+    colRanges = [⟨0, 1, false⟩, ⟨1, 1, false⟩] ∧
+    rowRanges = [⟨0, 1, false⟩, ⟨1, 2, false⟩, ⟨3, 1, false⟩, ⟨4, 1, false⟩, ⟨5, 1, false⟩] := by
+  exact ⟨rfl, rfl⟩
+
 end TestsBlock
 end ChromiumLayout

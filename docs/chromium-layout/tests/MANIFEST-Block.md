@@ -440,15 +440,15 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:209 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGapGeometry | geometry | formalized | `TestsBlock.GridLayoutAlgorithmGapGeometry_vectors`, `GridLayout.compute_grid_gap_midpoints_two` |
 | grid/grid_layout_algorithm_test.cc:290 | GridLayoutAlgorithmTest.GapGeomoetryWithSpanningItems | geometry | formalized | `TestsBlock.GapGeomoetryWithSpanningItems_vectors`, `GridLayout.cell_pair_status_same_item` |
 | grid/grid_layout_algorithm_test.cc:421 | GridLayoutAlgorithmTest.GapGeometryWithEmptyCellsAndSpanningItems | geometry | formalized | `TestsBlock.GapGeometryWithEmptyCellsAndSpanningItems_vectors`, `GridLayout.cell_pair_status_both_none` |
-| grid/grid_layout_algorithm_test.cc:603 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRanges | geometry | blocked | needs CSS grid track sizing and range building algorithm |
-| grid/grid_layout_algorithm_test.cc:650 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesWithAutoRepeater | geometry | blocked | needs CSS grid track sizing and range building algorithm |
-| grid/grid_layout_algorithm_test.cc:701 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicit | geometry | blocked | needs CSS grid track sizing and range building algorithm |
-| grid/grid_layout_algorithm_test.cc:764 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoColumns | geometry | blocked | needs CSS grid track sizing and range building algorithm |
-| grid/grid_layout_algorithm_test.cc:822 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoRows | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:603 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRanges | geometry | formalized | `TestsBlock.GridLayoutAlgorithmRanges_vectors`, `GridLayout.grid_ranges_pair` |
+| grid/grid_layout_algorithm_test.cc:650 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesWithAutoRepeater | geometry | formalized | `TestsBlock.GridLayoutAlgorithmRangesWithAutoRepeater_vectors`, `GridLayout.grid_ranges_single` |
+| grid/grid_layout_algorithm_test.cc:701 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicit | geometry | formalized | `TestsBlock.GridLayoutAlgorithmRangesImplicit_vectors`, `GridLayout.grid_ranges_length` |
+| grid/grid_layout_algorithm_test.cc:764 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoColumns | geometry | formalized | `TestsBlock.GridLayoutAlgorithmRangesImplicitAutoColumns_vectors`, `GridLayout.grid_ranges_empty` |
+| grid/grid_layout_algorithm_test.cc:822 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitAutoRows | geometry | formalized | `TestsBlock.GridLayoutAlgorithmRangesImplicitAutoRows_vectors`, `GridLayout.grid_ranges_pair` |
 | grid/grid_layout_algorithm_test.cc:881 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicitMixed | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:929 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoGridPositions | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
 | grid/grid_layout_algorithm_test.cc:1003 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoDense | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
-| grid/grid_layout_algorithm_test.cc:1159 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1159 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions | geometry | formalized | `TestsBlock.GridLayoutAlgorithmGridPositions_vectors`, `GridLayout.grid_ranges_length` |
 | grid/grid_layout_algorithm_test.cc:1216 | GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:1273 | GridLayoutAlgorithmTest.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:1356 | GridLayoutAlgorithmTest.FixedSizePositioning | geometry | formalized | `TestsBlock.FixedSizePositioning_vectors`, `GridLayout.track_offset_zero` |
