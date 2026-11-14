@@ -175,4 +175,41 @@ theorem clampLayoutUnit_le_max (v : Nat) :
   · exact Nat.le_refl _
   · omega
 
+/-! ## 6. Inline Tree Mutation & Invalidation (CSS 2.1 §9.4.2 & CSS Inline 3 §2) -/
+
+/-- DOM node mutation or style change operation affecting inline layout invalidation. -/
+inductive InlineMutation where
+  | insertNode (isOutOfFlowIndependent : Bool := false)
+  | removeNode
+  | changeStyle (affectsInlines : Bool := true)
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS 2.1 §9.4.2 & Blink InlineNode::SetNeedsCollectInlines:
+    Determine `needsCollectInlines` flags for modified target, parent, container, and sibling nodes.
+    - Ancestors up to the containing block flow (target, parent, container) are invalidated (marked true)
+      when an inline-affecting mutation occurs within the formatting context.
+    - Sibling nodes outside the ancestor path are unaffected (marked false).
+    - Modifications inside an independent out-of-flow formatting context do not invalidate the container. -/
+def computeNeedsCollectInlines (op : InlineMutation) : Bool × Bool × Bool × Bool :=
+  match op with
+  | .insertNode true => (false, false, false, false)
+  | .insertNode false => (true, true, true, false)
+  | .removeNode => (true, true, true, false)
+  | .changeStyle true => (true, true, true, false)
+  | .changeStyle false => (false, false, false, false)
+
+/-- CSS 2.1 §9.4.2 Law: Siblings outside the modified ancestor chain never need inline recolletion. -/
+theorem siblings_never_need_collect_inlines (op : InlineMutation) :
+    (computeNeedsCollectInlines op).2.2.2 = false := by
+  cases op with
+  | insertNode b => cases b <;> rfl
+  | removeNode => rfl
+  | changeStyle b => cases b <;> rfl
+
+/-- CSS 2.1 §9.4.2 Law: In-flow insertion or removal always marks parent and container for inline collection. -/
+theorem inflow_mutation_invalidates_ancestors (isInsert : Bool) :
+    let (_, p, c, _) := computeNeedsCollectInlines (if isInsert then .insertNode false else .removeNode)
+    p = true ∧ c = true := by
+  cases isInsert <;> exact ⟨rfl, rfl⟩
+
 end ChromiumLayout

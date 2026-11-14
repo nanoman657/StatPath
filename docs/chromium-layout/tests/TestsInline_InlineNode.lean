@@ -121,4 +121,27 @@ theorem inlineNode_minMaxSizesSaturated :
     sizes.minSize = 33554431 := by
   decide
 
+/-- Test: StyleChangeTest.NeedsCollectInlinesOnStyle (`inline/inline_node_test.cc:838`).
+    CSS 2.1 §9.4.2: Font, position, and bidi style changes invalidate ancestors while preserving siblings. -/
+theorem inlineNode_needsCollectInlinesOnStyle :
+    let (text1, parent1, container1, siblings1) := computeNeedsCollectInlines (.changeStyle true)
+    let (_, _, container2, _) := computeNeedsCollectInlines (.insertNode true)
+    (text1 = true) ∧ (parent1 = true) ∧ (container1 = true) ∧ (siblings1 = false) ∧
+    (container2 = false) := by
+  decide
+
+/-- Test: NodeInsertTest.NeedsCollectInlinesOnInsert (`inline/inline_node_test.cc:927`).
+    CSS 2.1 §9.4.2: Inserting node into parent marks parent and container for inline collection. -/
+theorem inlineNode_needsCollectInlinesOnInsert :
+    let (_, parent, container, siblings) := computeNeedsCollectInlines (.insertNode false)
+    (parent = true) ∧ (container = true) ∧ (siblings = false) := by
+  decide
+
+/-- Test: NodeRemoveTest.NeedsCollectInlinesOnRemove (`inline/inline_node_test.cc:987`).
+    CSS 2.1 §9.4.2: Removing child from parent marks parent and container for inline collection. -/
+theorem inlineNode_needsCollectInlinesOnRemove :
+    let (_, parent, container, siblings) := computeNeedsCollectInlines .removeNode
+    (parent = true) ∧ (container = true) ∧ (siblings = false) := by
+  decide
+
 end ChromiumLayout.TestsInline

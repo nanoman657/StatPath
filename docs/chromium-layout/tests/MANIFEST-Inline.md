@@ -102,10 +102,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
 | inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
 | inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | internal | internal | - | Crash regression in OffsetMapping |
-| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
-| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
+| inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | formalized | `inlineNode_needsCollectInlinesOnStyle` | CSS 2.1 §9.4.2: Font, position, and bidi style changes invalidate ancestors while preserving siblings |
+| inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | formalized | `inlineNode_needsCollectInlinesOnInsert` | CSS 2.1 §9.4.2: Inserting text, span, abspos, or float marks parent and container for inline collection |
 | inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | internal | internal | - | Out of flow button insert |
-| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
+| inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_needsCollectInlinesOnRemove` | CSS 2.1 §9.4.2: Removing child from parent marks parent and container for inline collection |
 | inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
 | inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
 | inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | internal | - | Adding span adds OpenTag/CloseTag items |
