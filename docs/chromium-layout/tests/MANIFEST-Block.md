@@ -1131,6 +1131,49 @@ checks every row against the pinned sources and the Lean modules.
 | geometry/box_sides_test.cc:13 | GeometryUnitsTest.LogicalBoxSidesToLineLogical | geometry | formalized | `TestsBlock.LogicalBoxSidesToLineLogical_vectors`, `BlockBoxSides.lineSides` |
 | geometry/box_sides_test.cc:35 | GeometryUnitsTest.PhysicalBoxSidesToLogical | geometry | formalized | `TestsBlock.PhysicalBoxSidesToLogical_vectors`, `BlockBoxSides.toLogical` |
 | geometry/static_position_test.cc:331 | StaticPositionTest.Convert | geometry | blocked | 48-row parameter table; a model of the static-position record cost 4.5 model tokens per result token under the mml gate, so it is not added |
+| forms/fieldset_layout_algorithm_test.cc:59 | FieldsetLayoutAlgorithmTest.Empty | geometry | formalized | `TestsBlock.FieldsetEmpty_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:78 | FieldsetLayoutAlgorithmTest.NoLegend | geometry | formalized | `TestsBlock.FieldsetNoLegend_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:100 | FieldsetLayoutAlgorithmTest.Legend | geometry | formalized | `TestsBlock.FieldsetLegend_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:124 | FieldsetLayoutAlgorithmTest.SmallLegendLargeBorder | geometry | formalized | `TestsBlock.FieldsetSmallLegendLargeBorder_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:150 | FieldsetLayoutAlgorithmTest.LegendOrthogonalWritingMode | geometry | formalized | `TestsBlock.FieldsetLegendOrthogonal_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:176 | FieldsetLayoutAlgorithmTest.VerticalLr | geometry | formalized | `TestsBlock.FieldsetVerticalLr_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:202 | FieldsetLayoutAlgorithmTest.VerticalRl | geometry | formalized | `TestsBlock.FieldsetVerticalRl_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:228 | FieldsetLayoutAlgorithmTest.LegendAutoSize | geometry | blocked | legend auto inline size is the shrink-to-fit of two left floats inside the legend; the legend model takes a fixed size |
+| forms/fieldset_layout_algorithm_test.cc:257 | FieldsetLayoutAlgorithmTest.PercentageHeightChild | geometry | formalized | `TestsBlock.FieldsetPercentageHeightChild_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:283 | FieldsetLayoutAlgorithmTest.AbsposChild | geometry | formalized | `TestsBlock.FieldsetAbsposChild_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:312 | FieldsetLayoutAlgorithmTest.ZeroHeight | geometry | formalized | `TestsBlock.FieldsetZeroHeight_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:340 | FieldsetLayoutAlgorithmTest.ZeroMaxHeight | geometry | formalized | `TestsBlock.FieldsetZeroMaxHeight_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:372 | FieldsetLayoutAlgorithmTest.PercentHeightQuirks | geometry | blocked | quirks-mode percentage-height rule inside fieldset/legend not modelled |
+| forms/fieldset_layout_algorithm_test.cc:404 | FieldsetLayoutAlgorithmTest.LegendPercentHeightQuirks | geometry | blocked | quirks-mode percentage-height rule inside fieldset/legend not modelled |
+| forms/fieldset_layout_algorithm_test.cc:433 | FieldsetLayoutAlgorithmTest.FieldsetPaddingWithLegend | geometry | formalized | `TestsBlock.FieldsetPaddingWithLegend_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:472 | FieldsetLayoutAlgorithmTest.MinMax | geometry | formalized | `TestsBlock.FieldsetMinMax_vectors`, `BlockFieldset.layout` |
+| forms/fieldset_layout_algorithm_test.cc:540 | FieldsetLayoutAlgorithmTest.NoFragmentation | geometry | partly formalized | `TestsBlock.FieldsetNoFragmentation_size` (size 176x126; the absent break token is not modelled) |
+| forms/fieldset_layout_algorithm_test.cc:567 | FieldsetLayoutAlgorithmTest.SimpleFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:604 | FieldsetLayoutAlgorithmTest.FragmentationNoPadding | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:645 | FieldsetLayoutAlgorithmTest.FieldsetContentFragmentationAutoHeight | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:708 | FieldsetLayoutAlgorithmTest.FieldsetContentFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:771 | FieldsetLayoutAlgorithmTest.LegendFragmentationAutoHeight | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:821 | FieldsetLayoutAlgorithmTest.LegendFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:871 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationAutoHeight | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:937 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1001 | FieldsetLayoutAlgorithmTest.LegendFragmentationWithOverflow | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1052 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationNegativeMargin | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1107 | FieldsetLayoutAlgorithmTest.OverflowedLegend | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1151 | FieldsetLayoutAlgorithmTest.OverflowedFieldsetContent | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1224 | FieldsetLayoutAlgorithmTest.BreakInsideAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1271 | FieldsetLayoutAlgorithmTest.BreakInsideAvoidTallBlock | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1334 | FieldsetLayoutAlgorithmTest.LegendBreakInsideAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1387 | FieldsetLayoutAlgorithmTest.BreakBeforeAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1442 | FieldsetLayoutAlgorithmTest.LegendBreakBeforeAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1494 | FieldsetLayoutAlgorithmTest.BreakAfterAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1540 | FieldsetLayoutAlgorithmTest.LegendBreakAfterAvoid | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1594 | FieldsetLayoutAlgorithmTest.MarginBottomPastEndOfFragmentainer | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1650 | FieldsetLayoutAlgorithmTest.SmallLegendLargeBorderFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1707 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderFragmentation | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1766 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderFragmentation2 | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1818 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderWithBreak | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
+| forms/layout_fieldset_test.cc:14 | LayoutFieldsetTest.AddChildWhitespaceCrash | internal | internal | crash regression in LayoutFieldset::AddChild, no layout rule |
+| forms/layout_fieldset_test.cc:31 | LayoutFieldsetTest.AddChildAnonymousInlineCrash | internal | internal | crash regression in LayoutFieldset::AddChild, no layout rule |
 
 
 
@@ -1182,6 +1225,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockAbsolute.clamp_bounds`: clamping always stays within [minVal, maxVal] when minVal ≤ maxVal.
 - `BlockWritingModeConverter.toLogical_toPhysical` / `toPhysical_toLogical`: offset conversion is a bijection for every writing mode, direction and size (CSS Writing Modes 4 §6).
 - `BlockBoxSides.toLogical_inline_or`: physical-to-logical side conversion keeps an axis's presence (CSS Writing Modes 4 §6.2).
+- `BlockFieldset.legend_above_anon`: the rendered legend never overlaps the fieldset's anonymous content box in the block axis (HTML §15.3.13).
 
 ## Merge notes
 

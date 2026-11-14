@@ -20,7 +20,7 @@ structure Legend where
 /-- The single in-flow child of the anonymous content box, with its block size.
     CSS 2.1 §10.5 (percentage heights), CSS Positioned Layout 3 §2 (absolute fills padding box). -/
 inductive Child where
-  | none | fixed (bs : Nat) | percent (p : Nat) | absFill
+  | none | fixed (bs : Nat) (is : Option Nat := none) | percent (p : Nat) | absFill
 
 /-- Fieldset input: writing mode, physical border and padding, content-box inline size, optional
     block size and max block size (flow-relative), optional legend, child. -/
@@ -75,7 +75,7 @@ def layout (f : Fieldset) : Result :=
   let padI := p.inlineStart + p.inlineEnd
   let padB := p.blockStart + p.blockEnd
   let top := anonTop f
-  let c := match f.child with | .fixed n => n | _ => 0
+  let c := match f.child with | .fixed n _ => n | _ => 0
   let cbs0 := match f.height with | some h => h | none => c + (top - b.blockStart)
   let cbs := match f.maxHeight with | some m => min cbs0 m | none => cbs0
   let bsz := max (b.blockStart + b.blockEnd + padB + cbs) (top + padB + b.blockEnd)
@@ -90,17 +90,21 @@ def layout (f : Fieldset) : Result :=
     anon := place f.wm cw b.inlineStart top (f.inlineSize + padI) anonB
     child := match f.child with
       | .none => none
-      | .fixed n => some (place f.wm acw p.inlineStart p.blockStart f.inlineSize n)
+      | .fixed n i => some (place f.wm acw p.inlineStart p.blockStart (i.getD f.inlineSize) n)
       | .percent q => some (place f.wm acw p.inlineStart p.blockStart f.inlineSize ((anonB - padB) * q / 100))
       | .absFill => some (place f.wm acw 0 0 (f.inlineSize + padI) anonB) }
 
+/-- Arithmetic core of `legend_above_anon`. -/
+theorem aux (a b c : Nat) :
+    (if a < b + c then 0 else (a - b) / 2) + b ≤ if a < b + c then b + c else a := by
+  by_cases h : a < b + c <;> simp [h] <;> omega
+
 /-- Law: the legend never overlaps the anonymous content box in the block axis. HTML §15.3.13. -/
-theorem legend_above_anon (f : Fieldset) (l : Legend) :
-    legendY f l + flowBlockSize f.wm l.width l.height ≤ anonTop f ∨
-    anonTop f = 0 := by
+theorem legend_above_anon (f : Fieldset) (l : Legend) (h : f.legend = some l) :
+    legendY f l + flowBlockSize f.wm l.width l.height ≤ anonTop f := by
   unfold legendY anonTop legendExtent
-  simp only [toLogical]
-  cases f.wm <;> simp only [flowBlockSize, flowMargins] <;> split <;> split <;> omega
+  simp only [toLogical, h]
+  cases f.wm <;> simp only [flowBlockSize, flowMargins] <;> exact aux _ _ _
 
 /-- Min/max inline size: border + padding plus the larger of the legend's margin box and the
     content, for both min and max (`MinMax`). Sizes are (min, max). -/
