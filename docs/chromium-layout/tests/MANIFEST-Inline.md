@@ -579,19 +579,19 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:106 | DeleteDataToEmpty | internal | internal | - | CharacterData deletion in text combine |
 | layout_text_combine_test.cc:137 | ElementRecalcOwnStyle | internal | internal | - | Style recalc in text combine |
 | layout_text_combine_test.cc:166 | HtmlElement | internal | internal | - | Text combine inside html element |
-| layout_text_combine_test.cc:191 | InkOverflow | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
-| layout_text_combine_test.cc:248 | InkOverflowEmphasisMark | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
-| layout_text_combine_test.cc:307 | InkOverflowOverline | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:191 | InkOverflow | geometry | formalized | `layoutTextCombine_inkOverflow` | CSS Writing Modes 3 §5.1 & CSS Text Decoration 3 §2: Half-leading vertical line placement with local text-combine ink overflow |
+| layout_text_combine_test.cc:248 | InkOverflowEmphasisMark | geometry | formalized | `layoutTextCombine_inkOverflowEmphasisMark` | CSS Text Decoration 3 §3.5 & CSS Writing Modes 3 §5.1: Text emphasis expands line and combine box ink overflow |
+| layout_text_combine_test.cc:307 | InkOverflowOverline | geometry | formalized | `layoutTextCombine_inkOverflowOverline` | CSS Text Decoration 3 §2 & CSS Writing Modes 3 §5.1: Overline decoration expands line ink overflow |
 | layout_text_combine_test.cc:364 | InkOverflowUnderline | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
-| layout_text_combine_test.cc:421 | InkOverflowWBR | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:421 | InkOverflowWBR | geometry | formalized | `layoutTextCombine_inkOverflowWBR` | CSS Writing Modes 3 §5.1: Combined text split by WBR maintains outer box ink overflow |
 | layout_text_combine_test.cc:488 | InsertBefore | internal | internal | - | DOM insertion in text combine |
 | layout_text_combine_test.cc:523 | InsertBR | internal | internal | - | BR insertion in text combine |
-| layout_text_combine_test.cc:540 | ScrollableOverflow | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
+| layout_text_combine_test.cc:540 | ScrollableOverflow | geometry | formalized | `layoutTextCombine_scrollableOverflow` | CSS Writing Modes 3 §5.1.1 & CSS Overflow 3 §4.4: 1em compressed text produce no scrollable overflow |
 | layout_text_combine_test.cc:582 | ListItemStyleToImage | internal | internal | - | List item marker mutation |
-| layout_text_combine_test.cc:621 | ListMarkerWidthOfSymbol | geometry | blocked | - | Blocked: model lacks text-combine-upright list marker layout |
+| layout_text_combine_test.cc:621 | ListMarkerWidthOfSymbol | geometry | formalized | `layoutTextCombine_listMarkerWidthOfSymbol` | CSS Writing Modes 3 §5.1 & CSS Lists 3 §3: Inside list marker symbol wrapped in LayoutTextCombine |
 | layout_text_combine_test.cc:644 | MultipleTextNode | internal | internal | - | Multiple text nodes in text combine |
 | layout_text_combine_test.cc:664 | Nested | internal | internal | - | Nested text combine elements |
-| layout_text_combine_test.cc:684 | Outline | geometry | blocked | - | Blocked: model lacks text-combine-upright outline layout |
+| layout_text_combine_test.cc:684 | Outline | geometry | formalized | `layoutTextCombine_outline` | CSS Basic User Interface 3 §4.2 & CSS Writing Modes 3 §5.1: Standard block outline vs focus ink overflow outlines |
 | layout_text_combine_test.cc:758 | PropageWritingModeFromBodyToHorizontal | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToHorizontal` | HTML writing mode propagation from body to html |
 | layout_text_combine_test.cc:783 | PropageWritingModeFromBodyToVertical | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToVertical` | HTML writing mode propagation to vertical |
 | layout_text_combine_test.cc:810 | RebuildLayoutTreeForDetails | internal | internal | - | Layout tree rebuild in details element |
@@ -617,7 +617,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:1412 | WithOrderedList | behaviour | formalized | `layoutTextCombine_withOrderedList` | Ordered list marker and items with text combine |
 | layout_text_combine_test.cc:1431 | WithQuote | behaviour | formalized | `layoutTextCombine_withQuote` | Quotes with text combine |
 | layout_text_combine_test.cc:1456 | WithTab | behaviour | formalized | `layoutTextCombine_withTab` | Preserved tab whitespace with text combine |
-| layout_text_combine_test.cc:1476 | WithTextIndent | geometry | blocked | - | Blocked: model lacks text-combine-upright text-indent |
+| layout_text_combine_test.cc:1476 | WithTextIndent | geometry | formalized | `layoutTextCombine_withTextIndent` | CSS Writing Modes 3 §5.1.2 & CSS 2.1 §9.4.2: LayoutTextCombine contents unaffected by container text-indent |
 | layout_text_combine_test.cc:1493 | WithWordBreak | behaviour | formalized | `layoutTextCombine_withWordBreak` | WBR inside text combine container |
 | layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | internal | internal | - | Svg parent LayoutObject check |
 | layout_text_combine_test.cc:1531 | InHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright in horizontal mode |

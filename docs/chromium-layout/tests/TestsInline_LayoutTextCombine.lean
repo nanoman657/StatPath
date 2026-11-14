@@ -191,4 +191,111 @@ theorem layoutTextCombine_inVertical :
     display = [.combined { children := [.text "ab"] }] := by
   decide
 
+/-! ## 4. Geometry, Ink Overflow, and Outlines Tests -/
+
+/-- Test `LayoutTextCombineTest, InkOverflow` (`layout_text_combine_test.cc:191`).
+    CSS Writing Modes 3 §5.1 & CSS Text Decoration 3 §2:
+    Text-combine in vertical-rl has cross-axis half-leading box placement at (5, 100) of size 100x100,
+    with local ink overflow (-5, 0 110x100) and unscaled text run (0, 0 1000x100). -/
+theorem layoutTextCombine_inkOverflow :
+    let m := computeTextCombineInkMetrics 110 100 300 100 [10]
+    (m.lineRect = { x := 0, y := 0, width := 110, height := 300 }) ∧
+    (m.lineInkOverflow = { x := 0, y := 0, width := 110, height := 300 }) ∧
+    (m.boxRect = { x := 5, y := 100, width := 100, height := 100 }) ∧
+    (m.boxSelfInkOverflow = { x := 0, y := 0, width := 100, height := 100 }) ∧
+    (m.boxTotalInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
+    (m.innerLineRect = { x := 0, y := 0, width := 100, height := 100 }) ∧
+    (m.innerLineInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
+    (m.innerContentRects = [{ x := 0, y := 0, width := 1000, height := 100 }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, InkOverflowEmphasisMark` (`layout_text_combine_test.cc:248`).
+    CSS Text Decoration 3 §3.5 & CSS Writing Modes 3 §5.1:
+    Text emphasis mark (50px dot) expands line and combine box ink overflow to 155px width,
+    while inside LayoutTextCombine line ink overflow remains 110px. -/
+theorem layoutTextCombine_inkOverflowEmphasisMark :
+    let m := computeTextCombineInkMetrics 110 100 300 100 [10] (.emphasisMark 50)
+    (m.lineInkOverflow = { x := 0, y := 0, width := 155, height := 300 }) ∧
+    (m.boxTotalInkOverflow = { x := -5, y := 0, width := 155, height := 100 }) ∧
+    (m.innerLineInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
+    (m.innerContentRects = [{ x := 0, y := 0, width := 1000, height := 100 }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, InkOverflowOverline` (`layout_text_combine_test.cc:307`).
+    CSS Text Decoration 3 §2 & CSS Writing Modes 3 §5.1:
+    Overline text decoration expands line ink overflow to 115px, with box ink overflow (0, 0 110x100). -/
+theorem layoutTextCombine_inkOverflowOverline :
+    let m := computeTextCombineInkMetrics 110 100 300 100 [10] .overline
+    (m.lineInkOverflow = { x := 0, y := 0, width := 115, height := 300 }) ∧
+    (m.boxTotalInkOverflow = { x := 0, y := 0, width := 110, height := 100 }) ∧
+    (m.innerLineInkOverflow = { x := 0, y := 0, width := 100, height := 100 }) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, InkOverflowWBR` (`layout_text_combine_test.cc:421`).
+    CSS Writing Modes 3 §5.1:
+    Combined text split by `<wbr>` creates two 500x100 text runs within LayoutTextCombine,
+    while preserve outer box ink overflow (-5, 0 110x100). -/
+theorem layoutTextCombine_inkOverflowWBR :
+    let m := computeTextCombineInkMetrics 110 100 300 100 [5, 5]
+    (m.boxTotalInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
+    (m.innerContentRects = [
+      { x := 0, y := 0, width := 500, height := 100 },
+      { x := 500, y := 0, width := 500, height := 100 }
+    ]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ScrollableOverflow` (`layout_text_combine_test.cc:540`).
+    CSS Writing Modes 3 §5.1.1 & CSS Overflow 3 §4.4:
+    Combined text compressed to 1em produces no scrollable overflow in block container. -/
+theorem layoutTextCombine_scrollableOverflow :
+    let s1 := computeBlockFlowScrollableOverflow 150 200
+    let s2 := computeBlockFlowScrollableOverflow 150 200
+    (s1.1 = false) ∧
+    (s1.2.1 = (150, 200)) ∧
+    (s1.2.2 = { x := 0, y := 0, width := 150, height := 200 }) ∧
+    (s2.1 = false) ∧
+    (s2.2.1 = (150, 200)) ∧
+    (s2.2.2 = { x := 0, y := 0, width := 150, height := 200 }) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ListMarkerWidthOfSymbol` (`layout_text_combine_test.cc:621`).
+    CSS Writing Modes 3 §5.1 & CSS Lists 3 §3:
+    In vertical-lr with text-combine-upright:all, an inside list marker symbol "\u2022 "
+    is wrapped in LayoutTextCombine, as is the list item content "ab". -/
+theorem layoutTextCombine_listMarkerWidthOfSymbol :
+    let active := isTextCombineActive .verticalLr .all
+    let tree := buildInsideListMarkerTree active "\u2022 " "ab"
+    (active = true) ∧
+    (tree.markerChildren = [.combined { children := [.fragment "\u2022 "] }]) ∧
+    (tree.contentChildren = [.combined { children := [.text "ab"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, Outline` (`layout_text_combine_test.cc:684`).
+    CSS Basic User Interface 3 §4.2 & CSS Writing Modes 3 §5.1:
+    Standard outline without ink overflow produces block bounds (150x200),
+    while focus outline includes block bounds and text-combine box/ink rects. -/
+theorem layoutTextCombine_outline :
+    let standard1 := computeTextCombineOutlineRects 150 100 200 false
+    let focus1 := computeTextCombineOutlineRects 150 100 200 true
+    let standard2 := computeTextCombineOutlineRects 150 100 100 false
+    (standard1 = [{ x := 0, y := 0, width := 150, height := 200 }]) ∧
+    (focus1 = [
+      { x := 0, y := 0, width := 150, height := 200 },
+      { x := 25, y := 0, width := 100, height := 100 },
+      { x := 20, y := 0, width := 110, height := 100 },
+      { x := 25, y := 100, width := 100, height := 100 },
+      { x := 25, y := 100, width := 100, height := 100 }
+    ]) ∧
+    (standard2 = [{ x := 0, y := 0, width := 150, height := 100 }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, WithTextIndent` (`layout_text_combine_test.cc:1476`).
+    CSS Writing Modes 3 §5.1.2 & CSS 2.1 §9.4.2:
+    LayoutTextCombine unscaled text run rect in container fragment is (0, 0 60x20),
+    unaffected by the containing block's `text-indent: 100px`. -/
+theorem layoutTextCombine_withTextIndent :
+    let r := textCombineContentRectInContainer 100 3 20
+    r = { x := 0, y := 0, width := 60, height := 20 } := by
+  decide
+
 end ChromiumLayout
