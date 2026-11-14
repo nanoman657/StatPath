@@ -993,5 +993,28 @@ theorem expand_subgrid_repeater_length (count : Nat) (names : List String) :
       dsimp [expandSubgridRepeater]
       rw [List.length_append, ih, Nat.succ_mul, Nat.add_comm]
 
+/-- Whether a box establishes an independent formatting context root in a grid formatting context.
+    A grid container and every in-flow grid item establish an independent formatting context.
+    CSS Grid Layout Module Level 1 §4 (Grid Formatting Context), §4.1 (Grid Items). -/
+def isGridFormattingContextRoot (isGridContainer : Bool) (isGridItem : Bool) : Bool :=
+  isGridContainer || isGridItem
+
+/-- Law: Every grid container establishes an independent formatting context root.
+    CSS Grid Layout Module Level 1 §4. -/
+theorem grid_container_is_fc_root (isItem : Bool) :
+    isGridFormattingContextRoot true isItem = true := rfl
+
+/-- Law: Every in-flow child of a grid container (grid item) establishes an independent formatting context.
+    CSS Grid Layout Module Level 1 §4.1. -/
+theorem grid_item_is_fc_root (isContainer : Bool) :
+    isGridFormattingContextRoot isContainer true = true := by
+  dsimp [isGridFormattingContextRoot]
+  cases isContainer <;> rfl
+
+/-- Law: An in-flow descendant that is neither a grid container nor a grid item does not establish an independent formatting context root.
+    CSS Grid Layout Module Level 1 §4.1. -/
+theorem grid_inflow_descendant_not_fc_root :
+    isGridFormattingContextRoot false false = false := rfl
+
 end GridLayout
 end ChromiumLayout

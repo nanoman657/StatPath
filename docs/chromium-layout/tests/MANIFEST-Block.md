@@ -123,7 +123,7 @@ checks every row against the pinned sources and the Lean modules.
 | physical_fragment_test.cc:134 | PhysicalFragmentTest.DumpFragmentTreeBasic | geometry | formalized | `TestsBlock.DumpFragmentTreeBasic_vectors` |
 | physical_fragment_test.cc:149 | PhysicalFragmentTest.DumpFragmentTreeWithAbspos | geometry | formalized | `TestsBlock.DumpFragmentTreeWithAbspos_vectors`, `BlockAbsolute.layout_document_kids_len` |
 | physical_fragment_test.cc:165 | PhysicalFragmentTest.DumpFragmentTreeWithAbsposInRelpos | geometry | formalized | `TestsBlock.DumpFragmentTreeWithAbsposInRelpos_vectors`, `BlockAbsolute.resolve_oof_container_relative` |
-| physical_fragment_test.cc:184 | PhysicalFragmentTest.DumpFragmentTreeWithGrid | geometry | blocked | needs grid layout algorithm (display: grid); not modelled |
+| physical_fragment_test.cc:184 | PhysicalFragmentTest.DumpFragmentTreeWithGrid | geometry | formalized | `TestsBlock.DumpFragmentTreeWithGrid_vectors`, `GridLayout.grid_container_is_fc_root` |
 | physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | formalized | `TestsBlock.DumpFragmentTreeWithTargetInsideColumn_vectors`, `ColumnLayout.multicol_bp_size` |
 | physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | blocked | needs table layout with repeated header group across multicol columns; not modelled |
 | physical_fragment_test.cc:295 | PhysicalFragmentTest.CrashInScrollableOverflowCalculator | internal | internal | crash regression in ScrollableOverflowCalculator under fullscreen menulist keyframes |

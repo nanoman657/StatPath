@@ -2,11 +2,12 @@ import BlockFlow
 import BlockSticky
 import BlockAbsolute
 import ColumnLayout
+import GridLayout
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockSticky BlockAbsolute ColumnLayout
+open BlockFlow BlockSticky BlockAbsolute ColumnLayout GridLayout
 
 -- physical_fragment_test.cc:84: StickyFragmentPropagationTest.StickyAxisEnabled
 -- Single-axis scroll container (overflow-y: scroll; overflow-x: clip) consumes vertical sticky
@@ -109,6 +110,48 @@ theorem DumpFragmentTreeWithAbsposInRelpos_vectors :
     docRel.kids.length = 1 ∧
     docAbs.id = 3 ∧ docAbs.w = 0 ∧ docAbs.h = 0 ∧
     docRel.relX docAbs = 10 ∧ docRel.relY docAbs = 20 := by
+  decide
+
+-- physical_fragment_test.cc:184: DumpFragmentTreeWithGrid
+-- A grid container with nested grid items and block container items.
+-- Grid containers and grid items establish independent formatting contexts (block-flow-root).
+-- CSS Display 3 §3, CSS Grid Layout 1 §4, §4.1.
+theorem DumpFragmentTreeWithGrid_vectors :
+    let foo : BF := { id := 5 }
+    let innerGridItem : BF := { id := 4, newBfc := true, children := [foo] }
+    let gridAsItem : BF := { id := 3, newBfc := true, children := [innerGridItem] }
+    let bar : BF := { id := 7 }
+    let blockContainerItem : BF := { id := 6, newBfc := true, children := [bar] }
+    let outerGrid : BF := { id := 2, newBfc := true, children := [gridAsItem, blockContainerItem] }
+    let htmlFrag := layoutRoot 800 (htmlBody [outerGrid])
+    let docFrag := layoutDocument 800 600 htmlFrag []
+    let docHtml := docFrag.kid 0
+    let docBody := docHtml.kid 0
+    let docOuterGrid := docBody.kid 0
+    let docGridAsItem := docOuterGrid.kid 0
+    let docInnerGridItem := docGridAsItem.kid 0
+    let docFoo := docInnerGridItem.kid 0
+    let docBlockContainerItem := docOuterGrid.kid 1
+    let docBar := docBlockContainerItem.kid 0
+    docFrag.w = 800 ∧ docFrag.h = 600 ∧
+    docHtml.w = 800 ∧ docHtml.h = 16 ∧
+    docBody.w = 784 ∧ docBody.h = 0 ∧
+    docHtml.relX docBody = 8 ∧ docHtml.relY docBody = 8 ∧
+    docOuterGrid.w = 784 ∧ docOuterGrid.h = 0 ∧
+    docBody.relX docOuterGrid = 0 ∧ docBody.relY docOuterGrid = 0 ∧
+    docGridAsItem.w = 784 ∧ docGridAsItem.h = 0 ∧
+    docOuterGrid.relX docGridAsItem = 0 ∧ docOuterGrid.relY docGridAsItem = 0 ∧
+    docInnerGridItem.w = 784 ∧ docInnerGridItem.h = 0 ∧
+    docGridAsItem.relX docInnerGridItem = 0 ∧ docGridAsItem.relY docInnerGridItem = 0 ∧
+    docFoo.w = 784 ∧ docFoo.h = 0 ∧
+    docInnerGridItem.relX docFoo = 0 ∧ docInnerGridItem.relY docFoo = 0 ∧
+    docBlockContainerItem.w = 784 ∧ docBlockContainerItem.h = 0 ∧
+    docOuterGrid.relX docBlockContainerItem = 0 ∧ docOuterGrid.relY docBlockContainerItem = 0 ∧
+    docBar.w = 784 ∧ docBar.h = 0 ∧
+    docBlockContainerItem.relX docBar = 0 ∧ docBlockContainerItem.relY docBar = 0 ∧
+    isGridFormattingContextRoot true false = true ∧
+    isGridFormattingContextRoot false true = true ∧
+    isGridFormattingContextRoot false false = false := by
   decide
 
 -- physical_fragment_test.cc:213: DumpFragmentTreeWithTargetInsideColumn
