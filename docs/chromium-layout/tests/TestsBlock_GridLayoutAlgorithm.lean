@@ -364,5 +364,22 @@ theorem SubgridLineNameList_vectors :
     rowLineNames = [(0, "a"), (1, "b"), (2, "c")] := by
   exact ⟨rfl, rfl, rfl, rfl⟩
 
+-- grid_layout_algorithm_test.cc:2019: GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters
+-- Subgrid line name ordering with fixed and auto repeaters.
+-- CSS Grid Layout Module Level 2 §2.1.
+theorem SubgridLineNameListWithRepeaters_vectors :
+    let subgridCols := gridAxisType true
+    let subgridRows := gridAxisType true
+    let colExplicitLines := [(0, "a"), (2, "d")]
+    let colAutoRepeatLines := subgridLineNames ["b", "c"]
+    let rowRepeatedNames := expandSubgridRepeater 2 ["b", "c"]
+    let rowLineNames := subgridLineNames (["a"] ++ rowRepeatedNames ++ ["d"])
+    subgridCols = .subgriddedAxis ∧
+    subgridRows = .subgriddedAxis ∧
+    colExplicitLines = [(0, "a"), (2, "d")] ∧
+    colAutoRepeatLines = [(0, "b"), (1, "c")] ∧
+    rowLineNames = [(0, "a"), (1, "b"), (2, "c"), (3, "b"), (4, "c"), (5, "d")] := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
 end TestsBlock
 end ChromiumLayout

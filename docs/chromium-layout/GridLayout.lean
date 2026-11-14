@@ -963,5 +963,35 @@ theorem subgrid_line_names_length (names : List String) :
   dsimp [subgridLineNames]
   simp
 
+/-- Expand a fixed-count subgrid line name repeater.
+    CSS Grid Layout Module Level 2 §2.1 (Line Names in Subgrids). -/
+def expandSubgridRepeater : Nat → List String → List String
+  | 0, _ => []
+  | n + 1, repeatedNames => repeatedNames ++ expandSubgridRepeater n repeatedNames
+
+/-- Law: Expanding a repeater 0 times produces an empty list.
+    CSS Grid Layout Module Level 2 §2.1. -/
+theorem expand_subgrid_repeater_zero (names : List String) :
+    expandSubgridRepeater 0 names = [] := rfl
+
+/-- Law: Expanding a repeater 1 time preserves the repeated line names.
+    CSS Grid Layout Module Level 2 §2.1. -/
+theorem expand_subgrid_repeater_one (names : List String) :
+    expandSubgridRepeater 1 names = names := by
+  dsimp [expandSubgridRepeater]
+  exact List.append_nil names
+
+/-- Law: Length of expanded repeater equals repeatCount times the repeated names length.
+    CSS Grid Layout Module Level 2 §2.1. -/
+theorem expand_subgrid_repeater_length (count : Nat) (names : List String) :
+    (expandSubgridRepeater count names).length = count * names.length := by
+  induction count with
+  | zero =>
+      dsimp [expandSubgridRepeater]
+      rw [Nat.zero_mul]
+  | succ n ih =>
+      dsimp [expandSubgridRepeater]
+      rw [List.length_append, ih, Nat.succ_mul, Nat.add_comm]
+
 end GridLayout
 end ChromiumLayout

@@ -462,7 +462,7 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:1800 | GridLayoutAlgorithmTest.PositionedOutOfFlowItems | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
 | grid/grid_layout_algorithm_test.cc:1940 | GridLayoutAlgorithmTest.NGGridAxisType | geometry | formalized | `TestsBlock.NGGridAxisType_vectors`, `GridLayout.grid_axis_type_subgrid` |
 | grid/grid_layout_algorithm_test.cc:1973 | GridLayoutAlgorithmTest.SubgridLineNameList | geometry | formalized | `TestsBlock.SubgridLineNameList_vectors`, `GridLayout.subgrid_line_names_empty` |
-| grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | blocked | needs CSS subgrid line names and track alignment |
+| grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | formalized | `TestsBlock.SubgridLineNameListWithRepeaters_vectors`, `GridLayout.expand_subgrid_repeater_length` |
 | grid/grid_layout_algorithm_test.cc:2090 | GridLayoutAlgorithmTest.SingleAxisScrollerAutoMinSizeUseCount | internal | internal | checks UseCounter for SingleAxisScrollerAutoMinSize feature |
 | grid/grid_layout_algorithm_test.cc:2136 | GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice | geometry | blocked | needs fragmented out-of-flow grid items placement |
 | grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | formalized | `TestsBlock.TestRangeIndexFromGridLine_vectors`, `GridLayout.range_index_first_track` |
