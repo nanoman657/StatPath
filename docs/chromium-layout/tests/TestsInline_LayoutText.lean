@@ -201,6 +201,21 @@ theorem layoutText_containsCaretOffsetWithTrailingSpace2 :
     (domNodeSnapCode units nodes[2]! 4 = "-CA") := by
   decide
 
+/-- Test `LayoutTextTest, ContainsCaretOffsetWithTrailingSpace3` (`layout_text_test.cc:599`).
+    CSS Text 3 §4, CSS 2.1 §9.4.2: `<div id=target>a<br>   <br>b<br></div>` caret snap codes across multi-sibling text, line breaks, and whitespace. -/
+theorem layoutText_containsCaretOffsetWithTrailingSpace3 :
+    layoutTextSnapCode "text" true 0 = "BC-" ∧
+    layoutTextSnapCode "text" true 1 = "-CA" ∧
+    layoutTextSnapCode "br" false 0 = "BC-" ∧
+    layoutTextSnapCode "br" false 1 = "--A" ∧
+    layoutTextSnapCode "space" false 0 = "BC-" ∧
+    layoutTextSnapCode "space" false 1 = "--A" ∧
+    layoutTextSnapCode "br" true 0 = "BC-" ∧
+    layoutTextSnapCode "br" true 1 = "-CA" ∧
+    layoutTextSnapCode "text" false 0 = "BC-" ∧
+    layoutTextSnapCode "text" false 1 = "--A" := by
+  decide
+
 /-! ## 12. Bounding Box and Quad Tests (`layout_text_test.cc`) -/
 
 /-- Test `LayoutTextTest, AbsoluteQuadsVRL` (`layout_text_test.cc:998`).

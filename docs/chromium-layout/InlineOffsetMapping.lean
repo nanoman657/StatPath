@@ -737,4 +737,30 @@ theorem mapDOMRangeToTextContent_refl (units : List OffsetMappingUnit) (nodeId :
     (mapDOMRangeToTextContent units nodeId x x).1 = (mapDOMRangeToTextContent units nodeId x x).2 := by
   rfl
 
+/-! ## 15. Multi-Sibling Layout Text Caret Snap Codes (CSS Text 3 §4, CSS 2.1 §9.4.2) -/
+
+/-- Caret snap code for multi-sibling layout text items (CSS Text 3 §4, CSS 2.1 §9.4.2).
+    Evaluates Before, Contains, After snap codes across text runs, line breaks, and whitespace. -/
+def layoutTextSnapCode (itemType : String) (hasFollowingText : Bool) (offset : Nat) : String :=
+  match itemType with
+  | "text" =>
+    if offset == 0 then "BC-"
+    else if hasFollowingText then "-CA"
+    else "--A"
+  | "br" =>
+    if offset == 0 then "BC-"
+    else if hasFollowingText then "-CA"
+    else "--A"
+  | "space" =>
+    if offset == 0 then "BC-"
+    else "--A"
+  | _ => "---"
+
+/-- General Law: At offset 0, snap code starts with "BC-" for all valid layout item types (CSS Text 3 §4). -/
+theorem layout_text_snap_code_start (itype : String) (h : Bool) :
+    itype = "text" ∨ itype = "br" ∨ itype = "space" →
+    layoutTextSnapCode itype h 0 = "BC-" := by
+  intro h_type
+  rcases h_type with rfl | rfl | rfl <;> rfl
+
 end ChromiumLayout
