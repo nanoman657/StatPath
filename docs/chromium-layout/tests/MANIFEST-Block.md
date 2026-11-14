@@ -1128,6 +1128,9 @@ checks every row against the pinned sources and the Lean modules.
 | inline_layout_test.cc:59 | InlineLayoutTest.BlockWithTextAndAtomicInline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
 | geometry/writing_mode_converter_test.cc:15 | WritingModeConverterTest.ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `TestsBlock.ConvertLogicalOffsetToPhysicalOffset_vectors`, `BlockWritingModeConverter.toPhysical` (general over writing mode, direction, sizes) |
 | geometry/writing_mode_converter_test.cc:73 | WritingModeConverterTest.ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `TestsBlock.ConvertPhysicalOffsetToLogicalOffset_vectors`, `BlockWritingModeConverter.toLogical` |
+| geometry/box_sides_test.cc:13 | GeometryUnitsTest.LogicalBoxSidesToLineLogical | geometry | formalized | `TestsBlock.LogicalBoxSidesToLineLogical_vectors`, `BlockBoxSides.lineSides` |
+| geometry/box_sides_test.cc:35 | GeometryUnitsTest.PhysicalBoxSidesToLogical | geometry | formalized | `TestsBlock.PhysicalBoxSidesToLogical_vectors`, `BlockBoxSides.toLogical` |
+| geometry/static_position_test.cc:331 | StaticPositionTest.Convert | geometry | blocked | 48-row parameter table; a model of the static-position record cost 4.5 model tokens per result token under the mml gate, so it is not added |
 
 
 
@@ -1178,6 +1181,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockRelative.opposing_sum_zero`: when only one opposing relative inset is specified, the resolved insets sum to zero.
 - `BlockAbsolute.clamp_bounds`: clamping always stays within [minVal, maxVal] when minVal ≤ maxVal.
 - `BlockWritingModeConverter.toLogical_toPhysical` / `toPhysical_toLogical`: offset conversion is a bijection for every writing mode, direction and size (CSS Writing Modes 4 §6).
+- `BlockBoxSides.toLogical_inline_or`: physical-to-logical side conversion keeps an axis's presence (CSS Writing Modes 4 §6.2).
 
 ## Merge notes
 

@@ -22,13 +22,16 @@ def vertical (wm : WM) : Bool := wm != .horizontalTb
     CSS Writing Modes 4 §6.2 (abstract-to-physical mappings). -/
 def fl (c : Bool) (o x n : Int) : Int := if c then o - x - n else x
 
+/-- (inline flipped, block flipped), see `conv`. -/
+def flips (wm : WM) (d : Dir) : Bool × Bool :=
+  ((d == .rtl) != (wm == .sidewaysLr), wm == .verticalRl || wm == .sidewaysRl)
+
 /-- Offset (inline, block) <-> (inline, block) in the other frame, before the axis swap:
     block flows right-to-left in vertical-rl/sideways-rl (§3.1); inline is reversed by rtl (§2.1)
     and by sideways-lr (text rotated counter-clockwise, §3.1). Sizes are (width, height). -/
 def conv (wm : WM) (d : Dir) (outer inner o : Int × Int) : Int × Int :=
   let s := fun (p : Int × Int) => if vertical wm then (p.2, p.1) else p
-  (fl ((d == .rtl) != (wm == .sidewaysLr)) (s outer).1 o.1 (s inner).1,
-   fl (wm == .verticalRl || wm == .sidewaysRl) (s outer).2 o.2 (s inner).2)
+  (fl (flips wm d).1 (s outer).1 o.1 (s inner).1, fl (flips wm d).2 (s outer).2 o.2 (s inner).2)
 
 /-- Logical (inline, block) offset to physical (x, y). -/
 def toPhysical (wm : WM) (d : Dir) (outer inner o : Int × Int) : Int × Int :=
