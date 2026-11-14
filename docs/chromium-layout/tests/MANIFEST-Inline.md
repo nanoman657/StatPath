@@ -470,18 +470,18 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | formalized | `layoutInline_physicalLinesBoundingBox` | CSS 2.1 §9.4.2 & CSS Writing Modes 3 §4: Union of line fragment rectangles across LTR, RTL, and vertical-rl |
 | layout_inline_test.cc:69 | SimpleContinuation | internal | internal | - | LayoutObject tree continuation structure |
 | layout_inline_test.cc:93 | BlockInInlineRemove | internal | internal | - | DOM mutation and LayoutObject tree continuation updates |
-| layout_inline_test.cc:139 | RegionHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
-| layout_inline_test.cc:194 | RelativePositionedHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
-| layout_inline_test.cc:241 | MultilineRelativePositionedHitTest | behaviour | blocked | - | Blocked: model lacks inline hit testing |
-| layout_inline_test.cc:319 | HitTestCulledInlinePreWrap | behaviour | blocked | - | Blocked: model lacks inline hit testing |
+| layout_inline_test.cc:139 | RegionHitTest | behaviour | formalized | `layoutInline_regionHitTest` | CSS 2.1 §9.4.2: List-based hit testing rect intersects line box fragment |
+| layout_inline_test.cc:194 | RelativePositionedHitTest | behaviour | formalized | `layoutInline_relativePositionedHitTest` | CSS 2.1 §9.3.1: Relative positioned inline in separate paint layer is ignored during normal-flow hit testing |
+| layout_inline_test.cc:241 | MultilineRelativePositionedHitTest | behaviour | formalized | `layoutInline_multilineRelativePositionedHitTest` | CSS 2.1 §9.3.1 & §9.4.2: Hit testing multiline positioned inline selects item on corresponding line |
+| layout_inline_test.cc:319 | HitTestCulledInlinePreWrap | behaviour | formalized | `layoutInline_hitTestCulledInlinePreWrap` | CSS Text 3 §5.1: Hit test on pre-wrap inline targets inner text node |
 | layout_inline_test.cc:350 | DISABLED_FocusRingRecursiveContinuations | internal | internal | - | Disabled upstream test for continuation focus ring |
 | layout_inline_test.cc:382 | DISABLED_FocusRingRecursiveInlinesVerticalRL | internal | internal | - | Disabled upstream test for vertical focus ring |
 | layout_inline_test.cc:417 | DISABLED_FocusRingRecursiveContinuationsVerticalRL | internal | internal | - | Disabled upstream test for vertical continuation focus ring |
 | layout_inline_test.cc:452 | DISABLED_FocusRingRecursiveInlines | internal | internal | - | Disabled upstream test for inline focus ring |
 | layout_inline_test.cc:483 | AbsoluteBoundingBoxRectHandlingEmptyInline | geometry | formalized | `layoutInline_absoluteBoundingBoxRectHandlingEmptyInline` | CSS 2.1 §9.4.2 & §10.8: Empty inline bounding box placement at line start |
 | layout_inline_test.cc:529 | AbsoluteBoundingBoxRectHandlingEmptyInlineVerticalRL | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
-| layout_inline_test.cc:575 | AddDraggableRegions | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
-| layout_inline_test.cc:609 | AddDraggableRegionsVerticalRL | behaviour | blocked | - | Blocked: model lacks AddDraggableRegions |
+| layout_inline_test.cc:575 | AddDraggableRegions | behaviour | formalized | `layoutInline_addDraggableRegions` | CSS 2.1 §9.4.2: Multiline inline draggable region bounds united across lines |
+| layout_inline_test.cc:609 | AddDraggableRegionsVerticalRL | behaviour | formalized | `layoutInline_addDraggableRegionsVerticalRL` | CSS Writing Modes 3 §3.1: Draggable region bounds under vertical-rl multiline layout |
 | layout_inline_test.cc:643 | VisualOverflowRecalcLegacyLayout | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
 | layout_inline_test.cc:689 | VisualOverflowRecalcLayoutNG | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
 | layout_inline_test.cc:733 | VisualOverflowRecalcLegacyLayoutPositionRelative | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |

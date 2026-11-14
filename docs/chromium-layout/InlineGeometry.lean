@@ -583,4 +583,96 @@ theorem computeSelectionVisualRect_nil :
 theorem computeSelectionVisualRect_singleton (r : LayoutUnitRect) :
     computeSelectionVisualRect [r] = r := rfl
 
+/-! ## 12. Draggable Regions (-webkit-app-region, CSS 2.1 §9.4.2 & CSS Writing Modes 3 §3.1) -/
+
+/-- Draggable region mode corresponding to `-webkit-app-region` (`drag`, `no-drag`, `none`). -/
+inductive AppRegionMode where
+  | drag
+  | noDrag
+  | none
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Draggable region descriptor (`DraggableRegionValue`). -/
+structure DraggableRegionValue where
+  bounds : LayoutUnitRect
+  draggable : Bool
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Compute draggable regions for an inline element from its line slices and app-region mode. -/
+def computeDraggableRegions (mode : AppRegionMode) (slices : List LayoutUnitRect) : List DraggableRegionValue :=
+  match mode with
+  | .none => []
+  | .drag =>
+    match slices with
+    | [] => []
+    | r :: rs => [{ bounds := rs.foldl LayoutUnitRect.union r, draggable := true }]
+  | .noDrag =>
+    match slices with
+    | [] => []
+    | r :: rs => [{ bounds := rs.foldl LayoutUnitRect.union r, draggable := false }]
+
+/-- CSS 2.1 §9.4.2 Law: Elements without app-region property produce no draggable regions. -/
+theorem computeDraggableRegions_none (slices : List LayoutUnitRect) :
+    computeDraggableRegions .none slices = [] := rfl
+
+/-- CSS 2.1 §9.4.2 Law: Draggable regions for drag mode always have draggable = true. -/
+theorem computeDraggableRegions_drag_is_draggable (r : LayoutUnitRect) (rs : List LayoutUnitRect) :
+    ∀ region ∈ computeDraggableRegions .drag (r :: rs), region.draggable = true := by
+  intro reg h
+  dsimp [computeDraggableRegions] at h
+  simp only [List.mem_singleton] at h
+  subst h
+  rfl
+
+/-- CSS 2.1 §9.4.2 Law: Draggable regions for noDrag mode always have draggable = false. -/
+theorem computeDraggableRegions_noDrag_not_draggable (r : LayoutUnitRect) (rs : List LayoutUnitRect) :
+    ∀ region ∈ computeDraggableRegions .noDrag (r :: rs), region.draggable = false := by
+  intro reg h
+  dsimp [computeDraggableRegions] at h
+  simp only [List.mem_singleton] at h
+  subst h
+  rfl
+
+/-! ## 13. Inline Hit Testing (CSS 2.1 §9.4.2 & §9.3.1) -/
+
+/-- An inline hit target item with local bounding rectangle and node identifier. -/
+structure InlineHitItem where
+  nodeId : Nat
+  bounds : LayoutUnitRect
+  isPositioned : Bool := false
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Check if a 2D point falls within a rectangle. -/
+def rectContainsPoint (r : LayoutUnitRect) (x y : Int) : Bool :=
+  x ≥ r.x && x < r.x + r.width && y ≥ r.y && y < r.y + r.height
+
+/-- Hit test a sequence of inline items (top-to-bottom / reverse-order for paint order).
+    `ignorePositioned`: if true, skips positioned items (normal flow phase). -/
+def hitTestInlineItems (containerX containerY : Int) (items : List InlineHitItem)
+    (ignorePositioned : Bool) (hitX hitY : Int) : Option Nat :=
+  let localX := hitX - containerX
+  let localY := hitY - containerY
+  let candidates := if ignorePositioned then items.filter (·.isPositioned == false) else items
+  match candidates.find? (fun item => rectContainsPoint item.bounds localX localY) with
+  | some item => some item.nodeId
+  | none => none
+
+/-- Check if a hit test location rectangle intersects a line box (`HitTestCulledInline`). -/
+def hitTestCulledInlineIntersects (lineBox : LayoutUnitRect) (hitRect : LayoutUnitRect) : Bool :=
+  hitRect.x < lineBox.x + lineBox.width && hitRect.x + hitRect.width > lineBox.x &&
+  hitRect.y < lineBox.y + lineBox.height && hitRect.y + hitRect.height > lineBox.y
+
+/-- CSS 2.1 §9.4.2 Law: Empty candidate list yields none for hit testing. -/
+theorem hitTestInlineItems_nil (cx cy : Int) (ign : Bool) (hx hy : Int) :
+    hitTestInlineItems cx cy [] ign hx hy = none := by
+  dsimp [hitTestInlineItems]
+  cases ign <;> rfl
+
+/-- CSS 2.1 §9.4.2 Law: Point outside rectangle bounds does not intersect. -/
+theorem rectContainsPoint_outside (r : LayoutUnitRect) (x y : Int) (h : x < r.x) :
+    rectContainsPoint r x y = false := by
+  dsimp [rectContainsPoint]
+  have : ¬(x ≥ r.x) := by omega
+  simp [this]
+
 end ChromiumLayout
