@@ -651,4 +651,49 @@ theorem inlineCursor_moveToLayoutObject :
     itemsForLayoutObject nodes "span2" = [] := by
   decide
 
+/-- Test: PositionForPointInChildHorizontalLTR (inline_cursor_test.cc:952)
+    CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in horizontal LTR text fragment. -/
+theorem inlineCursor_positionForPointInChildHorizontalLTR :
+    let offset := (10, 15)
+    let size := 20
+    let chars := 2
+    (positionForPointInChild false false offset (5, 15) size chars = (0, .downstream)) ∧
+    (positionForPointInChild false false offset (10, 15) size chars = (0, .downstream)) ∧
+    (positionForPointInChild false false offset (15, 15) size chars = (0, .downstream)) ∧
+    (positionForPointInChild false false offset (20, 15) size chars = (1, .downstream)) ∧
+    (positionForPointInChild false false offset (25, 15) size chars = (1, .downstream)) ∧
+    (positionForPointInChild false false offset (30, 15) size chars = (2, .upstream)) ∧
+    (positionForPointInChild false false offset (35, 15) size chars = (2, .upstream)) := by
+  decide
+
+/-- Test: PositionForPointInChildHorizontalRTL (inline_cursor_test.cc:988)
+    CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in horizontal RTL text fragment. -/
+theorem inlineCursor_positionForPointInChildHorizontalRTL :
+    let offset := (754, 15)
+    let size := 20
+    let chars := 2
+    (positionForPointInChild false true offset (749, 15) size chars = (2, .upstream)) ∧
+    (positionForPointInChild false true offset (754, 15) size chars = (2, .upstream)) ∧
+    (positionForPointInChild false true offset (759, 15) size chars = (2, .upstream)) ∧
+    (positionForPointInChild false true offset (764, 15) size chars = (1, .downstream)) ∧
+    (positionForPointInChild false true offset (769, 15) size chars = (1, .downstream)) ∧
+    (positionForPointInChild false true offset (774, 15) size chars = (0, .downstream)) ∧
+    (positionForPointInChild false true offset (779, 15) size chars = (0, .downstream)) := by
+  decide
+
+/-- Test: PositionForPointInChildVerticalRTL (inline_cursor_test.cc:1061)
+    CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in vertical RTL text fragment. -/
+theorem inlineCursor_positionForPointInChildVerticalRTL :
+    let offset := (15, 10)
+    let size := 20
+    let chars := 2
+    (positionForPointInChild true true offset (15, 5) size chars = (2, .upstream)) ∧
+    (positionForPointInChild true true offset (15, 10) size chars = (2, .upstream)) ∧
+    (positionForPointInChild true true offset (15, 15) size chars = (2, .upstream)) ∧
+    (positionForPointInChild true true offset (15, 20) size chars = (1, .downstream)) ∧
+    (positionForPointInChild true true offset (15, 25) size chars = (1, .downstream)) ∧
+    (positionForPointInChild true true offset (15, 30) size chars = (0, .downstream)) ∧
+    (positionForPointInChild true true offset (15, 35) size chars = (0, .downstream)) := by
+  decide
+
 end ChromiumLayout.TestsInline

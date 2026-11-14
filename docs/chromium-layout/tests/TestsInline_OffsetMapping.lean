@@ -180,4 +180,98 @@ theorem test_OffsetMapping_FullyCollapsedWhiteSpaceNode :
     ]) := by
   decide
 
+/-- Test: ReplacedElement (offset_mapping_test.cc:748)
+    CSS 2.1 §9.4.2: Atomic inline / replaced element forms identity unit of length 1;
+    positions at boundaries resolve to BeforeNode and AfterNode. -/
+theorem test_OffsetMapping_ReplacedElement :
+    let fooNode := 1
+    let imgNode := 2
+    let barNode := 3
+    let nodes := [DomNode.text fooNode "foo ", DomNode.replaced imgNode, DomNode.text barNode " bar"]
+    let units := buildDomOffsetMapping nodes
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := fooNode, unitType := .identity, domStart := 0, domEnd := 4, textStart := 0, textEnd := 4 }) ∧
+    (units[1]! = { nodeId := imgNode, unitType := .identity, domStart := 0, domEnd := 1, textStart := 4, textEnd := 5 }) ∧
+    (units[2]! = { nodeId := barNode, unitType := .identity, domStart := 0, domEnd := 4, textStart := 5, textEnd := 9 }) ∧
+    (getUnitForPosition units (.offset fooNode 0) = some units[0]!) ∧
+    (getUnitForPosition units (.offset fooNode 4) = some units[0]!) ∧
+    (getUnitForPosition units (.beforeNode imgNode) = some units[1]!) ∧
+    (getUnitForPosition units (.afterNode imgNode) = some units[1]!) ∧
+    (getUnitForPosition units (.offset barNode 0) = some units[2]!) ∧
+    (getTextContentOffset units (.offset fooNode 4) = some 4) ∧
+    (getTextContentOffset units (.beforeNode imgNode) = some 4) ∧
+    (getTextContentOffset units (.afterNode imgNode) = some 5) ∧
+    (getTextContentOffset units (.offset barNode 0) = some 5) ∧
+    (getFirstPosition units 4 = some (.offset fooNode 4)) ∧
+    (getLastPosition units 4 = some (.beforeNode imgNode)) ∧
+    (getFirstPosition units 5 = some (.afterNode imgNode)) ∧
+    (getLastPosition units 5 = some (.offset barNode 0)) := by
+  decide
+
+/-- Test: FirstLetter (offset_mapping_test.cc:805)
+    CSS Pseudo 4 §7: First-letter and remaining text are partitioned into separate mapping units. -/
+theorem test_OffsetMapping_FirstLetter :
+    let fooNode := 1
+    let nodes := [DomNode.text fooNode "foo" .normal true]
+    let units := buildDomOffsetMapping nodes
+    (units.length = 2) ∧
+    (units[0]! = { nodeId := fooNode, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }) ∧
+    (units[1]! = { nodeId := fooNode, unitType := .identity, domStart := 1, domEnd := 3, textStart := 1, textEnd := 3 }) ∧
+    (getTextContentOffset units (.offset fooNode 0) = some 0) ∧
+    (getTextContentOffset units (.offset fooNode 1) = some 1) ∧
+    (getTextContentOffset units (.offset fooNode 2) = some 2) := by
+  decide
+
+/-- Test: FirstLetterWithLeadingSpace (offset_mapping_test.cc:835)
+    CSS Pseudo 4 §7 & CSS Text 3 §4.1: Leading whitespace collapses before first-letter identity unit. -/
+theorem test_OffsetMapping_FirstLetterWithLeadingSpace :
+    let fooNode := 1
+    let nodes := [DomNode.text fooNode "  foo" .normal true]
+    let units := buildDomOffsetMapping nodes
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := fooNode, unitType := .collapsed, domStart := 0, domEnd := 2, textStart := 0, textEnd := 0 }) ∧
+    (units[1]! = { nodeId := fooNode, unitType := .identity, domStart := 2, domEnd := 3, textStart := 0, textEnd := 1 }) ∧
+    (units[2]! = { nodeId := fooNode, unitType := .identity, domStart := 3, domEnd := 5, textStart := 1, textEnd := 3 }) ∧
+    (getTextContentOffset units (.offset fooNode 0) = some 0) ∧
+    (getTextContentOffset units (.offset fooNode 2) = some 0) ∧
+    (getTextContentOffset units (.offset fooNode 3) = some 1) ∧
+    (getTextContentOffset units (.offset fooNode 4) = some 2) := by
+  decide
+
+/-- Test: FirstLetterWithoutRemainingText (offset_mapping_test.cc:871)
+    CSS Pseudo 4 §7: First-letter without remaining text produces collapsed unit and single identity unit. -/
+theorem test_OffsetMapping_FirstLetterWithoutRemainingText :
+    let textNode := 1
+    let nodes := [DomNode.text textNode "  f" .normal true]
+    let units := buildDomOffsetMapping nodes
+    (units.length = 2) ∧
+    (units[0]! = { nodeId := textNode, unitType := .collapsed, domStart := 0, domEnd := 2, textStart := 0, textEnd := 0 }) ∧
+    (units[1]! = { nodeId := textNode, unitType := .identity, domStart := 2, domEnd := 3, textStart := 0, textEnd := 1 }) ∧
+    (getTextContentOffset units (.offset textNode 0) = some 0) ∧
+    (getTextContentOffset units (.offset textNode 2) = some 0) ∧
+    (getTextContentOffset units (.offset textNode 3) = some 1) := by
+  decide
+
+/-- Test: FirstLetterInDifferentBlock (offset_mapping_test.cc:902)
+    CSS Pseudo 4 §7: Floating or block first-letter is mapped in its own block formatting context. -/
+theorem test_OffsetMapping_FirstLetterInDifferentBlock :
+    let textNode := 1
+    let (firstUnits, remUnits) := firstLetterBlockOffsetMapping textNode "foo"
+    (firstUnits.length = 1) ∧
+    (firstUnits[0]! = { nodeId := textNode, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }) ∧
+    (remUnits.length = 1) ∧
+    (remUnits[0]! = { nodeId := textNode, unitType := .identity, domStart := 1, domEnd := 3, textStart := 0, textEnd := 2 }) := by
+  decide
+
+/-- Test: WhiteSpaceTextNodeWithoutLayoutText (offset_mapping_test.cc:967)
+    CSS Text 3 §4.1.2: Completely collapsed leading whitespace node contains no non-collapsed content. -/
+theorem test_OffsetMapping_WhiteSpaceTextNodeWithoutLayoutText :
+    let textNode := 1
+    let spanNode := 2
+    let nodes := [DomNode.text textNode " ", DomNode.text spanNode "foo"]
+    let units := buildDomOffsetMapping nodes
+    (endOfLastNonCollapsedContent units textNode 1 = none) ∧
+    (startOfNextNonCollapsedContent units textNode 0 = none) := by
+  decide
+
 end ChromiumLayout.TestsInline

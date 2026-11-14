@@ -265,10 +265,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:893 | Sibling2 | behaviour | formalized | `inlineCursor_sibling2` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Sibling navigation within an inline box visits its direct children |
 | inline/inline_cursor_test.cc:905 | NextSkippingChildren | behaviour | formalized | `inlineCursor_nextSkippingChildren` | CSS 2.1 §9.4.2: MoveToNextSkippingChildren skips all descendants of current container |
 | inline/inline_cursor_test.cc:938 | EmptyOutOfFlow | behaviour | formalized | `inlineCursor_emptyOutOfFlow` | CSS 2.1 §9.3 & §9.5: Out-of-flow positioned elements do not participate in inline flow, yielding 0 in-flow cursor items |
-| inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:952 | PositionForPointInChildHorizontalLTR | geometry | formalized | `inlineCursor_positionForPointInChildHorizontalLTR` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in horizontal LTR text fragment |
+| inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | formalized | `inlineCursor_positionForPointInChildHorizontalRTL` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in horizontal RTL text fragment |
+| inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | blocked | - | Blocked: held-out test |
+| inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | formalized | `inlineCursor_positionForPointInChildVerticalRTL` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in vertical RTL text fragment |
 | inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | internal | - | Hit testing on inline-block with block children |
 | inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previous` | CSS 2.1 §9.4.2: MoveToPrevious visits all items in reverse pre-order sequence |
 | inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
@@ -405,12 +405,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:558 | BRBetweenTextNodes | behaviour | formalized | `test_OffsetMapping_BRBetweenTextNodes` | Offset mapping units across text nodes separated by BR element |
 | inline/offset_mapping_test.cc:613 | OneTextNodeWithCollapsedSpace | behaviour | formalized | `test_OffsetMapping_OneTextNodeWithCollapsedSpace` | OffsetMappingUnits partitioning into identity and collapsed runs |
 | inline/offset_mapping_test.cc:686 | FullyCollapsedWhiteSpaceNode | behaviour | formalized | `test_OffsetMapping_FullyCollapsedWhiteSpaceNode` | CSS Text 3 §4.1.2: Completely collapsed whitespace node generates collapsed unit |
-| inline/offset_mapping_test.cc:748 | ReplacedElement | behaviour | blocked | - | Blocked: model lacks replaced element offset mapping |
-| inline/offset_mapping_test.cc:805 | FirstLetter | behaviour | blocked | - | Blocked: model lacks first-letter offset mapping |
-| inline/offset_mapping_test.cc:835 | FirstLetterWithLeadingSpace | behaviour | blocked | - | Blocked: model lacks first-letter leading space offset mapping |
-| inline/offset_mapping_test.cc:871 | FirstLetterWithoutRemainingText | behaviour | blocked | - | Blocked: model lacks first-letter text offset mapping |
-| inline/offset_mapping_test.cc:902 | FirstLetterInDifferentBlock | behaviour | blocked | - | Blocked: model lacks first-letter block offset mapping |
-| inline/offset_mapping_test.cc:967 | WhiteSpaceTextNodeWithoutLayoutText | behaviour | blocked | - | Blocked: model lacks whitespace node offset mapping |
+| inline/offset_mapping_test.cc:748 | ReplacedElement | behaviour | formalized | `test_OffsetMapping_ReplacedElement` | CSS 2.1 §9.4.2: Atomic inline / replaced element forms identity unit of length 1 with BeforeNode and AfterNode |
+| inline/offset_mapping_test.cc:805 | FirstLetter | behaviour | formalized | `test_OffsetMapping_FirstLetter` | CSS Pseudo 4 §7: First-letter and remaining text partitioned into separate mapping units |
+| inline/offset_mapping_test.cc:835 | FirstLetterWithLeadingSpace | behaviour | formalized | `test_OffsetMapping_FirstLetterWithLeadingSpace` | CSS Pseudo 4 §7 & CSS Text 3 §4.1: Leading whitespace collapses before first-letter identity unit |
+| inline/offset_mapping_test.cc:871 | FirstLetterWithoutRemainingText | behaviour | formalized | `test_OffsetMapping_FirstLetterWithoutRemainingText` | CSS Pseudo 4 §7: First-letter without remaining text produces collapsed unit and single identity unit |
+| inline/offset_mapping_test.cc:902 | FirstLetterInDifferentBlock | behaviour | formalized | `test_OffsetMapping_FirstLetterInDifferentBlock` | CSS Pseudo 4 §7: Floating or block first-letter mapped in its own block formatting context |
+| inline/offset_mapping_test.cc:967 | WhiteSpaceTextNodeWithoutLayoutText | behaviour | formalized | `test_OffsetMapping_WhiteSpaceTextNodeWithoutLayoutText` | CSS Text 3 §4.1.2: Completely collapsed leading whitespace node contains no non-collapsed content |
 | inline/offset_mapping_test.cc:976 | ContainerWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
 | inline/offset_mapping_test.cc:1006 | InlineBlockWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
 | inline/offset_mapping_test.cc:1046 | Table | behaviour | blocked | - | Blocked: model lacks table offset mapping |

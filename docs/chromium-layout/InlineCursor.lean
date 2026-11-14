@@ -11,6 +11,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
+import InlineCaret
 
 namespace ChromiumLayout
 
@@ -529,5 +530,34 @@ theorem empty_out_of_flow_no_inflow (items : List CursorNode)
   intro n hn
   have := hOOF n hn
   simp [this]
+
+/-- CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2:
+    Visual inline offset to character index with boundary snapping. -/
+def visualInlineOffsetToCharIndex (coord : Int) (glyphSize : Int) (charCount : Nat) : Nat :=
+  if coord ≤ glyphSize / 2 then 0
+  else
+    let idx := (coord - glyphSize / 2 + glyphSize - 1) / glyphSize
+    min charCount idx.toNat
+
+/-- CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2:
+    Map a physical point within an inline text fragment to a DOM text position and affinity. -/
+def positionForPointInChild (isVertical : Bool) (isRtl : Bool) (fragmentOffset point : Int × Int)
+    (inlineSize : Int) (charCount : Nat) : Nat × TextAffinity :=
+  let coord := if isVertical then point.2 - fragmentOffset.2 else point.1 - fragmentOffset.1
+  let glyphSize := if charCount > 0 then inlineSize / (charCount : Int) else inlineSize
+  let ltrOffset := visualInlineOffsetToCharIndex coord glyphSize charCount
+  let finalOffset := if isRtl then charCount - ltrOffset else ltrOffset
+  let affinity : TextAffinity := if finalOffset == charCount then .upstream else .downstream
+  (finalOffset, affinity)
+
+/-- CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2:
+    A point at or before the visual start of an LTR fragment always maps to character offset 0. -/
+theorem positionForPointInChild_ltr_start (isVertical : Bool) (fragmentOffset point : Int × Int)
+    (inlineSize : Int) (charCount : Nat)
+    (hCoord : (if isVertical then point.2 - fragmentOffset.2 else point.1 - fragmentOffset.1) ≤
+      (if charCount > 0 then inlineSize / (charCount : Int) else inlineSize) / 2) :
+    (positionForPointInChild isVertical false fragmentOffset point inlineSize charCount).1 = 0 := by
+  dsimp [positionForPointInChild, visualInlineOffsetToCharIndex]
+  simp [hCoord]
 
 end ChromiumLayout
