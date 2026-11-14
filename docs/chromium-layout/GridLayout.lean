@@ -265,6 +265,50 @@ structure TrackRange where
   hasIntrinsic : Bool := false
   deriving Inhabited, DecidableEq, Repr
 
+/-- A repeater descriptor with track count, collapsed, and property flags.
+    CSS Grid Layout Level 1 §7.2.3. -/
+structure TrackRepeater where
+  trackCount : Nat
+  isCollapsed : Bool := false
+  hasFlexible : Bool := false
+  hasIntrinsic : Bool := false
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Build base track ranges from track repeaters.
+    CSS Grid Layout Level 1 §7.2.3. -/
+def buildTrackRanges (repeaters : List TrackRepeater) : List TrackRange :=
+  let rec loop (curLine : Nat) (rem : List TrackRepeater) : List TrackRange :=
+    match rem with
+    | [] => []
+    | rep :: rest =>
+        ⟨curLine, rep.trackCount, rep.isCollapsed, false, rep.hasFlexible, rep.hasIntrinsic⟩ ::
+          loop (curLine + rep.trackCount) rest
+  loop 0 repeaters
+
+/-- Build track ranges from set counts with running sum start lines.
+    CSS Grid Layout Level 1 §7.2.3. -/
+def buildTrackRangesFromSetCounts (setCounts : List Nat) : List TrackRange :=
+  let rec loop (curLine : Nat) (rem : List Nat) : List TrackRange :=
+    match rem with
+    | [] => []
+    | count :: rest =>
+        ⟨curLine, count, false, false, false, false⟩ :: loop (curLine + count) rest
+  loop 0 setCounts
+
+/-- Split a track range at a line boundary if the line falls strictly within the range.
+    CSS Grid Layout Level 1 §7.2.3, §7.6. -/
+def splitRangeAt (line : Nat) (r : TrackRange) : List TrackRange :=
+  let rEnd := r.startLine + r.trackCount
+  if line > r.startLine && line < rEnd then
+    [ { r with trackCount := line - r.startLine },
+      { r with startLine := line, trackCount := rEnd - line } ]
+  else
+    [r]
+
+/-- Split track ranges at a line boundary. CSS Grid Layout Level 1 §7.6. -/
+def splitRangesAt (line : Nat) (ranges : List TrackRange) : List TrackRange :=
+  ranges.flatMap (splitRangeAt line)
+
 /-- Ensure track coverage over [startLine, startLine + count) given range list.
     Returns the start and end range indices (0-based, inclusive) that cover the interval.
     CSS Grid Layout Level 1 §7.6. -/
@@ -285,6 +329,38 @@ def coverageRangeIndices (ranges : List TrackRange) (startLine count : Nat) : Op
         loop (idx + 1) rest newStart newEnd
   loop 0 ranges none none
 
+/-- Ensure track coverage over [startLine, startLine + count) by splitting ranges at
+    coverage boundaries and appending implicit ranges when exceeding explicit bounds.
+    Returns (updatedRanges, startRangeIndex, endRangeIndex).
+    CSS Grid Layout Level 1 §7.2.3, §7.6. -/
+def ensureTrackCoverage (ranges : List TrackRange) (startLine count : Nat)
+    (isImplicitFlex : Bool := false) (isImplicitIntrinsic : Bool := false) : List TrackRange × Nat × Nat :=
+  let endLine := startLine + count
+  let split1 := splitRangesAt startLine ranges
+  let split2 := splitRangesAt endLine split1
+  let lastEnd := match split2.getLast? with
+    | some r => r.startLine + r.trackCount
+    | none => 0
+  let uncollapsed := split2.map (fun r =>
+    let rEnd := r.startLine + r.trackCount
+    if r.startLine < endLine && rEnd > startLine then
+      { r with isCollapsed := false }
+    else r)
+  let finalRanges :=
+    if startLine > lastEnd then
+      uncollapsed ++ [
+        ⟨lastEnd, startLine - lastEnd, false, true, isImplicitFlex, isImplicitIntrinsic⟩,
+        ⟨startLine, count, false, true, isImplicitFlex, isImplicitIntrinsic⟩
+      ]
+    else if endLine > lastEnd then
+      uncollapsed ++ [⟨lastEnd, endLine - lastEnd, false, true, isImplicitFlex, isImplicitIntrinsic⟩]
+    else
+      uncollapsed
+  let (sIdx, eIdx) := match coverageRangeIndices finalRanges startLine count with
+    | some p => p
+    | none => (0, 0)
+  (finalRanges, sIdx, eIdx)
+
 /-- Whether a track size is flexible (fr unit). CSS Grid Layout Level 1 §11.4. -/
 def isFlexibleTrack : GridTrackSizeType → Bool
   | .flex _ => true
@@ -295,6 +371,24 @@ def isFlexibleTrack : GridTrackSizeType → Bool
 def isIntrinsicTrack : GridTrackSizeType → Bool
   | .minContent | .maxContent | .auto | .fitContent _ | .flex _ => true
   | _ => false
+
+/-- Law: Empty track repeaters produce no track ranges.
+    CSS Grid Layout Level 1 §7.2.3. -/
+theorem build_track_ranges_empty :
+    buildTrackRanges [] = [] := by
+  rfl
+
+/-- Law: Empty set counts produce no track ranges.
+    CSS Grid Layout Level 1 §7.2.3. -/
+theorem build_set_counts_empty :
+    buildTrackRangesFromSetCounts [] = [] := by
+  rfl
+
+/-- Law: Splitting an empty range list at any line yields empty ranges.
+    CSS Grid Layout Level 1 §7.6. -/
+theorem split_ranges_empty (line : Nat) :
+    splitRangesAt line [] = [] := by
+  rfl
 
 /-- Law: An empty range list has no coverage indices.
     CSS Grid Layout Level 1 §7.6. -/

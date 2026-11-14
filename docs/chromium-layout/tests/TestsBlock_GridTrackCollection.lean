@@ -77,14 +77,14 @@ theorem TestGridSetTrackSizeNormalization_vectors :
 -- grid_track_collection_test.cc:208: TestGridRangeBuilderImplicit
 -- CSS Grid Layout Level 1 §7.2.3, §7.6. Range builder splits explicit tracks and appends implicit tracks for coverage.
 theorem TestGridRangeBuilderImplicit_vectors :
-    let ranges : List TrackRange := [
-      ⟨0, 3, false, false, false, false⟩,
-      ⟨3, 5, false, false, false, false⟩,
-      ⟨8, 9, false, false, false, false⟩,
-      ⟨17, 21, false, false, false, false⟩,
-      ⟨38, 5, false, true, false, false⟩
+    let repeaters : List TrackRepeater := [
+      ⟨8, false, false, false⟩,
+      ⟨9, false, false, false⟩,
+      ⟨21, false, false, false⟩
     ]
-    coverageRangeIndices ranges 3 40 = some (1, 4) ∧
+    let baseRanges := buildTrackRanges repeaters
+    let (ranges, rStart, rEnd) := ensureTrackCoverage baseRanges 3 40
+    rStart = 1 ∧ rEnd = 4 ∧
     ranges.length = 5 ∧
     ranges[0]!.startLine = 0 ∧ ranges[0]!.trackCount = 3 ∧ ranges[0]!.isImplicit = false ∧
     ranges[1]!.startLine = 3 ∧ ranges[1]!.trackCount = 5 ∧ ranges[1]!.isImplicit = false ∧
@@ -97,15 +97,8 @@ theorem TestGridRangeBuilderImplicit_vectors :
 -- CSS Grid Layout Level 1 §7.2.3. Sizing collection set iteration partitions sets into ranges.
 theorem TestGridSizingTrackCollectionSetIterator_vectors :
     let setCounts : List Nat := [2, 5, 3, 11, 13, 7]
-    let totalSets := setCounts.foldl (·+·) 0
-    let ranges : List TrackRange := [
-      ⟨0, 2, false, false, false, false⟩,
-      ⟨2, 5, false, false, false, false⟩,
-      ⟨7, 3, false, false, false, false⟩,
-      ⟨10, 11, false, false, false, false⟩,
-      ⟨21, 13, false, false, false, false⟩,
-      ⟨34, 7, false, false, false, false⟩
-    ]
+    let ranges := buildTrackRangesFromSetCounts setCounts
+    let totalSets := (ranges.map (·.trackCount)).foldl (·+·) 0
     totalSets = 41 ∧
     ranges.length = 6 ∧
     ranges[0]!.startLine = 0 ∧ ranges[0]!.trackCount = 2 ∧
@@ -119,72 +112,72 @@ theorem TestGridSizingTrackCollectionSetIterator_vectors :
 -- grid_track_collection_test.cc:351: TestGridSizingTrackCollectionExplicitTracks
 -- CSS Grid Layout Level 1 §7.2.3, §7.6. Sizing collection ranges across auto-fit, collapsed, and implicit tracks.
 theorem TestGridSizingTrackCollectionExplicitTracks_vectors :
-    let ranges : List TrackRange := [
-      ⟨0, 2, false, false, false, false⟩,
-      ⟨2, 4, false, false, false, false⟩,
-      ⟨6, 3, false, false, false, false⟩,
-      ⟨9, 3, true, false, false, false⟩,
-      ⟨12, 4, false, false, false, false⟩,
-      ⟨16, 1, true, false, false, false⟩,
-      ⟨17, 2, false, false, false, false⟩,
-      ⟨19, 1, false, false, false, false⟩,
-      ⟨20, 2, false, false, false, false⟩,
-      ⟨22, 5, false, false, false, false⟩
+    let repeaters : List TrackRepeater := [
+      ⟨9, false, false, false⟩,
+      ⟨10, true, false, false⟩
     ]
-    coverageRangeIndices ranges 2 4 = some (1, 1) ∧
-    coverageRangeIndices ranges 12 4 = some (4, 4) ∧
-    coverageRangeIndices ranges 17 3 = some (6, 7) ∧
-    coverageRangeIndices ranges 22 5 = some (9, 9) ∧
-    ranges.length = 10 ∧
-    ranges[0]!.startLine = 0 ∧ ranges[0]!.trackCount = 2 ∧
-    ranges[1]!.startLine = 2 ∧ ranges[1]!.trackCount = 4 ∧
-    ranges[2]!.startLine = 6 ∧ ranges[2]!.trackCount = 3 ∧
-    ranges[3]!.startLine = 9 ∧ ranges[3]!.trackCount = 3 ∧ ranges[3]!.isCollapsed = true ∧
-    ranges[4]!.startLine = 12 ∧ ranges[4]!.trackCount = 4 ∧
-    ranges[5]!.startLine = 16 ∧ ranges[5]!.trackCount = 1 ∧ ranges[5]!.isCollapsed = true ∧
-    ranges[6]!.startLine = 17 ∧ ranges[6]!.trackCount = 2 ∧
-    ranges[7]!.startLine = 19 ∧ ranges[7]!.trackCount = 1 ∧
-    ranges[8]!.startLine = 20 ∧ ranges[8]!.trackCount = 2 ∧
-    ranges[9]!.startLine = 22 ∧ ranges[9]!.trackCount = 5 := by
+    let r0 := buildTrackRanges repeaters
+    let (r1, s1, e1) := ensureTrackCoverage r0 2 4
+    let (r2, s2, e2) := ensureTrackCoverage r1 12 4
+    let (r3, s3, e3) := ensureTrackCoverage r2 17 3
+    let (r4, s4, e4) := ensureTrackCoverage r3 22 5
+    s1 = 1 ∧ e1 = 1 ∧
+    s2 = 4 ∧ e2 = 4 ∧
+    s3 = 6 ∧ e3 = 7 ∧
+    s4 = 9 ∧ e4 = 9 ∧
+    r4.length = 10 ∧
+    r4[0]!.startLine = 0 ∧ r4[0]!.trackCount = 2 ∧
+    r4[1]!.startLine = 2 ∧ r4[1]!.trackCount = 4 ∧
+    r4[2]!.startLine = 6 ∧ r4[2]!.trackCount = 3 ∧
+    r4[3]!.startLine = 9 ∧ r4[3]!.trackCount = 3 ∧ r4[3]!.isCollapsed = true ∧
+    r4[4]!.startLine = 12 ∧ r4[4]!.trackCount = 4 ∧
+    r4[5]!.startLine = 16 ∧ r4[5]!.trackCount = 1 ∧ r4[5]!.isCollapsed = true ∧
+    r4[6]!.startLine = 17 ∧ r4[6]!.trackCount = 2 ∧
+    r4[7]!.startLine = 19 ∧ r4[7]!.trackCount = 1 ∧
+    r4[8]!.startLine = 20 ∧ r4[8]!.trackCount = 2 ∧
+    r4[9]!.startLine = 22 ∧ r4[9]!.trackCount = 5 := by
   decide
 
 -- grid_track_collection_test.cc:459: TestGridSizingTrackCollectionImplicitTracks
 -- CSS Grid Layout Level 1 §7.6. Sizing collection creates implicit ranges beyond explicit track bounds.
 theorem TestGridSizingTrackCollectionImplicitTracks_vectors :
-    let ranges : List TrackRange := [
-      ⟨0, 2, false, false, false, false⟩,
-      ⟨2, 2, false, false, false, false⟩,
-      ⟨4, 11, false, true, false, false⟩,
-      ⟨15, 8, false, true, false, false⟩,
-      ⟨23, 2, false, true, false, false⟩
+    let repeaters : List TrackRepeater := [
+      ⟨2, false, false, false⟩,
+      ⟨2, false, false, false⟩
     ]
-    coverageRangeIndices ranges 2 13 = some (1, 2) ∧
-    coverageRangeIndices ranges 23 2 = some (4, 4) ∧
-    ranges.length = 5 ∧
-    ranges[0]!.startLine = 0 ∧ ranges[0]!.trackCount = 2 ∧
-    ranges[1]!.startLine = 2 ∧ ranges[1]!.trackCount = 2 ∧
-    ranges[2]!.startLine = 4 ∧ ranges[2]!.trackCount = 11 ∧
-    ranges[3]!.startLine = 15 ∧ ranges[3]!.trackCount = 8 ∧
-    ranges[4]!.startLine = 23 ∧ ranges[4]!.trackCount = 2 := by
+    let r0 := buildTrackRanges repeaters
+    let (r1, s1, e1) := ensureTrackCoverage r0 2 13
+    let (r2, s2, e2) := ensureTrackCoverage r1 23 2
+    s1 = 1 ∧ e1 = 2 ∧
+    s2 = 4 ∧ e2 = 4 ∧
+    r2.length = 5 ∧
+    r2[0]!.startLine = 0 ∧ r2[0]!.trackCount = 2 ∧
+    r2[1]!.startLine = 2 ∧ r2[1]!.trackCount = 2 ∧
+    r2[2]!.startLine = 4 ∧ r2[2]!.trackCount = 11 ∧
+    r2[3]!.startLine = 15 ∧ r2[3]!.trackCount = 8 ∧
+    r2[4]!.startLine = 23 ∧ r2[4]!.trackCount = 2 := by
   decide
 
 -- grid_track_collection_test.cc:539: TestGridSizingTrackCollectionIntrinsicAndFlexTracks
 -- CSS Grid Layout Level 1 §11.4. Ranges classify flexible and intrinsic track properties.
 theorem TestGridSizingTrackCollectionIntrinsicAndFlexTracks_vectors :
-    let ranges : List TrackRange := [
-      ⟨0, 1, false, false, false, true⟩,
-      ⟨1, 2, false, false, true, true⟩,
-      ⟨3, 4, false, false, true, true⟩,
-      ⟨7, 1, false, false, false, false⟩,
-      ⟨8, 3, false, true, false, true⟩
+    let repeaters : List TrackRepeater := [
+      ⟨1, false, false, true⟩,
+      ⟨2, false, true, true⟩,
+      ⟨4, false, true, true⟩,
+      ⟨1, false, false, false⟩
     ]
-    coverageRangeIndices ranges 1 2 = some (1, 1) ∧
-    coverageRangeIndices ranges 7 4 = some (3, 4) ∧
-    ranges.length = 5 ∧
-    ranges[0]!.hasFlexible = false ∧ ranges[0]!.hasIntrinsic = true ∧
-    ranges[1]!.hasFlexible = true ∧ ranges[1]!.hasIntrinsic = true ∧
-    ranges[2]!.hasFlexible = true ∧ ranges[2]!.hasIntrinsic = true ∧
-    ranges[3]!.hasFlexible = false ∧ ranges[3]!.hasIntrinsic = false := by
+    let r0 := buildTrackRanges repeaters
+    let (r1, s1, e1) := ensureTrackCoverage r0 1 2 false true
+    let (r2, s2, e2) := ensureTrackCoverage r1 7 4 false true
+    s1 = 1 ∧ e1 = 1 ∧
+    s2 = 3 ∧ e2 = 4 ∧
+    r2.length = 5 ∧
+    r2[0]!.hasFlexible = false ∧ r2[0]!.hasIntrinsic = true ∧
+    r2[1]!.hasFlexible = true ∧ r2[1]!.hasIntrinsic = true ∧
+    r2[2]!.hasFlexible = true ∧ r2[2]!.hasIntrinsic = true ∧
+    r2[3]!.hasFlexible = false ∧ r2[3]!.hasIntrinsic = false ∧
+    r2[4]!.hasFlexible = false ∧ r2[4]!.hasIntrinsic = true := by
   decide
 
 end TestsBlock
