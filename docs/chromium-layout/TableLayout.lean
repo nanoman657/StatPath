@@ -192,5 +192,62 @@ theorem grid_min_sum (cols : List TableColConstraint) (pass : Bool) :
   dsimp [computeGridInlineMinMax]
   split <;> rfl
 
+/-! ## Table background opacity (CSS 2.1 §17.5.1, §17.6, CSS Backgrounds and Borders 3 §3) -/
+
+/-- CSS 2.1 §17.5.1: Internal table object types with layered painting order. -/
+inductive TablePartType where
+  | table
+  | section
+  | row
+  | cell
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Table background opacity configuration.
+    CSS 2.1 §17.5.1, §17.6, CSS Backgrounds 3 §3. -/
+structure TableBackgroundContext where
+  part : TablePartType
+  hasLayer : Bool := false
+  collapsedBorders : Bool := false
+  borderSpacing : Nat := 0
+  hasEmptyCells : Bool := false
+  isOpaqueColor : Bool := true
+  deriving Inhabited, DecidableEq, Repr
+
+/-- CSS 2.1 §17.5.1, §17.6, CSS Backgrounds 3 §3: Determine if a table object's background
+    is known to be unconditionally opaque in a given sub-rectangle.
+    - Table sections and rows cannot guarantee opacity across arbitrary sub-rectangles due to
+      the presence of cell boundaries, border-spacing gaps, collapsed borders, or empty cells,
+      so their background is never known to be opaque.
+    - Table cells with a composited layer and collapsed borders cannot be known to be opaque
+      because collapsed borders must remain exposed to underlying layers.
+    - Otherwise, a cell is opaque only if its color is opaque. -/
+def tableBackgroundIsKnownToBeOpaque (ctx : TableBackgroundContext) : Bool :=
+  match ctx.part with
+  | .section | .row | .table => false
+  | .cell => !(ctx.hasLayer && ctx.collapsedBorders) && ctx.isOpaqueColor
+
+/-- Law: A table section background is never known to be opaque across an arbitrary sub-rect.
+    CSS 2.1 §17.5.1, §17.6. -/
+theorem table_section_background_never_opaque (ctx : TableBackgroundContext) (h : ctx.part = .section) :
+    tableBackgroundIsKnownToBeOpaque ctx = false := by
+  dsimp [tableBackgroundIsKnownToBeOpaque]
+  rw [h]
+
+/-- Law: A table row background is never known to be opaque across an arbitrary sub-rect.
+    CSS 2.1 §17.5.1, §17.6. -/
+theorem table_row_background_never_opaque (ctx : TableBackgroundContext) (h : ctx.part = .row) :
+    tableBackgroundIsKnownToBeOpaque ctx = false := by
+  dsimp [tableBackgroundIsKnownToBeOpaque]
+  rw [h]
+
+/-- Law: A table cell with a layer and collapsed borders is never known to be opaque.
+    CSS 2.1 §17.6, CSS Backgrounds 3 §3. -/
+theorem table_cell_layer_collapsed_not_opaque (ctx : TableBackgroundContext)
+    (h_part : ctx.part = .cell) (h_layer : ctx.hasLayer = true) (h_col : ctx.collapsedBorders = true) :
+    tableBackgroundIsKnownToBeOpaque ctx = false := by
+  dsimp [tableBackgroundIsKnownToBeOpaque]
+  rw [h_part, h_layer, h_col]
+  rfl
+
 end TableLayout
 end ChromiumLayout
