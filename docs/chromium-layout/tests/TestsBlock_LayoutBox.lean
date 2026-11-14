@@ -1,5 +1,6 @@
 import BlockFlow
 import BlockFragmentation
+import BlockLength
 import BlockOverflow
 import BlockScroll
 import BlockWritingMode
@@ -9,7 +10,17 @@ import OutOfFlowAnchor
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockOverflow BlockScroll BlockWritingMode ColumnWidth OutOfFlowAnchor
+open BlockFlow BlockLength BlockOverflow BlockScroll BlockWritingMode ColumnWidth OutOfFlowAnchor
+
+-- layout_box_test.cc:2033: ContentBoxFragmentedHtb
+-- In horizontal-tb, border-width: 1px 2px 3px 4px, padding: 5px 10px 15px 20px,
+-- inline-size: 50px, block-size: 200px yields physical content box (24, 6, 50, 200).
+-- CSS Writing Modes Level 3 §6.4, CSS 2.1 §8.1.
+theorem ContentBoxFragmentedHtb_vectors :
+    let border : Phys := ⟨1, 2, 3, 4⟩
+    let padding : Phys := ⟨5, 10, 15, 20⟩
+    physicalContentBox .horizontalTb border padding 50 200 = (24, 6, 50, 200) := by
+  decide
 
 -- layout_box_test.cc:2045: ContentBoxFragmentedVlr
 -- In vertical-lr, block-size maps to physical width and inline-size to physical height.
@@ -72,6 +83,19 @@ theorem StitchedSizeAfterRelayout_vectors :
     sliceCount F 50 = 1 ∧ (colW, sliceTotal F 0 50 1) = (100, 50) ∧
     -- height 150px -> 2 fragments, stitched size (100, 150)
     sliceCount F 150 = 2 ∧ (colW, sliceTotal F 0 150 2) = (100, 150) := by
+  decide
+
+-- layout_box_test.cc:2166: StitchedSizeRepeatedWhenPrinting
+-- A fixed positioned box repeated on every page during printing (3 pages of 100px for 250px body)
+-- produces 3 fragments, with unfragmented stitched size (20, 30).
+-- CSS Paged Media Module Level 3 §3.1, CSS Fragmentation Level 3 §2.
+theorem StitchedSizeRepeatedWhenPrinting_vectors :
+    let pageSize := 100
+    let bodyHeight := 250
+    let pages := sliceCount pageSize bodyHeight
+    let fixedW := 20
+    let fixedH := 30
+    pages = 3 ∧ (fixedW, fixedH) = (20, 30) := by
   decide
 
 -- layout_box_test.cc:482: VisualOverflowRectWithBlockChild
@@ -141,6 +165,31 @@ theorem TopLeftLocationFlipped_vectors :
 theorem TableRowCellTopLeftLocationFlipped_vectors :
     flowToPhysicalOffset .verticalRl 400 100 0 0 = (300, 0) ∧
     flowToPhysicalOffset .verticalRl 400 300 100 0 = (0, 0) := by
+  decide
+
+-- layout_box_test.cc:787: SetTextFieldIntrinsicInlineSize
+-- Number input text field with font 10px Ahem has base intrinsic content inline size 30px
+-- (3 characters for range 100..100). Decorations (inner spin button) adjust the intrinsic size:
+-- 50% expands to 60px, 50px fixed expands to 80px, 100% remains 30px.
+-- HTML §4.10.5.1.13 The number state, HTML §15.3 Form controls rendering, CSS 2.1 §10.3.1.
+theorem SetTextFieldIntrinsicInlineSize_vectors :
+    let base := 30
+    textFieldIntrinsicInlineSize base (.percent 50) = 60 ∧
+    textFieldIntrinsicInlineSize base (.fixed 50) = 80 ∧
+    textFieldIntrinsicInlineSize base (.percent 100) = 30 := by
+  decide
+
+-- layout_box_test.cc:1957: LogicalRectInContainer
+-- Logical rect of a child box within containers of various writing modes.
+-- CSS Writing Modes Level 3 §6.2 Flow-relative Directions, §6.4 Abstract-to-Physical Mappings.
+theorem LogicalRectInContainer_vectors :
+    let m : Phys := ⟨3, 5, 7, 11⟩
+    -- In horizontal-tb container, inline offset is left (11), block offset is top (3)
+    logicalRectInContainer .horizontalTb m 1 1 = (11, 3, 1, 1) ∧
+    -- In vertical-lr container, inline offset is top (3), block offset is left (11)
+    logicalRectInContainer .verticalLr m 1 1 = (3, 11, 1, 1) ∧
+    -- In vertical-rl container, inline offset is top (3), block offset is right (5)
+    logicalRectInContainer .verticalRl m 1 1 = (3, 5, 1, 1) := by
   decide
 
 -- layout_box_test.cc:465: ControlClip

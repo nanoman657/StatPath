@@ -191,5 +191,43 @@ theorem clampSize_ge_min (sz : Sizing) (bp : Nat) (avail : Option Nat) (sizes : 
   simp only [h]
   exact Nat.le_max_right _ _
 
+/-- Decoration width for a text field (e.g. inner spin button).
+    HTML §4.10.5.1.13 The number state, HTML §15.3 Form controls rendering. -/
+inductive TextFieldDecoration where
+  | none
+  | fixed (px : Nat)
+  | percent (pct : Nat)
+  deriving DecidableEq, Repr
+
+/-- Compute intrinsic inline size for a text field with optional decoration.
+    HTML §4.10.5.1.13, HTML §15.3 Rendering: Form controls, CSS 2.1 §10.3.1. -/
+def textFieldIntrinsicInlineSize (baseSize : Nat) (dec : TextFieldDecoration) : Nat :=
+  match dec with
+  | .none => baseSize
+  | .fixed px => baseSize + px
+  | .percent pct =>
+    if pct < 100 then
+      baseSize + (baseSize * pct) / (100 - pct)
+    else
+      baseSize
+
+/-- Law: An unadorned text field retains its base intrinsic inline size.
+    HTML §4.10.5.1.13, HTML §15.3 Rendering: Form controls. -/
+theorem textFieldIntrinsicInlineSize_none (base : Nat) :
+    textFieldIntrinsicInlineSize base .none = base := by
+  rfl
+
+/-- Law: A fixed-width decoration increases the text field intrinsic inline size by its width.
+    HTML §4.10.5.1.13, HTML §15.3 Rendering: Form controls. -/
+theorem textFieldIntrinsicInlineSize_fixed (base px : Nat) :
+    textFieldIntrinsicInlineSize base (.fixed px) = base + px := by
+  rfl
+
+/-- Law: A 100% percentage decoration does not expand the text field intrinsic inline size past base.
+    HTML §4.10.5.1.13, HTML §15.3 Rendering: Form controls. -/
+theorem textFieldIntrinsicInlineSize_percent_100 (base : Nat) :
+    textFieldIntrinsicInlineSize base (.percent 100) = base := by
+  rfl
+
 end BlockLength
 end ChromiumLayout

@@ -173,5 +173,49 @@ theorem physicalContentBox_vertical (wm : WritingMode) (h : isVertical wm = true
   rw [h]
   rfl
 
+/-- Law: In horizontal writing modes, physical width is logical inline size and physical height is logical block size.
+    CSS Writing Modes Level 3 §6.4. -/
+theorem physicalContentBox_horizontal (wm : WritingMode) (h : isVertical wm = false) (b p : Phys) (is bs : Nat) :
+    (physicalContentBox wm b p is bs).2.2 = (is, bs) := by
+  dsimp [physicalContentBox]
+  rw [h]
+  rfl
+
+/-- Logical rect (inlineOffset, blockOffset, inlineSize, blockSize) of a child box within its container.
+    CSS Writing Modes Level 3 §6.2 Flow-relative Directions, §6.4 Abstract-to-Physical Mappings. -/
+def logicalRectInContainer (containerWm : WritingMode) (margins : Phys) (width height : Nat) :
+    Nat × Nat × Nat × Nat :=
+  let inlineOffset := match containerWm with
+    | .horizontalTb => margins.left
+    | .verticalLr | .verticalRl => margins.top
+  let blockOffset := match containerWm with
+    | .horizontalTb => margins.top
+    | .verticalLr => margins.left
+    | .verticalRl => margins.right
+  let inlineSize := flowInlineSize containerWm width height
+  let blockSize := flowBlockSize containerWm width height
+  (inlineOffset, blockOffset, inlineSize, blockSize)
+
+/-- Law: In horizontal-tb container, logical inline-offset is margins.left and block-offset is margins.top.
+    CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings. -/
+theorem logical_rect_in_container_horizontal_tb (m : Phys) (w h : Nat) :
+    (logicalRectInContainer .horizontalTb m w h).1 = m.left ∧
+    (logicalRectInContainer .horizontalTb m w h).2.1 = m.top := by
+  exact ⟨rfl, rfl⟩
+
+/-- Law: In vertical-lr container, logical inline-offset is margins.top and block-offset is margins.left.
+    CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings. -/
+theorem logical_rect_in_container_vertical_lr (m : Phys) (w h : Nat) :
+    (logicalRectInContainer .verticalLr m w h).1 = m.top ∧
+    (logicalRectInContainer .verticalLr m w h).2.1 = m.left := by
+  exact ⟨rfl, rfl⟩
+
+/-- Law: In vertical-rl container, logical inline-offset is margins.top and block-offset is margins.right.
+    CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings. -/
+theorem logical_rect_in_container_vertical_rl (m : Phys) (w h : Nat) :
+    (logicalRectInContainer .verticalRl m w h).1 = m.top ∧
+    (logicalRectInContainer .verticalRl m w h).2.1 = m.right := by
+  exact ⟨rfl, rfl⟩
+
 end BlockWritingMode
 end ChromiumLayout

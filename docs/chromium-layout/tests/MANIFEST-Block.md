@@ -598,7 +598,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | formalized | `TestsBlock.OverflowRectsContainPaint_vectors`, `BlockOverflow.contain_paint_clips_both` |
 | layout_box_test.cc:769 | LayoutBoxTest.OverflowRectsOverflowHidden | geometry | formalized | `TestsBlock.OverflowRectsOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
-| layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | formalized | `TestsBlock.SetTextFieldIntrinsicInlineSize_vectors`, `BlockLength.textFieldIntrinsicInlineSize_fixed` |
 | layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
@@ -628,9 +628,9 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1869 | LayoutBoxTest.AnchorInInlineContainingBlockWithNameConflicts | geometry | formalized | `TestsBlock.AnchorInInlineContainingBlockWithNameConflicts_vectors`, `OutOfFlowAnchor.find_anchor_mismatch` |
 | layout_box_test.cc:1906 | LayoutBoxTest.IsUserScrollable | behaviour | formalized | `TestsBlock.IsUserScrollable_vectors`, `BlockOverflow.user_scrollable_implies_overflow` |
 | layout_box_test.cc:1935 | LayoutBoxTest.IsUserScrollableLayoutView | behaviour | formalized | `TestsBlock.IsUserScrollableLayoutView_vectors`, `BlockOverflow.scrolls_overflow_hidden` |
-| layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | formalized | `TestsBlock.LogicalRectInContainer_vectors`, `BlockWritingMode.logical_rect_in_container_horizontal_tb` |
 | layout_box_test.cc:2006 | LayoutBoxTest.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline | geometry | formalized | `TestsBlock.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline_vectors`, `BlockOverflow.outline_shifts_origin` |
-| layout_box_test.cc:2033 | LayoutBoxTest.ContentBoxFragmentedHtb | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
+| layout_box_test.cc:2033 | LayoutBoxTest.ContentBoxFragmentedHtb | geometry | formalized | `TestsBlock.ContentBoxFragmentedHtb_vectors`, `BlockWritingMode.physicalContentBox_horizontal` |
 | layout_box_test.cc:2045 | LayoutBoxTest.ContentBoxFragmentedVlr | geometry | formalized | `TestsBlock.ContentBoxFragmentedVlr_vectors`, `BlockWritingMode.physicalContentBox_vertical` |
 | layout_box_test.cc:2057 | LayoutBoxTest.ContentBoxFragmentedVrl | geometry | formalized | `TestsBlock.ContentBoxFragmentedVrl_vectors`, `BlockWritingMode.physicalContentBox_vertical` |
 | layout_box_test.cc:2069 | LayoutBoxTest.StitchedBlockSize | geometry | formalized | `TestsBlock.StitchedBlockSize_vectors`, `BlockFlow.fragmentation_conserves_size` |
@@ -638,7 +638,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:2105 | LayoutBoxTest.StitchedSizeWithOverflow | geometry | formalized | `TestsBlock.StitchedSizeWithOverflow_vectors` |
 | layout_box_test.cc:2124 | LayoutBoxTest.StitchedSizeWithOverflowVrl | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
 | layout_box_test.cc:2143 | LayoutBoxTest.StitchedSizeAfterRelayout | geometry | formalized | `TestsBlock.StitchedSizeAfterRelayout_vectors`, `BlockFlow.sliceCount_pos` |
-| layout_box_test.cc:2166 | LayoutBoxTest.StitchedSizeRepeatedWhenPrinting | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
+| layout_box_test.cc:2166 | LayoutBoxTest.StitchedSizeRepeatedWhenPrinting | geometry | formalized | `TestsBlock.StitchedSizeRepeatedWhenPrinting_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2232 | LayoutBoxBackgroundPaintLocationTest.ContentBoxClipZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
 | layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
 | layout_box_test.cc:2259 | LayoutBoxBackgroundPaintLocationTest.NonLocalImage | behaviour | blocked | needs LayoutBox background paint location resolution |
