@@ -1174,6 +1174,15 @@ checks every row against the pinned sources and the Lean modules.
 | forms/fieldset_layout_algorithm_test.cc:1818 | FieldsetLayoutAlgorithmTest.SmallerLegendLargeBorderWithBreak | geometry | blocked | fieldset fragmentation across fragmentainers (legend and content break tokens) not modelled |
 | forms/layout_fieldset_test.cc:14 | LayoutFieldsetTest.AddChildWhitespaceCrash | internal | internal | crash regression in LayoutFieldset::AddChild, no layout rule |
 | forms/layout_fieldset_test.cc:31 | LayoutFieldsetTest.AddChildAnonymousInlineCrash | internal | internal | crash regression in LayoutFieldset::AddChild, no layout rule |
+| geometry/layout_unit_diffuser_test.cc:15 | LayoutUnitDiffuserTest.ThreeBuckets | geometry | formalized | `TestsBlock.ThreeBuckets_vectors`, `BlockDiffuser.share` |
+| geometry/layout_unit_diffuser_test.cc:35 | LayoutUnitDiffuserTest.FourBuckets | geometry | formalized | `TestsBlock.FourBuckets_vectors`, `BlockDiffuser.share` |
+| geometry/layout_unit_diffuser_test.cc:64 | LayoutUnitDiffuserTest.SevenBuckets | geometry | formalized | `TestsBlock.SevenBuckets_vectors`, `BlockDiffuser.share` |
+| geometry/box_edge_test.cc:11 | BoxEdgeTest.Construction | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/box_edge_test.cc:17 | BoxEdgeTest.End | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/box_edge_test.cc:22 | BoxEdgeTest.IsEmpty | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/box_edge_test.cc:28 | BoxEdgeTest.Move | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/box_edge_test.cc:39 | BoxEdgeTest.Equality | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/box_edge_test.cc:47 | BoxEdgeTest.MathOperators | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
 
 
 
@@ -1226,6 +1235,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockWritingModeConverter.toLogical_toPhysical` / `toPhysical_toLogical`: offset conversion is a bijection for every writing mode, direction and size (CSS Writing Modes 4 §6).
 - `BlockBoxSides.toLogical_inline_or`: physical-to-logical side conversion keeps an axis's presence (CSS Writing Modes 4 §6.2).
 - `BlockFieldset.legend_above_anon`: the rendered legend never overlaps the fieldset's anonymous content box in the block axis (HTML §15.3.13).
+- `BlockDiffuser.given_all`: spreading a total over n buckets hands out exactly the total (no CSS text; browser rounding rule read from tests).
 
 ## Merge notes
 
