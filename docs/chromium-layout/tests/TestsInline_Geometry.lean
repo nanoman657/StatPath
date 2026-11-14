@@ -51,6 +51,48 @@ theorem axis_toLogicalAxes :
     (toLogicalAxes .vertical .verticalRl = .inline) := by
   decide
 
+/-- Test `AxisTest, LogicalAxesOperators` (`geometry/axis_test.cc:72`).
+    Bitwise boolean operations on LogicalAxes. -/
+theorem axis_logicalAxesOperators :
+    (LogicalAxes.none ||| LogicalAxes.none = LogicalAxes.none) ∧
+    (LogicalAxes.none ||| LogicalAxes.inline = LogicalAxes.inline) ∧
+    (LogicalAxes.inline ||| LogicalAxes.block = LogicalAxes.both) ∧
+    (LogicalAxes.none ||| LogicalAxes.inline ||| LogicalAxes.block = LogicalAxes.both) ∧
+    (LogicalAxes.both &&& LogicalAxes.none = LogicalAxes.none) ∧
+    (LogicalAxes.inline &&& LogicalAxes.inline = LogicalAxes.inline) ∧
+    (LogicalAxes.both &&& LogicalAxes.inline = LogicalAxes.inline) ∧
+    (LogicalAxes.block &&& LogicalAxes.inline = LogicalAxes.none) ∧
+    (LogicalAxes.none ^^^ LogicalAxes.none = LogicalAxes.none) ∧
+    (LogicalAxes.both ^^^ LogicalAxes.both = LogicalAxes.none) ∧
+    (LogicalAxes.inline ^^^ LogicalAxes.block = LogicalAxes.both) ∧
+    (LogicalAxes.both ^^^ LogicalAxes.inline = LogicalAxes.block) ∧
+    (LogicalAxes.none - LogicalAxes.none = LogicalAxes.none) ∧
+    (LogicalAxes.inline - LogicalAxes.both = LogicalAxes.none) ∧
+    (LogicalAxes.both - LogicalAxes.block = LogicalAxes.inline) ∧
+    (LogicalAxes.inline - LogicalAxes.block = LogicalAxes.inline) := by
+  decide
+
+/-- Test `AxisTest, PhysicalAxesOperators` (`geometry/axis_test.cc:138`).
+    Bitwise boolean operations on PhysicalAxes. -/
+theorem axis_physicalAxesOperators :
+    (PhysicalAxes.none ||| PhysicalAxes.none = PhysicalAxes.none) ∧
+    (PhysicalAxes.none ||| PhysicalAxes.horizontal = PhysicalAxes.horizontal) ∧
+    (PhysicalAxes.horizontal ||| PhysicalAxes.vertical = PhysicalAxes.both) ∧
+    (PhysicalAxes.none ||| PhysicalAxes.horizontal ||| PhysicalAxes.vertical = PhysicalAxes.both) ∧
+    (PhysicalAxes.both &&& PhysicalAxes.none = PhysicalAxes.none) ∧
+    (PhysicalAxes.horizontal &&& PhysicalAxes.horizontal = PhysicalAxes.horizontal) ∧
+    (PhysicalAxes.both &&& PhysicalAxes.horizontal = PhysicalAxes.horizontal) ∧
+    (PhysicalAxes.vertical &&& PhysicalAxes.horizontal = PhysicalAxes.none) ∧
+    (PhysicalAxes.none ^^^ PhysicalAxes.none = PhysicalAxes.none) ∧
+    (PhysicalAxes.both ^^^ PhysicalAxes.both = PhysicalAxes.none) ∧
+    (PhysicalAxes.horizontal ^^^ PhysicalAxes.vertical = PhysicalAxes.both) ∧
+    (PhysicalAxes.both ^^^ PhysicalAxes.horizontal = PhysicalAxes.vertical) ∧
+    (PhysicalAxes.none - PhysicalAxes.none = PhysicalAxes.none) ∧
+    (PhysicalAxes.horizontal - PhysicalAxes.both = PhysicalAxes.none) ∧
+    (PhysicalAxes.both - PhysicalAxes.vertical = PhysicalAxes.horizontal) ∧
+    (PhysicalAxes.horizontal - PhysicalAxes.vertical = PhysicalAxes.horizontal) := by
+  decide
+
 /-! ## 2. Box Sides Tests (`geometry/box_sides_test.cc`) -/
 
 /-- Test `GeometryUnitsTest, LogicalBoxSidesToLineLogical` (`geometry/box_sides_test.cc:14`). -/
@@ -126,6 +168,15 @@ theorem boxStrut_convertLogicalToPhysical :
     (physicalStrutToLogical (logicalStrutToPhysical l .verticalLr .rtl) .verticalLr .rtl = l) ∧
     (physicalStrutToLogical (logicalStrutToPhysical l .verticalRl .ltr) .verticalRl .ltr = l) ∧
     (physicalStrutToLogical (logicalStrutToPhysical l .verticalRl .rtl) .verticalRl .rtl = l) := by
+  decide
+
+/-- Test `BoxStrutTest, Conversions` (`geometry/box_strut_test.cc:89`).
+    CSS Writing Modes 3 §3.1: Logical-to-physical and physical-to-logical strut roundtrip under sideways writing modes. -/
+theorem boxStrut_conversions_sideways :
+    let l : BoxStrut := { inlineStart := 5, inlineEnd := 10, blockStart := 15, blockEnd := 20 }
+    (physicalStrutToLogical (logicalStrutToPhysical l .sidewaysRl .rtl) .sidewaysRl .rtl = l) ∧
+    (physicalStrutToLogical (logicalStrutToPhysical l .sidewaysLr .ltr) .sidewaysLr .ltr = l) ∧
+    (physicalStrutToLogical (logicalStrutToPhysical l .sidewaysLr .rtl) .sidewaysLr .rtl = l) := by
   decide
 
 /-- Test `PhysicalBoxStrutTest, Unite` (`geometry/box_strut_test.cc:114`). -/

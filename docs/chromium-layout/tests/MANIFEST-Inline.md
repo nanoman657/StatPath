@@ -642,8 +642,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | list/list_marker_test.cc:335 | WidthOfSymbolForFontSizeZero | geometry | formalized | `listMarker_widthOfSymbolForFontSizeZero` | CSS Lists 3 §3: Zero font size produces zero width symbol marker |
 | list/list_marker_test.cc:349 | InlineMarginsForOutside | geometry | blocked | - | Blocked: model lacks ListMarker::InlineMarginsForOutside |
 | geometry/axis_test.cc:14 | StreamOperators | internal | internal | - | Stream operator debugging output |
-| geometry/axis_test.cc:72 | LogicalAxesOperators | geometry | blocked | - | Blocked: model lacks bitwise enum operators for LogicalAxes |
-| geometry/axis_test.cc:138 | PhysicalAxesOperators | geometry | blocked | - | Blocked: model lacks bitwise enum operators for PhysicalAxes |
+| geometry/axis_test.cc:72 | LogicalAxesOperators | geometry | formalized | `axis_logicalAxesOperators` | Bitwise boolean operations on LogicalAxes |
+| geometry/axis_test.cc:138 | PhysicalAxesOperators | geometry | formalized | `axis_physicalAxesOperators` | Bitwise boolean operations on PhysicalAxes |
 | geometry/axis_test.cc:213 | ToPhysicalAxes | geometry | formalized | `axis_toPhysicalAxes` | Converts logical axes to physical axes under horizontal and vertical writing modes |
 | geometry/axis_test.cc:239 | ToLogicalAxes | geometry | formalized | `axis_toLogicalAxes` | Converts physical axes to logical axes under horizontal and vertical writing modes |
 | geometry/box_edge_test.cc:10 | Construction | geometry | formalized | `boxEdge_properties` | Constructs BoxEdge with offset and size |
@@ -656,7 +656,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/box_sides_test.cc:33 | PhysicalBoxSidesToLogical | geometry | formalized | `boxSides_physicalToLogical` | Converts physical box sides to logical box sides across writing modes and directions |
 | geometry/box_strut_test.cc:17 | ConvertPhysicalStrutToLogical | geometry | formalized | `boxStrut_convertPhysicalToLogical` | Converts physical box strut to logical box strut across writing modes and directions |
 | geometry/box_strut_test.cc:52 | ConvertLogicalStrutToPhysical | geometry | formalized | `boxStrut_convertLogicalToPhysical` | Roundtrip conversion between logical and physical box struts |
-| geometry/box_strut_test.cc:89 | Constructors | geometry | blocked | - | Blocked: model lacks 64-bit saturated LayoutUnit arithmetic |
+| geometry/box_strut_test.cc:89 | Constructors | geometry | formalized | `boxStrut_conversions_sideways` | CSS Writing Modes 3 §3.1: Logical-to-physical and physical-to-logical strut roundtrip under sideways writing modes |
 | geometry/box_strut_test.cc:99 | Enclosing | geometry | blocked | - | Blocked: model lacks floating point OutsetsF conversions |
 | geometry/box_strut_test.cc:114 | Unite | geometry | formalized | `boxStrut_unite` | Unites two physical box struts taking maximum along each edge |
 | geometry/layout_unit_diffuser_test.cc:17 | ThreeBuckets | geometry | blocked | - | Blocked: model lacks fractional LayoutUnit division remainder |

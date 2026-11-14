@@ -81,6 +81,88 @@ def toLogicalAxes (axes : PhysicalAxes) (wm : WritingMode) : LogicalAxes :=
     | .vertical => .inline
     | .both => .both
 
+/-! ## 1b. Axes Bitwise Operators (`geometry/axis.h`) -/
+
+def LogicalAxes.hasInline (a : LogicalAxes) : Bool :=
+  a == .inline || a == .both
+
+def LogicalAxes.hasBlock (a : LogicalAxes) : Bool :=
+  a == .block || a == .both
+
+def LogicalAxes.fromBools (i b : Bool) : LogicalAxes :=
+  match i, b with
+  | false, false => .none
+  | true, false => .inline
+  | false, true => .block
+  | true, true => .both
+
+def LogicalAxes.or (a1 a2 : LogicalAxes) : LogicalAxes :=
+  LogicalAxes.fromBools (a1.hasInline || a2.hasInline) (a1.hasBlock || a2.hasBlock)
+
+def LogicalAxes.and (a1 a2 : LogicalAxes) : LogicalAxes :=
+  LogicalAxes.fromBools (a1.hasInline && a2.hasInline) (a1.hasBlock && a2.hasBlock)
+
+def LogicalAxes.xor (a1 a2 : LogicalAxes) : LogicalAxes :=
+  LogicalAxes.fromBools (a1.hasInline != a2.hasInline) (a1.hasBlock != a2.hasBlock)
+
+def LogicalAxes.sub (a1 a2 : LogicalAxes) : LogicalAxes :=
+  LogicalAxes.fromBools (a1.hasInline && !a2.hasInline) (a1.hasBlock && !a2.hasBlock)
+
+instance : HOr LogicalAxes LogicalAxes LogicalAxes where hOr := LogicalAxes.or
+instance : HAnd LogicalAxes LogicalAxes LogicalAxes where hAnd := LogicalAxes.and
+instance : HXor LogicalAxes LogicalAxes LogicalAxes where hXor := LogicalAxes.xor
+instance : HSub LogicalAxes LogicalAxes LogicalAxes where hSub := LogicalAxes.sub
+
+def PhysicalAxes.hasHorizontal (a : PhysicalAxes) : Bool :=
+  a == .horizontal || a == .both
+
+def PhysicalAxes.hasVertical (a : PhysicalAxes) : Bool :=
+  a == .vertical || a == .both
+
+def PhysicalAxes.fromBools (h v : Bool) : PhysicalAxes :=
+  match h, v with
+  | false, false => .none
+  | true, false => .horizontal
+  | false, true => .vertical
+  | true, true => .both
+
+def PhysicalAxes.or (a1 a2 : PhysicalAxes) : PhysicalAxes :=
+  PhysicalAxes.fromBools (a1.hasHorizontal || a2.hasHorizontal) (a1.hasVertical || a2.hasVertical)
+
+def PhysicalAxes.and (a1 a2 : PhysicalAxes) : PhysicalAxes :=
+  PhysicalAxes.fromBools (a1.hasHorizontal && a2.hasHorizontal) (a1.hasVertical && a2.hasVertical)
+
+def PhysicalAxes.xor (a1 a2 : PhysicalAxes) : PhysicalAxes :=
+  PhysicalAxes.fromBools (a1.hasHorizontal != a2.hasHorizontal) (a1.hasVertical != a2.hasVertical)
+
+def PhysicalAxes.sub (a1 a2 : PhysicalAxes) : PhysicalAxes :=
+  PhysicalAxes.fromBools (a1.hasHorizontal && !a2.hasHorizontal) (a1.hasVertical && !a2.hasVertical)
+
+instance : HOr PhysicalAxes PhysicalAxes PhysicalAxes where hOr := PhysicalAxes.or
+instance : HAnd PhysicalAxes PhysicalAxes PhysicalAxes where hAnd := PhysicalAxes.and
+instance : HXor PhysicalAxes PhysicalAxes PhysicalAxes where hXor := PhysicalAxes.xor
+instance : HSub PhysicalAxes PhysicalAxes PhysicalAxes where hSub := PhysicalAxes.sub
+
+/-- General Law: LogicalAxes and operation distributes over or. -/
+theorem logicalAxes_and_distrib_or (a b c : LogicalAxes) :
+    a &&& (b ||| c) = (a &&& b) ||| (a &&& c) := by
+  cases a <;> cases b <;> cases c <;> rfl
+
+/-- General Law: PhysicalAxes and operation distributes over or. -/
+theorem physicalAxes_and_distrib_or (a b c : PhysicalAxes) :
+    a &&& (b ||| c) = (a &&& b) ||| (a &&& c) := by
+  cases a <;> cases b <;> cases c <;> rfl
+
+/-- General Law: LogicalAxes difference with itself is none. -/
+theorem logicalAxes_sub_self (a : LogicalAxes) :
+    a - a = .none := by
+  cases a <;> rfl
+
+/-- General Law: PhysicalAxes difference with itself is none. -/
+theorem physicalAxes_sub_self (a : PhysicalAxes) :
+    a - a = .none := by
+  cases a <;> rfl
+
 /-! ## 2. Box Sides Model (`geometry/box_sides.h`) -/
 
 structure LogicalBoxSides where
