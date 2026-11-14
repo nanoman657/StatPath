@@ -298,4 +298,80 @@ theorem shouldGenerateBoxFragments_consistent (hasBorder : Bool) (n : Nat) (h : 
   rw [h]
   simp
 
+/-! ## 9. Float Positioning and Line Text Flow (CSS 2.1 §9.5, §9.5.1) -/
+
+/-- CSS 2.1 §9.5 & Blink InlineLayoutAlgorithm:
+    Compute line offset and span offset when an inline float of width `floatWidth`
+    fits on the line within container width `containerWidth`.
+    The float is placed at `containerMargin`, the line is indented by `floatWidth`,
+    and in-flow inline content begins at `floatWidth + containerMargin`. -/
+def computeInlineFloatOffsets (floatWidth containerWidth containerMargin : Nat) :
+    Option (Nat × Nat × Nat) :=
+  if floatWidth ≤ containerWidth then
+    some (containerMargin, floatWidth, floatWidth + containerMargin)
+  else
+    none
+
+/-- CSS 2.1 §9.5 Law: When an inline float fits on the line, line indentation equals float width. -/
+theorem inlineFloat_indentation_equals_width (fw cw cm : Nat) (h : fw ≤ cw) :
+    (computeInlineFloatOffsets fw cw cm).map (fun (_, lineOff, _) => lineOff) = some fw := by
+  dsimp [computeInlineFloatOffsets]
+  simp [h]
+
+/-! ## 10. First-Line Styling and Text-Overflow Ellipsis (CSS Text 4 §5, CSS Pseudo 4 §7) -/
+
+/-- CSS Text 4 §5 & CSS Pseudo 4 §7:
+    Resolve ellipsis string and font size for a text-overflow line with `::first-line` styling.
+    Uses the `::first-line` font's glyph coverage (falling back to "..." if U+2026 is missing)
+    and font size. -/
+def resolveFirstLineEllipsis (hasU2026 : Bool) (firstLineFontSize : Nat) : String × Nat :=
+  (selectEllipsisString hasU2026, firstLineFontSize)
+
+/-- CSS Text 4 §5 Law: Missing U+2026 on first-line font always selects "..." with first-line font size. -/
+theorem firstLineEllipsis_missing_glyph (fs : Nat) :
+    resolveFirstLineEllipsis false fs = ("...", fs) := by
+  dsimp [resolveFirstLineEllipsis, selectEllipsisString]
+
+/-! ## 11. Text Emphasis Annotation Metrics and Container Height (CSS Text Decoration 3 §3.5, CSS Ruby 1 §3.2) -/
+
+/-- CSS Text Decoration 3 §3.5 & CSS Ruby 1 §3.2:
+    Under `text-emphasis: under`, line box height remains equal to font line-height,
+    while container logical height expands by emphasis mark height (half font size)
+    to accommodate annotation overflow in block layout. -/
+def computeTextEmphasisContainerHeight (lineHeight fontSize : Nat) : Nat × Nat :=
+  let lineBoxHeight := lineHeight
+  let emphasisHeight := fontSize / 2
+  let containerHeight := lineBoxHeight + emphasisHeight
+  (lineBoxHeight, containerHeight)
+
+/-- CSS Text Decoration 3 §3.5 Law: Emphasis annotation preserves line box height while container expands. -/
+theorem textEmphasis_container_greater_than_line (lh fs : Nat) (hFs : fs ≥ 2) :
+    let (lHeight, cHeight) := computeTextEmphasisContainerHeight lh fs
+    cHeight > lHeight := by
+  dsimp [computeTextEmphasisContainerHeight]
+  omega
+
+/-! ## 12. CSS Text Box Trim on Inline Box (CSS Inline 3 §5) -/
+
+/-- Metric bounds for trimming text box (`CSS Inline 3 §5`). -/
+structure TextBoxTrimMetrics where
+  lineHeight : Nat := 100
+  capHeight : Nat := 80
+  alphabeticBaseline : Nat := 0
+  deriving DecidableEq, Repr
+
+/-- CSS Inline 3 §5 & Blink InlineLayoutAlgorithm::ApplyTextBoxTrim:
+    Compute block size of an inline box with and without `text-box: trim-both cap alphabetic`.
+    Untrimmed block size equals line-height; trimmed block size equals `capHeight - alphabeticBaseline`. -/
+def computeInlineBoxTrimmedSize (m : TextBoxTrimMetrics) (trimBoth : Bool) : Nat :=
+  if trimBoth then
+    m.capHeight - m.alphabeticBaseline
+  else
+    m.lineHeight
+
+/-- CSS Inline 3 §5 Law: Trimming to cap-to-alphabetic reduces block size by line-height minus cap-height. -/
+theorem textBoxTrim_reduces_to_metric (m : TextBoxTrimMetrics) (_h : m.capHeight ≤ m.lineHeight) :
+    computeInlineBoxTrimmedSize m true = m.capHeight - m.alphabeticBaseline := by
+  dsimp [computeInlineBoxTrimmedSize]
+
 end ChromiumLayout

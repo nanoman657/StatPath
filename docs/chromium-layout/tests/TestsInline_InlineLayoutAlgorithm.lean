@@ -238,4 +238,32 @@ theorem inlineLayoutAlgorithm_boxForEndMargin :
     (fragmentsGenerated[1]! = true) := by
   decide
 
+/-- Test `InlineLayoutAlgorithmTest.TextFloatsAroundInlineFloatThatFitsOnLine` (`inline/inline_layout_algorithm_test.cc:519`).
+    CSS 2.1 §9.5: Inline float that fits on line indents the line by float width and offsets span. -/
+theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatFitsOnLine :
+    computeInlineFloatOffsets 30 200 8 = some (8, 30, 38) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.EllipsisFallbackToDotsFirstLine` (`inline/inline_layout_algorithm_test.cc:1129`).
+    CSS Text 4 §5: First-line font lacking U+2026 falls back to "..." with first-line font size. -/
+theorem inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine :
+    resolveFirstLineEllipsis false 16 = ("...", 16) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.TextEmphasisAsRuby` (`inline/inline_layout_algorithm_test.cc:1175`).
+    CSS Text Decoration 3 §3.5 & CSS Ruby 1 §3.2:
+    Text emphasis preserves 20px line box height while container expands beyond 20px. -/
+theorem inlineLayoutAlgorithm_textEmphasisAsRuby :
+    let (lineHeight, containerHeight) := computeTextEmphasisContainerHeight 20 20
+    (lineHeight = 20) ∧ (containerHeight > 20) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.TextBoxTrimOnInlineBox` (`inline/inline_layout_algorithm_test.cc:1406`).
+    CSS Inline 3 §5: Untrimmed block size is 100px; text-box-trim trims block size to cap-height (80px). -/
+theorem inlineLayoutAlgorithm_textBoxTrimOnInlineBox :
+    let untrimmed := computeInlineBoxTrimmedSize {} false
+    let trimmed := computeInlineBoxTrimmedSize {} true
+    (untrimmed = 100) ∧ (trimmed = 80) := by
+  decide
+
 end ChromiumLayout.TestsInline
