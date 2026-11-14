@@ -56,6 +56,8 @@ structure FlexContainer where
   paddingCrossEnd : Nat := 0
   paddingMainStart : Nat := 0
   paddingMainEnd : Nat := 0
+  alignContentOffset : Nat := 0
+  lineCrossOverride : Option Nat := none
   items : List FlexItem := []
   deriving Inhabited, DecidableEq, Repr
 
@@ -150,9 +152,12 @@ def resolveFlexLineMainSizes (innerMain : Option Nat) (gap : Nat) (items : List 
 
 /-- Process a single flex line into positioned items. CSS Flexbox 1 §9.4, §9.5, §9.6. -/
 def layoutFlexLine (isRow : Bool) (innerMain : Option Nat) (gapMain : Nat) (bpMainStart : Nat)
+                   (lineCrossOverride : Option Nat)
                    (lineIdx : Nat) (currCross : Nat) (lItems : List FlexItem) : LaidOutLine × Nat :=
   let sized := resolveFlexLineMainSizes innerMain gapMain lItems
-  let lineCross := (sized.map (fun (it, _) => it.marginCrossStart + it.crossSize + it.marginCrossEnd)).foldl max 0
+  let lineCross := match lineCrossOverride with
+    | some sz => sz
+    | none => (sized.map (fun (it, _) => it.marginCrossStart + it.crossSize + it.marginCrossEnd)).foldl max 0
   let (laidItems, lineMainUsed) := sized.foldl (fun (pair : List LaidOutItem × Nat) (it, itMain) =>
     let (itAcc, curPos) := pair
     let itCross := if it.crossSize > 0 then it.crossSize else lineCross
@@ -173,7 +178,7 @@ def layoutFlex (c : FlexContainer) : FlexResult :=
   let innerCross := c.crossSize
   let linesRaw := collectFlexLines c.wrap innerMain c.gapMain c.items
   let bpMainStart := c.borderMainStart + c.paddingMainStart
-  let bpCrossStart := c.borderCrossStart + c.paddingCrossStart
+  let bpCrossStart := c.borderCrossStart + c.paddingCrossStart + c.alignContentOffset
   let bpMainEnd := c.borderMainEnd + c.paddingMainEnd
   let bpCrossEnd := c.borderCrossEnd + c.paddingCrossEnd
 
@@ -182,7 +187,7 @@ def layoutFlex (c : FlexContainer) : FlexResult :=
     match lines with
     | [] => (acc.reverse, currCross, maxMainUsed)
     | lItems :: rest =>
-      let (laidLine, lineMain) := layoutFlexLine isRow innerMain c.gapMain bpMainStart lineIdx currCross lItems
+      let (laidLine, lineMain) := layoutFlexLine isRow innerMain c.gapMain bpMainStart c.lineCrossOverride lineIdx currCross lItems
       processLines rest (lineIdx + 1) (currCross + laidLine.crossSize + c.gapCross) (max maxMainUsed lineMain) (laidLine :: acc)
 
   let (laidLines, totalCrossUsed, maxMainUsed) := processLines linesRaw 0 bpCrossStart 0 []
@@ -221,6 +226,147 @@ theorem flex_empty_container_lines (c : FlexContainer) (h : c.items = []) :
     rfl
   rw [hlines]
   rfl
+
+/-- Edge intersection state for a cross gap: whether it meets the container edges.
+    CSS Gap Decorations Module Level 1 §3.3. -/
+inductive EdgeIntersectionState where
+  | none
+  | start
+  | endEdge
+  | both
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Represents a main-axis gap between flex lines or tracks.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2. -/
+structure MainGap where
+  offset : Nat
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Represents a cross-axis gap between items in a flex line.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3. -/
+structure CrossGap where
+  inlineOffset : Nat
+  blockOffset : Nat
+  edgeState : EdgeIntersectionState := .none
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Full gap geometry for a flex container.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3. -/
+structure GapGeometry where
+  mainGaps : List MainGap := []
+  crossGaps : List CrossGap := []
+  contentInlineStart : Nat := 0
+  contentInlineEnd : Nat := 0
+  contentBlockStart : Nat := 0
+  contentBlockEnd : Nat := 0
+  blockGapSize : Nat := 0
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Compute main gaps between adjacent flex lines.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2. -/
+def computeMainGaps (gapBetweenLines : Nat) (lines : List LaidOutLine) : List MainGap :=
+  let rec loop (lines : List LaidOutLine) : List MainGap :=
+    match lines with
+    | [] => []
+    | [_] => []
+    | l1 :: l2 :: rest =>
+      let gapOffset := l1.crossPos + l1.crossSize + gapBetweenLines / 2
+      ⟨gapOffset⟩ :: loop (l2 :: rest)
+  loop lines
+
+/-- Compute cross gaps between items in flex lines.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3. -/
+def computeCrossGaps (isColumn : Bool) (gapBetweenItems : Nat) (gapBetweenLines : Nat)
+    (lines : List LaidOutLine) : List CrossGap :=
+  let totalLines := lines.length
+  let isSingleLine := totalLines ≤ 1
+  let rec processLine (lineIdx : Nat) (l : LaidOutLine) : List CrossGap :=
+    let items := l.items
+    let isFirstLine := lineIdx == 0
+    let isLastLine := lineIdx == totalLines - 1
+    let edgeState :=
+      if isSingleLine then EdgeIntersectionState.both
+      else if isFirstLine then EdgeIntersectionState.start
+      else if isLastLine then EdgeIntersectionState.endEdge
+      else EdgeIntersectionState.none
+    let crossOffset :=
+      if isSingleLine || isFirstLine then l.crossPos
+      else l.crossPos - gapBetweenLines / 2
+    let rec processItems (its : List LaidOutItem) : List CrossGap :=
+      match its with
+      | [] => []
+      | [_] => []
+      | _ :: it2 :: rest =>
+        let mainPos := if isColumn then it2.y else it2.x
+        let mainOffset := mainPos - gapBetweenItems / 2
+        let cg := if isColumn then
+          CrossGap.mk crossOffset mainOffset edgeState
+        else
+          CrossGap.mk mainOffset crossOffset edgeState
+        cg :: processItems (it2 :: rest)
+    processItems items
+  let rec loop (idx : Nat) (lines : List LaidOutLine) : List CrossGap :=
+    match lines with
+    | [] => []
+    | l :: rest => processLine idx l ++ loop (idx + 1) rest
+  loop 0 lines
+
+/-- Compute full gap geometry for a flex container.
+    CSS Box Alignment Module Level 3 §8, CSS Gap Decorations Module Level 1 §3,
+    CSS Flexible Box Layout Module Level 1 §5, §8, §9. -/
+def computeGapGeometry (c : FlexContainer) (lines : List LaidOutLine) : GapGeometry :=
+  let isColumn := match c.direction with | .column | .columnReverse => true | _ => false
+  let gapBetweenItems := c.gapMain
+  let gapBetweenLines := c.gapCross
+  let mainGaps := computeMainGaps gapBetweenLines lines
+  let crossGaps := computeCrossGaps isColumn gapBetweenItems gapBetweenLines lines
+  let bpMainStart := c.borderMainStart + c.paddingMainStart
+  let bpCrossStart := c.borderCrossStart + c.paddingCrossStart + c.alignContentOffset
+  let contentMainStart := bpMainStart
+  let contentCrossStart := match lines with | [] => bpCrossStart | l :: _ => l.crossPos
+  let contentCrossEnd := match lines with
+    | [] => bpCrossStart
+    | _ =>
+      let lastLine := lines.getLast!
+      lastLine.crossPos + lastLine.crossSize
+  let innerMain := match c.mainSize with | some m => m | none => 0
+  let containerMainEnd := bpMainStart + innerMain
+  let lastCrossGapMain := match crossGaps.reverse with
+    | [] => 0
+    | cg :: _ => if isColumn then cg.blockOffset else cg.inlineOffset
+  let contentMainEnd := Nat.max containerMainEnd lastCrossGapMain
+  let (cInlineStart, cInlineEnd, cBlockStart, cBlockEnd) :=
+    if isColumn then
+      (contentCrossStart, contentCrossEnd, contentMainStart, contentMainEnd)
+    else
+      (contentMainStart, contentMainEnd, contentCrossStart, contentCrossEnd)
+  let blockGap := if isColumn then c.gapMain else c.gapCross
+  ⟨mainGaps, crossGaps, cInlineStart, cInlineEnd, cBlockStart, cBlockEnd, blockGap⟩
+
+/-- Law: An empty list of lines produces no main gaps.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2. -/
+theorem compute_main_gaps_empty (gap : Nat) :
+    computeMainGaps gap [] = [] := by
+  rfl
+
+/-- Law: A single flex line produces no main gaps between lines.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2. -/
+theorem compute_main_gaps_single (gap : Nat) (line : LaidOutLine) :
+    computeMainGaps gap [line] = [] := by
+  rfl
+
+/-- Law: An empty list of lines produces no cross gaps.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.3. -/
+theorem compute_cross_gaps_empty (isCol : Bool) (g1 g2 : Nat) :
+    computeCrossGaps isCol g1 g2 [] = [] := by
+  rfl
+
+/-- Law: Computing gap geometry with no lines produces no main or cross gaps.
+    CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3. -/
+theorem compute_gap_geometry_empty (c : FlexContainer) :
+    (computeGapGeometry c []).mainGaps = [] ∧
+    (computeGapGeometry c []).crossGaps = [] := by
+  exact ⟨rfl, rfl⟩
 
 end FlexLayout
 end ChromiumLayout

@@ -193,5 +193,262 @@ theorem ReplacedAspectRatioPrecision_vectors :
     res.lines[0]!.items[0]!.w = 29 ∧ res.lines[0]!.items[0]!.h = 22 := by
   decide
 
+-- flex/flex_layout_algorithm_test.cc:72: GapDecorationsOneLine
+-- Single line flex container produces no main gaps and both-edge cross gaps.
+-- CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3.
+theorem GapDecorationsOneLine_vectors :
+    let c : FlexContainer := {
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 170,
+      gapMain := 20,
+      gapCross := 10,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50 },
+        { id := 1, mainSize := 100, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [] ∧
+    geom.crossGaps = [⟨62, 2, .both⟩] ∧
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 172 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 52 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:144: GapDecorationsBasic
+-- Basic multi-line flex container generates main row gaps and edge-classified cross gaps.
+-- CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3.
+theorem GapDecorationsBasic_vectors :
+    let c : FlexContainer := {
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 170,
+      gapMain := 10,
+      gapCross := 10,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50 },
+        { id := 1, mainSize := 50, crossSize := 50 },
+        { id := 2, mainSize := 50, crossSize := 50 },
+        { id := 3, mainSize := 50, crossSize := 50 },
+        { id := 4, mainSize := 50, crossSize := 50 },
+        { id := 5, mainSize := 50, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨57⟩] ∧
+    geom.crossGaps = [
+      ⟨57, 2, .start⟩,
+      ⟨117, 2, .start⟩,
+      ⟨57, 57, .endEdge⟩,
+      ⟨117, 57, .endEdge⟩
+    ] ∧
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 172 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 112 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:219: GapDecorationsContentEndPastContainer
+-- Overflowing items extend contentInlineEnd past container end.
+-- CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2.
+theorem GapDecorationsContentEndPastContainer_vectors :
+    let c : FlexContainer := {
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 200,
+      gapMain := 10,
+      wrap := .nowrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50, shrink := 0 },
+        { id := 1, mainSize := 50, crossSize := 50, shrink := 0 },
+        { id := 2, mainSize := 50, crossSize := 50, shrink := 0 },
+        { id := 3, mainSize := 50, crossSize := 50, shrink := 0 },
+        { id := 4, mainSize := 50, crossSize := 50, shrink := 0 },
+        { id := 5, mainSize := 50, crossSize := 50, shrink := 0 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 297 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 52 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:285: GapDecorationsNonAlignedColumn
+-- Non-aligned column items generate middle-line cross gaps with none edge state.
+-- CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3.
+theorem GapDecorationsNonAlignedColumn_vectors :
+    let c : FlexContainer := {
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 170,
+      gapMain := 10,
+      gapCross := 10,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50 },
+        { id := 1, mainSize := 50, crossSize := 50 },
+        { id := 2, mainSize := 50, crossSize := 50 },
+        { id := 3, mainSize := 100, crossSize := 50 },
+        { id := 4, mainSize := 50, crossSize := 50 },
+        { id := 5, mainSize := 50, crossSize := 50 },
+        { id := 6, mainSize := 50, crossSize := 50 },
+        { id := 7, mainSize := 50, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨57⟩, ⟨117⟩] ∧
+    geom.crossGaps = [
+      ⟨57, 2, .start⟩,
+      ⟨117, 2, .start⟩,
+      ⟨107, 57, .none⟩,
+      ⟨57, 117, .endEdge⟩,
+      ⟨117, 117, .endEdge⟩
+    ] ∧
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 172 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 172 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:370: GapDecorationsNonAlignedColumn2
+-- Multi-line flexbox with single item on final line generates no cross gaps for that line.
+-- CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3.
+theorem GapDecorationsNonAlignedColumn2_vectors :
+    let c : FlexContainer := {
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 170,
+      gapMain := 10,
+      gapCross := 10,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50 },
+        { id := 1, mainSize := 50, crossSize := 50 },
+        { id := 2, mainSize := 50, crossSize := 50 },
+        { id := 3, mainSize := 100, crossSize := 50 },
+        { id := 4, mainSize := 50, crossSize := 50 },
+        { id := 5, mainSize := 160, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨57⟩, ⟨117⟩] ∧
+    geom.crossGaps = [
+      ⟨57, 2, .start⟩,
+      ⟨117, 2, .start⟩,
+      ⟨107, 57, .none⟩
+    ] ∧
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 172 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 172 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:453: GapDecorationsVerticalFlexAlignedCenter
+-- Vertical flex container with align-content: center offsets lines along block axis.
+-- CSS Box Alignment 3 §5.1, §8, CSS Gap Decorations 1 §3.2, §3.3, CSS Writing Modes 3 §7.
+theorem GapDecorationsVerticalFlexAlignedCenter_vectors :
+    let c : FlexContainer := {
+      direction := .row,
+      borderMainStart := 4,
+      borderCrossStart := 2,
+      mainSize := some 300,
+      crossSize := some 300,
+      alignContentOffset := 61,
+      gapMain := 10,
+      gapCross := 30,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 74, crossSize := 74 },
+        { id := 1, mainSize := 74, crossSize := 74 },
+        { id := 2, mainSize := 74, crossSize := 74 },
+        { id := 3, mainSize := 74, crossSize := 74 },
+        { id := 4, mainSize := 74, crossSize := 74 },
+        { id := 5, mainSize := 74, crossSize := 74 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨152⟩] ∧
+    geom.crossGaps = [
+      ⟨83, 63, .start⟩,
+      ⟨167, 63, .start⟩,
+      ⟨83, 152, .endEdge⟩,
+      ⟨167, 152, .endEdge⟩
+    ] ∧
+    geom.contentInlineStart = 4 ∧
+    geom.contentInlineEnd = 304 ∧
+    geom.contentBlockStart = 63 ∧
+    geom.contentBlockEnd = 241 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:708: GapDecorationsColumnFlexDirection
+-- Column flex direction swaps main and cross axes for gap decorations.
+-- CSS Flexible Box Layout Level 1 §5.1, CSS Box Alignment 3 §8, CSS Gap Decorations 1 §3.2, §3.3.
+theorem GapDecorationsColumnFlexDirection_vectors :
+    let c : FlexContainer := {
+      direction := .column,
+      borderMainStart := 2,
+      borderCrossStart := 2,
+      mainSize := some 170,
+      crossSize := some 120,
+      gapMain := 10,
+      gapCross := 20,
+      wrap := .wrap,
+      items := [
+        { id := 0, mainSize := 50, crossSize := 50 },
+        { id := 1, mainSize := 50, crossSize := 50 },
+        { id := 2, mainSize := 50, crossSize := 50 },
+        { id := 3, mainSize := 50, crossSize := 50 },
+        { id := 4, mainSize := 50, crossSize := 50 },
+        { id := 5, mainSize := 50, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨62⟩] ∧
+    geom.crossGaps = [
+      ⟨2, 57, .start⟩,
+      ⟨2, 117, .start⟩,
+      ⟨62, 57, .endEdge⟩,
+      ⟨62, 117, .endEdge⟩
+    ] ∧
+    geom.contentInlineStart = 2 ∧
+    geom.contentInlineEnd = 122 ∧
+    geom.contentBlockStart = 2 ∧
+    geom.contentBlockEnd = 172 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:878: GapDecorationsContentDistributionGapsBetweenLines
+-- Content distribution stretches lines equally, placing main gap at line boundary.
+-- CSS Box Alignment 3 §5.1, §8, CSS Gap Decorations 1 §3.2.
+theorem GapDecorationsContentDistributionGapsBetweenLines_vectors :
+    let c : FlexContainer := {
+      mainSize := some 140,
+      crossSize := some 120,
+      wrap := .wrap,
+      lineCrossOverride := some 60,
+      items := [
+        { id := 0, mainSize := 70, crossSize := 50 },
+        { id := 1, mainSize := 70, crossSize := 50 },
+        { id := 2, mainSize := 70, crossSize := 50 },
+        { id := 3, mainSize := 70, crossSize := 50 }
+      ]
+    }
+    let res := layoutFlex c
+    let geom := computeGapGeometry c res.lines
+    geom.mainGaps = [⟨60⟩] ∧
+    geom.blockGapSize = 0 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

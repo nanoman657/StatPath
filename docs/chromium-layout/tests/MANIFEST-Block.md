@@ -368,17 +368,17 @@ checks every row against the pinned sources and the Lean modules.
 
 | flex/flex_layout_algorithm_test.cc:42 | FlexLayoutAlgorithmTest.DetailsFlexDoesntCrash | internal | internal | crash regression with details element styled as display:flex |
 | flex/flex_layout_algorithm_test.cc:50 | FlexLayoutAlgorithmTest.ReplacedAspectRatioPrecision | geometry | formalized | `TestsBlock.ReplacedAspectRatioPrecision_vectors` |
-| flex/flex_layout_algorithm_test.cc:72 | FlexLayoutAlgorithmTest.GapDecorationsOneLine | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:144 | FlexLayoutAlgorithmTest.GapDecorationsBasic | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:219 | FlexLayoutAlgorithmTest.GapDecorationsContentEndPastContainer | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:285 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:370 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn2 | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:453 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedCenter | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:72 | FlexLayoutAlgorithmTest.GapDecorationsOneLine | geometry | formalized | `TestsBlock.GapDecorationsOneLine_vectors`, `FlexLayout.compute_main_gaps_single` |
+| flex/flex_layout_algorithm_test.cc:144 | FlexLayoutAlgorithmTest.GapDecorationsBasic | geometry | formalized | `TestsBlock.GapDecorationsBasic_vectors`, `FlexLayout.compute_main_gaps_empty` |
+| flex/flex_layout_algorithm_test.cc:219 | FlexLayoutAlgorithmTest.GapDecorationsContentEndPastContainer | geometry | formalized | `TestsBlock.GapDecorationsContentEndPastContainer_vectors`, `FlexLayout.compute_main_gaps_single` |
+| flex/flex_layout_algorithm_test.cc:285 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn | geometry | formalized | `TestsBlock.GapDecorationsNonAlignedColumn_vectors`, `FlexLayout.compute_cross_gaps_empty` |
+| flex/flex_layout_algorithm_test.cc:370 | FlexLayoutAlgorithmTest.GapDecorationsNonAlignedColumn2 | geometry | formalized | `TestsBlock.GapDecorationsNonAlignedColumn2_vectors`, `FlexLayout.compute_cross_gaps_empty` |
+| flex/flex_layout_algorithm_test.cc:453 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedCenter | geometry | formalized | `TestsBlock.GapDecorationsVerticalFlexAlignedCenter_vectors`, `FlexLayout.compute_main_gaps_empty` |
 | flex/flex_layout_algorithm_test.cc:538 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStart | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
 | flex/flex_layout_algorithm_test.cc:623 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStretch | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:708 | FlexLayoutAlgorithmTest.GapDecorationsColumnFlexDirection | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:708 | FlexLayoutAlgorithmTest.GapDecorationsColumnFlexDirection | geometry | formalized | `TestsBlock.GapDecorationsColumnFlexDirection_vectors`, `FlexLayout.compute_cross_gaps_empty` |
 | flex/flex_layout_algorithm_test.cc:790 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGaps | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
-| flex/flex_layout_algorithm_test.cc:878 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGapsBetweenLines | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:878 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGapsBetweenLines | geometry | formalized | `TestsBlock.GapDecorationsContentDistributionGapsBetweenLines_vectors`, `FlexLayout.compute_main_gaps_empty` |
 | flex/flex_layout_algorithm_test.cc:939 | FlexLayoutAlgorithmTest.DevtoolsBasic | behaviour | formalized | `TestsBlock.DevtoolsBasic_vectors` |
 | flex/flex_layout_algorithm_test.cc:953 | FlexLayoutAlgorithmTest.DevtoolsWrap | behaviour | formalized | `TestsBlock.DevtoolsWrap_vectors` |
 | flex/flex_layout_algorithm_test.cc:968 | FlexLayoutAlgorithmTest.DevtoolsCoordinates | behaviour | formalized | `TestsBlock.DevtoolsCoordinates_vectors` |
