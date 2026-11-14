@@ -97,5 +97,103 @@ theorem cb_interval_top_monotone (t1 t2 p b h : Nat) (isBb : Bool) (ht : t1 ≤ 
   dsimp [containingBlockInterval]
   omega
 
+/-- Physical axes for sticky positioning and scroll container scrolling.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+inductive PhysicalAxes where
+  | none
+  | horizontal
+  | vertical
+  | both
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Consumed and pending axes for a sticky descendant in a scroll container fragment.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+structure StickyAxes where
+  consumed : PhysicalAxes := .none
+  pending : PhysicalAxes := .none
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Whether an axis set includes horizontal. -/
+def hasHorizontal : PhysicalAxes → Bool
+  | .horizontal | .both => true
+  | _ => false
+
+/-- Whether an axis set includes vertical. -/
+def hasVertical : PhysicalAxes → Bool
+  | .vertical | .both => true
+  | _ => false
+
+/-- Intersect two axis sets. -/
+def intersectAxes (a b : PhysicalAxes) : PhysicalAxes :=
+  match hasHorizontal a && hasHorizontal b, hasVertical a && hasVertical b with
+  | true, true => .both
+  | true, false => .horizontal
+  | false, true => .vertical
+  | false, false => .none
+
+/-- Subtract axis set `sub` from `a` (axes in `a` not in `sub`). -/
+def diffAxes (a sub : PhysicalAxes) : PhysicalAxes :=
+  match hasHorizontal a && !hasHorizontal sub, hasVertical a && !hasVertical sub with
+  | true, true => .both
+  | true, false => .horizontal
+  | false, true => .vertical
+  | false, false => .none
+
+/-- A sticky descendant element with its identifier and requested sticky axes.
+    CSS Positioned Layout 3 §2.3. -/
+structure StickyItem where
+  id : String
+  axes : PhysicalAxes
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Entry in a scroll container's sticky descendants table. -/
+structure StickyDescendantEntry where
+  id : String
+  axes : StickyAxes
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Resolve sticky descendants for a scroll container given its scrolling axes.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+def resolveStickyDescendants (scrollerAxes : PhysicalAxes) (items : List StickyItem) :
+    List StickyDescendantEntry :=
+  items.map (fun it =>
+    let consumed := intersectAxes it.axes scrollerAxes
+    let pending := diffAxes it.axes scrollerAxes
+    ⟨it.id, ⟨consumed, pending⟩⟩)
+
+/-- Propagate pending sticky descendants from an inner scroller to an outer scroller.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+def propagatePendingSticky (innerEntries : List StickyDescendantEntry) : List StickyItem :=
+  innerEntries.filterMap (fun e =>
+    if e.axes.pending ≠ .none then
+      some ⟨e.id, e.axes.pending⟩
+    else
+      none)
+
+/-- Law: Subtracting an axis set from itself yields no pending axes.
+    CSS Positioned Layout 3 §2.3. -/
+theorem diff_axes_self (a : PhysicalAxes) : diffAxes a a = .none := by
+  cases a <;> rfl
+
+/-- Law: Intersecting with both axes is the identity.
+    CSS Positioned Layout 3 §2.3. -/
+theorem intersect_axes_both (a : PhysicalAxes) : intersectAxes a .both = a := by
+  cases a <;> rfl
+
+/-- Law: Intersecting physical axes is commutative.
+    CSS Positioned Layout 3 §2.3. -/
+theorem intersect_axes_comm (a b : PhysicalAxes) : intersectAxes a b = intersectAxes b a := by
+  cases a <;> cases b <;> rfl
+
+/-- Law: Resolving an empty list of sticky items yields no sticky descendants.
+    CSS Positioned Layout 3 §2.3. -/
+theorem resolve_sticky_descendants_empty (ax : PhysicalAxes) :
+    resolveStickyDescendants ax [] = [] := rfl
+
+/-- Law: Propagating an empty list of sticky entries yields no pending items.
+    CSS Positioned Layout 3 §2.3. -/
+theorem propagate_pending_sticky_empty :
+    propagatePendingSticky [] = [] := rfl
+
 end BlockSticky
 end ChromiumLayout

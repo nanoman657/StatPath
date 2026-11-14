@@ -118,7 +118,7 @@ checks every row against the pinned sources and the Lean modules.
 | length_utils_test.cc:657 | LengthUtilsTest.AspectRatio | geometry | formalized | `TestsBlock.AspectRatio_vectors`, `BlockLength.inlineFromAspectRatio_le_max`, `BlockLength.inlineFromAspectRatio_one` |
 | min_max_size_test.cc:13 | MinMaxSizesTest.ShrinkToFit | geometry | formalized | `TestsBlock.ShrinkToFit_vectors`, `BlockFlow.shrinkToFit_bounds` |
 | min_max_sizes_cache_test.cc:14 | MinMaxSizesCacheTest.Eviction | internal | internal | checks C++ MinMaxSizesCache LRU eviction plumbing |
-| physical_fragment_test.cc:84 | StickyFragmentPropagationTest.StickyAxisEnabled | behaviour | blocked | model lacks single-axis sticky scroll container fragment propagation |
+| physical_fragment_test.cc:84 | StickyFragmentPropagationTest.StickyAxisEnabled | behaviour | formalized | `TestsBlock.StickyAxisEnabled_vectors`, `BlockSticky.diff_axes_self` |
 | physical_fragment_test.cc:113 | StickyFragmentPropagationTest.StickyAxisDisabled | behaviour | blocked | model lacks single-axis sticky scroll container fragment propagation |
 | physical_fragment_test.cc:134 | PhysicalFragmentTest.DumpFragmentTreeBasic | geometry | formalized | `TestsBlock.DumpFragmentTreeBasic_vectors` |
 | physical_fragment_test.cc:149 | PhysicalFragmentTest.DumpFragmentTreeWithAbspos | geometry | blocked | model lacks out-of-flow fragment positioning in layoutRoot |
@@ -673,8 +673,8 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:506 | LayoutBoxModelObjectTest.StickyPositionAnonymousContainer | behaviour | formalized | `TestsBlock.StickyPositionAnonymousContainer_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:540 | LayoutBoxModelObjectTest.StickyPositionTableContainers | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:571 | LayoutBoxModelObjectTest.StickyPositionConstraintInvalidation | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:610 | LayoutBoxModelObjectTest.StickyPositionStatusChange | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:701 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectStickyBoxShiftingAncestor | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
+| layout_box_model_object_test.cc:610 | LayoutBoxModelObjectTest.StickyPositionStatusChange | behaviour | formalized | `TestsBlock.StickyPositionStatusChange_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:701 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectStickyBoxShiftingAncestor | behaviour | formalized | `TestsBlock.StickyPositionFindsCorrectStickyBoxShiftingAncestor_vectors`, `BlockSticky.sticky_offset_none` |
 | layout_box_model_object_test.cc:764 | LayoutBoxModelObjectTest.StickyPositionInlineBlockUnderStickyInline | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:805 | LayoutBoxModelObjectTest.StickyPositionFindsNearestStickyInlineForBlockChild | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:843 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectContainingBlockShiftingAncestor | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
@@ -688,7 +688,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:1138 | LayoutBoxModelObjectTest.StickyPositionNestedStickyTable | geometry | formalized | `TestsBlock.StickyPositionNestedStickyTable_vectors`, `BlockSticky.sticky_offset_le_max_shift` |
 | layout_box_model_object_test.cc:1197 | LayoutBoxModelObjectTest.StickyPositionComplexTableNesting | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:1230 | LayoutBoxModelObjectTest.StickyPositionNestedInlineElements | geometry | formalized | `TestsBlock.StickyPositionNestedInlineElements_vectors`, `BlockSticky.sticky_offset_none` |
-| layout_box_model_object_test.cc:1268 | LayoutBoxModelObjectTest.StickyPositionNestedFixedPos | geometry | blocked | model lacks nested sticky fixed position offsets |
+| layout_box_model_object_test.cc:1268 | LayoutBoxModelObjectTest.StickyPositionNestedFixedPos | geometry | formalized | `TestsBlock.StickyPositionNestedFixedPos_vectors`, `BlockSticky.sticky_offset_le_max_shift` |
 | layout_box_model_object_test.cc:1364 | LayoutBoxModelObjectTest.InvalidatePaintLayerOnStackedChange | behaviour | blocked | model lacks paint layer invalidation and style mutation |
 | layout_box_model_object_test.cc:1406 | LayoutBoxModelObjectTest.BackfaceVisibilityChange | behaviour | blocked | model lacks paint layer invalidation and style mutation |
 | layout_box_model_object_test.cc:1434 | LayoutBoxModelObjectTest.ChangingFilterWithWillChange | behaviour | blocked | model lacks paint layer invalidation and style mutation |

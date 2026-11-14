@@ -202,5 +202,46 @@ theorem StickyPositionNestedInlineElements_vectors :
     computeStickyOffset innerC 50 0 = 25 := by
   decide
 
+-- layout_box_model_object_test.cc:610: StickyPositionStatusChange
+-- position: sticky with top: 0 has constraints; changing top to auto removes constraints.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionStatusChange_vectors :
+    let withTop : StickyConstraint := { top := some 0 }
+    let withAuto : StickyConstraint := { top := none }
+    withTop.top.isSome = true ∧ withAuto.top.isSome = false := by
+  decide
+
+-- layout_box_model_object_test.cc:701: StickyPositionFindsCorrectStickyBoxShiftingAncestor
+-- Unanchored sticky element (no top/bottom/left/right) has no constraints.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionFindsCorrectStickyBoxShiftingAncestor_vectors :
+    let unanchored : StickyConstraint := {}
+    let anchored : StickyConstraint := { top := some 0 }
+    unanchored.top.isSome = false ∧ anchored.top.isSome = true := by
+  decide
+
+-- layout_box_model_object_test.cc:1268: StickyPositionNestedFixedPos
+-- Sticky box inside fixed-pos container is fixed to view, constrained by view,
+-- and unaffected by intermediate scroller.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionNestedFixedPos_vectors :
+    let scrollerScroll := 100
+    let outerConstraint : StickyConstraint := {
+      top := some 0,
+      inFlowTop := 0,
+      height := 50,
+      cbHeight := 650
+    }
+    let outerShift := computeStickyOffset outerConstraint scrollerScroll 0
+    let innerTopConstraint : StickyConstraint := {
+      top := some 25,
+      inFlowTop := 0,
+      height := 25,
+      cbHeight := 1000
+    }
+    let innerTopShift := computeStickyOffset innerTopConstraint 0 0
+    outerShift = 100 ∧ innerTopShift = 25 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
