@@ -3,8 +3,12 @@
   written from absolute_utils_test.cc (`AbsoluteUtilsTest.Horizontal`, `AbsoluteUtilsTest.Vertical`,
   `AbsoluteUtilsTest.CenterStaticPosition`, `AbsoluteUtilsTest.MinMax`). Owned by the block lane.
 -/
+import BlockFlow
+
 namespace ChromiumLayout
 namespace BlockAbsolute
+
+open BlockFlow
 
 inductive InsetVal where
   | auto
@@ -328,6 +332,115 @@ theorem child_fits_col (fragH c0 w h : Nat) (h_fit : h ≤ fragH) :
   split
   · rfl
   · omega
+
+/-! ## Out-of-flow containing block resolution and fragment tree attachment (CSS 2.1 §10.1, CSS Positioned Layout Level 3 §2) -/
+
+/-- CSS 2.1 §9.3: Positioning schemes (in-flow / static, relative, absolute, fixed). -/
+inductive PositioningScheme where
+  | static
+  | relative
+  | absolute
+  | fixed
+  deriving DecidableEq, Repr
+
+/-- CSS 2.1 §10.1: Containing block for absolute positioning.
+    An ancestor element establishes the containing block for absolute positioning
+    if its position is other than 'static'. -/
+def isAbsContainingBlock (pos : PositioningScheme) : Bool :=
+  pos != .static
+
+/-- Candidate out-of-flow positioned descendant propagating up the layout tree
+    until reaching its containing block (CSS 2.1 §10.1, CSS Positioned Layout 3 §2.1, §2.2). -/
+structure OofCandidate where
+  id : Nat
+  w : Nat
+  h : Nat
+  left : Option Int := none
+  top : Option Int := none
+  staticX : Int := 0
+  staticY : Int := 0
+  deriving DecidableEq, Repr
+
+/-- Compute the 2D offset of an out-of-flow positioned fragment relative to its containing block.
+    If an inset is specified, it sets the position; otherwise the static position is used.
+    CSS 2.1 §10.3.7, §10.6.4, CSS Positioned Layout Level 3 §2.1, §2.2. -/
+def computeOofPosition (l t : Option Int) (sx sy : Int) : Int × Int :=
+  (l.getD sx, t.getD sy)
+
+/-- Attach out-of-flow candidates as child fragments of their containing block fragment.
+    CSS 2.1 §10.1, CSS Positioned Layout Level 3 §2.1. -/
+def attachCandidates (cb : Frag) (candidates : List OofCandidate) : List Frag :=
+  candidates.map (fun c =>
+    let (ox, oy) := computeOofPosition c.left c.top c.staticX c.staticY
+    { id := c.id, x := cb.x + ox, y := cb.y + oy, w := c.w, h := c.h })
+
+/-- Resolve out-of-flow candidates at a container box. If the box establishes a containing block
+    for absolute positioning (CSS 2.1 §10.1), all candidates are attached as child fragments
+    and none propagate up; otherwise all candidates propagate up to the outer container. -/
+def resolveOofContainer (pos : PositioningScheme) (boxFrag : Frag) (cs : List OofCandidate) :
+    Frag × List OofCandidate :=
+  if isAbsContainingBlock pos then
+    ({ boxFrag with kids := boxFrag.kids ++ attachCandidates boxFrag cs }, [])
+  else
+    (boxFrag, cs)
+
+/-- Construct the document root (`LayoutView #document`) physical fragment tree,
+    attaching the root flow fragment (HTML) and any unconsumed out-of-flow descendants
+    whose containing block is the Initial Containing Block.
+    CSS 2.1 §10.1, CSS Positioned Layout Level 3 §2.1. -/
+def layoutDocument (w h : Nat) (htmlFrag : Frag) (oof : List OofCandidate) : Frag :=
+  { w := w, h := h, kids := htmlFrag :: attachCandidates {} oof }
+
+/-! ## Out-of-flow containing block resolution laws (CSS 2.1 §10.1, CSS Positioned Layout 3 §2.1, §2.2) -/
+
+/-- Law: An ancestor with relative positioning always establishes an absolute containing block.
+    CSS 2.1 §10.1. -/
+theorem is_abs_cb_relative : isAbsContainingBlock .relative = true := rfl
+
+/-- Law: An ancestor with static positioning never establishes an absolute containing block.
+    CSS 2.1 §10.1. -/
+theorem is_abs_cb_static : isAbsContainingBlock .static = false := rfl
+
+/-- Law: Specified insets override static position.
+    CSS Positioned Layout Level 3 §2.1. -/
+theorem compute_oof_position_specified (l t sx sy : Int) :
+    computeOofPosition (some l) (some t) sx sy = (l, t) := rfl
+
+/-- Law: Auto insets fall back to the static position.
+    CSS Positioned Layout Level 3 §2.2. -/
+theorem compute_oof_position_static (sx sy : Int) :
+    computeOofPosition none none sx sy = (sx, sy) := rfl
+
+/-- Law: A relative container consumes all out-of-flow candidates, leaving none to propagate.
+    CSS 2.1 §10.1. -/
+theorem resolve_oof_container_relative (boxFrag : Frag) (cs : List OofCandidate) :
+    resolveOofContainer .relative boxFrag cs =
+    ({ boxFrag with kids := boxFrag.kids ++ attachCandidates boxFrag cs }, []) := rfl
+
+/-- Law: A static container does not attach out-of-flow candidates, propagating all of them up.
+    CSS 2.1 §10.1. -/
+theorem resolve_oof_container_static (boxFrag : Frag) (cs : List OofCandidate) :
+    resolveOofContainer .static boxFrag cs = (boxFrag, cs) := rfl
+
+/-- Law: Document root (Initial Containing Block) fragment attaches every unconsumed candidate.
+    CSS 2.1 §10.1. -/
+theorem layout_document_kids_len (w h : Nat) (htmlFrag : Frag) (cs : List OofCandidate) :
+    (layoutDocument w h htmlFrag cs).kids.length = 1 + cs.length := by
+  dsimp [layoutDocument, attachCandidates]
+  simp [List.length_map]
+  omega
+
+/-- Law: The relative offset of an attached out-of-flow child fragment matches its computed offset.
+    CSS Positioned Layout Level 3 §2.1. -/
+theorem attached_candidate_relative_offset (cb : Frag) (c : OofCandidate) :
+    let res := attachCandidates cb [c]
+    ∃ child, res = [child] ∧
+      cb.relX child = (computeOofPosition c.left c.top c.staticX c.staticY).1 ∧
+      cb.relY child = (computeOofPosition c.left c.top c.staticX c.staticY).2 := by
+  dsimp [attachCandidates, Frag.relX, Frag.relY]
+  refine ⟨_, rfl, ?_, ?_⟩
+  · dsimp; omega
+  · dsimp; omega
 
 end BlockAbsolute
 end ChromiumLayout

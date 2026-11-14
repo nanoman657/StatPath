@@ -74,6 +74,7 @@ structure Frag where
   w : Nat := 0
   h : Int := 0
   kids : List Frag := []
+  deriving Inhabited
 
 namespace Frag
 
