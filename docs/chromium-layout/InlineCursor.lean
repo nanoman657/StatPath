@@ -124,6 +124,8 @@ structure CursorNode where
   isEmptyLine : Bool := false
   isFloat : Bool := false
   isOutOfFlow : Bool := false
+  isHiddenForPaint : Bool := false
+  isGeneratedSymbol : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
 /-- Find parent index in pre-order flat tree: innermost ancestor whose descendants span over target. -/
@@ -237,12 +239,25 @@ def findNextLine (nodes : List CursorNode) (idx : Nat) : Option Nat :=
     else none
   | none => none
 
-/-- CSS Inline 3 §2 & Blink InlineCursorPosition::IsInlineLeaf. -/
+/-- CSS Inline 3 §2, CSS Overflow 3 §4.4, CSS Text 3 §4.1 & Blink InlineCursorPosition::IsInlineLeaf. -/
 def isInlineLeaf (n : CursorNode) (ignoreLineBreak : Bool := false) : Bool :=
-  if n.isLineBreak then ¬ignoreLineBreak
+  if n.isHiddenForPaint || n.isGeneratedSymbol then false
+  else if n.isLineBreak then ¬ignoreLineBreak
   else (n.type == .text ∨ n.isAtomic) ∧
        (n.descendantsCount == 0 ∨ n.isAtomic) ∧
        n.type != .line ∧ n.name != "#linebox"
+
+/-- CSS Overflow 3 §4.4 Law: Items hidden for paint are never inline leaves. -/
+theorem isInlineLeaf_hidden_false (n : CursorNode) (ilb : Bool) (h : n.isHiddenForPaint = true) :
+    isInlineLeaf n ilb = false := by
+  dsimp [isInlineLeaf]
+  simp [h]
+
+/-- CSS Text 3 §4.1 Law: Generated symbol fragments (such as soft hyphens or ellipsis) are never inline leaves. -/
+theorem isInlineLeaf_generated_symbol_false (n : CursorNode) (ilb : Bool) (h : n.isGeneratedSymbol = true) :
+    isInlineLeaf n ilb = false := by
+  dsimp [isInlineLeaf]
+  simp [h]
 
 /-- Collect all inline leaf debug strings visited by MoveToNextInlineLeaf. -/
 def collectInlineLeaves (nodes : List CursorNode) (ignoreLineBreak : Bool := false) : List String :=

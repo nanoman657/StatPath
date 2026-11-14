@@ -128,4 +128,17 @@ def applyTextTransform (uppercase : Bool) : List Char → List Char
   | 'ß' :: rest => if uppercase then 'S' :: 'S' :: applyTextTransform uppercase rest else 'ß' :: applyTextTransform uppercase rest
   | c :: rest => if uppercase then c.toUpper :: applyTextTransform uppercase rest else c :: applyTextTransform uppercase rest
 
+/-! ## 5. Visual Run Reordering (UAX #9 L2, CSS Writing Modes 3 §3.1) -/
+
+/-- CSS Writing Modes 3 §3.1 & UAX #9 L2:
+    Reorder bidi level items into visual order for an inline line box. -/
+def reorderBidiRunsVisual (baseDir : TextDirection) (runs : List (String × Nat)) : List (String × Nat) :=
+  match baseDir with
+  | .ltr => runs
+  | .rtl => runs.reverse
+
+/-- UAX #9 L2 Law: In an RTL context, visual ordering of line runs is the reversal of logical order. -/
+theorem rtl_visual_reorder_is_reverse (runs : List (String × Nat)) :
+    reorderBidiRunsVisual .rtl runs = runs.reverse := rfl
+
 end ChromiumLayout

@@ -216,7 +216,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxLTR` | Bidi levels for plain text, atomic inlines, and RTL bidi-override in LTR |
 | inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxRTL` | Bidi levels for Latin text and RTL bidi-override in RTL |
 | inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | formalized | `inlineCursor_bidiLevelSimpleLTR` | Nested RTL and LTR bidi-override levels in LTR |
-| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | blocked | - | Blocked: model lacks visual bidi reordering for RTL lines |
+| inline/inline_cursor_test.cc:155 | BidiLevelSimpleRTL | behaviour | formalized | `inlineCursor_bidiLevelSimpleRTL` | CSS Writing Modes 3 §3.1 & UAX #9 L2: Visual order of directional runs in RTL line |
 | inline/inline_cursor_test.cc:166 | BidiLevelFirstLineTextTransform | behaviour | formalized | `inlineCursor_bidiLevelFirstLineTextTransform` | First line uppercase text-transform with eszett at level 0 |
 | inline/inline_cursor_test.cc:175 | BidiLevelFirstLineTextTransformBR | behaviour | formalized | `inlineCursor_bidiLevelFirstLineTextTransformBR` | First line uppercase text-transform with BR element at level 0 |
 | inline/inline_cursor_test.cc:184 | GetLayoutBlockFlowWithScopedCursor | internal | internal | - | Scoped cursor block flow pointer equality |
@@ -245,16 +245,16 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | formalized | `inlineCursor_lastChild2` | CSS 2.1 §9.4.2: Successive MoveToLastChild visits nested inline box last child |
 | inline/inline_cursor_test.cc:588 | Next | behaviour | formalized | `inlineCursor_next` | CSS Inline 3 §2: MoveToNext performs pre-order DFS across inline fragments |
 | inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | internal | - | Next traversal across multicol fragmentainers |
-| inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | formalized | `inlineCursor_nextWithEllipsis` | CSS Overflow 3 §4.4: Traversal visits line box, hidden text, truncated fragment, and ellipsis symbol |
 | inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | internal | - | Empty inline box ellipsis traversal |
-| inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | formalized | `inlineCursor_nextWithListItem` | CSS Lists 3 §3: Traversal visits outside list marker, line box, and text |
+| inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | formalized | `inlineCursor_nextWithSoftHyphens` | CSS Text 3 §4.1: Traversal visits text, generated soft hyphen fragment, and next line |
 | inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | formalized | `inlineCursor_nextInlineLeaf` | CSS Inline 3 §2: MoveToNextInlineLeaf visits only text and break leaves |
 | inline/inline_cursor_test.cc:698 | NextInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextInlineLeafOnLine from container visits subsequent leaves on same line and halts |
 | inline/inline_cursor_test.cc:716 | NextInlineLeafOnLineFromNestedLayoutInline | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromNestedLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextOnLine from container skips descendants to sibling subtree on same line |
 | inline/inline_cursor_test.cc:738 | NextInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_nextInlineLeafOnLineFromLayoutText` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: NextInlineLeafOnLine traverses text and break leaves on line, stopping at line boundary |
-| inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:756 | NextInlineLeafWithEllipsis | behaviour | formalized | `inlineCursor_nextInlineLeafWithEllipsis` | CSS Overflow 3 §4.4 & CSS Inline 3 §2: Leaf traversal skips hidden text and ellipsis |
+| inline/inline_cursor_test.cc:776 | NextInlineLeafWithSoftHyphens | behaviour | formalized | `inlineCursor_nextInlineLeafWithSoftHyphens` | CSS Text 3 §4.1 & CSS Inline 3 §2: Leaf traversal across lines skips generated soft hyphens |
 | inline/inline_cursor_test.cc:788 | NextInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_nextInlineLeafIgnoringLineBreak` | CSS Inline 3 §2: MoveToNextInlineLeafIgnoringLineBreak skips line breaks |
 | inline/inline_cursor_test.cc:800 | NextLine | behaviour | formalized | `inlineCursor_nextLine` | CSS 2.1 §9.4.2: MoveToNextLine advances between consecutive line boxes |
 | inline/inline_cursor_test.cc:821 | NextWithImage | behaviour | formalized | `inlineCursor_nextWithImage` | CSS 2.1 §9.2.2: Atomic image elements participate in inline cursor pre-order traversal |

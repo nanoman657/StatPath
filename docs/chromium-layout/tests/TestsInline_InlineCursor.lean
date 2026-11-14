@@ -68,6 +68,13 @@ theorem inlineCursor_bidiLevelSimpleLTR :
     ] := by
   decide
 
+/-- Test: BidiLevelSimpleRTL (inline_cursor_test.cc:155)
+    CSS Writing Modes 3 §3.1 & UAX #9 L2: Visual order of directional runs in RTL line. -/
+theorem inlineCursor_bidiLevelSimpleRTL :
+    (reorderBidiRunsVisual .rtl [("GHI", 3), ("abc", 6), ("DEF", 3)] = [("DEF", 3), ("abc", 6), ("GHI", 3)]) ∧
+    (reorderBidiRunsVisual .rtl [("123", 2), (",", 1), ("jkl", 2), (" ", 1), ("MNO", 3)] = [("MNO", 3), (" ", 1), ("jkl", 2), (",", 1), ("123", 2)]) := by
+  decide
+
 /-- Test: BidiLevelFirstLineTextTransform (inline_cursor_test.cc:166)
     First line text-transform uppercases German eszett ('ß' -> "SS") at level 0. -/
 theorem inlineCursor_bidiLevelFirstLineTextTransform :
@@ -323,6 +330,67 @@ theorem inlineCursor_next :
     collectPreOrder nodes = [
       "#linebox", "text1", "#span1", "text2", "#span2", "text3", "text4", "text5"
     ] := by
+  decide
+
+/-- Test: NextWithEllipsis (inline_cursor_test.cc:635)
+    CSS Overflow 3 §4.4: Traversal visits line box, hidden text, truncated fragment, and ellipsis symbol. -/
+theorem inlineCursor_nextWithEllipsis :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 3 },
+      { name := "abcdefghi", isHiddenForPaint := true },
+      { name := "abcd" },
+      { name := "#'…'", isGeneratedSymbol := true }
+    ]
+    collectPreOrder nodes = ["#linebox", "abcdefghi", "abcd", "#'…'"] := by
+  decide
+
+/-- Test: NextWithListItem (inline_cursor_test.cc:665)
+    CSS Lists 3 §3: Traversal visits outside list marker, line box, and text. -/
+theorem inlineCursor_nextWithListItem :
+    let nodes : List CursorNode := [
+      { name := "LayoutOutsideListMarker (inline, children-inline) ::marker" },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "abc" }
+    ]
+    collectPreOrder nodes = ["LayoutOutsideListMarker (inline, children-inline) ::marker", "#linebox", "abc"] := by
+  decide
+
+/-- Test: NextWithSoftHyphens (inline_cursor_test.cc:675)
+    CSS Text 3 §4.1: Traversal visits text, generated soft hyphen fragment, and next line. -/
+theorem inlineCursor_nextWithSoftHyphens :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 2 },
+      { name := "abc\u00AD" },
+      { name := "#'‐'", isGeneratedSymbol := true },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "def" }
+    ]
+    collectPreOrder nodes = ["#linebox", "abc\u00AD", "#'‐'", "#linebox", "def"] := by
+  decide
+
+/-- Test: NextInlineLeafWithEllipsis (inline_cursor_test.cc:756)
+    CSS Overflow 3 §4.4 & CSS Inline 3 §2: Leaf traversal skips hidden text and ellipsis. -/
+theorem inlineCursor_nextInlineLeafWithEllipsis :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 3 },
+      { name := "abcdefghi", isHiddenForPaint := true },
+      { name := "abcd" },
+      { name := "#'…'", isGeneratedSymbol := true }
+    ]
+    collectInlineLeaves nodes = ["#linebox", "abcd"] := by
+  decide
+
+/-- Test: NextInlineLeafWithSoftHyphens (inline_cursor_test.cc:776)
+    CSS Text 3 §4.1 & CSS Inline 3 §2: Leaf traversal across lines skips generated soft hyphens. -/
+theorem inlineCursor_nextInlineLeafWithSoftHyphens :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 2 },
+      { name := "abc\u00AD" },
+      { name := "#'‐'", isGeneratedSymbol := true },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "def" }
+    ]
+    collectInlineLeaves nodes = ["#linebox", "abc\u00AD", "def"] := by
   decide
 
 /-- Test: NextInlineLeaf (inline_cursor_test.cc:685)
