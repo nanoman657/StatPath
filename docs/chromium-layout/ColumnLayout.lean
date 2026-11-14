@@ -883,5 +883,54 @@ theorem resolve_multicol_oof_start_clamp_zero (cbCol cbOffsetY fragH : Nat) (top
   · next h0 => omega
   · rfl
 
+/-- Whether a column-span declaration takes effect: column spanners only apply to elements
+    in normal flow of a multi-column container, not inside out-of-flow positioned elements.
+    CSS Multi-column Layout Level 1 §6. -/
+def isEffectiveSpanner (isOutOfFlowAncestor : Bool) (hasSpanAll : Bool) : Bool :=
+  !isOutOfFlowAncestor && hasSpanAll
+
+/-- Law: column-span: all inside an out-of-flow positioned container is not an effective multicol spanner.
+    CSS Multi-column Layout Level 1 §6. -/
+theorem spanner_inside_oof_not_effective (hasSpanAll : Bool) :
+    isEffectiveSpanner true hasSpanAll = false := rfl
+
+/-- Law: column-span: all in normal flow establishes an effective column spanner.
+    CSS Multi-column Layout Level 1 §6. -/
+theorem spanner_in_flow_effective :
+    isEffectiveSpanner false true = true := rfl
+
+/-- Balance auto height content across specified columns.
+    CSS Multi-column Layout Level 1 §3, §4. -/
+def autoBalancedFragH (totalContentH : Nat) (colCount : Nat) : Nat :=
+  if colCount = 0 then totalContentH
+  else (totalContentH + colCount - 1) / colCount
+
+/-- Law: Distributing auto height across a single column preserves total height.
+    CSS Multi-column Layout Level 1 §3. -/
+theorem auto_balanced_frag_h_one_col (h : Nat) :
+    autoBalancedFragH h 1 = h := by
+  dsimp [autoBalancedFragH]
+  have : (h + 1 - 1) / 1 = h := by omega
+  exact this
+
+/-- Resolve a percentage height against containing block height.
+    CSS 2.1 §10.5, CSS Box Model Level 3 §5. -/
+def resolvePctHeight (pct : Nat) (cbH : Nat) : Nat :=
+  (pct * cbH) / 100
+
+/-- Law: Zero percentage yields zero height.
+    CSS 2.1 §10.5. -/
+theorem resolve_pct_height_zero (cbH : Nat) :
+    resolvePctHeight 0 cbH = 0 := by
+  dsimp [resolvePctHeight]
+  omega
+
+/-- Law: 100% height equals containing block height.
+    CSS 2.1 §10.5. -/
+theorem resolve_pct_height_hundred (cbH : Nat) :
+    resolvePctHeight 100 cbH = cbH := by
+  dsimp [resolvePctHeight]
+  omega
+
 end ColumnLayout
 end ChromiumLayout

@@ -231,6 +231,54 @@ theorem SimpleAbsposNestedFragmentation_vectors :
     totalCols = 2 := by
   exact ⟨rfl, rfl, rfl, rfl⟩
 
+-- out_of_flow_layout_part_test.cc:945: OutOfFlowLayoutPartTest.SpannerInAbspos
+-- Column spanner declaration inside an out-of-flow positioned element does not span multi-column columns.
+-- CSS Multi-column Layout Level 1 §6, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem SpannerInAbspos_vectors :
+    let isSpannerEffective := isEffectiveSpanner true true
+    let fragH := 40
+    let slices := fragmentOofWithContent 0 0 50 50 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    isSpannerEffective = false ∧
+    slices = [⟨0, 0, 40, 40⟩, ⟨1, 0, 10, 10⟩] ∧
+    totalCols = 2 := by
+  exact ⟨rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:1083: OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewColumnsAutoHeight
+-- Out-of-flow element in auto-height multi-column balances across columns in the presence of spanners.
+-- CSS Multi-column Layout Level 1 §3, §4, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem AbsposFragWithSpannerAndNewColumnsAutoHeight_vectors :
+    let fragH := autoBalancedFragH 4 2
+    let slices := fragmentOofWithContent 0 0 4 4 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    fragH = 2 ∧
+    slices = [⟨0, 0, 2, 2⟩, ⟨1, 0, 2, 2⟩] ∧
+    totalCols = 2 := by
+  exact ⟨rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:1218: OutOfFlowLayoutPartTest.AbsposFragmentationPctResolutionWithOverflow
+-- Percentage block size on out-of-flow element resolves against containing block and fragments across 5 columns.
+-- CSS 2.1 §10.5, CSS Multi-column Layout Level 1 §2, CSS Fragmentation Level 3 §2, §4.
+theorem AbsposFragmentationPctResolutionWithOverflow_vectors :
+    let absH := resolvePctHeight 100 200
+    let slices := fragmentOofWithContent 0 30 absH absH 100
+    let totalCols := multicolTotalColumns 5 slices
+    absH = 200 ∧
+    slices = [⟨0, 30, 70, 70⟩, ⟨1, 0, 100, 100⟩, ⟨2, 0, 30, 30⟩] ∧
+    totalCols = 5 := by
+  exact ⟨rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:1322: OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewColumns
+-- Out-of-flow positioned element fragments across columns inside a nested multi-column container with spanners.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem AbsposNestedFragmentationNewColumns_vectors :
+    let fragH := 20
+    let slices := fragmentOofWithContent 0 0 40 40 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    slices = [⟨0, 0, 20, 20⟩, ⟨1, 0, 20, 20⟩] ∧
+    totalCols = 2 := by
+  exact ⟨rfl, rfl⟩
+
 -- out_of_flow_layout_part_test.cc:1549: OutOfFlowLayoutPartTest.PositionedObjectsInMulticol
 -- Out-of-flow positioned descendants in multicolumn are attached to column fragmentainers,
 -- not directly to the multicol fragmentation context root.

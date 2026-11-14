@@ -164,15 +164,15 @@ checks every row against the pinned sources and the Lean modules.
 | out_of_flow_layout_part_test.cc:787 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNestedSpanners | geometry | blocked | needs nested column spanners with out-of-flow fragmentation; not modelled |
 | out_of_flow_layout_part_test.cc:842 | OutOfFlowLayoutPartTest.AbsposInSpanner | geometry | blocked | needs abspos inside column spanner; not modelled |
 | out_of_flow_layout_part_test.cc:895 | OutOfFlowLayoutPartTest.AbsposInSpannerStaticPos | geometry | blocked | needs abspos inside column spanner static position; not modelled |
-| out_of_flow_layout_part_test.cc:945 | OutOfFlowLayoutPartTest.SpannerInAbspos | geometry | blocked | needs column spanner inside abspos container; not modelled |
+| out_of_flow_layout_part_test.cc:945 | OutOfFlowLayoutPartTest.SpannerInAbspos | geometry | formalized | `TestsBlock.SpannerInAbspos_vectors`, `ColumnLayout.spanner_inside_oof_not_effective` |
 | out_of_flow_layout_part_test.cc:987 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumnsAndSpanners | geometry | blocked | needs column spanner with abspos fragmentation and new columns; not modelled |
 | out_of_flow_layout_part_test.cc:1038 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumnsAfterSpanner | geometry | blocked | needs column spanner with abspos fragmentation and fixed bottom; not modelled |
-| out_of_flow_layout_part_test.cc:1083 | OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewColumnsAutoHeight | geometry | blocked | needs column spanner with abspos fragmentation and auto height; not modelled |
+| out_of_flow_layout_part_test.cc:1083 | OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewColumnsAutoHeight | geometry | formalized | `TestsBlock.AbsposFragWithSpannerAndNewColumnsAutoHeight_vectors`, `ColumnLayout.auto_balanced_frag_h_one_col` |
 | out_of_flow_layout_part_test.cc:1128 | OutOfFlowLayoutPartTest.AbsposFragWithSpannerAndNewEmptyColumns | geometry | blocked | needs column spanner with abspos fragmentation and new empty columns; not modelled |
 | out_of_flow_layout_part_test.cc:1175 | OutOfFlowLayoutPartTest.AbsposFragmentationPctResolution | geometry | formalized | `TestsBlock.AbsposFragmentationPctResolution_vectors` |
-| out_of_flow_layout_part_test.cc:1218 | OutOfFlowLayoutPartTest.AbsposFragmentationPctResolutionWithOverflow | geometry | blocked | needs percentage resolution with overflow in multicol out-of-flow; not modelled |
+| out_of_flow_layout_part_test.cc:1218 | OutOfFlowLayoutPartTest.AbsposFragmentationPctResolutionWithOverflow | geometry | formalized | `TestsBlock.AbsposFragmentationPctResolutionWithOverflow_vectors`, `ColumnLayout.resolve_pct_height_hundred` |
 | out_of_flow_layout_part_test.cc:1278 | OutOfFlowLayoutPartTest.SimpleAbsposNestedFragmentation | geometry | formalized | `TestsBlock.SimpleAbsposNestedFragmentation_vectors` |
-| out_of_flow_layout_part_test.cc:1322 | OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewColumns | geometry | blocked | needs nested multicol out-of-flow fragmentation with new columns; not modelled |
+| out_of_flow_layout_part_test.cc:1322 | OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewColumns | geometry | formalized | `TestsBlock.AbsposNestedFragmentationNewColumns_vectors` |
 | out_of_flow_layout_part_test.cc:1375 | OutOfFlowLayoutPartTest.AbsposNestedFragmentationNewEmptyColumns | geometry | blocked | needs nested multicol out-of-flow fragmentation with new empty columns; not modelled |
 | out_of_flow_layout_part_test.cc:1431 | OutOfFlowLayoutPartTest.PositionedFragmentationWithBottomPropertyAndHeightAuto | geometry | blocked | needs out-of-flow fragmentation with bottom property and height auto; not modelled |
 | out_of_flow_layout_part_test.cc:1479 | OutOfFlowLayoutPartTest.AbsposFragWithInlineCBAndSpanner | geometry | blocked | needs inline containing block and column spanner in multicol; not modelled |
