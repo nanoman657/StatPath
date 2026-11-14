@@ -338,8 +338,8 @@ def domNodeResolvedTextLength (units : List OffsetMappingUnit) (nodeId : Nat) : 
 
 /-- Extract collapsed character offsets within a specific DOM node. -/
 def collapsedIndicesForNode (units : List OffsetMappingUnit) (nodeId : Nat) : List Nat :=
-  let nodeUnits := units.filter (fun u => u.nodeId == nodeId && u.unitType == .collapsed)
-  nodeUnits.flatMap (fun u => List.range (u.domEnd - u.domStart) |>.map (fun i => u.domStart + i))
+  (units.filter (fun u => u.nodeId == nodeId && u.unitType == .collapsed)).flatMap
+    fun u => List.range (u.domEnd - u.domStart) |>.map (u.domStart + ·)
 
 /-- Format collapsed character indices for a DOM node as `{i, j, ...}`. -/
 def formatCollapsedNode (units : List OffsetMappingUnit) (nodeId : Nat) : String :=
@@ -352,9 +352,8 @@ def formatAllCollapsed (units : List OffsetMappingUnit) (nodeIds : List Nat) : S
 
 /-- Compute rendered collapsed index representation for given DOM nodes (`TestCollapsing`). -/
 def testCollapsing (nodes : List DomNode) : String :=
-  let units := buildDomOffsetMapping nodes
-  let nodeIds := nodes.filterMap (fun n => match n with | .text id _ _ _ => some id | _ => none)
-  formatAllCollapsed units nodeIds
+  formatAllCollapsed (buildDomOffsetMapping nodes)
+    (nodes.filterMap fun | .text id _ _ _ => some id | _ => none)
 
 /-- Map a DOM position (node ID and character offset) to rendered text content offset. -/
 def domToTextContentOffset (units : List OffsetMappingUnit) (nodeId : Nat) (domOffset : Nat) : Nat :=
@@ -370,12 +369,9 @@ def domToTextContentOffset (units : List OffsetMappingUnit) (nodeId : Nat) (domO
 
 /-- Compute full rendered text content from scanned nodes. -/
 def renderedTextContent (nodes : List DomNode) : String :=
-  let scanSt := nodes.foldl scanNode {}
-  let tokens := scanSt.tokens.reverse
-  let rev := tokens.reverse
-  let revBlock := collapseTrailingAtBlockEnd rev
-  let withNl := collapseSpacesBeforeNewline revBlock false
-  String.ofList (withNl.reverse.filterMap (fun t => t.textChar))
+  let tokens := (nodes.foldl scanNode {}).tokens.reverse
+  let withNl := collapseSpacesBeforeNewline (collapseTrailingAtBlockEnd tokens.reverse) false
+  String.ofList (withNl.reverse.filterMap (·.textChar))
 
 /-! ## 6. Offset Mapping Position Queries & Replaced Elements (CSS 2.1 §9.4.2, CSS Text 3 §4.1) -/
 
@@ -740,27 +736,36 @@ theorem mapDOMRangeToTextContent_refl (units : List OffsetMappingUnit) (nodeId :
 /-! ## 15. Multi-Sibling Layout Text Caret Snap Codes (CSS Text 3 §4, CSS 2.1 §9.4.2) -/
 
 /-- Caret snap code for multi-sibling layout text items (CSS Text 3 §4, CSS 2.1 §9.4.2).
-    Evaluates Before, Contains, After snap codes across text runs, line breaks, and whitespace. -/
-def layoutTextSnapCode (itemType : String) (hasFollowingText : Bool) (offset : Nat) : String :=
-  match itemType with
-  | "text" =>
-    if offset == 0 then "BC-"
-    else if hasFollowingText then "-CA"
-    else "--A"
-  | "br" =>
-    if offset == 0 then "BC-"
-    else if hasFollowingText then "-CA"
-    else "--A"
-  | "space" =>
-    if offset == 0 then "BC-"
-    else "--A"
-  | _ => "---"
+    Derives Before, Contains, After snap codes from offset vs item start and length. -/
+def layoutTextSnapCode (itemType : String) (len : Nat) (hasFollowingText : Bool) (offset : Nat) : String :=
+  if offset > len then "---"
+  else
+    let isStart := if itemType == "text" then offset < len else offset == 0
+    let b := if isStart then "B" else "-"
+    let c := if isStart || (hasFollowingText && itemType != "space") then "C" else "-"
+    let a := if offset > 0 then "A" else "-"
+    b ++ c ++ a
 
-/-- General Law: At offset 0, snap code starts with "BC-" for all valid layout item types (CSS Text 3 §4). -/
-theorem layout_text_snap_code_start (itype : String) (h : Bool) :
+/-- General Law: At offset 0 for any non-empty layout item, snap code is "BC-" (CSS Text 3 §4). -/
+theorem layout_text_snap_code_start (itype : String) (len : Nat) (h : Bool) (hlen : len > 0) :
     itype = "text" ∨ itype = "br" ∨ itype = "space" →
-    layoutTextSnapCode itype h 0 = "BC-" := by
+    layoutTextSnapCode itype len h 0 = "BC-" := by
   intro h_type
-  rcases h_type with rfl | rfl | rfl <;> rfl
+  unfold layoutTextSnapCode
+  have h_not : ¬ (0 > len) := by omega
+  simp [h_not]
+  rcases h_type with rfl | rfl | rfl
+  · have h_lt : 0 < len := hlen
+    simp [h_lt]
+  · simp
+  · simp
+
+/-- General Law: At any mid-text offset (0 < offset < len), snap code is "BCA" (CSS Text 3 §4). -/
+theorem layout_text_snap_code_mid (len offset : Nat) (h : Bool)
+    (h_mid1 : 0 < offset) (h_mid2 : offset < len) :
+    layoutTextSnapCode "text" len h offset = "BCA" := by
+  unfold layoutTextSnapCode
+  have h_not_gt : ¬ (offset > len) := by omega
+  simp [h_not_gt, h_mid1, h_mid2]
 
 end ChromiumLayout
