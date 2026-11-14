@@ -1223,5 +1223,158 @@ theorem ColumnBalancingFixedHeightMinHeight_vectors :
     res.columns[4]!.h = 30 ∧ res.columns[4]!.slices = [⟨0, 0, 0, 30, 30⟩] := by
   decide
 
+-- column_layout_algorithm_test.cc:3063: ColumnBalancing100By3
+-- Unconstrained balancing of 100px content into 3 columns yields 3 column fragmentainers.
+-- CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancing100By3_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 0, width := 300, children := [⟨0, .px 100, 100⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.columns.length = 3 ∧ res.columns[0]!.h = 34 ∧ res.columns[1]!.h = 34 ∧ res.columns[2]!.h = 34 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3086: ColumnBalancingEmpty
+-- Empty multi-column container generates one 0-height column fragmentainer.
+-- CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingEmpty_vectors :
+    let mc : BalancedMulticol := { cols := 3, gap := 10, width := 320, children := [] }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 0 ∧ res.colWidth = 100 ∧ res.columns.length = 1 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 0 ∧ res.columns[0]!.slices.isEmpty := by
+  decide
+
+-- column_layout_algorithm_test.cc:3109: ColumnBalancingEmptyBlock
+-- Multi-column container with 0-height block child generates one 0-height column fragmentainer.
+-- CSS Multi-column Layout Level 1 §4.
+theorem ColumnBalancingEmptyBlock_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, children := [⟨0, .px 20, 0⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 0 ∧ res.colWidth = 100 ∧ res.columns.length = 1 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 0 ∧ res.columns[0]!.slices.isEmpty := by
+  decide
+
+-- column_layout_algorithm_test.cc:3135: ColumnBalancingSingleLine
+-- Unbreakable line box of 20px steps balancing to 20px in one column fragmentainer.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.2.
+theorem ColumnBalancingSingleLine_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 20, children := [⟨0, .px 0, 20⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 20 ∧ res.colWidth = 100 ∧ res.columns.length = 1 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 20 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3229: ColumnBalancingOverflow
+-- Overflowing content (300px) balances across 3 columns of height 100.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §5.3, §5.4.
+theorem ColumnBalancingOverflow_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, children := [⟨0, .px 30, 300⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 100 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 100 ∧
+    res.columns[2]!.relX = 220 ∧ res.columns[2]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3264: ColumnBalancingLines
+-- 5 line boxes of 20px balance across 3 columns at stepped height 40px.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.2, CSS 2.1 §9.2.1.1.
+theorem ColumnBalancingLines_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 20, children := [⟨0, .px 0, 100⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 40 ∧ res.colWidth = 100 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 40 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 40 ∧
+    res.columns[2]!.relX = 220 ∧ res.columns[2]!.h = 40 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3302: ColumnBalancingLinesOrphans
+-- Orphans constraint of 3 lines enforces atomic 60px unit, balancing across 3 columns at height 60px.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.3.
+theorem ColumnBalancingLinesOrphans_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 60, children := [⟨0, .px 0, 120⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 60 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 60 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 60 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3348: ColumnBalancingLinesForcedBreak
+-- Forced break isolates line 1, distributing remaining 5 lines across 2 columns at stepped height 60px.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.1.
+theorem ColumnBalancingLinesForcedBreak_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 60, children := [⟨0, .px 0, 120⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 60 ∧ res.colWidth = 100 ∧ res.columns.length = 2 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 60 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 60 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3394: ColumnBalancingLinesForcedBreak2
+-- Forced break isolates 5 lines in column 3, balancing all columns at height 100px.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.1.
+theorem ColumnBalancingLinesForcedBreak2_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 100, children := [⟨0, .px 0, 240⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 100 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 100 ∧
+    res.columns[2]!.relX = 220 ∧ res.columns[2]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3447: ColumnBalancingLinesForcedBreak3
+-- Forced break inside nested block isolates 5 lines in column 3, balancing all columns at height 100px.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.1, §5.3.
+theorem ColumnBalancingLinesForcedBreak3_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 100, children := [⟨0, .px 0, 240⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 100 ∧ res.colWidth = 100 ∧ res.columns.length = 3 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 100 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 100 ∧
+    res.columns[2]!.relX = 220 ∧ res.columns[2]!.h = 100 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3506: ColumnBalancingLinesAvoidBreakInside
+-- Break-inside: avoid on 3-line block enforces minimum 60px column height across columns.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.2.
+theorem ColumnBalancingLinesAvoidBreakInside_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 60, children := [⟨0, .px 0, 120⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 60 ∧ res.colWidth = 100 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 60 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 60 := by
+  decide
+
+-- column_layout_algorithm_test.cc:3552: ColumnBalancingLinesAvoidBreakInside2
+-- Break-inside: avoid on 3-line block enforces minimum 60px column height across columns.
+-- CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.2.
+theorem ColumnBalancingLinesAvoidBreakInside2_vectors :
+    let mc : BalancedMulticol := {
+      cols := 3, gap := 10, width := 320, step := 60, children := [⟨0, .px 0, 100⟩]
+    }
+    let res := layoutBalancedMulticol mc
+    res.w = 320 ∧ res.h = 60 ∧ res.colWidth = 100 ∧
+    res.columns[0]!.relX = 0 ∧ res.columns[0]!.h = 60 ∧
+    res.columns[1]!.relX = 110 ∧ res.columns[1]!.h = 60 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

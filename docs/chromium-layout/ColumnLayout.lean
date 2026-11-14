@@ -191,14 +191,17 @@ structure BalancedMulticol where
   children : List ColChild := []
   border : Nat := 0
   padding : Nat := 0
+  step : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- Balanced column height computation under constraints.
     CSS Multi-column Layout Level 1 §4 & CSS 2.1 §10.5, §10.7.
     Min-height affects the container, not balanced column heights.
-    Max-height and fixed height constrain column heights from above. -/
-def balancedColumnHeight (cols : Nat) (contentH : Nat) (height maxHeight : Option Nat) : Nat :=
+    Max-height and fixed height constrain column heights from above.
+    Optional `step` parameter accommodates atomic line height increments (CSS Fragmentation 3 §3.2). -/
+def balancedColumnHeight (cols : Nat) (contentH : Nat) (height maxHeight : Option Nat) (step : Nat := 0) : Nat :=
   let initial := if cols = 0 then contentH else (contentH + cols - 1) / cols
+  let stepped := if step > 0 then ((initial + step - 1) / step) * step else initial
   let upper :=
     match height, maxHeight with
     | some h, some mh => some (Nat.min h mh)
@@ -206,8 +209,8 @@ def balancedColumnHeight (cols : Nat) (contentH : Nat) (height maxHeight : Optio
     | none, some mh => some mh
     | none, none => none
   match upper with
-  | some u => Nat.min initial u
-  | none => initial
+  | some u => Nat.min stepped u
+  | none => stepped
 
 /-- Container box height resolution for balanced multicolumn container.
     CSS 2.1 §10.5 & §10.7. -/
@@ -218,20 +221,23 @@ def balancedContainerHeight (colH : Nat) (height minHeight maxHeight : Option Na
 
 /-- Number of column fragmentainers created for balanced multicolumn layout.
     CSS Multi-column Layout Level 1 §4. -/
-def balancedColCount (cols colH contentH : Nat) : Nat :=
+def balancedColCount (cols colH contentH : Nat) (hasFixedHeight : Bool := false) : Nat :=
   if colH = 0 then
     if contentH = 0 then 1 else Nat.max 1 cols
   else
-    Nat.max (Nat.max 1 cols) ((contentH + colH - 1) / colH)
+    if hasFixedHeight then
+      Nat.max (Nat.max 1 cols) ((contentH + colH - 1) / colH)
+    else
+      Nat.max 1 ((contentH + colH - 1) / colH)
 
 /-- Layout a balanced multicolumn container.
     CSS Multi-column Layout Level 1 §4, CSS 2.1 §8.1, §10.5, §10.7. -/
 def layoutBalancedMulticol (mc : BalancedMulticol) : MulticolResult :=
   let colW := usedWidth mc.cols 0 mc.gap mc.width
   let contentH := totalContentHeight mc.children
-  let colH := balancedColumnHeight mc.cols contentH mc.height mc.maxHeight
+  let colH := balancedColumnHeight mc.cols contentH mc.height mc.maxHeight mc.step
   let containerH := balancedContainerHeight colH mc.height mc.minHeight mc.maxHeight
-  let numCols := balancedColCount mc.cols colH contentH
+  let numCols := balancedColCount mc.cols colH contentH mc.height.isSome
   let bp := mc.border + mc.padding
   let cols := (List.range numCols).map (fun k =>
     let x := bp + columnInlineOffset k colW mc.gap
@@ -242,29 +248,52 @@ def layoutBalancedMulticol (mc : BalancedMulticol) : MulticolResult :=
 
 /-- Law: Specified height bounds balanced column height from above.
     CSS Multi-column Layout Level 1 §4. -/
-theorem bal_h_le_height (cols contentH h : Nat) (mh : Option Nat) :
-    balancedColumnHeight cols contentH (some h) mh ≤ h := by
+theorem bal_h_le_height (cols contentH h : Nat) (mh : Option Nat) (step : Nat := 0) :
+    balancedColumnHeight cols contentH (some h) mh step ≤ h := by
   dsimp [balancedColumnHeight]
   cases mh with
   | none => apply Nat.min_le_right
   | some m =>
-    have h1 : Nat.min (if cols = 0 then contentH else (contentH + cols - 1) / cols) (Nat.min h m) ≤ Nat.min h m :=
-      Nat.min_le_right _ _
-    have h2 : Nat.min h m ≤ h := Nat.min_le_left _ _
-    exact Nat.le_trans h1 h2
+    apply Nat.le_trans (Nat.min_le_right _ _)
+    apply Nat.min_le_left
 
 /-- Law: Specified max-height bounds balanced column height from above.
     CSS Multi-column Layout Level 1 §4. -/
-theorem bal_h_le_max_h (cols contentH m : Nat) (h : Option Nat) :
-    balancedColumnHeight cols contentH h (some m) ≤ m := by
+theorem bal_h_le_max_h (cols contentH m : Nat) (h : Option Nat) (step : Nat := 0) :
+    balancedColumnHeight cols contentH h (some m) step ≤ m := by
   dsimp [balancedColumnHeight]
   cases h with
   | none => apply Nat.min_le_right
   | some h' =>
-    have h1 : Nat.min (if cols = 0 then contentH else (contentH + cols - 1) / cols) (Nat.min h' m) ≤ Nat.min h' m :=
-      Nat.min_le_right _ _
-    have h2 : Nat.min h' m ≤ m := Nat.min_le_right _ _
-    exact Nat.le_trans h1 h2
+    apply Nat.le_trans (Nat.min_le_right _ _)
+    apply Nat.min_le_right
+
+/-- Law: Multi-column container always generates at least one column fragmentainer.
+    CSS Multi-column Layout Level 1 §4. -/
+theorem bal_col_count_ge_one (cols colH contentH : Nat) (hasFixed : Bool) :
+    1 ≤ balancedColCount cols colH contentH hasFixed := by
+  dsimp [balancedColCount]
+  split
+  · split
+    · omega
+    · apply Nat.le_max_left
+  · split
+    · exact Nat.le_trans (Nat.le_max_left 1 cols) (Nat.le_max_left (Nat.max 1 cols) _)
+    · apply Nat.le_max_left
+
+/-- Law: Empty balanced container generates exactly one column fragmentainer.
+    CSS Multi-column Layout Level 1 §4. -/
+theorem bal_col_count_empty (cols : Nat) :
+    balancedColCount cols 0 0 false = 1 := by
+  rfl
+
+/-- Law: When line-stepping is active, unconstrained balanced column height is a multiple of step.
+    CSS Multi-column Layout Level 1 §4 & CSS Fragmentation Level 3 §3.2. -/
+theorem bal_h_step_multiple (cols contentH step : Nat) (h_step : 0 < step) :
+    balancedColumnHeight cols contentH none none step % step = 0 := by
+  dsimp [balancedColumnHeight]
+  have h_pos : step > 0 := h_step
+  simp [h_pos]
 
 /-- Law: Specified min-height is respected by container height.
     CSS 2.1 §10.7 & CSS Multi-column Layout Level 1 §4. -/

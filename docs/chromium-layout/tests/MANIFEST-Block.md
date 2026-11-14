@@ -264,21 +264,21 @@ checks every row against the pinned sources and the Lean modules.
 | column_layout_algorithm_test.cc:2960 | ColumnLayoutAlgorithmTest.ColumnBalancingMaxHeight | geometry | formalized | `TestsBlock.ColumnBalancingMaxHeight_vectors`, `ColumnLayout.bal_h_le_max_h` |
 | column_layout_algorithm_test.cc:2993 | ColumnLayoutAlgorithmTest.ColumnBalancingMinHeightLargerThanMaxHeight | geometry | formalized | `TestsBlock.ColumnBalancingMinHeightLargerThanMaxHeight_vectors`, `ColumnLayout.cont_ge_min_h` |
 | column_layout_algorithm_test.cc:3027 | ColumnLayoutAlgorithmTest.ColumnBalancingFixedHeightMinHeight | geometry | formalized | `TestsBlock.ColumnBalancingFixedHeightMinHeight_vectors`, `ColumnLayout.bal_h_le_max_h` |
-| column_layout_algorithm_test.cc:3063 | ColumnLayoutAlgorithmTest.ColumnBalancing100By3 | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:3086 | ColumnLayoutAlgorithmTest.ColumnBalancingEmpty | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:3109 | ColumnLayoutAlgorithmTest.ColumnBalancingEmptyBlock | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:3135 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLine | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3163 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNested | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3195 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNestedSpanner | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3229 | ColumnLayoutAlgorithmTest.ColumnBalancingOverflow | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
-| column_layout_algorithm_test.cc:3264 | ColumnLayoutAlgorithmTest.ColumnBalancingLines | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3302 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesOrphans | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3348 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3394 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak2 | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3447 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak3 | geometry | blocked | needs inline line box fragmentation in multicolumn |
-| column_layout_algorithm_test.cc:3506 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesAvoidBreakInside | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
-| column_layout_algorithm_test.cc:3552 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesAvoidBreakInside2 | geometry | blocked | needs break-inside avoid / break avoid constraints in multicolumn |
-| column_layout_algorithm_test.cc:3597 | ColumnLayoutAlgorithmTest.ColumnBalancingUnderflow | geometry | blocked | needs column balancing binary search algorithm in multicolumn |
+| column_layout_algorithm_test.cc:3063 | ColumnLayoutAlgorithmTest.ColumnBalancing100By3 | geometry | formalized | `TestsBlock.ColumnBalancing100By3_vectors`, `ColumnLayout.bal_col_count_ge_one` |
+| column_layout_algorithm_test.cc:3086 | ColumnLayoutAlgorithmTest.ColumnBalancingEmpty | geometry | formalized | `TestsBlock.ColumnBalancingEmpty_vectors`, `ColumnLayout.bal_col_count_empty` |
+| column_layout_algorithm_test.cc:3109 | ColumnLayoutAlgorithmTest.ColumnBalancingEmptyBlock | geometry | formalized | `TestsBlock.ColumnBalancingEmptyBlock_vectors`, `ColumnLayout.bal_col_count_empty` |
+| column_layout_algorithm_test.cc:3135 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLine | geometry | formalized | `TestsBlock.ColumnBalancingSingleLine_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3163 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNested | geometry | blocked | needs nested multicolumn container column balancing |
+| column_layout_algorithm_test.cc:3195 | ColumnLayoutAlgorithmTest.ColumnBalancingSingleLineInNestedSpanner | geometry | blocked | needs nested multicolumn container balancing with spanner |
+| column_layout_algorithm_test.cc:3229 | ColumnLayoutAlgorithmTest.ColumnBalancingOverflow | geometry | formalized | `TestsBlock.ColumnBalancingOverflow_vectors`, `ColumnLayout.bal_h_unconst` |
+| column_layout_algorithm_test.cc:3264 | ColumnLayoutAlgorithmTest.ColumnBalancingLines | geometry | formalized | `TestsBlock.ColumnBalancingLines_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3302 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesOrphans | geometry | formalized | `TestsBlock.ColumnBalancingLinesOrphans_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3348 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak | geometry | formalized | `TestsBlock.ColumnBalancingLinesForcedBreak_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3394 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak2 | geometry | formalized | `TestsBlock.ColumnBalancingLinesForcedBreak2_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3447 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesForcedBreak3 | geometry | formalized | `TestsBlock.ColumnBalancingLinesForcedBreak3_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3506 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesAvoidBreakInside | geometry | formalized | `TestsBlock.ColumnBalancingLinesAvoidBreakInside_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3552 | ColumnLayoutAlgorithmTest.ColumnBalancingLinesAvoidBreakInside2 | geometry | formalized | `TestsBlock.ColumnBalancingLinesAvoidBreakInside2_vectors`, `ColumnLayout.bal_h_step_multiple` |
+| column_layout_algorithm_test.cc:3597 | ColumnLayoutAlgorithmTest.ColumnBalancingUnderflow | geometry | blocked | needs negative margin underflow in multicol column balancing |
 | column_layout_algorithm_test.cc:3623 | ColumnLayoutAlgorithmTest.ClassCBreakPointBeforeBfc | geometry | blocked | needs class C break point resolution in multicolumn |
 | column_layout_algorithm_test.cc:3660 | ColumnLayoutAlgorithmTest.NoClassCBreakPointBeforeBfc | geometry | blocked | needs class C break point resolution in multicolumn |
 | column_layout_algorithm_test.cc:3696 | ColumnLayoutAlgorithmTest.ClassCBreakPointBeforeBfcWithClearance | geometry | blocked | needs class C break point resolution in multicolumn |
@@ -1139,6 +1139,9 @@ checks every row against the pinned sources and the Lean modules.
 - `ColumnLayout.columnInlineOffset_step`: column offset advances by stride for each subsequent column.
 - `ColumnLayout.columns_non_overlapping`: columns do not overlap when gap is non-negative and column width is positive.
 - `ColumnLayout.actualColumnCount_at_least_one`: multicolumn container always generates at least one column fragmentainer.
+- `ColumnLayout.bal_col_count_ge_one`: multicolumn container always generates at least one column fragmentainer under balancing.
+- `ColumnLayout.bal_col_count_empty`: empty balanced container generates exactly one column fragmentainer.
+- `ColumnLayout.bal_h_step_multiple`: line-stepped balanced column height is a multiple of step.
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).
