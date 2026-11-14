@@ -676,9 +676,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/static_position_test.cc:331 | Convert | geometry | formalized | `staticPosition_convert` | CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4: Logical to physical static position roundtrip across all writing modes and directions |
 | geometry/writing_mode_converter_test.cc:15 | ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `writingModeConverter_toPhysical` | Converts logical offset to physical offset across writing modes and directions |
 | geometry/writing_mode_converter_test.cc:73 | ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `writingModeConverter_toLogical` | Converts physical offset to logical offset across writing modes and directions |
-| svg/layout_svg_container_test.cc:19 | TransformAffectsVectorEffect | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/layout_svg_container_test.cc:70 | TransformAffectsVectorEffectNestedSVG | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/layout_svg_container_test.cc:100 | TransformAffectsVectorEffectHiddenContainerAndUse | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:19 | TransformAffectsVectorEffect | behaviour | formalized | `svg_container_transformAffectsVectorEffect` | SVG 2 §13.3: Root SVG does not affect vector effect; non-scaling-stroke child triggers transformAffectsVectorEffect |
+| svg/layout_svg_container_test.cc:70 | TransformAffectsVectorEffectNestedSVG | behaviour | formalized | `svg_container_transformAffectsVectorEffectNestedSVG` | SVG 2 §13.3: Nested SVG with non-scaling-stroke propagates transformAffectsVectorEffect to outer container |
+| svg/layout_svg_container_test.cc:100 | TransformAffectsVectorEffectHiddenContainerAndUse | behaviour | formalized | `svg_container_transformAffectsVectorEffectHiddenContainerAndUse` | SVG 2 §13.3: Defs subtree does not affect transform directly; referencing use element propagates non-scaling-stroke |
 | svg/layout_svg_container_test.cc:127 | PatternWithContentVisibility | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_container_test.cc:161 | BoundingBoxesWith3DTransformedChild | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
 | svg/layout_svg_container_test.cc:180 | MaskCacheClearedOnLastClientRemovedBeforeGCAndDisplayLock | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
@@ -704,26 +704,26 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_image_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_image_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_image_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_inline_test.cc:13 | IsChildAllowed | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_inline_test.cc:13 | IsChildAllowed | behaviour | formalized | `svg_inline_isChildAllowed` | SVG 2 §11.3.3: textPath element cannot have textPath descendant |
 | svg/layout_svg_inline_test.cc:25 | LocalToAncestorPoint | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_rect_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_rect_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_rect_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_rect_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_root_test.cc:27 | VisualRectMappingWithoutViewportClipWithBorder | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_root_test.cc:27 | VisualRectMappingWithoutViewportClipWithBorder | geometry | formalized | `svg_root_visualRectMappingWithoutViewportClipWithBorder` | SVG 2 §7.3, CSS 2.1 §10: Visual rect mapping with border offset when overflow is visible |
 | svg/layout_svg_root_test.cc:54 | VisualOverflowExpandsLayer | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/layout_svg_root_test.cc:74 | VisualRectMappingWithViewportClipAndBorder | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
-| svg/layout_svg_root_test.cc:101 | RectBasedHitTestPartialOverlap | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_root_test.cc:74 | VisualRectMappingWithViewportClipAndBorder | geometry | formalized | `svg_root_visualRectMappingWithViewportClipAndBorder` | SVG 2 §7.3, CSS 2.1 §10: Visual rect mapping clipped to SVG viewport plus border offset |
+| svg/layout_svg_root_test.cc:101 | RectBasedHitTestPartialOverlap | behaviour | formalized | `svg_root_rectBasedHitTestPartialOverlap` | CSSOM View §8, SVG 2 §7.3: Rect-based hit testing detects partially overlapping SVG root and body |
 | svg/layout_svg_root_test.cc:132 | PaintLayerType | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_root_test.cc:155 | VisualRectMappingWithReferenceFilter | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
-| svg/layout_svg_shape_test.cc:12 | StrokeBoundingBoxOnEmptyShape | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
+| svg/layout_svg_shape_test.cc:12 | StrokeBoundingBoxOnEmptyShape | geometry | formalized | `svg_shape_strokeBoundingBoxOnEmptyShape` | SVG 2 §13.5: Circle shape with radius 0 has empty stroke bounding box |
 | svg/layout_svg_shape_test.cc:23 | RectBasedHitTest_CircleEllipse | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
 | svg/layout_svg_shape_test.cc:77 | RectBasedHitTest_Rect | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
 | svg/layout_svg_shape_test.cc:137 | RectBasedHitTest_Path | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
-| svg/layout_svg_text_test.cc:13 | RectBasedHitTest | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
+| svg/layout_svg_text_test.cc:13 | RectBasedHitTest | behaviour | formalized | `svg_text_rectBasedHitTest` | CSSOM View §8, SVG 2 §7.3: Rect-based hit test finds overlapping text and parent SVG rect |
 | svg/layout_svg_text_test.cc:38 | RectBasedHitTest_RotatedText | behaviour | blocked | - | Blocked: model lacks SVG hit testing |
-| svg/layout_svg_text_test.cc:67 | TransformAffectsVectorEffect | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/layout_svg_text_test.cc:96 | AbsoluteQuads | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_text_test.cc:67 | TransformAffectsVectorEffect | behaviour | formalized | `svg_text_transformAffectsVectorEffect` | SVG 2 §13.3: Text element or tspan child with non-scaling-stroke triggers transformAffectsVectorEffect |
+| svg/layout_svg_text_test.cc:96 | AbsoluteQuads | behaviour | formalized | `svg_text_absoluteQuads` | SVG 2 §11.4: SVG text bounding box computed from origin and textLength |
 | svg/layout_svg_text_test.cc:115 | ObjectBoundingBox | geometry | blocked | - | Blocked: model lacks SVG bounding box layout |
 | svg/layout_svg_text_test.cc:136 | SubtreeLayout | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_text_test.cc:161 | WillBeRemovedFromTree | internal | internal | - | Crash regression / lifecycle plumbing |
