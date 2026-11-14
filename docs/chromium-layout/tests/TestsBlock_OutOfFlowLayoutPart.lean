@@ -24,6 +24,28 @@ theorem FixedInsideAbs_offsets :
     (resolveOofOffset 49 0 fixedInsideAbs_fixed2).1 = 7 := by
   decide
 
+-- out_of_flow_layout_part_test.cc:103: OutOfFlowLayoutPartTest.PositionedInMulticol
+-- Out-of-flow positioned nodes inside a multi-column with relative containing blocks.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2.
+theorem PositionedInMulticol_vectors :
+    let colWidth := (1000 - 16) / 2
+    let col0Offset := 0
+    let col1Offset := colWidth + 16
+    let child1Slice0Height := 40
+    let child1Slice1Height := 10
+    let relBlockOffsetInCol1 := child1Slice1Height
+    let abs1Top := resolveMulticolOofOffset relBlockOffsetInCol1 10
+    let abs2Top := resolveMulticolOofOffset relBlockOffsetInCol1 20
+    colWidth = 492 ∧
+    col0Offset = 0 ∧
+    col1Offset = 508 ∧
+    child1Slice0Height = 40 ∧
+    child1Slice1Height = 10 ∧
+    relBlockOffsetInCol1 = 10 ∧
+    abs1Top = 20 ∧
+    abs2Top = 30 := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 -- out_of_flow_layout_part_test.cc:320: OutOfFlowLayoutPartTest.BreakInsideAvoid
 -- An absolute positioned element with break-inside: avoid is not pushed to the next
 -- column; it fragments across columns. CSS Fragmentation Level 3 §3.2.

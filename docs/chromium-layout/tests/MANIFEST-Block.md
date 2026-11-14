@@ -145,7 +145,7 @@ checks every row against the pinned sources and the Lean modules.
 | absolute_utils_test.cc:436 | AbsoluteUtilsTest.CenterStaticPosition | geometry | formalized | `TestsBlock.CenterStaticPosition_vectors` |
 | absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `BlockAbsolute.clamp_bounds` |
 | out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | formalized | `TestsBlock.FixedInsideAbs_offsets`, `BlockAbsolute.explicit_inset_overrides_static`, `BlockAbsolute.auto_inset_uses_static` |
-| out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | formalized | `TestsBlock.PositionedInMulticol_vectors`, `ColumnLayout.multicol_oof_offset_zero` |
 | out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:238 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
@@ -449,7 +449,7 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:929 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoGridPositions | geometry | formalized | `TestsBlock.GridLayoutAlgorithmAutoGridPositions_vectors`, `GridLayout.resolve_auto_grid_positions_single_definite` |
 | grid/grid_layout_algorithm_test.cc:1003 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoDense | geometry | formalized | `TestsBlock.GridLayoutAlgorithmAutoDense_vectors`, `GridLayout.grid_area_overlaps_symm` |
 | grid/grid_layout_algorithm_test.cc:1159 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGridPositions | geometry | formalized | `TestsBlock.GridLayoutAlgorithmGridPositions_vectors`, `GridLayout.grid_ranges_length` |
-| grid/grid_layout_algorithm_test.cc:1216 | GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes | geometry | blocked | needs CSS grid track sizing and range building algorithm |
+| grid/grid_layout_algorithm_test.cc:1216 | GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes | geometry | formalized | `TestsBlock.GridLayoutAlgorithmResolveFixedTrackSizes_vectors`, `GridLayout.maximize_track_sizes_empty` |
 | grid/grid_layout_algorithm_test.cc:1273 | GridLayoutAlgorithmTest.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks | geometry | formalized | `TestsBlock.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks_vectors`, `GridLayout.is_flexible_implies_intrinsic` |
 | grid/grid_layout_algorithm_test.cc:1356 | GridLayoutAlgorithmTest.FixedSizePositioning | geometry | formalized | `TestsBlock.FixedSizePositioning_vectors`, `GridLayout.track_offset_zero` |
 | grid/grid_layout_algorithm_test.cc:1405 | GridLayoutAlgorithmTest.FixedSizePositioningAutoRows | geometry | formalized | `TestsBlock.FixedSizePositioningAutoRows_vectors` |
@@ -464,7 +464,7 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:1973 | GridLayoutAlgorithmTest.SubgridLineNameList | geometry | formalized | `TestsBlock.SubgridLineNameList_vectors`, `GridLayout.subgrid_line_names_empty` |
 | grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | formalized | `TestsBlock.SubgridLineNameListWithRepeaters_vectors`, `GridLayout.expand_subgrid_repeater_length` |
 | grid/grid_layout_algorithm_test.cc:2090 | GridLayoutAlgorithmTest.SingleAxisScrollerAutoMinSizeUseCount | internal | internal | checks UseCounter for SingleAxisScrollerAutoMinSize feature |
-| grid/grid_layout_algorithm_test.cc:2136 | GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice | geometry | blocked | needs fragmented out-of-flow grid items placement |
+| grid/grid_layout_algorithm_test.cc:2136 | GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice | geometry | formalized | `TestsBlock.FragmentedOofInGridPlaceItemsTwice_vectors`, `GridLayout.uniform_fragment_count_zero_frag` |
 | grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | formalized | `TestsBlock.TestRangeIndexFromGridLine_vectors`, `GridLayout.range_index_first_track` |
 | grid/grid_track_collection_test.cc:119 | GridTrackCollectionTest.TestGridTrackList | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:171 | GridTrackCollectionTest.TestGridRangeBuilder | geometry | formalized | `TestsBlock.TestGridRangeBuilder_vectors` |

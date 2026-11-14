@@ -415,5 +415,37 @@ theorem PositionedOutOfFlowItems_vectors :
     item7 = (5, 210) := by
   exact ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
 
+-- grid_layout_algorithm_test.cc:1216: GridLayoutAlgorithmTest.GridLayoutAlgorithmResolveFixedTrackSizes
+-- Resolving fixed track base sizes and growth limits across columns and rows under available space constraints.
+-- CSS Grid Layout Module Level 1 §11.4, §11.5.1.
+theorem GridLayoutAlgorithmResolveFixedTrackSizes_vectors :
+    let colSets : List GridTrackSet := [
+      ⟨25, 25, 1⟩,
+      ⟨60, 60, 3⟩,
+      ⟨15, 15, 1⟩
+    ]
+    let (colBases, colGrowths) := maximizeTrackSizes (some 100) colSets
+    let rowSets : List GridTrackSet := [
+      ⟨0, 100, 1⟩,
+      ⟨50, 50, 1⟩,
+      ⟨40, 70, 2⟩
+    ]
+    let (rowBases, rowGrowths) := maximizeTrackSizes (some 200) rowSets
+    colBases = [25, 60, 15] ∧
+    colGrowths = [25, 60, 15] ∧
+    rowBases = [80, 50, 70] ∧
+    rowGrowths = [100, 50, 70] := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:2136: GridLayoutAlgorithmTest.FragmentedOofInGridPlaceItemsTwice
+-- Fragmented out-of-flow item inside multicolumn produces fragment count based on fragmentainer height.
+-- CSS Fragmentation Level 3 §2.
+theorem FragmentedOofInGridPlaceItemsTwice_vectors :
+    let elmHeight := 500
+    let fragmentainerHeight := 100
+    let fragments := uniformFragmentCount elmHeight fragmentainerHeight
+    fragments = 5 := by
+  exact rfl
+
 end TestsBlock
 end ChromiumLayout

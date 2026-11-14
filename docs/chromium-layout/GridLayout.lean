@@ -1098,5 +1098,94 @@ theorem resolve_grid_oof_left_inset (padL padR padT padB inset : Nat) (lx ly : L
 theorem resolve_grid_oof_justify_end (padL padR padT padB w : Nat) (lx ly : List (Nat × Nat)) :
     (resolveGridOofPosition (padL, padR, padT, padB) lx ly { width := w, justifySelf := .flexEnd }).1 = padR - w := rfl
 
+/-- A grid sizing track set representing contiguous tracks with uniform sizing functions.
+    CSS Grid Layout Module Level 1 §11.4, §11.5. -/
+structure GridTrackSet where
+  baseSize : Nat
+  growthLimit : Nat
+  trackCount : Nat := 1
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Maximize track base sizes by distributing available free space up to growth limits.
+    Tracks freeze as they reach their growth limits, continuing to grow unfrozen tracks.
+    CSS Grid Layout Module Level 1 §11.5.1 (Maximize Tracks). -/
+def maximizeTrackSizes (avail : Option Nat) (sets : List GridTrackSet) : List Nat × List Nat :=
+  match sets with
+  | [] => ([], [])
+  | _ =>
+      let bases := sets.map (·.baseSize)
+      let growths := sets.map (·.growthLimit)
+      let totalBase := bases.foldl (· + ·) 0
+      match avail with
+      | none => (bases, growths)
+      | some totalAvail =>
+          if totalAvail ≤ totalBase then (bases, growths)
+          else
+            let extra := totalAvail - totalBase
+            let rec distribute (remExtra : Nat) (curSets : List GridTrackSet) (fuel : Nat) : List GridTrackSet :=
+              match fuel with
+              | 0 => curSets
+              | fuel + 1 =>
+                  if remExtra == 0 then curSets
+                  else
+                    let growable := curSets.filter (fun s => s.growthLimit > s.baseSize)
+                    let totalTracks := growable.foldl (fun sum s => sum + s.trackCount) 0
+                    if totalTracks == 0 then curSets
+                    else
+                      let minPotPerTrack := growable.foldl (fun acc s =>
+                        let pot := (s.growthLimit - s.baseSize) / s.trackCount
+                        match acc with
+                        | none => some pot
+                        | some m => some (min m pot)) none |>.getD 0
+                      if minPotPerTrack > 0 && remExtra ≥ totalTracks * minPotPerTrack then
+                        let step := minPotPerTrack
+                        let nextSets := curSets.map (fun s =>
+                          if s.growthLimit > s.baseSize then
+                            let inc := step * s.trackCount
+                            { s with baseSize := min s.growthLimit (s.baseSize + inc) }
+                          else s)
+                        distribute (remExtra - totalTracks * step) nextSets fuel
+                      else
+                        let rec drain (rem : Nat) (remSets : List GridTrackSet) : List GridTrackSet :=
+                          match remSets with
+                          | [] => []
+                          | s :: rest =>
+                              if s.growthLimit > s.baseSize then
+                                let inc := min rem (s.growthLimit - s.baseSize)
+                                { s with baseSize := s.baseSize + inc } :: drain (rem - inc) rest
+                              else
+                                s :: drain rem rest
+                        drain remExtra curSets
+            let finalSets := distribute extra sets (sets.length + 5)
+            (finalSets.map (·.baseSize), growths)
+
+/-- Fragment count of an element split across uniform fragmentainers.
+    CSS Fragmentation Level 3 §2. -/
+def uniformFragmentCount (totalBlockSize fragmentainerBlockSize : Nat) : Nat :=
+  if fragmentainerBlockSize > 0 then
+    (totalBlockSize + fragmentainerBlockSize - 1) / fragmentainerBlockSize
+  else 1
+
+/-- Law: Maximizing an empty list of track sets produces empty base sizes and growth limits.
+    CSS Grid Layout Module Level 1 §11.5.1. -/
+theorem maximize_track_sizes_empty (avail : Option Nat) :
+    maximizeTrackSizes avail [] = ([], []) := rfl
+
+/-- Law: When available space is indefinite (none), base sizes and growth limits remain unchanged.
+    CSS Grid Layout Module Level 1 §11.5.1. -/
+theorem maximize_track_sizes_indefinite (sets : List GridTrackSet) :
+    maximizeTrackSizes none sets = (sets.map (·.baseSize), sets.map (·.growthLimit)) := by
+  cases sets <;> rfl
+
+/-- Law: A non-positive fragmentainer height defaults to 1 fragment.
+    CSS Fragmentation Level 3 §2. -/
+theorem uniform_fragment_count_zero_frag (tot : Nat) :
+    uniformFragmentCount tot 0 = 1 := rfl
+
+/-- Law: Total height 0 in fragmentainer height 1 produces 0 fragments.
+    CSS Fragmentation Level 3 §2. -/
+theorem uniform_fragment_count_zero_one :
+    uniformFragmentCount 0 1 = 0 := rfl
+
 end GridLayout
 end ChromiumLayout

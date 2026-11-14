@@ -775,5 +775,21 @@ theorem column_is_fragmentainer_not_root (nodeId : Option Nat) (isOof : Bool) (k
     isColumnBox f = true ∧ isFragContextRoot f = false := by
   exact ⟨rfl, rfl⟩
 
+/-- Resolve the offset of an out-of-flow positioned element relative to its column fragmentainer,
+    taking into account the block offset of its positioned containing block within that column.
+    CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2. -/
+def resolveMulticolOofOffset (cbBlockOffsetInCol : Nat) (topInset : Nat) : Nat :=
+  cbBlockOffsetInCol + topInset
+
+/-- Law: An out-of-flow element with top 0 matches its containing block offset in the column.
+    CSS Positioned Layout Level 3 §2. -/
+theorem multicol_oof_offset_zero (cbOffset : Nat) :
+    resolveMulticolOofOffset cbOffset 0 = cbOffset := rfl
+
+/-- Law: Adding top inset shifts the out-of-flow element down by inset.
+    CSS Positioned Layout Level 3 §2. -/
+theorem multicol_oof_offset_add (cbOffset inset : Nat) :
+    resolveMulticolOofOffset cbOffset inset = cbOffset + inset := rfl
+
 end ColumnLayout
 end ChromiumLayout
