@@ -251,4 +251,22 @@ theorem fieldset_fieldsetPaddingWithLegend :
     res.childSizes = [{ width := 100, height := 40 }] :=
   ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
+/-- Test `FieldsetLayoutAlgorithmTest, MinMax` (`forms/fieldset_layout_algorithm_test.cc:472`).
+    HTML 5.2 §4.10.16 & CSS Sizing 3 §5:
+    Computes min/max content sizes for 6 fieldset/legend configurations. -/
+theorem fieldset_minMax :
+    let fs1 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := false }
+    let fs2 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := true, legendBorderPaddingMargin := 76 }
+    let fs3 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := true, legendBorderPaddingMargin := 76, contentFloats := [50, 50] }
+    let fs4 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := true, legendBorderPaddingMargin := 76, legendFloats := [50, 50], contentFloats := [50] }
+    let fs5 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := true, legendBorderPaddingMargin := 76, legendFloats := [50], contentFloats := [50, 50, 50] }
+    let fs6 : FieldsetMinMaxInput := { borderPadding := 26, hasLegend := false, contentFloats := [50, 50] }
+    computeFieldsetMinMaxSizes fs1 = { minSize := 26, maxSize := 26 } ∧
+    computeFieldsetMinMaxSizes fs2 = { minSize := 102, maxSize := 102 } ∧
+    computeFieldsetMinMaxSizes fs3 = { minSize := 102, maxSize := 126 } ∧
+    computeFieldsetMinMaxSizes fs4 = { minSize := 152, maxSize := 202 } ∧
+    computeFieldsetMinMaxSizes fs5 = { minSize := 152, maxSize := 176 } ∧
+    computeFieldsetMinMaxSizes fs6 = { minSize := 76, maxSize := 126 } :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 end ChromiumLayout

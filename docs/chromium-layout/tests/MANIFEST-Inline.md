@@ -760,7 +760,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | forms/fieldset_layout_algorithm_test.cc:372 | PercentHeightQuirks | geometry | formalized | `fieldset_percentHeightQuirks` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Percentage height quirks in fieldset and legend |
 | forms/fieldset_layout_algorithm_test.cc:404 | LegendPercentHeightQuirks | geometry | formalized | `fieldset_legendPercentHeightQuirks` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Legend percent height quirks mode |
 | forms/fieldset_layout_algorithm_test.cc:433 | FieldsetPaddingWithLegend | geometry | formalized | `fieldset_fieldsetPaddingWithLegend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset padding delegation with tall legend |
-| forms/fieldset_layout_algorithm_test.cc:472 | MinMax | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:472 | MinMax | geometry | formalized | `fieldset_minMax` | HTML 5.2 §4.10.16 & CSS Sizing 3 §5: Fieldset min/max content sizes with floats and legend |
 | forms/fieldset_layout_algorithm_test.cc:540 | NoFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/fieldset_layout_algorithm_test.cc:567 | SimpleFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/fieldset_layout_algorithm_test.cc:604 | FragmentationNoPadding | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |

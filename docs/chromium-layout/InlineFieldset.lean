@@ -269,4 +269,40 @@ theorem legend_centering_offset_le (b h : Nat) :
     (if b > h then (b - h) / 2 else 0) ≤ b := by
   split <;> omega
 
+/-- Min-max sizes for a layout box (CSS Sizing 3 §5). -/
+structure MinMaxSizes where
+  minSize : Nat
+  maxSize : Nat
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Input parameters for computing fieldset min/max content sizes (HTML 5.2 §4.10.16, CSS Sizing 3 §5). -/
+structure FieldsetMinMaxInput where
+  borderPadding : Nat
+  legendBorderPaddingMargin : Nat := 0
+  legendFloats : List Nat := []
+  hasLegend : Bool := false
+  contentFloats : List Nat := []
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Compute min/max content sizes for a fieldset and legend according to HTML 5.2 §4.10.16 & CSS Sizing 3 §5. -/
+def computeFieldsetMinMaxSizes (inp : FieldsetMinMaxInput) : MinMaxSizes :=
+  let contentMin := if inp.contentFloats.isEmpty then 0 else inp.contentFloats.foldl Nat.max 0
+  let contentMax := inp.contentFloats.foldl (· + ·) 0
+  let contentTotalMin := inp.borderPadding + contentMin
+  let contentTotalMax := inp.borderPadding + contentMax
+  if inp.hasLegend then
+    let legMin := if inp.legendFloats.isEmpty then 0 else inp.legendFloats.foldl Nat.max 0
+    let legMax := inp.legendFloats.foldl (· + ·) 0
+    let legTotalMin := inp.borderPadding + inp.legendBorderPaddingMargin + legMin
+    let legTotalMax := inp.borderPadding + inp.legendBorderPaddingMargin + legMax
+    { minSize := Nat.max legTotalMin contentTotalMin, maxSize := Nat.max legTotalMax contentTotalMax }
+  else
+    { minSize := contentTotalMin, maxSize := contentTotalMax }
+
+/-- General Law: An empty fieldset with no legend has minSize = maxSize = borderPadding (CSS Sizing 3 §5). -/
+theorem fieldset_empty_min_max_eq (bp : Nat) :
+    let inp : FieldsetMinMaxInput := { borderPadding := bp, hasLegend := false, contentFloats := [] }
+    computeFieldsetMinMaxSizes inp = { minSize := bp, maxSize := bp } :=
+  rfl
+
 end ChromiumLayout
