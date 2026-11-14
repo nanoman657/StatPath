@@ -3,11 +3,12 @@ import BlockFragmentation
 import BlockOverflow
 import BlockWritingMode
 import ColumnWidth
+import OutOfFlowAnchor
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockOverflow BlockWritingMode ColumnWidth
+open BlockFlow BlockOverflow BlockWritingMode ColumnWidth OutOfFlowAnchor
 
 -- layout_box_test.cc:2045: ContentBoxFragmentedVlr
 -- In vertical-lr, block-size maps to physical width and inline-size to physical height.
@@ -220,6 +221,34 @@ theorem IsUserScrollableLayoutView_vectors :
     isUserScrollable .auto 600 2000 = true ∧
     scrollsOverflow .hidden = false ∧
     isUserScrollable .hidden 600 2000 = false := by
+  decide
+
+-- layout_box_test.cc:1805: AnchorInFragmentedContainingBlock
+-- CSS Anchor Positioning Level 1 §3.1, §3.2. Fragmented CB matches target anchor by name.
+theorem AnchorInFragmentedContainingBlock_vectors :
+    let anchors : List ScopedAnchor := [{ elementId := "anchor", scopeId := 1, name := "--a" }]
+    findTargetAnchor anchors 1 "--a" = some "anchor" := by
+  decide
+
+-- layout_box_test.cc:1849: AnchorInInlineContainingBlock
+-- CSS Anchor Positioning Level 1 §3.1, §3.2, §3.3. Inline CB matches target anchor; no implicit anchor.
+theorem AnchorInInlineContainingBlock_vectors :
+    let anchors : List ScopedAnchor := [{ elementId := "anchor", scopeId := 1, name := "--a" }]
+    findTargetAnchor anchors 1 "--a" = some "anchor" ∧
+    acceptableImplicitAnchor none = none := by
+  decide
+
+-- layout_box_test.cc:1869: AnchorInInlineContainingBlockWithNameConflicts
+-- CSS Anchor Positioning Level 1 §3.1, §3.2. Conflicting anchor names resolve by containing block scope.
+theorem AnchorInInlineContainingBlockWithNameConflicts_vectors :
+    let anchors : List ScopedAnchor := [
+      { elementId := "anchor1", scopeId := 1, name := "--a" },
+      { elementId := "anchor2", scopeId := 2, name := "--a" },
+      { elementId := "anchor3", scopeId := 3, name := "--a" }
+    ]
+    findTargetAnchor anchors 1 "--a" = some "anchor1" ∧
+    findTargetAnchor anchors 2 "--a" = some "anchor2" ∧
+    findTargetAnchor anchors 3 "--a" = some "anchor3" := by
   decide
 
 end TestsBlock

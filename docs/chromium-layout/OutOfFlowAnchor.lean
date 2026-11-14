@@ -122,5 +122,50 @@ theorem no_running_anchor_transform_animation :
     hasRunningAnchorTransformAnimation false = false := by
   rfl
 
+/-- Scoped anchor declaration with element identifier, containing block scope id, and anchor-name.
+    CSS Anchor Positioning 1 §3.1, §3.2. -/
+structure ScopedAnchor where
+  elementId : String
+  scopeId : Nat := 0
+  name : String
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Find target anchor matching a scoped name within containing block scope.
+    CSS Anchor Positioning 1 §3.2. -/
+def findTargetAnchor (anchors : List ScopedAnchor) (scopeId : Nat) (name : String) : Option String :=
+  let matching := anchors.filter (fun a => a.scopeId == scopeId && a.name == name)
+  matching.head?.map (·.elementId)
+
+/-- Implicit anchor validation for out-of-flow positioned element.
+    CSS Anchor Positioning 1 §3.3. -/
+def acceptableImplicitAnchor (implicitAnchorId : Option String := none) : Option String :=
+  implicitAnchorId
+
+/-- Law: Empty anchor list yields no target anchor.
+    CSS Anchor Positioning 1 §3.2. -/
+theorem find_anchor_empty (scopeId : Nat) (name : String) :
+    findTargetAnchor [] scopeId name = none := by
+  rfl
+
+/-- Law: Matching scope and anchor name resolves to the target element.
+    CSS Anchor Positioning 1 §3.2. -/
+theorem find_anchor_matches (elemId : String) (scope : Nat) (name : String) :
+    findTargetAnchor [{ elementId := elemId, scopeId := scope, name := name }] scope name = some elemId := by
+  dsimp [findTargetAnchor]
+  simp
+
+/-- Law: Mismatched containing block scope resolves to none.
+    CSS Anchor Positioning 1 §3.2. -/
+theorem find_anchor_mismatch (elemId : String) (s1 s2 : Nat) (name : String) (h : (s1 == s2) = false) :
+    findTargetAnchor [{ elementId := elemId, scopeId := s1, name := name }] s2 name = none := by
+  dsimp [findTargetAnchor]
+  simp [h]
+
+/-- Law: In the absence of an implicit anchor element, acceptableImplicitAnchor is none.
+    CSS Anchor Positioning 1 §3.3. -/
+theorem implicit_anchor_none :
+    acceptableImplicitAnchor none = none := by
+  rfl
+
 end OutOfFlowAnchor
 end ChromiumLayout

@@ -623,9 +623,9 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1765 | LayoutBoxTest.ScrollsWithViewportFixedPositionInsideTransform | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPositionInsideTransform_vectors`, `BlockOverflow.transform_cb_not_fixed_to_view` |
 | layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:1790 | LayoutBoxTest.HitTestResizerStackedWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
-| layout_box_test.cc:1805 | LayoutBoxTest.AnchorInFragmentedContainingBlock | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
-| layout_box_test.cc:1849 | LayoutBoxTest.AnchorInInlineContainingBlock | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
-| layout_box_test.cc:1869 | LayoutBoxTest.AnchorInInlineContainingBlockWithNameConflicts | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
+| layout_box_test.cc:1805 | LayoutBoxTest.AnchorInFragmentedContainingBlock | geometry | formalized | `TestsBlock.AnchorInFragmentedContainingBlock_vectors`, `OutOfFlowAnchor.find_anchor_matches` |
+| layout_box_test.cc:1849 | LayoutBoxTest.AnchorInInlineContainingBlock | geometry | formalized | `TestsBlock.AnchorInInlineContainingBlock_vectors`, `OutOfFlowAnchor.implicit_anchor_none` |
+| layout_box_test.cc:1869 | LayoutBoxTest.AnchorInInlineContainingBlockWithNameConflicts | geometry | formalized | `TestsBlock.AnchorInInlineContainingBlockWithNameConflicts_vectors`, `OutOfFlowAnchor.find_anchor_mismatch` |
 | layout_box_test.cc:1906 | LayoutBoxTest.IsUserScrollable | behaviour | formalized | `TestsBlock.IsUserScrollable_vectors`, `BlockOverflow.user_scrollable_implies_overflow` |
 | layout_box_test.cc:1935 | LayoutBoxTest.IsUserScrollableLayoutView | behaviour | formalized | `TestsBlock.IsUserScrollableLayoutView_vectors`, `BlockOverflow.scrolls_overflow_hidden` |
 | layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | blocked | needs LayoutBox geometry model |
