@@ -135,9 +135,9 @@ checks every row against the pinned sources and the Lean modules.
 | physical_box_fragment_test.cc:115 | PhysicalBoxFragmentTest.IsFragmentationContextRoot | geometry | formalized | `TestsBlock.IsFragmentationContextRoot_columnCount`, `ColumnLayout.actualColumnCount_at_least_one` |
 | physical_box_fragment_test.cc:135 | PhysicalBoxFragmentTest.IsFragmentationContextRootNested | geometry | formalized | `TestsBlock.IsFragmentationContextRootNested_columnCounts`, `ColumnLayout.actualColumnCount_at_least_one` |
 | physical_box_fragment_test.cc:169 | PhysicalBoxFragmentTest.IsFragmentationContextRootFieldset | behaviour | blocked | model lacks fragmentation context root query on physical fragments |
-| physical_box_fragment_test.cc:201 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStart | behaviour | blocked | model lacks descendant overflow above block-start query on physical fragments |
-| physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | blocked | model lacks descendant overflow above block-start query on physical fragments |
-| physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | blocked | model lacks visual box overflow-clip-margin calculation |
+| physical_box_fragment_test.cc:201 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStart | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStart_vectors`, `BlockOverflow.compute_may_have_descendant_above_propagation` |
+| physical_box_fragment_test.cc:216 | PhysicalBoxFragmentTest.MayHaveDescendantAboveBlockStartBlockInInline | behaviour | formalized | `TestsBlock.MayHaveDescendantAboveBlockStartBlockInInline_vectors`, `BlockOverflow.compute_may_have_descendant_above_propagation` |
+| physical_box_fragment_test.cc:233 | PhysicalBoxFragmentTest.OverflowClipMarginVisualBox | geometry | formalized | `TestsBlock.OverflowClipMarginVisualBox_vectors`, `BlockOverflow.visual_box_clip_size_monotonic` |
 | physical_box_fragment_test.cc:294 | PhysicalBoxFragmentTest.CloneWithPostLayoutFragments | internal | internal | checks CloneWithPostLayoutFragments preserves C++ frame set layout data pointer |
 | relative_utils_test.cc:49 | RelativeUtilsTest.HorizontalTB | geometry | formalized | `TestsBlock.HorizontalTB_vectors`, `BlockRelative.opposing_sum_zero` |
 | absolute_utils_test.cc:150 | AbsoluteUtilsTest.Horizontal | geometry | formalized | `TestsBlock.Horizontal_vectors` |

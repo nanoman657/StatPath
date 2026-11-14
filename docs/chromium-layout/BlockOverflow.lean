@@ -314,5 +314,75 @@ theorem child_visual_overflow_origin (p c : PhysicalRect) :
   dsimp [visualOverflowWithChild]
   omega
 
+/-- A child fragment's offset and descendant-overflow flag.
+    CSS 2.1 §8.3.1 Collapsing Margins, CSS Overflow 3 §2. -/
+structure FragmentDescendant where
+  offsetY : Int := 0
+  height : Nat := 0
+  hasDescendantAbove : Bool := false
+  deriving DecidableEq, Repr
+
+/-- Whether a container or its descendants overflow above the container's block-start edge (y < 0).
+    CSS 2.1 §8.3.1 Collapsing Margins, CSS Overflow 3 §2. -/
+def computeMayHaveDescendantAboveBlockStart (children : List FragmentDescendant) : Bool :=
+  children.any (fun c => c.offsetY < 0 || c.hasDescendantAbove)
+
+/-- Law: An empty list has no descendants above block-start.
+    CSS 2.1 §8.3.1, CSS Overflow 3 §2. -/
+theorem compute_may_have_descendant_above_empty :
+    computeMayHaveDescendantAboveBlockStart [] = false := rfl
+
+/-- Law: A child with negative block-start offset causes the container to report true.
+    CSS 2.1 §8.3.1, CSS Overflow 3 §2. -/
+theorem compute_may_have_descendant_above_negative_offset (y : Int) (h : Nat) (hy : y < 0) :
+    computeMayHaveDescendantAboveBlockStart [⟨y, h, false⟩] = true := by
+  dsimp [computeMayHaveDescendantAboveBlockStart]
+  simp [decide_eq_true hy]
+
+/-- Law: A child with hasDescendantAbove flag propagates true to the container.
+    CSS 2.1 §8.3.1, CSS Overflow 3 §2. -/
+theorem compute_may_have_descendant_above_propagation (y : Int) (h : Nat) :
+    computeMayHaveDescendantAboveBlockStart [⟨y, h, true⟩] = true := by
+  dsimp [computeMayHaveDescendantAboveBlockStart]
+  simp
+
+/-- Reference box for overflow-clip-margin.
+    CSS Overflow Module Level 3 §3.2 The overflow-clip-margin property. -/
+inductive VisualBox where
+  | contentBox
+  | paddingBox
+  | borderBox
+  deriving DecidableEq, Repr
+
+/-- Effective clip size along an axis given visual box, box-struts, and margin.
+    CSS Overflow Module Level 3 §3.2 The overflow-clip-margin property. -/
+def visualBoxClipSize (vbox : VisualBox) (contentSize padding border margin : Nat) : Nat :=
+  match vbox with
+  | .contentBox => border + padding + contentSize + margin
+  | .paddingBox => border + padding + contentSize + padding + margin
+  | .borderBox => border + padding + contentSize + padding + border + margin
+
+/-- Law: Reference box clip sizing is monotonic from content-box to padding-box to border-box.
+    CSS Overflow Module Level 3 §3.2 The overflow-clip-margin property. -/
+theorem visual_box_clip_size_monotonic (c p b m : Nat) :
+    visualBoxClipSize .contentBox c p b m ≤ visualBoxClipSize .paddingBox c p b m ∧
+    visualBoxClipSize .paddingBox c p b m ≤ visualBoxClipSize .borderBox c p b m := by
+  dsimp [visualBoxClipSize]
+  omega
+
+/-- Law: The difference between border-box and padding-box clip size is the border thickness.
+    CSS Overflow Module Level 3 §3.2 The overflow-clip-margin property. -/
+theorem visual_box_clip_size_border_diff (c p b m : Nat) :
+    visualBoxClipSize .borderBox c p b m - visualBoxClipSize .paddingBox c p b m = b := by
+  dsimp [visualBoxClipSize]
+  omega
+
+/-- Law: The difference between padding-box and content-box clip size is the padding thickness.
+    CSS Overflow Module Level 3 §3.2 The overflow-clip-margin property. -/
+theorem visual_box_clip_size_padding_diff (c p b m : Nat) :
+    visualBoxClipSize .paddingBox c p b m - visualBoxClipSize .contentBox c p b m = p := by
+  dsimp [visualBoxClipSize]
+  omega
+
 end BlockOverflow
 end ChromiumLayout
