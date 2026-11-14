@@ -1126,6 +1126,8 @@ checks every row against the pinned sources and the Lean modules.
 | layout_input_node_test.cc:173 | LayoutInputNodeTest.DumpRelposInline | internal | internal | Blink debug string dumper check |
 | inline_layout_test.cc:32 | InlineLayoutTest.BlockWithSingleTextNode | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
 | inline_layout_test.cc:59 | InlineLayoutTest.BlockWithTextAndAtomicInline | behaviour | blocked | inline lane (model lacks inline formatting context / inline layout algorithm) |
+| geometry/writing_mode_converter_test.cc:15 | WritingModeConverterTest.ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `TestsBlock.ConvertLogicalOffsetToPhysicalOffset_vectors`, `BlockWritingModeConverter.toPhysical` (general over writing mode, direction, sizes) |
+| geometry/writing_mode_converter_test.cc:73 | WritingModeConverterTest.ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `TestsBlock.ConvertPhysicalOffsetToLogicalOffset_vectors`, `BlockWritingModeConverter.toLogical` |
 
 
 
@@ -1175,6 +1177,7 @@ checks every row against the pinned sources and the Lean modules.
 - `ColumnWidth.columns_fit`: multicol columns plus gaps fit the available inline size.
 - `BlockRelative.opposing_sum_zero`: when only one opposing relative inset is specified, the resolved insets sum to zero.
 - `BlockAbsolute.clamp_bounds`: clamping always stays within [minVal, maxVal] when minVal ≤ maxVal.
+- `BlockWritingModeConverter.toLogical_toPhysical` / `toPhysical_toLogical`: offset conversion is a bijection for every writing mode, direction and size (CSS Writing Modes 4 §6).
 
 ## Merge notes
 
