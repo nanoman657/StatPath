@@ -187,4 +187,117 @@ theorem lineInflowEndOffset_text (startOffset s e : Nat) :
 theorem lineInflowEndOffset_openRubyColumn (startOffset s e : Nat) :
     lineInflowEndOffset startOffset [.openRubyColumn s e] = e := rfl
 
+/-! ## 5. CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Ruby Annotation Metrics and Text Emphasis -/
+
+/-- CSS Text Decoration 3 §3.5: The position of text emphasis marks relative to text. -/
+inductive TextEmphasisPosition where
+  | over
+  | under
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Annotation metrics describing the distances from the line-over and line-under of an inline
+    fragment to the exterior boundaries of ruby annotations and text-emphasis marks.
+    (Matches Blink `FontHeight FragmentItem::AnnotationMetrics() const`). -/
+structure AnnotationMetrics where
+  ascent : Nat := 0
+  descent : Nat := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text Decoration 3 §3.5: Default text emphasis mark height is 50% of the font size. -/
+def computeTextEmphasisHeight (fontSize : Nat) : Nat :=
+  fontSize / 2
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    A specification of ruby annotation and emphasis parameters for a text fragment. -/
+structure TextAnnotationSpec where
+  hasRuby : Bool := false
+  rubyPosition : RubyPosition := .over
+  rubyAnnoHeight : Nat := 0
+  hasEmphasis : Bool := false
+  emphasisPosition : TextEmphasisPosition := .over
+  fontSize : Nat := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Compute annotation metrics for a text item.
+    - If the item is not in a ruby container (hasRuby = false), metrics are {0, 0}.
+    - If ruby is over, ascent is determined by ruby annotation height or over-emphasis height.
+    - If ruby is under, descent is determined by ruby annotation height or under-emphasis height. -/
+def computeAnnotationMetrics (spec : TextAnnotationSpec) : AnnotationMetrics :=
+  if !spec.hasRuby then
+    { ascent := 0, descent := 0 }
+  else
+    let empHeight := if spec.hasEmphasis then computeTextEmphasisHeight spec.fontSize else 0
+    let ascentVal :=
+      if spec.rubyPosition == .over then
+        if spec.rubyAnnoHeight > 0 then spec.rubyAnnoHeight
+        else if spec.hasEmphasis && spec.emphasisPosition == .over then empHeight
+        else 0
+      else 0
+    let descentVal :=
+      if spec.rubyPosition == .under then
+        if spec.rubyAnnoHeight > 0 then spec.rubyAnnoHeight
+        else if spec.hasEmphasis && spec.emphasisPosition == .under then empHeight
+        else 0
+      else 0
+    { ascent := ascentVal, descent := descentVal }
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    A nested ruby annotation layer with text height and emphasis mark. -/
+structure NestedRubyAnnotation where
+  textHeight : Nat
+  emphasisHeight : Nat := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Total ascent for nested ruby annotations stacked outside a base item.
+    Each layer contributes its text height and any associated emphasis mark height. -/
+def computeNestedRubyAscent : List NestedRubyAnnotation → Nat
+  | [] => 0
+  | l :: ls => l.textHeight + l.emphasisHeight + computeNestedRubyAscent ls
+
+/-- CSS Ruby 1 §3.2, CSS Text Decoration 3 §3.5, CSS 2.1 §10.8:
+    Line box height for a line containing text with ruby annotations and text emphasis. -/
+def computeAnnotatedLineHeight (baseHeight rubyAnnoOver empOver rubyAnnoUnder empUnder : Nat) : Nat :=
+  baseHeight + max rubyAnnoOver empOver + max rubyAnnoUnder empUnder
+
+/-! ## 6. General Laws for Annotation Metrics and Ruby Stacking -/
+
+/-- CSS Ruby 1 §3.2: Non-ruby text fragments always have zero annotation metrics. -/
+theorem computeAnnotationMetrics_noRuby (spec : TextAnnotationSpec) (h : spec.hasRuby = false) :
+    computeAnnotationMetrics spec = { ascent := 0, descent := 0 } := by
+  dsimp [computeAnnotationMetrics]
+  rw [h]
+  rfl
+
+/-- CSS Text Decoration 3 §3.5: Text emphasis mark height is monotonic in font size. -/
+theorem computeTextEmphasisHeight_monotonic (s1 s2 : Nat) (h : s1 ≤ s2) :
+    computeTextEmphasisHeight s1 ≤ computeTextEmphasisHeight s2 := by
+  dsimp [computeTextEmphasisHeight]
+  exact Nat.div_le_div_right h
+
+/-- CSS Ruby 1 §3.2: Stacking nested ruby annotations preserves total ascent additivity. -/
+theorem computeNestedRubyAscent_append (l1 l2 : List NestedRubyAnnotation) :
+    computeNestedRubyAscent (l1 ++ l2) = computeNestedRubyAscent l1 + computeNestedRubyAscent l2 := by
+  induction l1 with
+  | nil =>
+    dsimp [computeNestedRubyAscent]
+    omega
+  | cons head tail ih =>
+    dsimp [computeNestedRubyAscent]
+    rw [ih]
+    omega
+
+/-- CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    When ruby annotation height matches emphasis height, line height is invariant
+    between ruby-only, emphasis-only, and ruby-with-emphasis. -/
+theorem computeAnnotatedLineHeight_ruby_emphasis_invariant (baseHeight H : Nat) :
+    computeAnnotatedLineHeight baseHeight 0 H 0 0 = computeAnnotatedLineHeight baseHeight H H 0 0 ∧
+    computeAnnotatedLineHeight baseHeight H H 0 0 = computeAnnotatedLineHeight baseHeight H 0 0 0 := by
+  dsimp [computeAnnotatedLineHeight]
+  constructor
+  · omega
+  · omega
+
 end ChromiumLayout

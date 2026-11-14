@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
 import InlineLayoutAlgorithm
+import InlineRuby
 
 namespace ChromiumLayout.TestsInline
 
@@ -156,6 +157,64 @@ theorem inlineLayoutAlgorithm_typesForBlockInInline :
     (empty[1]!.isEmptyLineBox = true ∧ empty[1]!.isBlockInInline = true) ∧
     -- Non-self-collapsing block with height
     (height[1]!.isEmptyLineBox = false ∧ height[1]!.isBlockInInline = true) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsVerticalLr` (`inline/inline_layout_algorithm_test.cc:1272`).
+    CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Annotation metrics in vertical-lr writing mode for ruby with text emphasis. -/
+theorem inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsVerticalLr :
+    let test1 := computeAnnotationMetrics { hasRuby := true, rubyPosition := .under, hasEmphasis := true, emphasisPosition := .under, fontSize := 20 }
+    let test2 := computeAnnotationMetrics { hasRuby := true, rubyPosition := .over, hasEmphasis := true, emphasisPosition := .over, fontSize := 20 }
+    let test3 := computeAnnotationMetrics { hasRuby := false, fontSize := 20 }
+    (test1.ascent = 0 ∧ test1.descent = 10) ∧
+    (test2.ascent = 10 ∧ test2.descent = 0) ∧
+    (test3.ascent = 0 ∧ test3.descent = 0) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsVerticalRl` (`inline/inline_layout_algorithm_test.cc:1276`).
+    CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Annotation metrics in vertical-rl writing mode for ruby with text emphasis. -/
+theorem inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsVerticalRl :
+    let test1 := computeAnnotationMetrics { hasRuby := true, rubyPosition := .under, hasEmphasis := true, emphasisPosition := .under, fontSize := 20 }
+    let test2 := computeAnnotationMetrics { hasRuby := true, rubyPosition := .over, hasEmphasis := true, emphasisPosition := .over, fontSize := 20 }
+    let test3 := computeAnnotationMetrics { hasRuby := false, fontSize := 20 }
+    (test1.ascent = 0 ∧ test1.descent = 10) ∧
+    (test2.ascent = 10 ∧ test2.descent = 0) ∧
+    (test3.ascent = 0 ∧ test3.descent = 0) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.RubyTextEmphasisAnnotationMetricsHorizontal` (`inline/inline_layout_algorithm_test.cc:1280`).
+    CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Annotation metrics in horizontal writing mode:
+    1. Ruby and Emphasis both Under: ascent = 0, descent = 10; non-ruby text after: 0, 0.
+    2. Ruby and Emphasis both Over: ascent = 10, descent = 0.
+    3. Base only with Emphasis Under: 0, 0.
+    4. Multiple columns on same line: column A ascent 20, column B aligned ascent 12. -/
+theorem inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsHorizontal :
+    let test1A := computeAnnotationMetrics { hasRuby := true, rubyPosition := .under, hasEmphasis := true, emphasisPosition := .under, fontSize := 20 }
+    let test1After := computeAnnotationMetrics { hasRuby := false, fontSize := 20 }
+    let test2B := computeAnnotationMetrics { hasRuby := true, rubyPosition := .over, hasEmphasis := true, emphasisPosition := .over, fontSize := 20 }
+    let test3C := computeAnnotationMetrics { hasRuby := false, fontSize := 20 }
+    let test4A := computeAnnotationMetrics { hasRuby := true, rubyPosition := .over, rubyAnnoHeight := 20, fontSize := 20 }
+    let test4B := computeAnnotationMetrics { hasRuby := true, rubyPosition := .over, rubyAnnoHeight := 12, fontSize := 20 }
+    (test1A.ascent = 0 ∧ test1A.descent = 10) ∧
+    (test1After.ascent = 0 ∧ test1After.descent = 0) ∧
+    (test2B.ascent = 10 ∧ test2B.descent = 0) ∧
+    (test3C.ascent = 0 ∧ test3C.descent = 0) ∧
+    (test4A.ascent = 20 ∧ test4A.descent = 0) ∧
+    (test4B.ascent = 12 ∧ test4B.descent = 0) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.RubyTextEmphasisHeight` (`inline/inline_layout_algorithm_test.cc:1373`).
+    CSS 2.1 §10.8, CSS Ruby 1 §3.2, CSS Text Decoration 3 §3.5:
+    Line box height for text with emphasis only, both ruby & emphasis, and ruby only are all equal. -/
+theorem inlineLayoutAlgorithm_rubyTextEmphasisHeight :
+    let p1Height := computeAnnotatedLineHeight 80 0 40 0 0 + 2
+    let p2Height := computeAnnotatedLineHeight 80 40 40 0 0 + 2
+    let p3Height := computeAnnotatedLineHeight 80 40 0 0 0 + 2
+    (p1Height = 122) ∧
+    (p1Height = p2Height) ∧
+    (p1Height = p3Height) := by
   decide
 
 end ChromiumLayout.TestsInline

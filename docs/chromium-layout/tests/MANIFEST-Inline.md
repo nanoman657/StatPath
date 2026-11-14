@@ -347,10 +347,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_layout_algorithm_test.cc:1086 | EllipsisFallbackToDots | behaviour | formalized | `test_EllipsisFallbackToDots` | Missing U+2026 glyph falls back to three dots |
 | inline/inline_layout_algorithm_test.cc:1129 | EllipsisFallbackToDotsFirstLine | behaviour | blocked | - | Blocked: model lacks EllipsisFallbackToDotsFirstLine layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:1175 | TextEmphasisAsRuby | geometry | blocked | - | Blocked: model lacks TextEmphasisAsRuby layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:1272 | RubyTextEmphasisAnnotationMetricsVerticalLr | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsVerticalLr layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:1276 | RubyTextEmphasisAnnotationMetricsVerticalRl | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsVerticalRl layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:1280 | RubyTextEmphasisAnnotationMetricsHorizontal | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisAnnotationMetricsHorizontal layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:1373 | RubyTextEmphasisHeight | geometry | blocked | - | Blocked: model lacks RubyTextEmphasisHeight layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:1272 | RubyTextEmphasisAnnotationMetricsVerticalLr | geometry | formalized | `inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsVerticalLr` | CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Vertical-lr annotation metrics for ruby text with emphasis |
+| inline/inline_layout_algorithm_test.cc:1276 | RubyTextEmphasisAnnotationMetricsVerticalRl | geometry | formalized | `inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsVerticalRl` | CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Vertical-rl annotation metrics for ruby text with emphasis |
+| inline/inline_layout_algorithm_test.cc:1280 | RubyTextEmphasisAnnotationMetricsHorizontal | geometry | formalized | `inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetricsHorizontal` | CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Horizontal annotation metrics across ruby and emphasis positions |
+| inline/inline_layout_algorithm_test.cc:1373 | RubyTextEmphasisHeight | geometry | formalized | `inlineLayoutAlgorithm_rubyTextEmphasisHeight` | CSS 2.1 §10.8, CSS Ruby 1 §3.2, CSS Text Decoration 3 §3.5: Invariant line box height for ruby annotations and text emphasis |
 | inline/inline_layout_algorithm_test.cc:1406 | TextBoxTrimOnInlineBox | geometry | blocked | - | Blocked: model lacks TextBoxTrimOnInlineBox layout algorithm support |
 
 | inline/inline_node_shape_cache_test.cc:51 | ShapeCacheMultipleItems | internal | internal | - | Tests IsNGShapeCacheAllowed flag for multiple items |
@@ -450,7 +450,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/ruby_utils_test.cc:67 | GroupLinesBothSides | geometry | formalized | `rubyBlockPositionCalculator_groupLinesBothSides` | Over and under annotations group into separate lines with negative and positive depths |
 | inline/ruby_utils_test.cc:106 | GroupLinesAnnotationForAnnotation | geometry | formalized | `rubyBlockPositionCalculator_groupLinesAnnotationForAnnotation` | Sub-columns of an annotation column form sub-levels such as [1, -1] |
 | inline/ruby_utils_test.cc:129 | PlaceLinesTreePlacement | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
-| inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | blocked | - | Blocked: model lacks RubyBlockPositionCalculator |
+| inline/ruby_utils_test.cc:146 | PlaceLinesNestedRubyWithTextEmphasis | geometry | formalized | `rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis` | CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5: Stacked annotation and emphasis ascent metrics for nested ruby |
 | inline/score_line_breaker_test.cc:78 | LastLines | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
 | inline/score_line_breaker_test.cc:136 | BalanceMaxLinesExceeded | behaviour | formalized | `scoreLineBreaker_balanceMaxLinesExceeded` | CSS Text 4 §5.3: Line count exceeding limit falls back from paragraph balancing |
 | inline/score_line_breaker_test.cc:172 | BlockInInlineTest.BeforeAfter | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |

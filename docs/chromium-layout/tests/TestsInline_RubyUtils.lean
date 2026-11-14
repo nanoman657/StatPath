@@ -86,4 +86,29 @@ theorem rubyBlockPositionCalculator_groupLinesAnnotationForAnnotation :
     (lines[2]!.level = [1, -1]) := by
   decide
 
+/-! ## 6. PlaceLinesNestedRubyWithTextEmphasis (`inline/ruby_utils_test.cc:146`) -/
+
+/-- Test `RubyBlockPositionCalculatorTest, PlaceLinesNestedRubyWithTextEmphasis` (`inline/ruby_utils_test.cc:146`).
+    CSS Ruby 1 §3.2 & CSS Text Decoration 3 §3.5:
+    Nested ruby annotations with text emphasis:
+    - Non-ruby items (item_before) have zero annotation ascent.
+    - Base item accumulates all nested annotations and emphasis marks:
+      90 = 20 (first anno) + 10 (nested anno emphasis) + 20 (nested anno) + 10 (first anno emphasis)
+         + 10 (second anno emphasis) + 20 (second anno).
+    - First annotation inner base (first2) has ascent 30 = 10 (nested emphasis) + 20 (nested anno).
+    - First annotation leaf (first1) has zero ascent. -/
+theorem rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis :
+    let anno1 : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
+    let annoNested : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
+    let anno2 : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
+    let baseAscent := computeNestedRubyAscent [anno1, annoNested, anno2]
+    let first2Ascent := computeNestedRubyAscent [annoNested]
+    let first1Ascent := computeNestedRubyAscent []
+    let beforeMetrics := computeAnnotationMetrics { hasRuby := false }
+    (beforeMetrics.ascent = 0) ∧
+    (baseAscent = 90) ∧
+    (first1Ascent = 0) ∧
+    (first2Ascent = 30) := by
+  decide
+
 end ChromiumLayout
