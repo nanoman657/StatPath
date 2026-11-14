@@ -673,7 +673,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/physical_rect_test.cc:243 | EdgesOnPixelBoundaries | geometry | formalized | `physicalRect_edgesOnPixelBoundaries` | Rect edges test on integer pixel boundaries |
 | geometry/physical_rect_test.cc:281 | ExpandEdgesToPixelBoundaries | geometry | formalized | `physicalRect_expandEdgesToPixelBoundaries` | Expand rect edges to enclosing integer pixel boundaries |
 | geometry/physical_rect_test.cc:335 | InfiniteIntRect | geometry | formalized | `physicalRect_infiniteIntRect` | Infinite integer rect encloses bounding box without precision loss |
-| geometry/static_position_test.cc:331 | Convert | geometry | blocked | - | Blocked: model lacks StaticPosition::Convert |
+| geometry/static_position_test.cc:331 | Convert | geometry | formalized | `staticPosition_convert` | CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4: Logical to physical static position roundtrip across all writing modes and directions |
 | geometry/writing_mode_converter_test.cc:15 | ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `writingModeConverter_toPhysical` | Converts logical offset to physical offset across writing modes and directions |
 | geometry/writing_mode_converter_test.cc:73 | ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `writingModeConverter_toLogical` | Converts physical offset to logical offset across writing modes and directions |
 | svg/layout_svg_container_test.cc:19 | TransformAffectsVectorEffect | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |

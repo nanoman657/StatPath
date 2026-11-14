@@ -348,6 +348,163 @@ def physicalToLogicalOffset (wm : WritingMode) (dir : TextDirection) (outerSize 
     | .ltr => { inlineOffset := outerSize.height - innerSize.height - offset.top, blockOffset := offset.left }
     | .rtl => { inlineOffset := offset.top, blockOffset := offset.left }
 
+/-! ## 5b. Static Position Model (`geometry/static_position.h`, CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4) -/
+
+inductive InlineEdge where
+  | inlineStart
+  | inlineCenter
+  | inlineEnd
+  deriving DecidableEq, Repr, Inhabited
+
+inductive BlockEdge where
+  | blockStart
+  | blockCenter
+  | blockEnd
+  deriving DecidableEq, Repr, Inhabited
+
+inductive LogicalAlignmentDirection where
+  | block
+  | inline
+  deriving DecidableEq, Repr, Inhabited
+
+structure LogicalStaticPosition where
+  offset : LogicalOffset := { inlineOffset := 0, blockOffset := 0 }
+  inlineEdge : InlineEdge := .inlineStart
+  blockEdge : BlockEdge := .blockStart
+  alignSelfDirection : LogicalAlignmentDirection := .block
+  deriving DecidableEq, Repr, Inhabited
+
+inductive HorizontalEdge where
+  | left
+  | horizontalCenter
+  | right
+  deriving DecidableEq, Repr, Inhabited
+
+inductive VerticalEdge where
+  | top
+  | verticalCenter
+  | bottom
+  deriving DecidableEq, Repr, Inhabited
+
+inductive PhysicalAlignmentDirection where
+  | horizontal
+  | vertical
+  deriving DecidableEq, Repr, Inhabited
+
+structure PhysicalStaticPosition where
+  offset : PhysicalOffset := { left := 0, top := 0 }
+  horizontalEdge : HorizontalEdge := .left
+  verticalEdge : VerticalEdge := .top
+  alignSelfDirection : PhysicalAlignmentDirection := .vertical
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Convert LogicalStaticPosition to PhysicalStaticPosition (`LogicalStaticPosition::ConvertToPhysical`).
+    CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4. -/
+def logicalToPhysicalStaticPosition (wm : WritingMode) (dir : TextDirection) (outerSize : PhysicalSize)
+    (pos : LogicalStaticPosition) : PhysicalStaticPosition :=
+  let pOffset := logicalToPhysicalOffset wm dir outerSize { width := 0, height := 0 } pos.offset
+  let hEdge : HorizontalEdge :=
+    match wm with
+    | .horizontalTb =>
+      if pos.inlineEdge == .inlineCenter then .horizontalCenter
+      else if (pos.inlineEdge == .inlineStart) == (dir == .ltr) then .left
+      else .right
+    | .verticalRl | .sidewaysRl =>
+      if pos.blockEdge == .blockCenter then .horizontalCenter
+      else if pos.blockEdge == .blockEnd then .left
+      else .right
+    | .verticalLr =>
+      if pos.blockEdge == .blockCenter then .horizontalCenter
+      else if pos.blockEdge == .blockStart then .left
+      else .right
+    | .sidewaysLr =>
+      if pos.blockEdge == .blockCenter then .horizontalCenter
+      else if pos.blockEdge == .blockStart then .left
+      else .right
+  let vEdge : VerticalEdge :=
+    match wm with
+    | .horizontalTb =>
+      if pos.blockEdge == .blockCenter then .verticalCenter
+      else if pos.blockEdge == .blockStart then .top
+      else .bottom
+    | .verticalRl | .sidewaysRl =>
+      if pos.inlineEdge == .inlineCenter then .verticalCenter
+      else if (pos.inlineEdge == .inlineStart) == (dir == .ltr) then .top
+      else .bottom
+    | .verticalLr =>
+      if pos.inlineEdge == .inlineCenter then .verticalCenter
+      else if (pos.inlineEdge == .inlineStart) == (dir == .ltr) then .top
+      else .bottom
+    | .sidewaysLr =>
+      if pos.inlineEdge == .inlineCenter then .verticalCenter
+      else if (pos.inlineEdge == .inlineEnd) == (dir == .ltr) then .top
+      else .bottom
+  let pAlign : PhysicalAlignmentDirection :=
+    match wm with
+    | .horizontalTb =>
+      if pos.alignSelfDirection == .inline then .horizontal else .vertical
+    | .verticalRl | .sidewaysRl | .verticalLr | .sidewaysLr =>
+      if pos.alignSelfDirection == .inline then .vertical else .horizontal
+  { offset := pOffset, horizontalEdge := hEdge, verticalEdge := vEdge, alignSelfDirection := pAlign }
+
+/-- Convert PhysicalStaticPosition to LogicalStaticPosition (`PhysicalStaticPosition::ConvertToLogical`).
+    CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4. -/
+def physicalToLogicalStaticPosition (wm : WritingMode) (dir : TextDirection) (outerSize : PhysicalSize)
+    (pos : PhysicalStaticPosition) : LogicalStaticPosition :=
+  let lOffset := physicalToLogicalOffset wm dir outerSize { width := 0, height := 0 } pos.offset
+  let iEdge : InlineEdge :=
+    match wm with
+    | .horizontalTb =>
+      if pos.horizontalEdge == .horizontalCenter then .inlineCenter
+      else if (pos.horizontalEdge == .left) == (dir == .ltr) then .inlineStart
+      else .inlineEnd
+    | .verticalRl | .sidewaysRl =>
+      if pos.verticalEdge == .verticalCenter then .inlineCenter
+      else if (pos.verticalEdge == .top) == (dir == .ltr) then .inlineStart
+      else .inlineEnd
+    | .verticalLr =>
+      if pos.verticalEdge == .verticalCenter then .inlineCenter
+      else if (pos.verticalEdge == .top) == (dir == .ltr) then .inlineStart
+      else .inlineEnd
+    | .sidewaysLr =>
+      if pos.verticalEdge == .verticalCenter then .inlineCenter
+      else if (pos.verticalEdge == .bottom) == (dir == .ltr) then .inlineStart
+      else .inlineEnd
+  let bEdge : BlockEdge :=
+    match wm with
+    | .horizontalTb =>
+      if pos.verticalEdge == .verticalCenter then .blockCenter
+      else if pos.verticalEdge == .top then .blockStart
+      else .blockEnd
+    | .verticalRl | .sidewaysRl =>
+      if pos.horizontalEdge == .horizontalCenter then .blockCenter
+      else if pos.horizontalEdge == .right then .blockStart
+      else .blockEnd
+    | .verticalLr =>
+      if pos.horizontalEdge == .horizontalCenter then .blockCenter
+      else if pos.horizontalEdge == .left then .blockStart
+      else .blockEnd
+    | .sidewaysLr =>
+      if pos.horizontalEdge == .horizontalCenter then .blockCenter
+      else if pos.horizontalEdge == .left then .blockStart
+      else .blockEnd
+  let lAlign : LogicalAlignmentDirection :=
+    match wm with
+    | .horizontalTb =>
+      if pos.alignSelfDirection == .horizontal then .inline else .block
+    | .verticalRl | .sidewaysRl | .verticalLr | .sidewaysLr =>
+      if pos.alignSelfDirection == .horizontal then .block else .inline
+  { offset := lOffset, inlineEdge := iEdge, blockEdge := bEdge, alignSelfDirection := lAlign }
+
+/-- General Law: converting logical edges and alignment to physical and back preserves all edges and directions. -/
+theorem logicalStaticPosition_edges_roundtrip (wm : WritingMode) (dir : TextDirection)
+    (off : LogicalOffset) (ie : InlineEdge) (be : BlockEdge) (al : LogicalAlignmentDirection) :
+    let pos : LogicalStaticPosition := { offset := off, inlineEdge := ie, blockEdge := be, alignSelfDirection := al }
+    let phys := logicalToPhysicalStaticPosition wm dir { width := 100, height := 100 } pos
+    let log := physicalToLogicalStaticPosition wm dir { width := 100, height := 100 } phys
+    log.inlineEdge = ie ∧ log.blockEdge = be ∧ log.alignSelfDirection = al := by
+  cases wm <;> cases dir <;> cases ie <;> cases be <;> cases al <;> exact ⟨rfl, rfl, rfl⟩
+
 /-! ## 6. Logical and Physical Rect Operations (`geometry/logical_rect.h`, `physical_rect.h`) -/
 
 structure LogicalRect where

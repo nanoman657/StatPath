@@ -299,4 +299,299 @@ theorem physicalRect_infiniteIntRect :
     infiniteIntRect.encloses { x := -8000000, y := -8000000, width := 16000000, height := 16000000 } = true := by
   decide
 
+/-- Test `StaticPositionTest, Convert` (`geometry/static_position_test.cc:331`).
+    CSS Writing Modes 3 §3 & §4.2, CSS Positioned Layout 3 §4:
+    Roundtrip conversion between logical and physical static position across all writing modes and directions. -/
+theorem staticPosition_convert :
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .ltr { width := 100, height := 100 }
+       { offset := { left := 20, top := 30 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .horizontalTb .rtl { width := 100, height := 100 }
+       { offset := { left := 80, top := 30 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .ltr { width := 100, height := 100 }
+       { offset := { left := 70, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .right, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 70, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalRl .rtl { width := 100, height := 100 }
+       { offset := { left := 70, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .verticalLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .ltr { width := 100, height := 100 }
+       { offset := { left := 30, top := 80 }, horizontalEdge := .horizontalCenter, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .bottom, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockStart, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .top, alignSelfDirection := .horizontal } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockEnd, alignSelfDirection := .block }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .right, verticalEdge := .bottom, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineEnd, blockEdge := .blockEnd, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .left, verticalEdge := .verticalCenter, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineCenter, blockEdge := .blockStart, alignSelfDirection := .inline }) ∧
+    (logicalToPhysicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline } =
+       { offset := { left := 30, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical }) ∧
+    (physicalToLogicalStaticPosition .sidewaysLr .rtl { width := 100, height := 100 }
+       { offset := { left := 30, top := 20 }, horizontalEdge := .horizontalCenter, verticalEdge := .top, alignSelfDirection := .vertical } =
+       { offset := { inlineOffset := 20, blockOffset := 30 }, inlineEdge := .inlineStart, blockEdge := .blockCenter, alignSelfDirection := .inline }) :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 end ChromiumLayout
+
