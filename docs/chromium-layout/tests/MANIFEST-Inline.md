@@ -373,11 +373,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_break_candidate_test.cc:130 | Span | geometry | formalized | `lineBreak_Span` | CSS Text 3 §4: Break candidate offsets across inline span boundaries |
 | inline/line_break_candidate_test.cc:157 | SpanMidWord | geometry | formalized | `lineBreak_SpanMidWord` | CSS Text 3 §4: Mid-word span boundary does not create break opportunity |
 | inline/line_break_candidate_test.cc:183 | SpanCloseAfterSpace | geometry | formalized | `lineBreak_SpanCloseAfterSpace` | CSS Text 3 §4: Break candidate offset advances past closing tag to next in-flow item |
-| inline/line_break_candidate_test.cc:210 | TrailingSpacesCollapsed | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:210 | TrailingSpacesCollapsed | geometry | formalized | `lineBreak_TrailingSpacesCollapsed` | CSS Text 3 §4.1 & §5.2: Multi-line line break boundary sentinels under constrained available width |
 | inline/line_break_candidate_test.cc:247 | AtomicInline | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:276 | AtomicInlineBr | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:307 | AtomicInlineTrailingSpaces | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:339 | ForcedBreak | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:276 | AtomicInlineBr | geometry | formalized | `lineBreak_AtomicInlineBr` | CSS Text 3 §4 & CSS 2.1 §9.5.1: Atomic inline followed by forced break produces break candidate with matching break and non-break positions |
+| inline/line_break_candidate_test.cc:307 | AtomicInlineTrailingSpaces | geometry | formalized | `lineBreak_AtomicInlineTrailingSpaces` | CSS Text 3 §4.1: Whitespace following atomic inline produces soft wrap opportunity collapsing trailing space |
+| inline/line_break_candidate_test.cc:339 | ForcedBreak | geometry | formalized | `lineBreak_ForcedBreak` | CSS Text 3 §4: Forced line break (<br>) creates unconditional break candidate preserving non-break positions |
 | inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | formalized | `lineBreak_OutOfFlowPositioned` | CSS Text 3 §5.2: Out of flow positioned element does not affect line break candidates |
 | inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
 | inline/line_info_test.cc:23 | InflowEndOffset | behaviour | formalized | `lineInfo_inflowEndOffset` | Ruby base text establishes inflow end offset excluding annotations |

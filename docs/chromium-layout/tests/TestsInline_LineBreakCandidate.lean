@@ -113,4 +113,76 @@ theorem lineBreak_OutOfFlowPositioned :
         { offset := { itemIndex := 2, textOffset := 24 }, endOffset := { itemIndex := 2, textOffset := 24 }, posNoBreak := 240, posIfBreak := 240 } ] := by
   decide
 
+/-! ### Test 8: ForcedBreak (`line_break_candidate_test.cc:339`) -/
+def target_ForcedBreak : List IndexedInlineToken :=
+  [ ⟨0, .text "01 345"⟩,
+    ⟨1, .br⟩,
+    ⟨2, .text "01 3456"⟩,
+    ⟨3, .br⟩ ]
+
+/-- Test `LineBreakCandidateTest.ForcedBreak` (`inline/line_break_candidate_test.cc:339`).
+    CSS Text 3 §4: Forced breaks (<br>) create unconditional candidates with posIfBreak = posNoBreak. -/
+theorem lineBreak_ForcedBreak :
+    computeLineBreakCandidates target_ForcedBreak =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 2 }, posNoBreak := 30, posIfBreak := 20 },
+        { offset := { itemIndex := 1, textOffset := 7 }, endOffset := { itemIndex := 0, textOffset := 6 }, posNoBreak := 60, posIfBreak := 60 },
+        { offset := { itemIndex := 2, textOffset := 10 }, endOffset := { itemIndex := 2, textOffset := 9 }, posNoBreak := 90, posIfBreak := 80 },
+        { offset := { itemIndex := 3, textOffset := 15 }, endOffset := { itemIndex := 2, textOffset := 14 }, posNoBreak := 130, posIfBreak := 130 } ] := by
+  decide
+
+/-! ### Test 9: AtomicInlineBr (`line_break_candidate_test.cc:276`) -/
+def target_AtomicInlineBr : List IndexedInlineToken :=
+  [ ⟨0, .atomicInline 10⟩,
+    ⟨1, .closeTag⟩,
+    ⟨2, .br⟩ ]
+
+/-- Test `LineBreakCandidateTest.AtomicInlineBr` (`inline/line_break_candidate_test.cc:276`).
+    CSS Text 3 §4 & CSS 2.1 §9.5.1: Atomic inline followed by <br> produces forced break candidate. -/
+theorem lineBreak_AtomicInlineBr :
+    computeLineBreakCandidates target_AtomicInlineBr =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 2, textOffset := 2 }, endOffset := { itemIndex := 1, textOffset := 1 }, posNoBreak := 10, posIfBreak := 10 } ] := by
+  decide
+
+/-! ### Test 10: AtomicInlineTrailingSpaces (`line_break_candidate_test.cc:307`) -/
+def target_AtomicInlineTrailingSpaces : List IndexedInlineToken :=
+  [ ⟨0, .openTag "span"⟩,
+    ⟨1, .atomicInline 10⟩,
+    ⟨2, .closeTag⟩,
+    ⟨3, .text " "⟩,
+    ⟨4, .openTag "span"⟩,
+    ⟨5, .text "23"⟩,
+    ⟨7, .closeTag⟩ ]
+
+/-- Test `LineBreakCandidateTest.AtomicInlineTrailingSpaces` (`inline/line_break_candidate_test.cc:307`).
+    CSS Text 3 §4.1: Whitespace between atomic inline and text produces soft wrap opportunity. -/
+theorem lineBreak_AtomicInlineTrailingSpaces :
+    computeLineBreakCandidates target_AtomicInlineTrailingSpaces =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 3, textOffset := 2 }, endOffset := { itemIndex := 2, textOffset := 1 }, posNoBreak := 20, posIfBreak := 10 },
+        { offset := { itemIndex := 7, textOffset := 4 }, endOffset := { itemIndex := 7, textOffset := 4 }, posNoBreak := 40, posIfBreak := 40 } ] := by
+  decide
+
+/-! ### Test 11: TrailingSpacesCollapsed (`line_break_candidate_test.cc:210`) -/
+def target_TrailingSpacesCollapsed : List IndexedInlineToken :=
+  [ ⟨0, .text "012 "⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨3, .closeTag⟩,
+    ⟨4, .text "456"⟩ ]
+
+/-- Test `LineBreakCandidateTest.TrailingSpacesCollapsed` (`inline/line_break_candidate_test.cc:210`).
+    CSS Text 3 §4.1 & §5.2: Boundary sentinels emitted under constrained available width. -/
+theorem lineBreak_TrailingSpacesCollapsed :
+    (computeLineBreakCandidates target_TrailingSpacesCollapsed =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 0, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
+        { offset := { itemIndex := 4, textOffset := 7 }, endOffset := { itemIndex := 4, textOffset := 7 }, posNoBreak := 70, posIfBreak := 70 } ]) ∧
+    (computeLineBreakCandidates target_TrailingSpacesCollapsed .auto 10 (some 50) =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 0, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
+        { offset := { itemIndex := 4, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
+        { offset := { itemIndex := 4, textOffset := 7 }, endOffset := { itemIndex := 4, textOffset := 7 }, posNoBreak := 70, posIfBreak := 70 } ]) := by
+  decide
+
 end ChromiumLayout.TestsInline

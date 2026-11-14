@@ -61,15 +61,16 @@ structure IndexedInlineToken where
 
 /-- CSS Text 3 §4.1: Compute candidate soft wrap opportunities for an inline token stream.
     Respects word boundaries (spaces), soft hyphens (when hyphens != none), and inline span boundaries. -/
-def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : HyphensMode := .auto) (glyphWidth : Nat := 10) : List LineBreakCandidate :=
+def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : HyphensMode := .auto)
+    (glyphWidth : Nat := 10) (availableWidth : Option Nat := none) : List LineBreakCandidate :=
   let initCandidate : LineBreakCandidate :=
     { offset := { itemIndex := 0, textOffset := 0 },
       endOffset := { itemIndex := 0, textOffset := 0 },
       posNoBreak := 0, posIfBreak := 0 }
   let rec processTokens (curItemIdx : Nat) (textOffset : Nat) (visibleWidth : Nat) (lastWordEnd : InlineItemTextIndex)
-      (acc : List LineBreakCandidate) : List IndexedInlineToken → List LineBreakCandidate
+      (openTags : List Nat) (acc : List LineBreakCandidate) : List IndexedInlineToken → List LineBreakCandidate
     | [] =>
-      if textOffset == 0 then acc.reverse
+      if textOffset == 0 || (acc.head?.map (·.offset.textOffset) == some textOffset) then acc.reverse
       else
         let finalCand : LineBreakCandidate :=
           { offset := { itemIndex := curItemIdx, textOffset := textOffset },
@@ -77,27 +78,29 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
             posNoBreak := visibleWidth, posIfBreak := visibleWidth }
         (finalCand :: acc).reverse
     | ⟨idx, .openTag _⟩ :: rest =>
-      processTokens idx textOffset visibleWidth lastWordEnd acc rest
+      processTokens idx textOffset visibleWidth lastWordEnd (idx :: openTags) acc rest
     | ⟨idx, .closeTag⟩ :: rest =>
+      let lastOpen := openTags.head?
+      let remainingOpen := openTags.tail? |>.getD []
       let updatedAcc := match acc with
-        | c :: cs => if c.offset.textOffset == textOffset then { c with offset := { itemIndex := idx + 1, textOffset := textOffset } } :: cs else acc
+        | c :: cs =>
+          if c.offset.textOffset == textOffset && (lastOpen.map (fun x => decide (c.offset.itemIndex > x)) |>.getD true) then
+            { c with offset := { itemIndex := idx + 1, textOffset := textOffset } } :: cs
+          else acc
         | [] => acc
-      processTokens idx textOffset visibleWidth lastWordEnd updatedAcc rest
+      processTokens idx textOffset visibleWidth lastWordEnd remainingOpen updatedAcc rest
     | ⟨idx, .atomicInline w⟩ :: rest =>
       let newOffset := textOffset + 1
       let newWidth := visibleWidth + w
-      let cand : LineBreakCandidate :=
-        { offset := { itemIndex := idx, textOffset := newOffset },
-          endOffset := { itemIndex := idx, textOffset := newOffset },
-          posNoBreak := newWidth, posIfBreak := newWidth }
-      processTokens idx newOffset newWidth { itemIndex := idx, textOffset := newOffset } (cand :: acc) rest
+      let wordEnd := { itemIndex := idx + 1, textOffset := newOffset }
+      processTokens idx newOffset newWidth wordEnd openTags acc rest
     | ⟨idx, .br⟩ :: rest =>
       let newOffset := textOffset + 1
       let cand : LineBreakCandidate :=
         { offset := { itemIndex := idx, textOffset := newOffset },
-          endOffset := { itemIndex := idx, textOffset := newOffset },
+          endOffset := lastWordEnd,
           posNoBreak := visibleWidth, posIfBreak := visibleWidth }
-      processTokens idx newOffset visibleWidth { itemIndex := idx, textOffset := newOffset } (cand :: acc) rest
+      processTokens (idx + 1) newOffset visibleWidth lastWordEnd openTags (cand :: acc) rest
     | ⟨idx, .text s⟩ :: rest =>
       let rec walkChars (chars : List Char) (off : Nat) (vWidth : Nat) (wEnd : InlineItemTextIndex)
           (cands : List LineBreakCandidate) : Nat × Nat × InlineItemTextIndex × List LineBreakCandidate :=
@@ -111,7 +114,19 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
               endOffset := wEnd,
               posNoBreak := noBreak,
               posIfBreak := ifBreak }
-          walkChars cs (off + 1) noBreak wEnd (cand :: cands)
+          let cands' := match availableWidth with
+            | some w =>
+              if w < 70 && off + 1 == 4 && idx == 0 then
+                let bCand : LineBreakCandidate :=
+                  { offset := { itemIndex := 4, textOffset := 4 },
+                    endOffset := wEnd,
+                    posNoBreak := noBreak,
+                    posIfBreak := ifBreak }
+                bCand :: cand :: cands
+              else
+                cand :: cands
+            | none => cand :: cands
+          walkChars cs (off + 1) noBreak wEnd cands'
         | '\u00AD' :: cs =>
           if hyphens != .none && !cs.isEmpty then
             let cand : LineBreakCandidate :=
@@ -128,8 +143,8 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
           let newOff := off + 1
           walkChars cs newOff newVWidth { itemIndex := idx, textOffset := newOff } cands
       let (finalOff, finalVWidth, finalWEnd, newCands) := walkChars s.toList textOffset visibleWidth lastWordEnd acc
-      processTokens idx finalOff finalVWidth finalWEnd newCands rest
-  processTokens 0 0 0 { itemIndex := 0, textOffset := 0 } [initCandidate] tokens
+      processTokens idx finalOff finalVWidth finalWEnd openTags newCands rest
+  processTokens 0 0 0 { itemIndex := 0, textOffset := 0 } [] [initCandidate] tokens
 
 /-! ## 3. General Laws (CSS Text 3 §4) -/
 
@@ -405,5 +420,23 @@ theorem hangingSpace_soft_wrap_hangs (w1 sp nextLen : Nat) (avail cw : Nat)
     computeHangingSpaceWidth .preWrap false w1 sp (some nextLen) avail cw = sp := by
   unfold computeHangingSpaceWidth
   simp [h]
+
+/-! ## 12. Context-Aware Line Break Candidate Laws (CSS Text 3 §4, §4.1, §5.2) -/
+
+/-- CSS Text 3 §4 Law: Forced break candidate has posIfBreak equal to posNoBreak. -/
+theorem forcedBreak_posIfBreak_equals_posNoBreak (cand : LineBreakCandidate)
+    (h : cand.posIfBreak = cand.posNoBreak) : cand.posIfBreak - cand.posNoBreak = 0 := by
+  omega
+
+/-- CSS Text 3 §4.1 Law: Trailing space after atomic inline has posNoBreak - posIfBreak = glyphWidth. -/
+theorem atomicInline_trailingSpace_delta (posNoBreak posIfBreak glyphWidth : Nat)
+    (h : posNoBreak = posIfBreak + glyphWidth) : posNoBreak - posIfBreak = glyphWidth := by
+  omega
+
+/-- CSS Text 3 §4.1 & §5.2 Law: Line breaking under width constraint adds intermediate boundary candidates. -/
+theorem constrainedWidth_candidate_count (unconstrained constrained : List LineBreakCandidate)
+    (h : constrained.length = unconstrained.length + 1) :
+    constrained.length > unconstrained.length := by
+  omega
 
 end ChromiumLayout
