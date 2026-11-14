@@ -266,4 +266,54 @@ theorem inlineLayoutAlgorithm_textBoxTrimOnInlineBox :
     (untrimmed = 100) ∧ (trimmed = 80) := by
   decide
 
+/-- Test `InlineLayoutAlgorithmTest.ContainerBorderPadding` (`inline/inline_layout_algorithm_test.cc:397`).
+    CSS 2.1 §8.1 & §9.4.2: Block container with padding (left 5px, top 10px) positions
+    content and first line box fragment at physical offset (5, 10). -/
+theorem inlineLayoutAlgorithm_containerBorderPadding :
+    let padding : PhysicalBoxStrut := { left := 5, top := 10 }
+    let contentOffset := strutContentOffset {} padding
+    contentOffset = (5, 10) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.TextFloatsAroundInlineFloatThatDoesNotFitOnLine` (`inline/inline_layout_algorithm_test.cc:565`).
+    CSS 2.1 §9.5: Inline float that overflows line width does not fit on line,
+    and its horizontal offset aligns with container body margin (8px). -/
+theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatDoesNotFitOnLine :
+    let placement := placeInlineFloat 160 80 200 8
+    (placement.fitsOnLine = false) ∧ (placement.floatOffsetLeft = 8) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.TextCombineBasic` (`inline/inline_layout_algorithm_test.cc:718`).
+    CSS Writing Modes 3 §5.1:
+    `text-combine-upright: all` creates 1em × 1em atomic inline box (100x100).
+    In vertical-rl line (line-height 110), cross-axis offset is (110 - 100) / 2 = 5px,
+    positioning item 'a' at (5, 0), combine box at (5, 100), and item 'b' at (5, 200). -/
+theorem inlineLayoutAlgorithm_textCombineBasic :
+    let boxSize := computeTextCombineBoxSize 100
+    let offsetA := computeVerticalLineItemOffset 110 100 0
+    let offsetCombine := computeVerticalLineItemOffset 110 100 100
+    let offsetB := computeVerticalLineItemOffset 110 100 200
+    (boxSize = (100, 100)) ∧
+    (offsetA = (5, 0)) ∧
+    (offsetCombine = (5, 100)) ∧
+    (offsetB = (5, 200)) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.TextCombineFake` (`inline/inline_layout_algorithm_test.cc:745`).
+    CSS Writing Modes 3 §5.1:
+    Simulated text-combine via inline-block in vertical-rl line has outer offset (5, 100),
+    while inner text offset with line-height 110 has vertical half-leading offset (0, 5). -/
+theorem inlineLayoutAlgorithm_textCombineFake :
+    let offsetOuter := computeVerticalLineItemOffset 110 100 100
+    let innerTextY := (110 - 100) / 2
+    (offsetOuter = (5, 100)) ∧ (innerTextY = 5) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.LineClampAndMaxContent` (`inline/inline_layout_algorithm_test.cc:1044`).
+    CSS Sizing 3 §5 & CSS Overflow 4 §4.2:
+    Under `width: max-content` without forced breaks, content fits in line 1 without line-clamp ellipsis. -/
+theorem inlineLayoutAlgorithm_lineClampAndMaxContent :
+    hasLineClampEllipsis true false 1 = false := by
+  decide
+
 end ChromiumLayout.TestsInline

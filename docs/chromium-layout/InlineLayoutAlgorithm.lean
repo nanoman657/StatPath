@@ -42,9 +42,14 @@ def partitionInlineStrut (s : PhysicalBoxStrut) (isStart : Bool) (isEnd : Bool) 
     bottom := s.bottom }
 
 /-- Content offset derived from border and padding struts.
-    Tested in `InlineLayoutAlgorithmTest.InlineBoxBorderPadding`. -/
+    Tested in `InlineLayoutAlgorithmTest.InlineBoxBorderPadding` and `ContainerBorderPadding`. -/
 def strutContentOffset (border : PhysicalBoxStrut) (padding : PhysicalBoxStrut) : Nat × Nat :=
   (border.left + padding.left, border.top + padding.top)
+
+/-- CSS 2.1 §8.1 Law: Empty border leaves content offset identical to padding offset. -/
+theorem strutContentOffset_zero_border (padding : PhysicalBoxStrut) :
+    strutContentOffset {} padding = (padding.left, padding.top) := by
+  simp [strutContentOffset]
 
 /-- General Law: Vertical borders and paddings are invariant across all line fragments. -/
 theorem physicalBoxStrut_partition_vertical_preserved (s : PhysicalBoxStrut) (isStart isEnd : Bool) :
@@ -300,22 +305,58 @@ theorem shouldGenerateBoxFragments_consistent (hasBorder : Bool) (n : Nat) (h : 
 
 /-! ## 9. Float Positioning and Line Text Flow (CSS 2.1 §9.5, §9.5.1) -/
 
+/-- Placement result of an inline float in line layout. -/
+structure InlineFloatPlacement where
+  fitsOnLine : Bool
+  floatOffsetLeft : Nat
+  lineIndentation : Nat
+  spanOffsetLeft : Nat
+  deriving DecidableEq, Repr
+
 /-- CSS 2.1 §9.5 & Blink InlineLayoutAlgorithm:
-    Compute line offset and span offset when an inline float of width `floatWidth`
-    fits on the line within container width `containerWidth`.
-    The float is placed at `containerMargin`, the line is indented by `floatWidth`,
-    and in-flow inline content begins at `floatWidth + containerMargin`. -/
+    Place an inline float within available line space.
+    If `currentOffset + floatWidth ≤ containerWidth`, the float fits on the current line,
+    indents the line by `floatWidth`, and shifts subsequent inline content.
+    If it does not fit, it is pushed to the next line (`fitsOnLine = false`),
+    with horizontal offset starting at `containerMargin`. -/
+def placeInlineFloat (floatWidth currentOffset containerWidth containerMargin : Nat) : InlineFloatPlacement :=
+  if currentOffset + floatWidth ≤ containerWidth then
+    { fitsOnLine := true,
+      floatOffsetLeft := containerMargin,
+      lineIndentation := floatWidth,
+      spanOffsetLeft := containerMargin + floatWidth }
+  else
+    { fitsOnLine := false,
+      floatOffsetLeft := containerMargin,
+      lineIndentation := 0,
+      spanOffsetLeft := containerMargin }
+
+/-- CSS 2.1 §9.5 Law: Left float horizontal offset always aligns with container margin whether it fits on line or is pushed. -/
+theorem inlineFloat_offsetLeft_invariant (fw off cw cm : Nat) :
+    (placeInlineFloat fw off cw cm).floatOffsetLeft = cm := by
+  dsimp [placeInlineFloat]
+  split <;> rfl
+
+/-- CSS 2.1 §9.5 Law: When an inline float overflows remaining space, it does not fit on the line. -/
+theorem inlineFloat_overflow_pushed (fw off cw cm : Nat) (h : off + fw > cw) :
+    (placeInlineFloat fw off cw cm).fitsOnLine = false := by
+  dsimp [placeInlineFloat]
+  have : ¬ (off + fw ≤ cw) := by omega
+  simp [this]
+
+/-- Backward-compatible helper for float placement starting at offset 0. -/
 def computeInlineFloatOffsets (floatWidth containerWidth containerMargin : Nat) :
     Option (Nat × Nat × Nat) :=
-  if floatWidth ≤ containerWidth then
-    some (containerMargin, floatWidth, floatWidth + containerMargin)
+  let p := placeInlineFloat floatWidth 0 containerWidth containerMargin
+  if p.fitsOnLine then
+    some (p.floatOffsetLeft, p.lineIndentation, p.spanOffsetLeft)
   else
     none
 
 /-- CSS 2.1 §9.5 Law: When an inline float fits on the line, line indentation equals float width. -/
 theorem inlineFloat_indentation_equals_width (fw cw cm : Nat) (h : fw ≤ cw) :
     (computeInlineFloatOffsets fw cw cm).map (fun (_, lineOff, _) => lineOff) = some fw := by
-  dsimp [computeInlineFloatOffsets]
+  dsimp [computeInlineFloatOffsets, placeInlineFloat]
   simp [h]
 
 /-! ## 10. First-Line Styling and Text-Overflow Ellipsis (CSS Text 4 §5, CSS Pseudo 4 §7) -/
@@ -373,5 +414,49 @@ def computeInlineBoxTrimmedSize (m : TextBoxTrimMetrics) (trimBoth : Bool) : Nat
 theorem textBoxTrim_reduces_to_metric (m : TextBoxTrimMetrics) (_h : m.capHeight ≤ m.lineHeight) :
     computeInlineBoxTrimmedSize m true = m.capHeight - m.alphabeticBaseline := by
   dsimp [computeInlineBoxTrimmedSize]
+
+/-! ## 13. Text Combine Upright in Vertical Writing Mode (CSS Writing Modes 3 §5.1) -/
+
+/-- CSS Writing Modes 3 §5.1:
+    In vertical writing mode, `text-combine-upright: all` establishes an atomic inline
+    composition box whose outer inline size equals 1em (the font size), fitting into the
+    vertical line alongside normal vertical glyphs. -/
+def computeTextCombineBoxSize (fontSize : Nat) : Nat × Nat :=
+  (fontSize, fontSize)
+
+/-- Compute item physical offset in a vertical line with half-leading `(lineHeight - fontSize) / 2`. -/
+def computeVerticalLineItemOffset (lineHeight fontSize : Nat) (inlineOffset : Nat) : Nat × Nat :=
+  let crossOffset := (lineHeight - fontSize) / 2
+  (crossOffset, inlineOffset)
+
+/-- CSS Writing Modes 3 §5.1 Law: Text combine upright outer box is square with dimension equal to font size (1em × 1em). -/
+theorem textCombine_box_is_square (fs : Nat) :
+    let (w, h) := computeTextCombineBoxSize fs
+    w = fs ∧ h = fs := by
+  dsimp [computeTextCombineBoxSize]
+  exact ⟨rfl, rfl⟩
+
+/-- CSS Writing Modes 3 §5.1 Law: In vertical writing mode, line cross-axis offset equals half-leading. -/
+theorem verticalLine_cross_offset_is_half_leading (lh fs off : Nat) :
+    (computeVerticalLineItemOffset lh fs off).1 = (lh - fs) / 2 := rfl
+
+/-! ## 14. Max-Content Sizing and Line Clamp (CSS Sizing 3 §5, CSS Overflow 4 §4.2) -/
+
+/-- CSS Sizing 3 §5 & CSS Overflow 4 §4.2:
+    Determine whether line-clamp ellipsis is applied.
+    When `isMaxContent` is true and there are no forced line breaks, the available line width
+    equals the total content inline size, fitting all content in a single line.
+    Thus, for `lineClampCount ≥ 1`, content does not clamp and has no ellipsis. -/
+def hasLineClampEllipsis (isMaxContent : Bool) (hasForcedBreak : Bool) (lineClampCount : Nat) : Bool :=
+  if isMaxContent ∧ ¬hasForcedBreak then
+    false
+  else
+    lineClampCount > 0
+
+/-- CSS Sizing 3 §5 & CSS Overflow 4 §4.2 Law:
+    Under `width: max-content` without forced breaks, line-clamp never produces an ellipsis. -/
+theorem maxContent_no_lineClamp_ellipsis (n : Nat) :
+    hasLineClampEllipsis true false n = false := by
+  dsimp [hasLineClampEllipsis]
 
 end ChromiumLayout
