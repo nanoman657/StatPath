@@ -788,19 +788,19 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | forms/fieldset_layout_algorithm_test.cc:1818 | SmallerLegendLargeBorderWithBreak | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/layout_fieldset_test.cc:14 | AddChildWhitespaceCrash | internal | internal | - | Crash regression test |
 | forms/layout_fieldset_test.cc:31 | AddChildAnonymousInlineCrash | internal | internal | - | Crash regression test |
-| forms/layout_text_control_inner_editor_test.cc:12 | AddChildWithoutTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_inner_editor_test.cc:43 | AddChildWithTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_inner_editor_test.cc:85 | RemoveChildWithoutTrailingLf | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_inner_editor_test.cc:114 | AddChildBeforeTestRenderingHolder | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_inner_editor_test.cc:126 | EnableDynamic | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_single_line_test.cc:13 | VisualOverflowCleared | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:56 | ChangingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:74 | ChangingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:92 | AddingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:109 | AddingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:126 | RemovingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:142 | RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: model lacks text control layout |
-| forms/layout_text_control_test.cc:158 | HitTestSearchInput | behaviour | blocked | - | Blocked: model lacks text control layout |
+| forms/layout_text_control_inner_editor_test.cc:12 | AddChildWithoutTrailingLf | behaviour | formalized | `layoutTextControl_addChildWithoutTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block decomposition without trailing newline |
+| forms/layout_text_control_inner_editor_test.cc:43 | AddChildWithTrailingLf | behaviour | formalized | `layoutTextControl_addChildWithTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block decomposition with trailing newline |
+| forms/layout_text_control_inner_editor_test.cc:85 | RemoveChildWithoutTrailingLf | behaviour | formalized | `layoutTextControl_removeChildWithoutTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block count after dynamic node removal |
+| forms/layout_text_control_inner_editor_test.cc:114 | AddChildBeforeTestRenderingHolder | behaviour | formalized | `layoutTextControl_addChildBeforeTestRenderingHolder` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea inner editor single char line block structure |
+| forms/layout_text_control_inner_editor_test.cc:126 | EnableDynamic | behaviour | formalized | `layoutTextControl_enableDynamic` | HTML 5.2 §4.10.11: Empty textarea inner editor block list |
+| forms/layout_text_control_single_line_test.cc:13 | VisualOverflowCleared | behaviour | formalized | `layoutTextControl_visualOverflowCleared` | CSS Backgrounds and Borders 3 §7.1: Box-shadow visual overflow expansion and clearance |
+| forms/layout_text_control_test.cc:56 | ChangingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | formalized | `layoutTextControl_changingPseudoSelectionStyleSingle` | CSS Pseudo 4 §4.1: Selection style invalidation on single-line text control |
+| forms/layout_text_control_test.cc:74 | ChangingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | formalized | `layoutTextControl_changingPseudoSelectionStyleMulti` | CSS Pseudo 4 §4.1: Selection style invalidation on multiline text control |
+| forms/layout_text_control_test.cc:92 | AddingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | formalized | `layoutTextControl_addingPseudoSelectionStyleSingle` | CSS Pseudo 4 §4.1: Adding selection pseudo style invalidates selection |
+| forms/layout_text_control_test.cc:109 | AddingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | blocked | - | Blocked: held out |
+| forms/layout_text_control_test.cc:126 | RemovingPseudoSelectionStyleShouldInvalidateSelectionSingle | behaviour | formalized | `layoutTextControl_removingPseudoSelectionStyleSingle` | CSS Pseudo 4 §4.1: Removing selection pseudo style invalidates selection |
+| forms/layout_text_control_test.cc:142 | RemovingPseudoSelectionStyleShouldInvalidateSelectionMulti | behaviour | formalized | `layoutTextControl_removingPseudoSelectionStyleMulti` | CSS Pseudo 4 §4.1: Removing selection pseudo style invalidates selection on multiline text control |
+| forms/layout_text_control_test.cc:158 | HitTestSearchInput | behaviour | formalized | `layoutTextControl_hitTestSearchInput` | HTML 5.2 §4.10.5 & CSS 2.1 §10: Search input hit-test point mapping to inner editor |
 | shapes/box_shape_test.cc:82 | zeroRadii | geometry | formalized | `boxShape_zeroRadii` | CSS Shapes 1 §3.1: Box shape bounding box and line overlap tests with shape-margin 10 |
 | shapes/box_shape_test.cc:143 | getIntervals | geometry | formalized | `boxShape_getIntervals` | CSS Shapes 1 §3.1: Excluded intervals across lines on 100x100 box shape with zero margin |
 | shapes/ellipse_shape_test.cc:32 | ZeroRadii | geometry | formalized | `ellipseShape_zeroRadii` | CSS Shapes 1 §3.2: Ellipse shape with 0,0 radii is empty with zero bounding box |
