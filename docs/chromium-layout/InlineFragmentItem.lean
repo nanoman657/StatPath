@@ -20,7 +20,7 @@ inductive FragmentItemType where
   | text
   | generatedText
   | box
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Inhabited
 
 /-- Physical rectangle (`platform/geometry/physical_rect.h`). -/
 structure PhysicalRect where
@@ -28,7 +28,7 @@ structure PhysicalRect where
   y : Nat := 0
   width : Nat := 0
   height : Nat := 0
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Inhabited
 
 /-- Rectangle union (`PhysicalRect::Unite`). -/
 def PhysicalRect.union (r1 r2 : PhysicalRect) : PhysicalRect :=
@@ -60,7 +60,7 @@ structure FragmentItem where
   isLastForNode : Bool := false
   isRubyAnnotationLine : Bool := false
   startOffsetInContainer : Option Nat := none
-  deriving DecidableEq, Repr
+  deriving DecidableEq, Repr, Inhabited
 
 /-- Compute bounding box for a culled inline from its descendant items
     (`inline/fragment_item.cc:754-780`, `CulledInlineBox`). -/
@@ -191,5 +191,34 @@ theorem caret_position_zero_offset (textLen avail : Nat) :
 theorem culledInlineBoundingBox_empty (target : Nat) :
     culledInlineBoundingBox [] target = {} := by
   rfl
+
+/-! ## 4. Fragmentainer Container Queries for Culled Inlines (CSS Fragmentation 3 §2, CSS Inline 3 §2) -/
+
+/-- CSS Fragmentation 3 §2, CSS Inline 3 §2:
+    Query whether a fragmentainer contains items of a culled inline,
+    and whether it is the first or last fragmentainer to contain them.
+    Returns `(isContainer, isFirst, isLast)`. -/
+def isContainerForCulledInline (allFragments : List (List Nat)) (fragIdx : Nat) (culledNodeId : Nat) :
+    Bool × Bool × Bool :=
+  let current := allFragments[fragIdx]?.getD []
+  if current.contains culledNodeId == false then (false, false, false)
+  else
+    let isFirst := !(allFragments.take fragIdx).any (fun items => items.contains culledNodeId)
+    let isLast := !(allFragments.drop (fragIdx + 1)).any (fun items => items.contains culledNodeId)
+    (true, isFirst, isLast)
+
+/-- General Law: If a fragmentainer does not contain any item of a culled inline,
+    it is not a container for it. -/
+theorem isContainerForCulledInline_not_contains (allFragments : List (List Nat)) (fragIdx : Nat) (culledNodeId : Nat)
+    (hNot : (allFragments[fragIdx]?.getD []).contains culledNodeId = false) :
+    (isContainerForCulledInline allFragments fragIdx culledNodeId).1 = false := by
+  dsimp [isContainerForCulledInline]
+  rw [hNot]
+  simp
+
+/-- General Law: When there are no fragments, no fragmentainer contains the culled inline. -/
+theorem isContainerForCulledInline_empty (fragIdx : Nat) (culledNodeId : Nat) :
+    isContainerForCulledInline [] fragIdx culledNodeId = (false, false, false) := by
+  dsimp [isContainerForCulledInline]
 
 end ChromiumLayout

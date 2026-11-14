@@ -233,4 +233,34 @@ def selectEllipsisString (fontHasEllipsisGlyph : Bool) : String :=
 theorem ellipsisFallback_missing_glyph : selectEllipsisString false = "..." := by
   rfl
 
+/-! ## 7. Block-in-Inline Line Box Classification (CSS 2.1 §9.2.1.1) -/
+
+structure LineBoxFragmentInfo where
+  isEmptyLineBox : Bool := false
+  isBlockInInline : Bool := false
+  blockCount : Nat := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS 2.1 §9.2.1.1: Classify line box fragments around and for a block-in-inline. -/
+def classifyBlockInInline (isBlockEmpty : Bool) (hasHeight : Bool) : List LineBoxFragmentInfo :=
+  let preLine : LineBoxFragmentInfo := { isEmptyLineBox := true, isBlockInInline := false }
+  let blockLine : LineBoxFragmentInfo := {
+    isEmptyLineBox := isBlockEmpty && !hasHeight,
+    isBlockInInline := true,
+    blockCount := 1
+  }
+  let postLine : LineBoxFragmentInfo := { isEmptyLineBox := true, isBlockInInline := false }
+  [preLine, blockLine, postLine]
+
+/-- CSS 2.1 §9.2.1.1 Law: Block-in-inline split produces exactly 3 line boxes where
+    the middle line box represents the block-in-inline. -/
+theorem blockInInline_middle_is_block (empty height : Bool) :
+    let lines := classifyBlockInInline empty height
+    lines.length = 3 ∧
+    lines[0]!.isBlockInInline = false ∧
+    lines[1]!.isBlockInInline = true ∧
+    lines[2]!.isBlockInInline = false := by
+  dsimp [classifyBlockInInline]
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
 end ChromiumLayout

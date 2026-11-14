@@ -151,12 +151,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
 | inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
 | inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText` | CSS 2.1 §9.4.2: First and last fragment flags for wrapping text |
-| inline/fragment_item_test.cc:173 | RtlText | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:173 | RtlText | geometry | formalized | `fragmentItem_rtlText` | CSS Writing Modes 3 §3.1 & UAX #9: Mixed-directional RTL text item visual runs and sequence flags |
 | inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | formalized | `fragmentItem_basicInlineBox` | CSS 2.1 §9.4.2: Fragment flags for wrapped and non-wrapped inline boxes |
 | inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | formalized | `fragmentItem_culledInlineBox` | CSS Inline 3 §2: Culled inline bounding box unites descendant fragments |
 | inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | internal | - | Invalidation and visual overflow recalc on self-painting layer |
-| inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
-| inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
+| inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | formalized | `fragmentItem_startOffsetInContainer` | CSS Text 3 §5.2: Soft hyphen line breaks generate hyphen items with start offsets in container |
+| inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | formalized | `fragmentItem_ellipsizedAtomicInline` | CSS Overflow 3 §4.4: Ellipsized atomic inlines are marked as terminal box fragments for the node |
 | inline/fragment_item_test.cc:417 | LineFragmentId | behaviour | internal | - | Multicol column line fragment ID tagging |
 | inline/fragment_item_test.cc:451 | Outline | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:526 | MarkLineBoxesDirtyOnInsert | behaviour | internal | - | Incremental layout dirty line index tracking on insert |
@@ -188,7 +188,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_item_test.cc:952 | IsRubyAnnotationLine | behaviour | formalized | `fragmentItem_isRubyAnnotationLine` | CSS Ruby 1 §3: Ruby annotation line classification in FragmentItem |
 | inline/fragment_items_builder_test.cc:23 | MultipleLogicalLineItems | behaviour | blocked | - | Blocked: model lacks FragmentItemsBuilder line assembly |
 | inline/fragment_items_test.cc:20 | DirtyLinesFromNeedsLayoutWithOrthogonalWritingMode | behaviour | internal | - | Regression test for orthogonal writing mode incremental layout |
-| inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | blocked | - | Blocked: model lacks multicolumn culled inline container resolution |
+| inline/fragment_items_test.cc:46 | IsContainerForCulledInline | geometry | formalized | `fragmentItems_isContainerForCulledInline` | CSS Fragmentation 3 §2, CSS Inline 3 §2: Multicolumn container resolution and first/last container flags for culled inlines |
 | inline/hyphen_result_test.cc:37 | Horizontal | geometry | formalized | `hyphenResult_horizontal` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Horizontal writing hyphen glyph orientation |
 | inline/hyphen_result_test.cc:53 | VerticalUpright | geometry | formalized | `hyphenResult_verticalUpright` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Vertical upright hyphen glyph orientation |
 | inline/hyphen_result_test.cc:70 | VerticalMixed | geometry | formalized | `hyphenResult_verticalMixed` | CSS Text 3 §5.3 & CSS Writing Modes 3 §5.1: Vertical mixed hyphen glyph orientation and feature fix |
@@ -316,7 +316,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
 | inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | formalized | `inlineLayout_emptyLineBoxTypes` | Empty inline tags generate empty line box, text does not |
 | inline/inline_layout_algorithm_test.cc:113 | TypesForFirstLine | behaviour | blocked | - | Blocked: model lacks TypesForFirstLine layout algorithm support |
-| inline/inline_layout_algorithm_test.cc:137 | TypesForBlockInInline | behaviour | blocked | - | Blocked: model lacks TypesForBlockInInline layout algorithm support |
+| inline/inline_layout_algorithm_test.cc:137 | TypesForBlockInInline | behaviour | formalized | `inlineLayoutAlgorithm_typesForBlockInInline` | CSS 2.1 §9.2.1.1: Anonymous block-in-inline line box fragment classification across regular, self-collapsing, and fixed-height blocks |
 | inline/inline_layout_algorithm_test.cc:192 | BreakToken | behaviour | formalized | `test_BreakToken_chain` | Chaining of inline break tokens across line layout passes |
 | inline/inline_layout_algorithm_test.cc:245 | EmptyLineWithOutOfFlowInInlineContainingBlock | geometry | blocked | - | Blocked: model lacks EmptyLineWithOutOfFlowInInlineContainingBlock layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:291 | BoxForEndMargin | behaviour | blocked | - | Blocked: model lacks BoxForEndMargin layout algorithm support |

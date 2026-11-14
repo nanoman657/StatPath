@@ -141,4 +141,21 @@ theorem test_EllipsisFallbackToDots :
     selectEllipsisString false = "..." := by
   rfl
 
+/-- Test `InlineLayoutAlgorithmTest.TypesForBlockInInline` (`inline/inline_layout_algorithm_test.cc:137`).
+    CSS 2.1 §9.2.1.1: Anonymous block-in-inline line box fragment classification across
+    regular, self-collapsing, and fixed-height blocks. -/
+theorem inlineLayoutAlgorithm_typesForBlockInInline :
+    let normal := classifyBlockInInline false false
+    let empty := classifyBlockInInline true false
+    let height := classifyBlockInInline true true
+    -- Normal block
+    (normal[0]!.isEmptyLineBox = true ∧ normal[0]!.isBlockInInline = false) ∧
+    (normal[1]!.isEmptyLineBox = false ∧ normal[1]!.isBlockInInline = true ∧ normal[1]!.blockCount = 1) ∧
+    (normal[2]!.isEmptyLineBox = true ∧ normal[2]!.isBlockInInline = false) ∧
+    -- Self-collapsing block
+    (empty[1]!.isEmptyLineBox = true ∧ empty[1]!.isBlockInInline = true) ∧
+    -- Non-self-collapsing block with height
+    (height[1]!.isEmptyLineBox = false ∧ height[1]!.isBlockInInline = true) := by
+  decide
+
 end ChromiumLayout.TestsInline
