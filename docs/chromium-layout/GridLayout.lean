@@ -254,5 +254,71 @@ theorem track_offset_zero (gap : Nat) (tracks : List Nat) :
   dsimp [trackOffset]
   cases tracks <;> rfl
 
+/-- A refined grid range with start grid line, track count, collapsed, and implicit flags.
+    CSS Grid Layout Level 1 §7.2.3, §7.6. -/
+structure TrackRange where
+  startLine : Nat
+  trackCount : Nat
+  isCollapsed : Bool := false
+  isImplicit : Bool := false
+  hasFlexible : Bool := false
+  hasIntrinsic : Bool := false
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Ensure track coverage over [startLine, startLine + count) given range list.
+    Returns the start and end range indices (0-based, inclusive) that cover the interval.
+    CSS Grid Layout Level 1 §7.6. -/
+def coverageRangeIndices (ranges : List TrackRange) (startLine count : Nat) : Option (Nat × Nat) :=
+  let endLine := startLine + count
+  let rec loop (idx : Nat) (rem : List TrackRange) (startIdx endIdx : Option Nat) : Option (Nat × Nat) :=
+    match rem with
+    | [] =>
+        match startIdx, endIdx with
+        | some s, some e => some (s, e)
+        | some s, none => some (s, idx - 1)
+        | _, _ => none
+    | r :: rest =>
+        let rEnd := r.startLine + r.trackCount
+        let overlaps := r.startLine < endLine && rEnd > startLine
+        let newStart := if overlaps && startIdx.isNone then some idx else startIdx
+        let newEnd := if overlaps then some idx else endIdx
+        loop (idx + 1) rest newStart newEnd
+  loop 0 ranges none none
+
+/-- Whether a track size is flexible (fr unit). CSS Grid Layout Level 1 §11.4. -/
+def isFlexibleTrack : GridTrackSizeType → Bool
+  | .flex _ => true
+  | _ => false
+
+/-- Whether a track size is intrinsic (min-content, max-content, auto, fit-content, flex).
+    CSS Grid Layout Level 1 §11.4. -/
+def isIntrinsicTrack : GridTrackSizeType → Bool
+  | .minContent | .maxContent | .auto | .fitContent _ | .flex _ => true
+  | _ => false
+
+/-- Law: An empty range list has no coverage indices.
+    CSS Grid Layout Level 1 §7.6. -/
+theorem coverage_indices_empty (s c : Nat) :
+    coverageRangeIndices [] s c = none := by
+  rfl
+
+/-- Law: Fixed track size is neither flexible nor intrinsic.
+    CSS Grid Layout Level 1 §11.4. -/
+theorem fixed_track_not_flexible (px : Nat) :
+    isFlexibleTrack (.fixed px) = false ∧ isIntrinsicTrack (.fixed px) = false := by
+  exact ⟨rfl, rfl⟩
+
+/-- Law: Flex track size is always flexible.
+    CSS Grid Layout Level 1 §11.4. -/
+theorem flex_track_is_flexible (fr : Nat) :
+    isFlexibleTrack (.flex fr) = true := by
+  rfl
+
+/-- Law: Min-content track size is intrinsic.
+    CSS Grid Layout Level 1 §11.4. -/
+theorem min_content_is_intrinsic :
+    isIntrinsicTrack .minContent = true := by
+  rfl
+
 end GridLayout
 end ChromiumLayout
