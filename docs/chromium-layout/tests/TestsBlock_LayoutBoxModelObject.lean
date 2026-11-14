@@ -243,5 +243,63 @@ theorem StickyPositionNestedFixedPos_vectors :
     outerShift = 100 ∧ innerTopShift = 25 := by
   decide
 
+-- layout_box_model_object_test.cc:805: StickyPositionFindsNearestStickyInlineForBlockChild
+-- Block child inside nested sticky inline elements detects the nearest inline sticky ancestor.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionFindsNearestStickyInlineForBlockChild_vectors :
+    let nodes : List StickyNode := [
+      { id := "scroller", isScroller := true },
+      { id := "container", containingBlockId := some "scroller", parentId := some "scroller" },
+      { id := "farther", isSticky := true, isAnchored := true, parentId := some "container" },
+      { id := "nearer", isSticky := true, isAnchored := true, parentId := some "farther" },
+      { id := "inner", isSticky := true, isAnchored := true, parentId := some "nearer" }
+    ]
+    findNearestStickyBoxShiftingAncestor nodes "inner" = some "nearer" := by
+  decide
+
+-- layout_box_model_object_test.cc:843: StickyPositionFindsCorrectContainingBlockShiftingAncestor
+-- Descendant sticky elements find the nearest containing-block shifting ancestor, skipping unanchored sticky.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionFindsCorrectContainingBlockShiftingAncestor_vectors :
+    let nodes : List StickyNode := [
+      { id := "scroller", isScroller := true },
+      { id := "stickyParent", isSticky := true, isAnchored := true, containingBlockId := some "scroller", parentId := some "scroller" },
+      { id := "unanchoredSticky", isSticky := true, isAnchored := false, parentId := some "stickyParent" },
+      { id := "stickyChild", isSticky := true, isAnchored := true, containingBlockId := some "stickyParent", parentId := some "unanchoredSticky" },
+      { id := "div", containingBlockId := some "stickyParent", parentId := some "unanchoredSticky" },
+      { id := "stickyNestedChild", isSticky := true, isAnchored := true, containingBlockId := some "stickyParent", parentId := some "div" }
+    ]
+    findNearestContainingBlockShiftingAncestor nodes "stickyParent" = none ∧
+    findNearestContainingBlockShiftingAncestor nodes "stickyChild" = some "stickyParent" ∧
+    findNearestContainingBlockShiftingAncestor nodes "stickyNestedChild" = some "stickyParent" := by
+  decide
+
+-- layout_box_model_object_test.cc:905: StickyPositionFindsCorrectContainingBlockShiftingAncestorRoot
+-- Grandchild sticky detects ancestor sticky as containing-block shifting ancestor when overflow ancestor is the page.
+-- CSS Positioned Layout 3 §2.3.
+theorem StickyPositionFindsCorrectContainingBlockShiftingAncestorRoot_vectors :
+    let nodes : List StickyNode := [
+      { id := "stickyParent", isSticky := true, isAnchored := true },
+      { id := "div", parentId := some "stickyParent" },
+      { id := "stickyGrandchild", isSticky := true, isAnchored := true, containingBlockId := some "stickyParent", parentId := some "div" }
+    ]
+    findNearestContainingBlockShiftingAncestor nodes "stickyGrandchild" = some "stickyParent" := by
+  decide
+
+-- layout_box_model_object_test.cc:940: StickyPositionFindsCorrectContainingBlockShiftingAncestorTable
+-- In a table, table cell's containing block is table, skipping over thead/tr to find outer sticky.
+-- CSS Positioned Layout 3 §2.3, CSS 2.1 §10.1.
+theorem StickyPositionFindsCorrectContainingBlockShiftingAncestorTable_vectors :
+    let nodes : List StickyNode := [
+      { id := "scroller", isScroller := true },
+      { id := "stickyOuter", isSticky := true, isAnchored := true, parentId := some "scroller" },
+      { id := "table", parentId := some "stickyOuter" },
+      { id := "thead", parentId := some "table" },
+      { id := "tr", parentId := some "thead" },
+      { id := "stickyTh", isSticky := true, isAnchored := true, containingBlockId := some "table", parentId := some "tr" }
+    ]
+    findNearestContainingBlockShiftingAncestor nodes "stickyTh" = some "stickyOuter" := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

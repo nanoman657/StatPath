@@ -195,5 +195,74 @@ theorem resolve_sticky_descendants_empty (ax : PhysicalAxes) :
 theorem propagate_pending_sticky_empty :
     propagatePendingSticky [] = [] := rfl
 
+/-- A node in the box tree with its sticky status and containing block hierarchy.
+    CSS Positioned Layout 3 §2.3, CSS 2.1 §10.1. -/
+structure StickyNode where
+  id : String
+  isSticky : Bool := false
+  isAnchored : Bool := false
+  isScroller : Bool := false
+  containingBlockId : Option String := none
+  parentId : Option String := none
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Find nearest sticky-box shifting ancestor: the first anchored sticky ancestor in the parent chain
+    before reaching the containing block or scroller.
+    CSS Positioned Layout 3 §2.3. -/
+def findNearestStickyBoxShiftingAncestor (nodes : List StickyNode) (startId : String) : Option String :=
+  let rec walk (fuel : Nat) (curId : String) : Option String :=
+    match fuel with
+    | 0 => none
+    | fuel + 1 =>
+      match nodes.find? (fun n => n.id == curId) with
+      | none => none
+      | some n =>
+        match n.parentId with
+        | none => none
+        | some pid =>
+          match nodes.find? (fun p => p.id == pid) with
+          | none => none
+          | some parentNode =>
+            if parentNode.isScroller then none
+            else if parentNode.isSticky && parentNode.isAnchored then some parentNode.id
+            else walk fuel parentNode.id
+  walk nodes.length startId
+
+/-- Find nearest containing-block shifting ancestor: the first anchored sticky element in the ancestor
+    chain starting from the containing block (inclusive) up to the ancestor scroll container (exclusive).
+    CSS Positioned Layout 3 §2.3. -/
+def findNearestContainingBlockShiftingAncestor (nodes : List StickyNode) (startId : String) : Option String :=
+  let startNode := nodes.find? (fun n => n.id == startId)
+  match startNode with
+  | none => none
+  | some node =>
+    match node.containingBlockId with
+    | none => none
+    | some cbId =>
+      let rec walk (fuel : Nat) (curId : String) : Option String :=
+        match fuel with
+        | 0 => none
+        | fuel + 1 =>
+          match nodes.find? (fun n => n.id == curId) with
+          | none => none
+          | some n =>
+            if n.isScroller then none
+            else if n.isSticky && n.isAnchored then some n.id
+            else
+              match n.parentId with
+              | none => none
+              | some pid => walk fuel pid
+      walk nodes.length cbId
+
+/-- Law: Finding nearest sticky-box shifting ancestor in an empty node list yields none.
+    CSS Positioned Layout 3 §2.3. -/
+theorem find_nearest_sticky_box_empty (id : String) :
+    findNearestStickyBoxShiftingAncestor [] id = none := rfl
+
+/-- Law: Finding nearest containing-block shifting ancestor in an empty node list yields none.
+    CSS Positioned Layout 3 §2.3. -/
+theorem find_nearest_containing_block_empty (id : String) :
+    findNearestContainingBlockShiftingAncestor [] id = none := rfl
+
 end BlockSticky
 end ChromiumLayout
