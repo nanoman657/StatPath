@@ -834,16 +834,16 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | exclusions/exclusion_space_test.cc:1083 | CopyOnWriteNoAllocationOnCopy | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | exclusions/exclusion_space_test.cc:1162 | CopyOnWriteDisabledFallback | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | layout_quote_test.cc:40 | Locale | behaviour | formalized | `layoutQuote_locale` | `<q>` element delimiters use language from parent, while quote text uses element language |
-| hit_testing_test.cc:87 | OcclusionHitTest | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:87 | OcclusionHitTest | behaviour | formalized | `hitTest_occlusion` | CSSOM View §8, CSS 2.1 §9.9: Occlusion hit test with negative margin top |
 | hit_testing_test.cc:111 | OcclusionHitTestSVGTextWithFilterCrash | internal | internal | - | Crash regression test |
-| hit_testing_test.cc:136 | HitTestWithCallback | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:205 | OcclusionHitTestWithClipPath | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:253 | OcclusionHitTestWithBorderShapeStrokeMode | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:319 | OcclusionHitTestWithBorderShapeFillMode | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:384 | ScrolledInline | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:421 | ReferenceFilter | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:457 | OcclusionHitTestWith3DTransform | behaviour | blocked | - | Blocked: model lacks hit testing |
-| hit_testing_test.cc:495 | OcclusionHitTestWithFlattenedPreserve3DOccluder | behaviour | blocked | - | Blocked: model lacks hit testing |
+| hit_testing_test.cc:136 | HitTestWithCallback | behaviour | formalized | `hitTest_withCallback` | CSSOM View §8: Hit testing with callback stopper stops at requested node |
+| hit_testing_test.cc:205 | OcclusionHitTestWithClipPath | behaviour | formalized | `hitTest_occlusionWithClipPath` | CSS Masking 1 §3, CSSOM View §8: Occlusion hit test with circular clip path |
+| hit_testing_test.cc:253 | OcclusionHitTestWithBorderShapeStrokeMode | behaviour | formalized | `hitTest_occlusionWithBorderShapeStrokeMode` | CSS Backgrounds and Borders 3 §7.1, CSSOM View §8: Border shape circle stroke mode early-out |
+| hit_testing_test.cc:319 | OcclusionHitTestWithBorderShapeFillMode | behaviour | formalized | `hitTest_occlusionWithBorderShapeFillMode` | CSS Backgrounds and Borders 3 §7.1, CSSOM View §8: Border shape polygon fill mode early-out |
+| hit_testing_test.cc:384 | ScrolledInline | behaviour | formalized | `hitTest_scrolledInline` | CSS Overflow 3 §3, CSSOM View §8: Scrolled inline hit testing maps point to line 3 |
+| hit_testing_test.cc:421 | ReferenceFilter | behaviour | formalized | `hitTest_referenceFilter` | CSS Filter Effects 1 §3.1: Visual overflow rect including reference filter expansion |
+| hit_testing_test.cc:457 | OcclusionHitTestWith3DTransform | behaviour | formalized | `hitTest_occlusionWith3DTransform` | CSS Transforms 2 §4, CSSOM View §8: 3D perspective occlusion with Y-rotation depth |
+| hit_testing_test.cc:495 | OcclusionHitTestWithFlattenedPreserve3DOccluder | behaviour | formalized | `hitTest_occlusionWithFlattenedPreserve3DOccluder` | CSS Transforms 2 §4, CSS 2.1 §9.9: Flat stacking context flattens 3D translations to 2D paint order |
 | hit_testing_test.cc:549 | ShapeWithPerspectiveFunction | behaviour | blocked | - | Blocked: model lacks hit testing |
 | hit_testing_test.cc:574 | ShapeUnderSVGRootPerspective | behaviour | formalized | `svg_hitTest_shapeUnderSVGRootPerspective` | CSS Transforms 2 §4, CSSOM View §8: Perspective projection hit testing on 3D-transformed SVG shape |
 | hit_testing_test.cc:592 | ContainerUnderSVGRootPerspective | behaviour | formalized | `svg_hitTest_containerUnderSVGRootPerspective` | CSS Transforms 2 §4, CSSOM View §8: Perspective projection hit testing on 3D-transformed SVG container |
