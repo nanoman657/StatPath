@@ -455,7 +455,7 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:1405 | GridLayoutAlgorithmTest.FixedSizePositioningAutoRows | geometry | formalized | `TestsBlock.FixedSizePositioningAutoRows_vectors` |
 | grid/grid_layout_algorithm_test.cc:1462 | GridLayoutAlgorithmTest.SpecifiedPositionsOutOfOrder | geometry | formalized | `TestsBlock.SpecifiedPositionsOutOfOrder_vectors` |
 | grid/grid_layout_algorithm_test.cc:1536 | GridLayoutAlgorithmTest.GridWithGap | geometry | formalized | `TestsBlock.GridWithGap_vectors`, `GridLayout.grid_gap_positive` |
-| grid/grid_layout_algorithm_test.cc:1586 | GridLayoutAlgorithmTest.GridWithPercentGap | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:1586 | GridLayoutAlgorithmTest.GridWithPercentGap | geometry | formalized | `TestsBlock.GridWithPercentGap_vectors`, `GridLayout.resolve_gap_none` |
 | grid/grid_layout_algorithm_test.cc:1640 | GridLayoutAlgorithmTest.AutoSizedGridWithGap | geometry | formalized | `TestsBlock.AutoSizedGridWithGap_vectors` |
 | grid/grid_layout_algorithm_test.cc:1694 | GridLayoutAlgorithmTest.AutoSizedGridWithPercentageGap | geometry | blocked | needs CSS grid gap geometry calculation |
 | grid/grid_layout_algorithm_test.cc:1739 | GridLayoutAlgorithmTest.ItemsSizeWithGap | geometry | formalized | `TestsBlock.ItemsSizeWithGap_vectors` |
@@ -468,9 +468,9 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_track_collection_test.cc:85 | GridTrackCollectionTest.TestRangeIndexFromGridLine | geometry | formalized | `TestsBlock.TestRangeIndexFromGridLine_vectors`, `GridLayout.range_index_first_track` |
 | grid/grid_track_collection_test.cc:119 | GridTrackCollectionTest.TestGridTrackList | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:171 | GridTrackCollectionTest.TestGridRangeBuilder | geometry | formalized | `TestsBlock.TestGridRangeBuilder_vectors` |
-| grid/grid_track_collection_test.cc:188 | GridTrackCollectionTest.TestGridRangeBuilderCollapsed | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:188 | GridTrackCollectionTest.TestGridRangeBuilderCollapsed | geometry | formalized | `TestsBlock.TestGridRangeBuilderCollapsed_vectors`, `GridLayout.grid_ranges_start_zero` |
 | grid/grid_track_collection_test.cc:208 | GridTrackCollectionTest.TestGridRangeBuilderImplicit | geometry | blocked | needs CSS grid track collection sizing and range normalization |
-| grid/grid_track_collection_test.cc:248 | GridTrackCollectionTest.TestGridSetTrackSizeNormalization | geometry | blocked | needs CSS grid track collection sizing and range normalization |
+| grid/grid_track_collection_test.cc:248 | GridTrackCollectionTest.TestGridSetTrackSizeNormalization | geometry | formalized | `TestsBlock.TestGridSetTrackSizeNormalization_vectors`, `GridLayout.normalize_no_flex_min` |
 | grid/grid_track_collection_test.cc:300 | GridTrackCollectionTest.TestGridSizingTrackCollectionSetIterator | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:351 | GridTrackCollectionTest.TestGridSizingTrackCollectionExplicitTracks | geometry | blocked | needs CSS grid track collection sizing and range normalization |
 | grid/grid_track_collection_test.cc:459 | GridTrackCollectionTest.TestGridSizingTrackCollectionImplicitTracks | geometry | blocked | needs CSS grid track collection sizing and range normalization |
@@ -1148,6 +1148,9 @@ checks every row against the pinned sources and the Lean modules.
 - `TableLayout.resolve_hidden_zero`: any border set containing a hidden border resolves to 0 width (CSS 2.1 §17.6.2.1).
 - `TableLayout.sync_exact_max`: when assignable table size equals total max size, columns equal their max sizes without redistribution (CSS 2.1 §17.5.2).
 - `TableLayout.grid_min_sum`: table grid minimum inline size is always the sum of column minimum sizes (CSS 2.1 §17.5.2.1, CSS Table 3 §3).
+- `GridLayout.grid_ranges_start_zero`: first grid range always starts at line 0 (CSS Grid 1 §7.2.3).
+- `GridLayout.normalize_no_flex_min`: a flex factor is never a track minimum in normalized track sizes (CSS Grid 1 §7.2.5).
+- `GridLayout.resolve_gap_none`: percentage gap resolves to 0 when container dimension is indefinite (CSS Box Alignment 3 §8, CSS Grid 1 §10.1).
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).

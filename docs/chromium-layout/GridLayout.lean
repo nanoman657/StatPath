@@ -143,21 +143,96 @@ def rangeIndexLoop (idx accum line : Nat) : List Nat → Nat
 def rangeIndexFromGridLine (rangeCounts : List Nat) (line : Nat) : Nat :=
   rangeIndexLoop 0 0 line rangeCounts
 
-/-- Grid range descriptor with starting grid line and track count. -/
+/-- Resolve gap percentage against container dimension. CSS Box Alignment 3 §8, CSS Grid 1 §10.1. -/
+def resolveGapPercent (pct : Nat) (containerDim : Option Nat) : Nat :=
+  match containerDim with
+  | some d => d * pct / 100
+  | none => 0
+
+/-- Resolve gap percentage in LayoutUnit (64ths px). CSS Box Alignment 3 §8, CSS Grid 1 §10.1. -/
+def resolveGapPercentLU (pct : Nat) (containerDim : Option Nat) : Nat :=
+  match containerDim with
+  | some d => d * pct * 64 / 100
+  | none => 0
+
+/-- Grid range descriptor with starting grid line, track count, and collapsed flag. CSS Grid 1 §7.2.3. -/
 structure GridRange where
   startLine : Nat
   trackCount : Nat
+  isCollapsed : Bool := false
   deriving Inhabited, DecidableEq, Repr
 
-/-- Build grid ranges from repeater definitions (`GridRangeBuilder`). -/
-def buildGridRanges (repeaters : List (Nat × Nat)) : List GridRange :=
-  let rec loop (curLine : Nat) (rem : List (Nat × Nat)) : List GridRange :=
+/-- Grid repeater descriptor (track size, repeat count, and whether collapsed). CSS Grid 1 §7.2.3. -/
+structure GridRepeater where
+  trackSize : Nat
+  repeatCount : Nat
+  isCollapsed : Bool := false
+  deriving Inhabited, DecidableEq, Repr
+
+instance : Coe (Nat × Nat) GridRepeater where
+  coe p := ⟨p.1, p.2, false⟩
+
+/-- Build grid ranges from repeater definitions (`GridRangeBuilder`). CSS Grid 1 §7.2.3. -/
+def buildGridRanges (repeaters : List GridRepeater) : List GridRange :=
+  let rec loop (curLine : Nat) (rem : List GridRepeater) : List GridRange :=
     match rem with
     | [] => []
-    | (trackSize, repeatCount) :: rest =>
-        let count := trackSize * repeatCount
-        ⟨curLine, count⟩ :: loop (curLine + count) rest
+    | rep :: rest =>
+        let count := rep.trackSize * rep.repeatCount
+        ⟨curLine, count, rep.isCollapsed⟩ :: loop (curLine + count) rest
   loop 0 repeaters
+
+/-- Track size type for CSS Grid Level 1 §7.2.5. -/
+inductive GridTrackSizeType where
+  | auto
+  | fixed (px : Nat)
+  | percent (pct : Nat)
+  | minContent
+  | maxContent
+  | flex (fr : Nat)
+  | fitContent (limit : Nat)
+  deriving Inhabited, DecidableEq, Repr
+
+/-- A resolved grid track size pair: (minTrackSize, maxTrackSize). CSS Grid 1 §7.2.5. -/
+structure NormalizedTrackSize where
+  minType : GridTrackSizeType
+  maxType : GridTrackSizeType
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Normalize track size definition for definite vs indefinite container. CSS Grid 1 §7.2.5. -/
+def normalizeTrackSize (minType maxType : GridTrackSizeType) (isIndefinite : Bool) : NormalizedTrackSize :=
+  let normMin :=
+    match minType with
+    | .flex _ => .auto
+    | .percent _ => if isIndefinite then .auto else minType
+    | _ => minType
+  let normMax :=
+    match maxType with
+    | .percent _ => if isIndefinite then .auto else maxType
+    | .fitContent _ => if isIndefinite then .maxContent else maxType
+    | _ => maxType
+  ⟨normMin, normMax⟩
+
+/-- Law: First grid range starts at line 0.
+    CSS Grid Layout Level 1 §7.2.3. -/
+theorem grid_ranges_start_zero (rep : GridRepeater) (rest : List GridRepeater) :
+    (buildGridRanges (rep :: rest)).head?.map (·.startLine) = some 0 := by
+  rfl
+
+/-- Law: A flex factor is never a track minimum in normalized track sizes.
+    CSS Grid Layout Level 1 §7.2.5. -/
+theorem normalize_no_flex_min (minT maxT : GridTrackSizeType) (isIndefinite : Bool) :
+    match (normalizeTrackSize minT maxT isIndefinite).minType with
+    | .flex _ => False
+    | _ => True := by
+  dsimp [normalizeTrackSize]
+  cases minT <;> (try cases isIndefinite) <;> trivial
+
+/-- Law: Percentage gap resolves to 0 when container dimension is indefinite.
+    CSS Box Alignment Level 3 §8, CSS Grid 1 §10.1. -/
+theorem resolve_gap_none (pct : Nat) :
+    resolveGapPercent pct none = 0 := by
+  rfl
 
 /-- Adding gap strictly increases inter-track distance when gap is positive. -/
 theorem grid_gap_positive (t gap : Nat) (h : 0 < gap) :

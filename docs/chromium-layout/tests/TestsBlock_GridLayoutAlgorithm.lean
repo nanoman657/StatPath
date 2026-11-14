@@ -79,6 +79,16 @@ theorem GridWithGap_vectors :
     (res.items[3]!).x = 110 ∧ (res.items[3]!).y = 110 := by
   decide
 
+-- grid_layout_algorithm_test.cc:1586: GridWithPercentGap
+-- Percentage gaps resolve against container inline/block dimensions (50% of 100px = 50px, 75% of 50px = 37.5px = 2400 LU).
+-- CSS Grid 1 §10.1, CSS Box Alignment 3 §8.
+theorem GridWithPercentGap_vectors :
+    -- grid-column-gap: 50% of 100px width = 50px
+    resolveGapPercent 50 (some 100) = 50 ∧
+    -- grid-row-gap: 75% of 50px height = 37.5px = 2400 LU
+    resolveGapPercentLU 75 (some 50) = 2400 := by
+  decide
+
 -- grid_layout_algorithm_test.cc:1640: AutoSizedGridWithGap
 def autoSizedGridWithGap_spec : GridSpec :=
   { columns := [100, 200], rows := [100, 100], colGap := 50, rowGap := 75 }
