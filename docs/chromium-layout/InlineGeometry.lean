@@ -296,6 +296,62 @@ def physicalStrutUnite (s1 s2 : PhysicalBoxStrut) : PhysicalBoxStrut :=
   , bottom := Nat.max s1.bottom s2.bottom
   , left := Nat.max s1.left s2.left }
 
+/-! ## Fixed-Point LayoutUnits & Enclosing Strut (CSS 2.1 §8.3, `platform/geometry/layout_unit.h`, `geometry/box_strut.h`) -/
+
+/-- Fixed-point LayoutUnit representation with 1/64 px quantum (CSS 2.1 §8.3, `layout_unit.h`). -/
+structure LayoutUnitFixed where
+  rawValue : Int
+  deriving DecidableEq, Repr, Inhabited
+
+namespace LayoutUnitFixed
+
+def kFixedPointDenominator : Int := 64
+def kMaxRawValue : Int := 1073741823
+def kMinRawValue : Int := -1073741824
+
+def fromInt (n : Int) : LayoutUnitFixed :=
+  { rawValue := n * kFixedPointDenominator }
+
+def fromFloatCeil (num den : Int) : LayoutUnitFixed :=
+  if den <= 0 then { rawValue := 0 }
+  else
+    let scaled := num * kFixedPointDenominator
+    let raw := -((-scaled) / den)
+    let clamped := if raw < kMinRawValue then kMinRawValue
+                   else if raw > kMaxRawValue then kMaxRawValue
+                   else raw
+    { rawValue := clamped }
+
+def epsilon : LayoutUnitFixed := { rawValue := 1 }
+def max : LayoutUnitFixed := { rawValue := kMaxRawValue }
+
+end LayoutUnitFixed
+
+/-- Physical box strut in fixed-point LayoutUnits (CSS 2.1 §8.3, `geometry/box_strut.h`). -/
+structure LayoutUnitBoxStrut where
+  top : LayoutUnitFixed
+  right : LayoutUnitFixed
+  bottom : LayoutUnitFixed
+  left : LayoutUnitFixed
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Computes enclosing box strut from floating point outsets (CSS 2.1 §8.3, `box_strut.h:Enclosing`). -/
+def boxStrutEnclosing (topNum topDen rightNum rightDen bottomNum bottomDen leftNum leftDen : Int) : LayoutUnitBoxStrut :=
+  { top := LayoutUnitFixed.fromFloatCeil topNum topDen
+  , right := LayoutUnitFixed.fromFloatCeil rightNum rightDen
+  , bottom := LayoutUnitFixed.fromFloatCeil bottomNum bottomDen
+  , left := LayoutUnitFixed.fromFloatCeil leftNum leftDen }
+
+/-- General Law: Zero outsets enclose to a zero LayoutUnitBoxStrut (CSS 2.1 §8.3, `box_strut.h:Enclosing`). -/
+theorem box_strut_enclosing_zero :
+    boxStrutEnclosing 0 1 0 1 0 1 0 1 = {
+      top := { rawValue := 0 },
+      right := { rawValue := 0 },
+      bottom := { rawValue := 0 },
+      left := { rawValue := 0 }
+    } := by
+  rfl
+
 /-! ## 5. WritingModeConverter Model (`geometry/writing_mode_converter.h`) -/
 
 structure PhysicalSize where

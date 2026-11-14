@@ -657,7 +657,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/box_strut_test.cc:17 | ConvertPhysicalStrutToLogical | geometry | formalized | `boxStrut_convertPhysicalToLogical` | Converts physical box strut to logical box strut across writing modes and directions |
 | geometry/box_strut_test.cc:52 | ConvertLogicalStrutToPhysical | geometry | formalized | `boxStrut_convertLogicalToPhysical` | Roundtrip conversion between logical and physical box struts |
 | geometry/box_strut_test.cc:89 | Constructors | geometry | formalized | `boxStrut_conversions_sideways` | CSS Writing Modes 3 §3.1: Logical-to-physical and physical-to-logical strut roundtrip under sideways writing modes |
-| geometry/box_strut_test.cc:99 | Enclosing | geometry | blocked | - | Blocked: model lacks floating point OutsetsF conversions |
+| geometry/box_strut_test.cc:99 | Enclosing | geometry | formalized | `boxStrut_enclosing` | CSS 2.1 §8.3: PhysicalBoxStrut::Enclosing converts floating point OutsetsF to fixed point LayoutUnits via FromFloatCeil |
 | geometry/box_strut_test.cc:114 | Unite | geometry | formalized | `boxStrut_unite` | Unites two physical box struts taking maximum along each edge |
 | geometry/layout_unit_diffuser_test.cc:17 | ThreeBuckets | geometry | formalized | `layoutUnitDiffuser_threeBuckets` | LayoutUnitDiffuser distributes remainders across 3 buckets |
 | geometry/layout_unit_diffuser_test.cc:35 | FourBuckets | geometry | formalized | `layoutUnitDiffuser_buckets` | Diffuses fractional epsilon across 4 buckets using Bresenham stepping |
@@ -679,7 +679,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_container_test.cc:19 | TransformAffectsVectorEffect | behaviour | formalized | `svg_container_transformAffectsVectorEffect` | SVG 2 §13.3: Root SVG does not affect vector effect; non-scaling-stroke child triggers transformAffectsVectorEffect |
 | svg/layout_svg_container_test.cc:70 | TransformAffectsVectorEffectNestedSVG | behaviour | formalized | `svg_container_transformAffectsVectorEffectNestedSVG` | SVG 2 §13.3: Nested SVG with non-scaling-stroke propagates transformAffectsVectorEffect to outer container |
 | svg/layout_svg_container_test.cc:100 | TransformAffectsVectorEffectHiddenContainerAndUse | behaviour | formalized | `svg_container_transformAffectsVectorEffectHiddenContainerAndUse` | SVG 2 §13.3: Defs subtree does not affect transform directly; referencing use element propagates non-scaling-stroke |
-| svg/layout_svg_container_test.cc:127 | PatternWithContentVisibility | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_container_test.cc:127 | PatternWithContentVisibility | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_container_test.cc:161 | BoundingBoxesWith3DTransformedChild | geometry | formalized | `svg_container_boundingBoxesWith3DTransformedChild` | SVG 2 §13.2, CSS Transforms 2 §4: 3D perspective projected bounding box |
 | svg/layout_svg_container_test.cc:180 | MaskCacheClearedOnLastClientRemovedBeforeGCAndDisplayLock | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_foreign_object_test.cc:18 | DivInForeignObject | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
@@ -691,10 +691,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_foreign_object_test.cc:317 | HitTestUnderTransformedForeignObjectDescendant | behaviour | formalized | `svg_foreignObject_hitTestUnderTransformedDescendant` | SVG 2 §13.2, CSS Transforms 1 §5: Translated foreignObject descendant hit testing |
 | svg/layout_svg_foreign_object_test.cc:351 | HitTestUnderScrollingAncestor | behaviour | formalized | `svg_foreignObject_hitTestUnderScrollingAncestor` | CSS Overflow 3 §3, SVG 2 §13.2: ForeignObject hit testing under scrolling ancestor |
 | svg/layout_svg_foreign_object_test.cc:389 | BBoxPropagationZoomed | geometry | formalized | `svg_foreignObject_bBoxPropagationZoomed` | SVG 2 §13.2: ForeignObject ObjectBoundingBox and DecoratedBoundingBox under zoom |
-| svg/layout_svg_foreign_object_test.cc:411 | SetNeedsCollectInlines | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:411 | SetNeedsCollectInlines | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_foreign_object_test.cc:424 | SubtreeLayoutCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_foreign_object_test.cc:451 | ZoomChangesInvalidatePaintProperties | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/layout_svg_foreign_object_test.cc:489 | DisplayLocked | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_foreign_object_test.cc:451 | ZoomChangesInvalidatePaintProperties | behaviour | blocked | - | Blocked: engine service, parked |
+| svg/layout_svg_foreign_object_test.cc:489 | DisplayLocked | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_foreign_object_test.cc:507 | LocalToAncestorPoint | behaviour | formalized | `svg_foreign_localToAncestorPoint` | SVG 2 §13.2, CSS 2.1 §10: Target offset to document root vs foreignObject ancestor |
 | svg/layout_svg_foreign_object_test.cc:525 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_foreign_object_test.cc:545 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
@@ -714,7 +714,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_root_test.cc:54 | VisualOverflowExpandsLayer | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_root_test.cc:74 | VisualRectMappingWithViewportClipAndBorder | geometry | formalized | `svg_root_visualRectMappingWithViewportClipAndBorder` | SVG 2 §7.3, CSS 2.1 §10: Visual rect mapping clipped to SVG viewport plus border offset |
 | svg/layout_svg_root_test.cc:101 | RectBasedHitTestPartialOverlap | behaviour | formalized | `svg_root_rectBasedHitTestPartialOverlap` | CSSOM View §8, SVG 2 §7.3: Rect-based hit testing detects partially overlapping SVG root and body |
-| svg/layout_svg_root_test.cc:132 | PaintLayerType | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/layout_svg_root_test.cc:132 | PaintLayerType | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_root_test.cc:155 | VisualRectMappingWithReferenceFilter | geometry | formalized | `svg_root_visualRectMappingWithReferenceFilter` | SVG 2 §15, CSS Filter Effects 1 §3.1: Visual rect in document with reference filter expansion |
 | svg/layout_svg_shape_test.cc:12 | StrokeBoundingBoxOnEmptyShape | geometry | formalized | `svg_shape_strokeBoundingBoxOnEmptyShape` | SVG 2 §13.5: Circle shape with radius 0 has empty stroke bounding box |
 | svg/layout_svg_shape_test.cc:23 | RectBasedHitTest_CircleEllipse | behaviour | formalized | `svg_shape_rectBasedHitTest_CircleEllipse` | SVG 2 §13.2, CSSOM View §8: Rect-based hit testing for stroked circle with inner hole and filled ellipses |
@@ -731,8 +731,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_viewport_container_test.cc:36 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_viewport_container_test.cc:56 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_viewport_container_test.cc:76 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_hit_test_perftest.cc:84 | HandleMouseMoveEvent | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
-| svg/svg_hit_test_perftest.cc:105 | IntersectsClipPath | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
+| svg/svg_hit_test_perftest.cc:84 | HandleMouseMoveEvent | behaviour | blocked | - | Blocked: engine service, parked |
+| svg/svg_hit_test_perftest.cc:105 | IntersectsClipPath | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/svg_layout_support_test.cc:14 | FindClosestLayoutSVGText | behaviour | formalized | `svg_support_findClosestLayoutSVGText` | SVG 2 §11.4, CSSOM View §8: Closest SVG text candidate selected by Euclidean distance to bounding box |
 | svg/svg_layout_support_test.cc:35 | VisualRectInAncestorSpaceContainerWithFilter | geometry | formalized | `svg_support_visualRectInAncestorSpaceContainerWithFilter` | SVG 2 §15, CSS Filter Effects 1 §3.1: Visual rect expanded by feDropShadow filter margins in document |
 | svg/svg_layout_support_test.cc:64 | VisualRectInDocumentWith3DTransform | geometry | formalized | `svg_support_visualRectInDocumentWith3DTransform` | CSS Transforms 2 §4: 3D perspective projection and translateZ scales visual rect about transform origin |

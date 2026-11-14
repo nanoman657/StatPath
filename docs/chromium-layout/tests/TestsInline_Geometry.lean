@@ -179,6 +179,16 @@ theorem boxStrut_conversions_sideways :
     (physicalStrutToLogical (logicalStrutToPhysical l .sidewaysLr .rtl) .sidewaysLr .rtl = l) := by
   decide
 
+/-- Test `PhysicalBoxStrutTest, Enclosing` (`geometry/box_strut_test.cc:99`).
+    CSS 2.1 §8.3: Enclosing converts floating outsets (3.0, 5.01, -7.001, max+1) to fixed-point LayoutUnits. -/
+theorem boxStrut_enclosing :
+    let s := boxStrutEnclosing 3 1 501 100 (-7001) 1000 (LayoutUnitFixed.kMaxRawValue / 64 + 1) 1
+    s.top = LayoutUnitFixed.fromInt 3 ∧
+    s.right.rawValue = (LayoutUnitFixed.fromInt 5).rawValue + LayoutUnitFixed.epsilon.rawValue ∧
+    s.bottom = LayoutUnitFixed.fromInt (-7) ∧
+    s.left = LayoutUnitFixed.max := by
+  decide
+
 /-- Test `PhysicalBoxStrutTest, Unite` (`geometry/box_strut_test.cc:114`). -/
 theorem boxStrut_unite :
     let s1 : PhysicalBoxStrut := { top := 10, right := 10, bottom := 10, left := 10 }
