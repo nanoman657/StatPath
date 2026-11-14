@@ -125,5 +125,24 @@ theorem ItemsSizeWithGap_vectors :
     (res.items[2]!).x = 240 ∧ (res.items[2]!).w = 100 := by
   decide
 
+-- grid_layout_algorithm_test.cc:209: GridLayoutAlgorithmGapGeometry
+-- Midpoints of row and column gaps for CSS grid decorations.
+-- CSS Gap Decorations Level 1 §3.2, §3.3, CSS Box Alignment 3 §8.
+theorem GridLayoutAlgorithmGapGeometry_vectors :
+    let colTracks := [80, 120, 90]
+    let rowTracks := [90, 130, 110, 140]
+    let colGap := 14
+    let rowGap := 12
+    let geom := computeGridGapGeometry colGap rowGap colTracks rowTracks
+    geom.inlineGap = 14 ∧
+    geom.blockGap = 12 ∧
+    geom.mainGaps = [96, 238, 360] ∧
+    geom.crossGaps = [87, 221] ∧
+    geom.contentInlineStart = 0 ∧
+    geom.contentBlockStart = 0 ∧
+    geom.contentInlineEnd = 318 ∧
+    geom.contentBlockEnd = 506 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

@@ -414,5 +414,79 @@ theorem min_content_is_intrinsic :
     isIntrinsicTrack .minContent = true := by
   rfl
 
+/-! ## Grid Gap Geometry (CSS Gap Decorations Level 1 §3.2, §3.3, CSS Box Alignment 3 §8) -/
+
+/-- Compute the midpoints of the gaps between consecutive tracks.
+    CSS Gap Decorations Level 1 §3.2, CSS Box Alignment 3 §8. -/
+def computeGridGapMidpoints (gap : Nat) (tracks : List Nat) : List Nat :=
+  let rec loop (offset : Nat) (rem : List Nat) : List Nat :=
+    match rem with
+    | [] | [_] => []
+    | t1 :: t2 :: rest =>
+        (offset + t1 + gap / 2) :: loop (offset + t1 + gap) (t2 :: rest)
+  loop 0 tracks
+
+/-- Total size spanning all tracks and intervening gaps.
+    CSS Grid Layout Level 1 §10.1, CSS Box Alignment 3 §8. -/
+def gridTotalSpan (gap : Nat) (tracks : List Nat) : Nat :=
+  match tracks with
+  | [] => 0
+  | _ => tracks.foldl (·+·) 0 + (tracks.length - 1) * gap
+
+/-- Grid gap geometry structure holding gap dimensions, midpoints, and content bounds.
+    CSS Gap Decorations Level 1 §3.2, §3.3, CSS Box Alignment 3 §8. -/
+structure GridGapGeometry where
+  inlineGap : Nat
+  blockGap : Nat
+  mainGaps : List Nat
+  crossGaps : List Nat
+  contentInlineStart : Nat := 0
+  contentInlineEnd : Nat
+  contentBlockStart : Nat := 0
+  contentBlockEnd : Nat
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Compute the 2D gap geometry for a CSS grid container.
+    CSS Gap Decorations Level 1 §3.2, §3.3, CSS Box Alignment 3 §8. -/
+def computeGridGapGeometry (colGap rowGap : Nat) (colTracks rowTracks : List Nat) : GridGapGeometry :=
+  let mainGaps := computeGridGapMidpoints rowGap rowTracks
+  let crossGaps := computeGridGapMidpoints colGap colTracks
+  let inlineEnd := gridTotalSpan colGap colTracks
+  let blockEnd := gridTotalSpan rowGap rowTracks
+  { inlineGap := colGap, blockGap := rowGap,
+    mainGaps := mainGaps, crossGaps := crossGaps,
+    contentInlineEnd := inlineEnd, contentBlockEnd := blockEnd }
+
+/-! ## Grid Gap Geometry Laws (CSS Gap Decorations Level 1 §3.2, §3.3, CSS Box Alignment 3 §8) -/
+
+/-- Law: Empty track list produces no gap midpoints.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem compute_grid_gap_midpoints_empty (gap : Nat) :
+    computeGridGapMidpoints gap [] = [] := rfl
+
+/-- Law: Single track produces no gap midpoints.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem compute_grid_gap_midpoints_single (gap t : Nat) :
+    computeGridGapMidpoints gap [t] = [] := rfl
+
+/-- Law: Empty track list has 0 total span.
+    CSS Grid Layout Level 1 §10.1. -/
+theorem grid_total_span_empty (gap : Nat) :
+    gridTotalSpan gap [] = 0 := rfl
+
+/-- Law: Single track has total span equal to its track size.
+    CSS Grid Layout Level 1 §10.1. -/
+theorem grid_total_span_single (gap t : Nat) :
+    gridTotalSpan gap [t] = t := by
+  dsimp [gridTotalSpan]
+  omega
+
+/-- Law: Two tracks produce a single gap midpoint at first track size plus half the gap.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem compute_grid_gap_midpoints_two (gap t1 t2 : Nat) :
+    computeGridGapMidpoints gap [t1, t2] = [t1 + gap / 2] := by
+  dsimp [computeGridGapMidpoints, computeGridGapMidpoints.loop]
+  rw [Nat.zero_add]
+
 end GridLayout
 end ChromiumLayout
