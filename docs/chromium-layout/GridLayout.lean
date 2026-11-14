@@ -488,5 +488,112 @@ theorem compute_grid_gap_midpoints_two (gap t1 t2 : Nat) :
   dsimp [computeGridGapMidpoints, computeGridGapMidpoints.loop]
   rw [Nat.zero_add]
 
+/-! ## Gap Segment State Ranges (CSS Gap Decorations Level 1 §3.2, §3.3) -/
+
+/-- Gap segment state representing whether a gap segment between two tracks is blocked by a spanning item
+    or adjacent to empty cells. CSS Gap Decorations Level 1 §3.2, §3.3. -/
+inductive GapSegmentStatus where
+  | none
+  | blocked
+  | emptyBefore
+  | emptyAfter
+  | emptyBoth
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Coalesced segment state range [start, end) along a gap. CSS Gap Decorations Level 1 §3.2. -/
+structure GapSegmentRange where
+  start : Nat
+  «end» : Nat
+  status : GapSegmentStatus
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Compute the gap status between two adjacent cells.
+    CSS Gap Decorations Level 1 §3.2, §3.3. -/
+def cellPairGapStatus (c1 c2 : Option Nat) : GapSegmentStatus :=
+  match c1, c2 with
+  | some id1, some id2 => if id1 == id2 then .blocked else .none
+  | none, none => .emptyBoth
+  | none, some _ => .emptyBefore
+  | some _, none => .emptyAfter
+
+/-- Coalesce consecutive track segment statuses into disjoint ranges [start, end). -/
+def coalesceGapRanges (statuses : List GapSegmentStatus) : List GapSegmentRange :=
+  let rec loop (idx : Nat) (curStatus : GapSegmentStatus) (startIdx : Nat) (rem : List GapSegmentStatus) : List GapSegmentRange :=
+    match rem with
+    | [] =>
+        if curStatus != .none then [⟨startIdx, idx, curStatus⟩] else []
+    | st :: rest =>
+        if st == curStatus then
+          loop (idx + 1) curStatus startIdx rest
+        else
+          let pfx := if curStatus != .none then [⟨startIdx, idx, curStatus⟩] else []
+          pfx ++ loop (idx + 1) st idx rest
+  match statuses with
+  | [] => []
+  | st :: rest => loop 1 st 0 rest
+
+/-- Compute the segment status list along a column gap (cross gap) between colIdx and colIdx + 1. -/
+def columnGapStatuses (colIdx : Nat) (grid : List (List (Option Nat))) : List GapSegmentStatus :=
+  grid.map (fun row =>
+    let c1 := row.getD colIdx none
+    let c2 := row.getD (colIdx + 1) none
+    cellPairGapStatus c1 c2)
+
+/-- Compute the segment status list along a row gap (main gap) between rowIdx and rowIdx + 1. -/
+def rowGapStatuses (rowIdx : Nat) (numCols : Nat) (grid : List (List (Option Nat))) : List GapSegmentStatus :=
+  let r1 := grid.getD rowIdx []
+  let r2 := grid.getD (rowIdx + 1) []
+  (List.range numCols).map (fun c =>
+    let c1 := r1.getD c none
+    let c2 := r2.getD c none
+    cellPairGapStatus c1 c2)
+
+/-- Coalesced ranges along a column gap (cross gap). CSS Gap Decorations Level 1 §3.2. -/
+def crossGapRanges (colIdx : Nat) (grid : List (List (Option Nat))) : List GapSegmentRange :=
+  coalesceGapRanges (columnGapStatuses colIdx grid)
+
+/-- Coalesced ranges along a row gap (main gap). CSS Gap Decorations Level 1 §3.2. -/
+def mainGapRanges (rowIdx : Nat) (numCols : Nat) (grid : List (List (Option Nat))) : List GapSegmentRange :=
+  coalesceGapRanges (rowGapStatuses rowIdx numCols grid)
+
+/-! ## Gap Segment State Range Laws (CSS Gap Decorations Level 1 §3.2, §3.3) -/
+
+/-- Law: Adjacent cells occupied by the same item ID are blocked across the intervening gap.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem cell_pair_status_same_item (id : Nat) :
+    cellPairGapStatus (some id) (some id) = .blocked := by
+  dsimp [cellPairGapStatus]
+  simp
+
+/-- Law: Two empty adjacent cells produce emptyBoth status.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem cell_pair_status_both_none :
+    cellPairGapStatus none none = .emptyBoth := rfl
+
+/-- Law: Empty cell before occupied cell produces emptyBefore status.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem cell_pair_status_empty_before (id : Nat) :
+    cellPairGapStatus none (some id) = .emptyBefore := rfl
+
+/-- Law: Occupied cell before empty cell produces emptyAfter status.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem cell_pair_status_empty_after (id : Nat) :
+    cellPairGapStatus (some id) none = .emptyAfter := rfl
+
+/-- Law: Empty status list produces no segment ranges.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem coalesce_gap_ranges_empty :
+    coalesceGapRanges [] = [] := rfl
+
+/-- Law: Single none status produces no segment ranges.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem coalesce_gap_ranges_single_none :
+    coalesceGapRanges [.none] = [] := rfl
+
+/-- Law: Single blocked status produces a range from 0 to 1.
+    CSS Gap Decorations Level 1 §3.2. -/
+theorem coalesce_gap_ranges_single_blocked :
+    coalesceGapRanges [.blocked] = [⟨0, 1, .blocked⟩] := rfl
+
 end GridLayout
 end ChromiumLayout

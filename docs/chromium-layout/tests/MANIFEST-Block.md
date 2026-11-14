@@ -438,8 +438,8 @@ checks every row against the pinned sources and the Lean modules.
 | table/table_layout_utils_test.cc:294 | TableLayoutUtilsTest.DistributeTableBlockSizeToSections | geometry | formalized | `TestsBlock.DistributeTableBlockSizeToSections_vectors` |
 | grid/grid_layout_algorithm_test.cc:171 | GridLayoutAlgorithmTest.GridLayoutAlgorithmAvailableRowSizes | geometry | blocked | needs CSS grid layout algorithm |
 | grid/grid_layout_algorithm_test.cc:209 | GridLayoutAlgorithmTest.GridLayoutAlgorithmGapGeometry | geometry | formalized | `TestsBlock.GridLayoutAlgorithmGapGeometry_vectors`, `GridLayout.compute_grid_gap_midpoints_two` |
-| grid/grid_layout_algorithm_test.cc:290 | GridLayoutAlgorithmTest.GapGeomoetryWithSpanningItems | geometry | blocked | needs CSS grid gap geometry calculation |
-| grid/grid_layout_algorithm_test.cc:421 | GridLayoutAlgorithmTest.GapGeometryWithEmptyCellsAndSpanningItems | geometry | blocked | needs CSS grid gap geometry calculation |
+| grid/grid_layout_algorithm_test.cc:290 | GridLayoutAlgorithmTest.GapGeomoetryWithSpanningItems | geometry | formalized | `TestsBlock.GapGeomoetryWithSpanningItems_vectors`, `GridLayout.cell_pair_status_same_item` |
+| grid/grid_layout_algorithm_test.cc:421 | GridLayoutAlgorithmTest.GapGeometryWithEmptyCellsAndSpanningItems | geometry | formalized | `TestsBlock.GapGeometryWithEmptyCellsAndSpanningItems_vectors`, `GridLayout.cell_pair_status_both_none` |
 | grid/grid_layout_algorithm_test.cc:603 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRanges | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:650 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesWithAutoRepeater | geometry | blocked | needs CSS grid track sizing and range building algorithm |
 | grid/grid_layout_algorithm_test.cc:701 | GridLayoutAlgorithmTest.GridLayoutAlgorithmRangesImplicit | geometry | blocked | needs CSS grid track sizing and range building algorithm |

@@ -144,5 +144,35 @@ theorem GridLayoutAlgorithmGapGeometry_vectors :
     geom.contentBlockEnd = 506 := by
   decide
 
+-- grid_layout_algorithm_test.cc:290: GapGeomoetryWithSpanningItems
+-- Cross and main gap blocked segment state ranges created by spanning grid items.
+-- CSS Gap Decorations Level 1 §3.2, §3.3.
+theorem GapGeomoetryWithSpanningItems_vectors :
+    let grid : List (List (Option Nat)) := [
+      [some 1, some 1, some 3],
+      [some 4, some 5, some 3],
+      [some 6, some 8, some 8]
+    ]
+    crossGapRanges 0 grid = [⟨0, 1, .blocked⟩] ∧
+    crossGapRanges 1 grid = [⟨2, 3, .blocked⟩] ∧
+    mainGapRanges 0 3 grid = [⟨2, 3, .blocked⟩] ∧
+    mainGapRanges 1 3 grid = [] := by
+  decide
+
+-- grid_layout_algorithm_test.cc:421: GapGeometryWithEmptyCellsAndSpanningItems
+-- Gap segment state ranges with empty cells (emptyBefore, emptyAfter, emptyBoth) and spanning items.
+-- CSS Gap Decorations Level 1 §3.2, §3.3.
+theorem GapGeometryWithEmptyCellsAndSpanningItems_vectors :
+    let grid : List (List (Option Nat)) := [
+      [some 1, some 1, some 3],
+      [some 2, none, some 3],
+      [none, none, some 3]
+    ]
+    crossGapRanges 0 grid = [⟨0, 1, .blocked⟩, ⟨1, 2, .emptyAfter⟩, ⟨2, 3, .emptyBoth⟩] ∧
+    crossGapRanges 1 grid = [⟨1, 3, .emptyBefore⟩] ∧
+    mainGapRanges 0 3 grid = [⟨1, 2, .emptyAfter⟩, ⟨2, 3, .blocked⟩] ∧
+    mainGapRanges 1 3 grid = [⟨0, 1, .emptyAfter⟩, ⟨1, 2, .emptyBoth⟩, ⟨2, 3, .blocked⟩] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
