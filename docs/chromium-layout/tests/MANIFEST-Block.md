@@ -146,9 +146,9 @@ checks every row against the pinned sources and the Lean modules.
 | absolute_utils_test.cc:474 | AbsoluteUtilsTest.MinMax | geometry | formalized | `TestsBlock.MinMax_vectors`, `BlockAbsolute.clamp_bounds` |
 | out_of_flow_layout_part_test.cc:46 | OutOfFlowLayoutPartTest.FixedInsideAbs | geometry | formalized | `TestsBlock.FixedInsideAbs_offsets`, `BlockAbsolute.explicit_inset_overrides_static`, `BlockAbsolute.auto_inset_uses_static` |
 | out_of_flow_layout_part_test.cc:103 | OutOfFlowLayoutPartTest.PositionedInMulticol | geometry | formalized | `TestsBlock.PositionedInMulticol_vectors`, `ColumnLayout.multicol_oof_offset_zero` |
-| out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
-| out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
-| out_of_flow_layout_part_test.cc:238 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
+| out_of_flow_layout_part_test.cc:149 | OutOfFlowLayoutPartTest.SimplePositionedFragmentation | geometry | formalized | `TestsBlock.SimplePositionedFragmentation_vectors`, `ColumnLayout.fragment_oof_zero_frag` |
+| out_of_flow_layout_part_test.cc:191 | OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow | geometry | formalized | `TestsBlock.PositionedFragmentationWithOverflow_vectors`, `ColumnLayout.fragment_oof_zero_content` |
+| out_of_flow_layout_part_test.cc:238 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns | geometry | formalized | `TestsBlock.PositionedFragmentationWithNewColumns_vectors`, `ColumnLayout.multicol_total_columns_empty` |
 | out_of_flow_layout_part_test.cc:279 | OutOfFlowLayoutPartTest.PositionedFragmentationWithNewEmptyColumns | geometry | blocked | needs out-of-flow fragmentation in multicolumn with column spanners; not modelled |
 | out_of_flow_layout_part_test.cc:320 | OutOfFlowLayoutPartTest.BreakInsideAvoid | behaviour | formalized | `TestsBlock.BreakInsideAvoid_vectors`, `BlockAbsolute.abspos_ignores_bi` |
 | out_of_flow_layout_part_test.cc:359 | OutOfFlowLayoutPartTest.BreakBeforeColumn | behaviour | formalized | `TestsBlock.BreakBeforeColumn_vectors`, `BlockAbsolute.abspos_ignores_bb` |

@@ -791,5 +791,70 @@ theorem multicol_oof_offset_zero (cbOffset : Nat) :
 theorem multicol_oof_offset_add (cbOffset inset : Nat) :
     resolveMulticolOofOffset cbOffset inset = cbOffset + inset := rfl
 
+/-- A fragment slice of an out-of-flow positioned box and its contained overflow/content slice.
+    CSS Fragmentation Level 3 §2, §4, CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2. -/
+structure OofFragmentWithContent where
+  colIndex : Nat
+  offsetY : Nat
+  boxHeight : Nat
+  contentHeight : Nat
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Fragment remaining content of an out-of-flow box across subsequent columns.
+    CSS Fragmentation Level 3 §2, §4. -/
+def fragmentOofRemaining (fragH : Nat) : Nat → Nat → Nat → Nat → List OofFragmentWithContent
+  | 0, _, _, _ => []
+  | fuel + 1, col, remBox, remContent =>
+      if remContent == 0 then []
+      else
+        let sliceBox := min remBox fragH
+        let sliceContent := min remContent fragH
+        ⟨col, 0, sliceBox, sliceContent⟩ ::
+          fragmentOofRemaining fragH fuel (col + 1) (remBox - sliceBox) (remContent - sliceContent)
+
+/-- Fragment an out-of-flow positioned box and its overflow content across columns.
+    CSS Fragmentation Level 3 §2, §4, CSS Positioned Layout Level 3 §2, CSS Multi-column Layout Level 1 §2. -/
+def fragmentOofWithContent (startCol : Nat) (startOffsetY : Nat) (boxHeight : Nat)
+    (contentHeight : Nat) (fragH : Nat) : List OofFragmentWithContent :=
+  if fragH = 0 then []
+  else if contentHeight = 0 then
+    [⟨startCol, startOffsetY, 0, 0⟩]
+  else
+    let avail0 := fragH - startOffsetY
+    let boxH0 := min boxHeight avail0
+    let contentH0 := min contentHeight avail0
+    let remBox0 := boxHeight - boxH0
+    let remContent0 := contentHeight - contentH0
+    ⟨startCol, startOffsetY, boxH0, contentH0⟩ ::
+      fragmentOofRemaining fragH (remContent0 + 1) (startCol + 1) remBox0 remContent0
+
+/-- Total multi-column column count expanded by positioned fragment slices.
+    CSS Multi-column Layout Level 1 §2. -/
+def multicolTotalColumns (initCols : Nat) (slices : List OofFragmentWithContent) : Nat :=
+  slices.foldl (fun acc s => max acc (s.colIndex + 1)) initCols
+
+/-- Law: Zero fragmentainer height yields no out-of-flow fragment slices.
+    CSS Fragmentation Level 3 §2. -/
+theorem fragment_oof_zero_frag (startCol startOffsetY boxH contentH : Nat) :
+    fragmentOofWithContent startCol startOffsetY boxH contentH 0 = [] := rfl
+
+/-- Law: Zero content height in positive fragmentainer produces a single zero-height slice.
+    CSS Fragmentation Level 3 §2. -/
+theorem fragment_oof_zero_content (startCol startOffsetY boxH fragH : Nat) (h : 0 < fragH) :
+    fragmentOofWithContent startCol startOffsetY boxH 0 fragH = [⟨startCol, startOffsetY, 0, 0⟩] := by
+  unfold fragmentOofWithContent
+  have hne : fragH ≠ 0 := by omega
+  simp [hne]
+
+/-- Law: Multi-column total column count with no slices is the initial count.
+    CSS Multi-column Layout Level 1 §2. -/
+theorem multicol_total_columns_empty (initCols : Nat) :
+    multicolTotalColumns initCols [] = initCols := rfl
+
+/-- Law: Multi-column total column count with a single slice covers that slice's column.
+    CSS Multi-column Layout Level 1 §2. -/
+theorem multicol_total_columns_single (initCols col y bh ch : Nat) :
+    multicolTotalColumns initCols [⟨col, y, bh, ch⟩] = max initCols (col + 1) := rfl
+
 end ColumnLayout
 end ChromiumLayout

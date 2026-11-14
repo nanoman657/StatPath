@@ -46,6 +46,67 @@ theorem PositionedInMulticol_vectors :
     abs2Top = 30 := by
   exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
+-- out_of_flow_layout_part_test.cc:149: OutOfFlowLayoutPartTest.SimplePositionedFragmentation
+-- Positioned nodes fragment across columns when exceeding available fragmentainer height.
+-- CSS Multi-column Layout Level 1 §2, CSS Fragmentation Level 3 §2, §4.
+theorem SimplePositionedFragmentation_vectors :
+    let fragH := 40
+    let col0Offset := columnInlineOffset 0 492 16
+    let col1Offset := columnInlineOffset 1 492 16
+    let col2Offset := columnInlineOffset 2 492 16
+    let inflowSlice0H := 40
+    let inflowSlice1H := 10
+    let relBlockOffsetInCol1 := inflowSlice1H
+    let absBoxH := 50 + 2 * 5 + 2 * 2
+    let absW := 5 + 2 * 5 + 2 * 2
+    let absStartY := resolveMulticolOofOffset relBlockOffsetInCol1 0 + 5
+    let slices := fragmentOofWithContent 1 absStartY absBoxH absBoxH fragH
+    let totalCols := multicolTotalColumns 2 slices
+    col0Offset = 0 ∧
+    col1Offset = 508 ∧
+    col2Offset = 1016 ∧
+    inflowSlice0H = 40 ∧
+    inflowSlice1H = 10 ∧
+    absBoxH = 64 ∧
+    absW = 19 ∧
+    absStartY = 15 ∧
+    slices = [⟨1, 15, 25, 25⟩, ⟨2, 0, 39, 39⟩] ∧
+    totalCols = 3 := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:191: OutOfFlowLayoutPartTest.PositionedFragmentationWithOverflow
+-- Positioned node with overflowing child fragments across columns, producing a zero-height
+-- parent continuation fragment to host the child's continuation slice.
+-- CSS Multi-column Layout Level 1 §2, CSS Fragmentation Level 3 §2, §4.
+theorem PositionedFragmentationWithOverflow_vectors :
+    let fragH := 40
+    let col0Offset := columnInlineOffset 0 492 16
+    let col1Offset := columnInlineOffset 1 492 16
+    let col2Offset := columnInlineOffset 2 492 16
+    let absBoxH := 10
+    let childH := 50
+    let absStartY := resolveMulticolOofOffset 0 10
+    let slices := fragmentOofWithContent 0 absStartY absBoxH childH fragH
+    col0Offset = 0 ∧
+    col1Offset = 508 ∧
+    col2Offset = 1016 ∧
+    absStartY = 10 ∧
+    slices = [⟨0, 10, 10, 30⟩, ⟨1, 0, 0, 20⟩] := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:238: OutOfFlowLayoutPartTest.PositionedFragmentationWithNewColumns
+-- Positioned node fragments beyond the initial column count, creating new columns as needed.
+-- CSS Multi-column Layout Level 1 §2, CSS Fragmentation Level 3 §2.
+theorem PositionedFragmentationWithNewColumns_vectors :
+    let fragH := 40
+    let absBoxH := 120
+    let absStartY := resolveMulticolOofOffset 0 0
+    let slices := fragmentOofWithContent 0 absStartY absBoxH absBoxH fragH
+    let totalCols := multicolTotalColumns 2 slices
+    slices = [⟨0, 0, 40, 40⟩, ⟨1, 0, 40, 40⟩, ⟨2, 0, 40, 40⟩] ∧
+    totalCols = 3 := by
+  exact ⟨rfl, rfl⟩
+
 -- out_of_flow_layout_part_test.cc:320: OutOfFlowLayoutPartTest.BreakInsideAvoid
 -- An absolute positioned element with break-inside: avoid is not pushed to the next
 -- column; it fragments across columns. CSS Fragmentation Level 3 §3.2.
