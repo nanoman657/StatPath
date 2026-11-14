@@ -490,4 +490,127 @@ theorem offsetMapping_firstLetterBlock_preserves_length (id : Nat) (s : String) 
   simp [firstLetterBlockOffsetMapping]
   omega
 
+/-! ## 8. CSS Text 3 §4.1 & Generated Content Offset Mapping Queries -/
+
+/-- CSS 2.1 §12.1 & Blink OffsetMapping::GetMappingUnitsForLayoutObject:
+    Query mapping units corresponding to a specific DOM or pseudo-element node. -/
+def getMappingUnitsForNode (units : List OffsetMappingUnit) (nodeId : Nat) : List OffsetMappingUnit :=
+  units.filter (fun u => u.nodeId == nodeId)
+
+/-- CSS Text 3 §4.1 & Blink InlineItemsBuilder::RestoreTrailingCollapsibleSpace:
+    When a collapsible space at an element boundary was provisionally collapsed,
+    checks whether subsequent inline content contains visible text.
+    If followed by non-whitespace content, the trailing space is restored to an identity unit;
+    if followed only by collapsible spaces or end-of-block, the space remains collapsed. -/
+def resolveTrailingCollapsibleSpace (hasSubsequentText : Bool) (spaceDomLen : Nat) (baseTextOffset : Nat) (nodeId : Nat) :
+    List OffsetMappingUnit :=
+  if hasSubsequentText then
+    let preserved : OffsetMappingUnit := {
+      nodeId := nodeId,
+      unitType := .identity,
+      domStart := 0,
+      domEnd := 1,
+      textStart := baseTextOffset,
+      textEnd := baseTextOffset + 1
+    }
+    if spaceDomLen > 1 then
+      let collapsedRem : OffsetMappingUnit := {
+        nodeId := nodeId,
+        unitType := .collapsed,
+        domStart := 1,
+        domEnd := spaceDomLen,
+        textStart := baseTextOffset + 1,
+        textEnd := baseTextOffset + 1
+      }
+      [preserved, collapsedRem]
+    else
+      [preserved]
+  else
+    [{
+      nodeId := nodeId,
+      unitType := .collapsed,
+      domStart := 0,
+      domEnd := spaceDomLen,
+      textStart := baseTextOffset,
+      textEnd := baseTextOffset
+    }]
+
+/-- CSS Text 3 §5.2 & Blink InlineItemsBuilder:
+    When a space at the end of a nowrap inline box is followed by collapsible whitespace
+    in normal flow, Blink inserts a zero-width space (break opportunity) between them,
+    leaving the nowrap space as an identity unit and collapsing the subsequent normal space. -/
+def buildNoWrapBoundaryMapping (nowrapNodeId normalNodeId : Nat) (nowrapText normalText : String) :
+    List OffsetMappingUnit :=
+  let nowrapLen := nowrapText.length
+  let nowrapUnit : OffsetMappingUnit := {
+    nodeId := nowrapNodeId,
+    unitType := .identity,
+    domStart := 0,
+    domEnd := nowrapLen,
+    textStart := 0,
+    textEnd := nowrapLen
+  }
+  let zwsLen := 1
+  let normalBase := nowrapLen + zwsLen
+  let normalChars := normalText.toList
+  let normalLeadWs := normalChars.takeWhile isCssWhitespace
+  let leadWsLen := normalLeadWs.length
+  let normalRemLen := normalText.length - leadWsLen
+  let colUnit : OffsetMappingUnit := {
+    nodeId := normalNodeId,
+    unitType := .collapsed,
+    domStart := 0,
+    domEnd := leadWsLen,
+    textStart := normalBase,
+    textEnd := normalBase
+  }
+  let remUnit : OffsetMappingUnit := {
+    nodeId := normalNodeId,
+    unitType := .identity,
+    domStart := leadWsLen,
+    domEnd := normalText.length,
+    textStart := normalBase,
+    textEnd := normalBase + normalRemLen
+  }
+  if leadWsLen > 0 then
+    [nowrapUnit, colUnit, remUnit]
+  else
+    [nowrapUnit, remUnit]
+
+/-! ## 9. General Laws for Generated Content and Space Restoration -/
+
+/-- CSS Text 3 §5.2: Boundary between nowrap space and collapsible space introduces a ZWS gap
+    where the normal leading space is collapsed. -/
+theorem buildNoWrapBoundaryMapping_zws_gap (nwId nId : Nat) (nwText nText : String)
+    (hLead : (nText.toList.takeWhile isCssWhitespace).length > 0) :
+    let units := buildNoWrapBoundaryMapping nwId nId nwText nText
+    units.length = 3 ∧
+    units[0]!.textEnd + 1 = units[1]!.textStart ∧
+    units[1]!.unitType = .collapsed := by
+  dsimp [buildNoWrapBoundaryMapping]
+  split
+  · exact ⟨rfl, rfl, rfl⟩
+  · contradiction
+
+/-- Querying units for a node always returns units belonging exclusively to that node. -/
+theorem getMappingUnitsForNode_filter (units : List OffsetMappingUnit) (nodeId : Nat) (u : OffsetMappingUnit) :
+    u ∈ getMappingUnitsForNode units nodeId → u.nodeId = nodeId := by
+  dsimp [getMappingUnitsForNode]
+  intro h
+  have hMem := List.mem_filter.mp h
+  exact of_decide_eq_true hMem.2
+
+/-- CSS Text 3 §4.1: When trailing spaces are not followed by visible text, all produced units are collapsed. -/
+theorem resolveTrailingCollapsibleSpace_noText_collapsed (spaceDomLen baseOff id : Nat) :
+    (resolveTrailingCollapsibleSpace false spaceDomLen baseOff id).all (fun u => u.unitType == .collapsed) = true := by
+  dsimp [resolveTrailingCollapsibleSpace]
+  rfl
+
+/-- CSS Text 3 §4.1: When trailing spaces are followed by visible text, the first character is restored as identity. -/
+theorem resolveTrailingCollapsibleSpace_withText_preserves_first (spaceDomLen baseOff id : Nat) (_h : spaceDomLen ≥ 1) :
+    let units := resolveTrailingCollapsibleSpace true spaceDomLen baseOff id
+    units[0]!.unitType = .identity ∧ units[0]!.domStart = 0 ∧ units[0]!.domEnd = 1 := by
+  dsimp [resolveTrailingCollapsibleSpace]
+  split <;> simp
+
 end ChromiumLayout

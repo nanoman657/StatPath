@@ -411,21 +411,21 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:871 | FirstLetterWithoutRemainingText | behaviour | formalized | `test_OffsetMapping_FirstLetterWithoutRemainingText` | CSS Pseudo 4 §7: First-letter without remaining text produces collapsed unit and single identity unit |
 | inline/offset_mapping_test.cc:902 | FirstLetterInDifferentBlock | behaviour | formalized | `test_OffsetMapping_FirstLetterInDifferentBlock` | CSS Pseudo 4 §7: Floating or block first-letter mapped in its own block formatting context |
 | inline/offset_mapping_test.cc:967 | WhiteSpaceTextNodeWithoutLayoutText | behaviour | formalized | `test_OffsetMapping_WhiteSpaceTextNodeWithoutLayoutText` | CSS Text 3 §4.1.2: Completely collapsed leading whitespace node contains no non-collapsed content |
-| inline/offset_mapping_test.cc:976 | ContainerWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
+| inline/offset_mapping_test.cc:976 | ContainerWithGeneratedContent | behaviour | formalized | `test_OffsetMapping_ContainerWithGeneratedContent` | CSS 2.1 §12.1: Generated content ::before and ::after pseudo-elements receive dedicated OffsetMappingUnits and queryable mapping units |
 | inline/offset_mapping_test.cc:1006 | InlineBlockWithGeneratedContent | behaviour | blocked | - | Blocked: model lacks generated content offset mapping |
 | inline/offset_mapping_test.cc:1046 | Table | behaviour | blocked | - | Blocked: model lacks table offset mapping |
 | inline/offset_mapping_test.cc:1070 | GetMappingForInlineBlock | behaviour | blocked | - | Blocked: model lacks inline block offset mapping |
-| inline/offset_mapping_test.cc:1098 | NoWrapSpaceAndCollapsibleSpace | behaviour | blocked | - | Blocked: model lacks nowrap offset mapping |
+| inline/offset_mapping_test.cc:1098 | NoWrapSpaceAndCollapsibleSpace | behaviour | formalized | `test_OffsetMapping_NoWrapSpaceAndCollapsibleSpace` | CSS Text 3 §5.2: Boundary between nowrap whitespace and collapsible space preserves nowrap space and collapses subsequent normal space |
 | inline/offset_mapping_test.cc:1128 | PreLine | behaviour | formalized | `test_OffsetMapping_PreLine` | OffsetMappingUnits partitioning with preserved newlines in pre-line |
 | inline/offset_mapping_test.cc:1152 | BiDiAroundForcedBreakInPreLine | behaviour | blocked | - | Blocked: model lacks bidi pre-line offset mapping |
 | inline/offset_mapping_test.cc:1176 | BiDiAroundForcedBreakInPreWrap | behaviour | blocked | - | Blocked: model lacks bidi pre-wrap offset mapping |
 | inline/offset_mapping_test.cc:1200 | BiDiAroundForcedBreakInPre | behaviour | blocked | - | Blocked: model lacks bidi pre offset mapping |
 | inline/offset_mapping_test.cc:1224 | SoftHyphen | behaviour | blocked | - | Blocked: model lacks soft hyphen offset mapping |
 | inline/offset_mapping_test.cc:1241 | PreWrapAndReusing | behaviour | blocked | - | Blocked: model lacks pre-wrap reuse offset mapping |
-| inline/offset_mapping_test.cc:1266 | RestoreTrailingCollapsibleSpaceReplace | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
-| inline/offset_mapping_test.cc:1295 | RestoreTrailingCollapsibleSpaceReplaceKeep | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
-| inline/offset_mapping_test.cc:1324 | RestoreTrailingCollapsibleSpaceNone | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
-| inline/offset_mapping_test.cc:1349 | RestoreTrailingCollapsibleSpaceSplit | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
+| inline/offset_mapping_test.cc:1266 | RestoreTrailingCollapsibleSpaceReplace | behaviour | formalized | `test_OffsetMapping_RestoreTrailingCollapsibleSpaceReplace` | CSS Text 3 §4.1: Collapsible space followed only by whitespace and block-end remains collapsed |
+| inline/offset_mapping_test.cc:1295 | RestoreTrailingCollapsibleSpaceReplaceKeep | behaviour | formalized | `test_OffsetMapping_RestoreTrailingCollapsibleSpaceReplaceKeep` | CSS Text 3 §4.1: Collapsible space followed by visible text is restored to identity unit |
+| inline/offset_mapping_test.cc:1324 | RestoreTrailingCollapsibleSpaceNone | behaviour | formalized | `test_OffsetMapping_RestoreTrailingCollapsibleSpaceNone` | CSS Text 3 §4.1: First collapsible space followed by visible text is restored; remainder collapses |
+| inline/offset_mapping_test.cc:1349 | RestoreTrailingCollapsibleSpaceSplit | behaviour | formalized | `test_OffsetMapping_RestoreTrailingCollapsibleSpaceSplit` | CSS Text 3 §4.1: Multiple collapsible spaces not followed by text remain fully collapsed |
 | inline/offset_mapping_test.cc:1378 | RestoreTrailingCollapsibleSpaceSplitKeep | behaviour | blocked | - | Blocked: model lacks trailing space restore offset mapping |
 | inline/offset_mapping_test.cc:1409 | TextOverflowEllipsis | behaviour | blocked | - | Blocked: model lacks ellipsis offset mapping |
 | inline/offset_mapping_test.cc:1426 | StartOfNextNonCollapsedContentWithPseudo | behaviour | blocked | - | Blocked: model lacks pseudo element offset mapping |

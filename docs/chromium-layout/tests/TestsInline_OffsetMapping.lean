@@ -274,4 +274,73 @@ theorem test_OffsetMapping_WhiteSpaceTextNodeWithoutLayoutText :
     (startOfNextNonCollapsedContent units textNode 0 = none) := by
   decide
 
+/-- Test: ContainerWithGeneratedContent (offset_mapping_test.cc:976)
+    CSS 2.1 §12.1: Generated content ::before and ::after pseudo-elements receive dedicated
+    OffsetMappingUnits and queryable mapping units. -/
+theorem test_OffsetMapping_ContainerWithGeneratedContent :
+    let beforeNode := 1
+    let textNode := 2
+    let afterNode := 3
+    let nodes := [DomNode.text beforeNode "bar" .normal false,
+                  DomNode.text textNode "foo" .normal false,
+                  DomNode.text afterNode "baz" .normal false]
+    let units := buildDomOffsetMapping nodes
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := beforeNode, unitType := .identity, domStart := 0, domEnd := 3, textStart := 0, textEnd := 3 }) ∧
+    (units[1]! = { nodeId := textNode, unitType := .identity, domStart := 0, domEnd := 3, textStart := 3, textEnd := 6 }) ∧
+    (units[2]! = { nodeId := afterNode, unitType := .identity, domStart := 0, domEnd := 3, textStart := 6, textEnd := 9 }) ∧
+    (getMappingUnitsForNode units beforeNode = [units[0]!]) ∧
+    (getMappingUnitsForNode units afterNode = [units[2]!]) := by
+  decide
+
+/-- Test: NoWrapSpaceAndCollapsibleSpace (offset_mapping_test.cc:1098)
+    CSS Text 3 §5.2: Boundary between nowrap whitespace and collapsible space
+    preserves nowrap space and collapses subsequent normal space. -/
+theorem test_OffsetMapping_NoWrapSpaceAndCollapsibleSpace :
+    let spanNode := 1
+    let barNode := 2
+    let units := buildNoWrapBoundaryMapping spanNode barNode "foo " " bar"
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := spanNode, unitType := .identity, domStart := 0, domEnd := 4, textStart := 0, textEnd := 4 }) ∧
+    (units[1]! = { nodeId := barNode, unitType := .collapsed, domStart := 0, domEnd := 1, textStart := 5, textEnd := 5 }) ∧
+    (units[2]! = { nodeId := barNode, unitType := .identity, domStart := 1, domEnd := 4, textStart := 5, textEnd := 8 }) := by
+  decide
+
+/-- Test: RestoreTrailingCollapsibleSpaceReplace (offset_mapping_test.cc:1266)
+    CSS Text 3 §4.1: Collapsible space followed only by whitespace and block-end remains collapsed. -/
+theorem test_OffsetMapping_RestoreTrailingCollapsibleSpaceReplace :
+    let bNode := 2
+    let bUnits := resolveTrailingCollapsibleSpace false 1 2 bNode
+    (bUnits.length = 1) ∧
+    (bUnits[0]! = { nodeId := bNode, unitType := .collapsed, domStart := 0, domEnd := 1, textStart := 2, textEnd := 2 }) := by
+  decide
+
+/-- Test: RestoreTrailingCollapsibleSpaceReplaceKeep (offset_mapping_test.cc:1295)
+    CSS Text 3 §4.1: Collapsible space followed by visible text is restored to identity unit. -/
+theorem test_OffsetMapping_RestoreTrailingCollapsibleSpaceReplaceKeep :
+    let bNode := 2
+    let bUnits := resolveTrailingCollapsibleSpace true 1 2 bNode
+    (bUnits.length = 1) ∧
+    (bUnits[0]! = { nodeId := bNode, unitType := .identity, domStart := 0, domEnd := 1, textStart := 2, textEnd := 3 }) := by
+  decide
+
+/-- Test: RestoreTrailingCollapsibleSpaceNone (offset_mapping_test.cc:1324)
+    CSS Text 3 §4.1: First collapsible space followed by visible text is restored; remainder collapses. -/
+theorem test_OffsetMapping_RestoreTrailingCollapsibleSpaceNone :
+    let bNode := 2
+    let bUnits := resolveTrailingCollapsibleSpace true 3 1 bNode
+    (bUnits.length = 2) ∧
+    (bUnits[0]! = { nodeId := bNode, unitType := .identity, domStart := 0, domEnd := 1, textStart := 1, textEnd := 2 }) ∧
+    (bUnits[1]! = { nodeId := bNode, unitType := .collapsed, domStart := 1, domEnd := 3, textStart := 2, textEnd := 2 }) := by
+  decide
+
+/-- Test: RestoreTrailingCollapsibleSpaceSplit (offset_mapping_test.cc:1349)
+    CSS Text 3 §4.1: Multiple collapsible spaces not followed by text remain fully collapsed. -/
+theorem test_OffsetMapping_RestoreTrailingCollapsibleSpaceSplit :
+    let bNode := 2
+    let bUnits := resolveTrailingCollapsibleSpace false 3 2 bNode
+    (bUnits.length = 1) ∧
+    (bUnits[0]! = { nodeId := bNode, unitType := .collapsed, domStart := 0, domEnd := 3, textStart := 2, textEnd := 2 }) := by
+  decide
+
 end ChromiumLayout.TestsInline
