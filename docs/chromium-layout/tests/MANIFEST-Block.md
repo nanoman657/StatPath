@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `OutOfFlowAnchor.lean` (CSS anchor positioning declarations, queries, and side evaluation), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -1025,10 +1025,10 @@ checks every row against the pinned sources and the Lean modules.
 | anchor_scope_test.cc:80 | AnchorScopedNameTest.LookupDeleted | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_scope_test.cc:93 | AnchorScopedNameTest.ElementEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_scope_test.cc:115 | AnchorScopedNameTest.TreeScopeEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:71 | AnchorEvaluatorImplTest.AnchorNameAdd | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:104 | AnchorEvaluatorImplTest.AnchorNameChange | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:71 | AnchorEvaluatorImplTest.AnchorNameAdd | behaviour | formalized | `TestsBlock.AnchorNameAdd_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
+| anchor_evaluator_impl_test.cc:104 | AnchorEvaluatorImplTest.AnchorNameChange | behaviour | formalized | `TestsBlock.AnchorNameChange_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
+| anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | behaviour | formalized | `TestsBlock.AnchorNameRemove_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
+| anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | behaviour | formalized | `TestsBlock.BlockFlow_vectors`, `OutOfFlowAnchor.anchor_top_le_bottom` |
 | anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_evaluator_impl_test.cc:310 | AnchorEvaluatorImplTest.Relative | behaviour | blocked | model lacks CSS anchor positioning engine |
@@ -1156,6 +1156,9 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockSticky.sticky_offset_le_max_shift`: sticky offset is always bounded by the containing block headroom (CSS Positioned Layout 3 §2.3).
 - `BlockSticky.sticky_offset_none`: if no top inset is specified, sticky offset is 0 (CSS Positioned Layout 3 §2.3).
 - `BlockSticky.sticky_offset_unscrolled`: if target position is at or before starting position, sticky offset is 0 (CSS Positioned Layout 3 §2.3).
+- `OutOfFlowAnchor.anchor_top_le_bottom`: top edge of an anchor is always at or before bottom edge (CSS Anchor Positioning 1 §4.1).
+- `OutOfFlowAnchor.anchor_left_le_right`: left edge of an anchor is always at or before right edge (CSS Anchor Positioning 1 §4.1).
+- `OutOfFlowAnchor.anchor_lookup_empty`: lookup in an empty anchor map always yields none (CSS Anchor Positioning 1 §3.1).
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).
