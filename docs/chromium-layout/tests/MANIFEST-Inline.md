@@ -745,21 +745,21 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/svg_text_layout_algorithm_test.cc:62 | ControlCharCrash | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/svg_text_layout_algorithm_test.cc:70 | FirstLineTextTransformCrash | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/svg_text_layout_attributes_builder_test.cc:13 | TextPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| forms/fieldset_layout_algorithm_test.cc:59 | Empty | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:78 | NoLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:100 | Legend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:124 | SmallLegendLargeBorder | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:150 | LegendOrthogonalWritingMode | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:176 | VerticalLr | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:202 | VerticalRl | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:228 | LegendAutoSize | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:257 | PercentageHeightChild | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:283 | AbsposChild | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:312 | ZeroHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:340 | ZeroMaxHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:372 | PercentHeightQuirks | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:404 | LegendPercentHeightQuirks | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:433 | FieldsetPaddingWithLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:59 | Empty | geometry | formalized | `fieldset_empty` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Empty fieldset content box geometry |
+| forms/fieldset_layout_algorithm_test.cc:78 | NoLegend | geometry | formalized | `fieldset_noLegend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset without legend, padding delegation |
+| forms/fieldset_layout_algorithm_test.cc:100 | Legend | geometry | formalized | `fieldset_legend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset with legend over block-start border |
+| forms/fieldset_layout_algorithm_test.cc:124 | SmallLegendLargeBorder | geometry | formalized | `fieldset_smallLegendLargeBorder` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Legend centered inside thick border |
+| forms/fieldset_layout_algorithm_test.cc:150 | LegendOrthogonalWritingMode | geometry | formalized | `fieldset_legendOrthogonalWritingMode` | HTML 5.2 §4.10.16 & CSS Writing Modes 3 §4.2: Orthogonal vertical legend in horizontal fieldset |
+| forms/fieldset_layout_algorithm_test.cc:176 | VerticalLr | geometry | formalized | `fieldset_verticalLr` | HTML 5.2 §4.10.16 & CSS Writing Modes 3 §4.2: Fieldset in vertical-lr writing mode |
+| forms/fieldset_layout_algorithm_test.cc:202 | VerticalRl | geometry | formalized | `fieldset_verticalRl` | HTML 5.2 §4.10.16 & CSS Writing Modes 3 §4.2: Fieldset in vertical-rl writing mode |
+| forms/fieldset_layout_algorithm_test.cc:228 | LegendAutoSize | geometry | formalized | `fieldset_legendAutoSize` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Legend auto size enclosing float children |
+| forms/fieldset_layout_algorithm_test.cc:257 | PercentageHeightChild | geometry | formalized | `fieldset_percentageHeightChild` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Percentage height child inside fieldset content |
+| forms/fieldset_layout_algorithm_test.cc:283 | AbsposChild | geometry | formalized | `fieldset_absposChild` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Abspos child inside fieldset |
+| forms/fieldset_layout_algorithm_test.cc:312 | ZeroHeight | geometry | blocked | - | Blocked: held out |
+| forms/fieldset_layout_algorithm_test.cc:340 | ZeroMaxHeight | geometry | formalized | `fieldset_zeroMaxHeight` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset with max-height 0 |
+| forms/fieldset_layout_algorithm_test.cc:372 | PercentHeightQuirks | geometry | formalized | `fieldset_percentHeightQuirks` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Percentage height quirks in fieldset and legend |
+| forms/fieldset_layout_algorithm_test.cc:404 | LegendPercentHeightQuirks | geometry | formalized | `fieldset_legendPercentHeightQuirks` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Legend percent height quirks mode |
+| forms/fieldset_layout_algorithm_test.cc:433 | FieldsetPaddingWithLegend | geometry | formalized | `fieldset_fieldsetPaddingWithLegend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset padding delegation with tall legend |
 | forms/fieldset_layout_algorithm_test.cc:472 | MinMax | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/fieldset_layout_algorithm_test.cc:540 | NoFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/fieldset_layout_algorithm_test.cc:567 | SimpleFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
