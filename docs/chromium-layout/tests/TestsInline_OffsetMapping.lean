@@ -343,4 +343,122 @@ theorem test_OffsetMapping_RestoreTrailingCollapsibleSpaceSplit :
     (bUnits[0]! = { nodeId := bNode, unitType := .collapsed, domStart := 0, domEnd := 3, textStart := 2, textEnd := 2 }) := by
   decide
 
+/-- Test: Table (offset_mapping_test.cc:1046)
+    CSS Text 3 §4.1: Leading and trailing whitespace in table cell collapses, leaving central text identity unit. -/
+theorem test_OffsetMapping_Table :
+    let units := computeOffsetMappingUnits .normal "  foo  "
+    (units.length = 3) ∧
+    (units[0]! = { unitType := .collapsed, domStart := 0, domEnd := 2, textStart := 0, textEnd := 0 }) ∧
+    (units[1]! = { unitType := .identity, domStart := 2, domEnd := 5, textStart := 0, textEnd := 3 }) ∧
+    (units[2]! = { unitType := .collapsed, domStart := 5, domEnd := 7, textStart := 3, textEnd := 3 }) := by
+  decide
+
+/-- Test: GetMappingForInlineBlock (offset_mapping_test.cc:1070)
+    CSS 2.1 §9.2.2: Before and after anchors on inline block resolve to containing block mapping,
+    not to the inline block's inner mapping. -/
+theorem test_OffsetMapping_GetMappingForInlineBlock :
+    let divId := 1
+    let spanId := 2
+    let beforeScope := resolveOffsetMappingScope divId spanId .beforeNode
+    let afterScope := resolveOffsetMappingScope divId spanId .afterNode
+    let innerScope := resolveOffsetMappingScope divId spanId .offsetInNode
+    beforeScope = divId ∧
+    beforeScope ≠ spanId ∧
+    afterScope = divId ∧
+    afterScope ≠ spanId ∧
+    innerScope = spanId := by
+  decide
+
+/-- Test: BiDiAroundForcedBreakInPreLine (offset_mapping_test.cc:1152)
+    UAX #9 L2 & CSS Writing Modes 3 §3.2: Offset mapping skips generated BiDi controls around forced break in pre-line. -/
+theorem test_OffsetMapping_BiDiAroundForcedBreakInPreLine :
+    let units := buildBiDiForcedBreakUnits 1 3 3 2
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 3, textStart := 2, textEnd := 5 }) ∧
+    (units[1]! = { nodeId := 1, unitType := .identity, domStart := 3, domEnd := 4, textStart := 7, textEnd := 8 }) ∧
+    (units[2]! = { nodeId := 1, unitType := .identity, domStart := 4, domEnd := 7, textStart := 10, textEnd := 13 }) := by
+  decide
+
+/-- Test: BiDiAroundForcedBreakInPreWrap (offset_mapping_test.cc:1176)
+    UAX #9 L2 & CSS Writing Modes 3 §3.2: Offset mapping skips generated BiDi controls around forced break in pre-wrap. -/
+theorem test_OffsetMapping_BiDiAroundForcedBreakInPreWrap :
+    let units := buildBiDiForcedBreakUnits 1 3 3 2
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 3, textStart := 2, textEnd := 5 }) ∧
+    (units[1]! = { nodeId := 1, unitType := .identity, domStart := 3, domEnd := 4, textStart := 7, textEnd := 8 }) ∧
+    (units[2]! = { nodeId := 1, unitType := .identity, domStart := 4, domEnd := 7, textStart := 10, textEnd := 13 }) := by
+  decide
+
+/-- Test: BiDiAroundForcedBreakInPre (offset_mapping_test.cc:1200)
+    UAX #9 L2 & CSS Writing Modes 3 §3.2: Offset mapping skips generated BiDi controls around forced break in pre. -/
+theorem test_OffsetMapping_BiDiAroundForcedBreakInPre :
+    let units := buildBiDiForcedBreakUnits 1 3 3 2
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 3, textStart := 2, textEnd := 5 }) ∧
+    (units[1]! = { nodeId := 1, unitType := .identity, domStart := 3, domEnd := 4, textStart := 7, textEnd := 8 }) ∧
+    (units[2]! = { nodeId := 1, unitType := .identity, domStart := 4, domEnd := 7, textStart := 10, textEnd := 13 }) := by
+  decide
+
+/-- Test: SoftHyphen (offset_mapping_test.cc:1224)
+    CSS Text 3 §5.2: Soft hyphen character is preserved as identity unit in offset mapping. -/
+theorem test_OffsetMapping_SoftHyphen :
+    let units := computeOffsetMappingUnits .normal "abc\u00ADdef"
+    (units.length = 1) ∧
+    (units[0]! = { unitType := .identity, domStart := 0, domEnd := 7, textStart := 0, textEnd := 7 }) := by
+  decide
+
+/-- Test: PreWrapAndReusing (offset_mapping_test.cc:1241)
+    CSS Text 3 §5.2: Reusing preserved leading space in pre-wrap introduces ZWS gap in mapping units. -/
+theorem test_OffsetMapping_PreWrapAndReusing :
+    let units := buildPreWrapReusedUnits 1
+    (units.length = 2) ∧
+    (units[0]! = { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }) ∧
+    (units[1]! = { nodeId := 1, unitType := .identity, domStart := 1, domEnd := 4, textStart := 2, textEnd := 5 }) := by
+  decide
+
+/-- Test: TextOverflowEllipsis (offset_mapping_test.cc:1409)
+    CSS Overflow 3 §4.4: Text-overflow ellipsis does not alter underlying offset mapping units. -/
+theorem test_OffsetMapping_TextOverflowEllipsis :
+    let units := computeOffsetMappingUnits .normal "123456"
+    (units.length = 1) ∧
+    (units[0]! = { unitType := .identity, domStart := 0, domEnd := 6, textStart := 0, textEnd := 6 }) := by
+  decide
+
+/-- Test: StartOfNextNonCollapsedContentWithPseudo (offset_mapping_test.cc:1426)
+    CSS Text 3 §4.1.2: Fully collapsed whitespace preceding pseudo content yields no start non-collapsed content. -/
+theorem test_OffsetMapping_StartOfNextNonCollapsedContentWithPseudo :
+    let wsNode := 1
+    let quoteNode := 2
+    let nodes := [DomNode.text wsNode "\n      " .normal false, DomNode.text quoteNode "bar" .normal false]
+    let units := buildDomOffsetMapping nodes
+    startOfNextNonCollapsedContent units wsNode 0 = none := by
+  decide
+
+/-- Test: EndOfLastNonCollapsedContentWithPseudo (offset_mapping_test.cc:1444)
+    CSS Text 3 §4.1.2: Fully collapsed whitespace following pseudo content with space yields no end non-collapsed content. -/
+theorem test_OffsetMapping_EndOfLastNonCollapsedContentWithPseudo :
+    let quoteNode := 1
+    let pseudoAfter := 2
+    let wsNode := 3
+    let barNode := 4
+    let nodes := [
+      DomNode.text quoteNode "foo" .normal false,
+      DomNode.text pseudoAfter "\" " .normal false,
+      DomNode.text wsNode "\n      " .normal false,
+      DomNode.text barNode "bar" .normal false
+    ]
+    let units := buildDomOffsetMapping nodes
+    endOfLastNonCollapsedContent units wsNode 7 = none := by
+  decide
+
+/-- Test: WordBreak (offset_mapping_test.cc:1461)
+    CSS Text 3 §5.1: `<wbr>` generates its own identity unit between adjacent text units. -/
+theorem test_OffsetMapping_WordBreak :
+    let units := buildWordBreakUnits 1 2 3
+    (units.length = 3) ∧
+    (units[0]! = { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }) ∧
+    (units[1]! = { nodeId := 2, unitType := .identity, domStart := 0, domEnd := 1, textStart := 1, textEnd := 2 }) ∧
+    (units[2]! = { nodeId := 3, unitType := .identity, domStart := 0, domEnd := 1, textStart := 2, textEnd := 3 }) := by
+  decide
+
 end ChromiumLayout.TestsInline

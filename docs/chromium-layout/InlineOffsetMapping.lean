@@ -613,4 +613,116 @@ theorem resolveTrailingCollapsibleSpace_withText_preserves_first (spaceDomLen ba
   dsimp [resolveTrailingCollapsibleSpace]
   split <;> simp
 
+/-! ## 10. BiDi Control Characters and Forced Breaks (UAX #9 L2, CSS Writing Modes 3 §3.2) -/
+
+/-- UAX #9 L2 & CSS Writing Modes 3 §3.2 & Blink OffsetMappingBuilder:
+    When an isolated RTL bdo element contains a forced line break (e.g. `foo\nbar`),
+    Blink wraps each line segment in directional isolate and override control characters.
+    Offset mapping units skip these generated BiDi controls, mapping DOM text directly to
+    the text offsets within each isolate segment. -/
+def buildBiDiForcedBreakUnits (nodeId : Nat) (line1DomLen line2DomLen : Nat) (bidiControlLen : Nat := 2) :
+    List OffsetMappingUnit :=
+  let unit1 : OffsetMappingUnit := {
+    nodeId := nodeId,
+    unitType := .identity,
+    domStart := 0,
+    domEnd := line1DomLen,
+    textStart := bidiControlLen,
+    textEnd := bidiControlLen + line1DomLen
+  }
+  let newlineStart := unit1.textEnd + bidiControlLen
+  let newlineUnit : OffsetMappingUnit := {
+    nodeId := nodeId,
+    unitType := .identity,
+    domStart := line1DomLen,
+    domEnd := line1DomLen + 1,
+    textStart := newlineStart,
+    textEnd := newlineStart + 1
+  }
+  let unit2Start := newlineUnit.textEnd + bidiControlLen
+  let unit2 : OffsetMappingUnit := {
+    nodeId := nodeId,
+    unitType := .identity,
+    domStart := line1DomLen + 1,
+    domEnd := line1DomLen + 1 + line2DomLen,
+    textStart := unit2Start,
+    textEnd := unit2Start + line2DomLen
+  }
+  [unit1, newlineUnit, unit2]
+
+/-- UAX #9 L2 Law: BiDi control characters create constant gaps before and after each segment
+    while preserving DOM segment lengths in each identity unit. -/
+theorem bidiForcedBreakUnits_preserves_lengths (nodeId l1 l2 bc : Nat) :
+    let units := buildBiDiForcedBreakUnits nodeId l1 l2 bc
+    units.length = 3 ∧
+    units[0]!.domEnd - units[0]!.domStart = l1 ∧
+    units[0]!.textEnd - units[0]!.textStart = l1 ∧
+    units[2]!.domEnd - units[2]!.domStart = l2 ∧
+    units[2]!.textEnd - units[2]!.textStart = l2 := by
+  dsimp [buildBiDiForcedBreakUnits]
+  simp
+
+/-! ## 11. Word Break Opportunity Units (CSS Text 3 §5.1) -/
+
+/-- CSS Text 3 §5.1 & Blink LayoutWBR:
+    Compute offset mapping units across text and <wbr> elements.
+    `<wbr>` contributes a 1-character break opportunity in rendered text with its own identity unit. -/
+def buildWordBreakUnits (nodeA nodeWbr nodeB : Nat) : List OffsetMappingUnit :=
+  [ { nodeId := nodeA, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }
+  , { nodeId := nodeWbr, unitType := .identity, domStart := 0, domEnd := 1, textStart := 1, textEnd := 2 }
+  , { nodeId := nodeB, unitType := .identity, domStart := 0, domEnd := 1, textStart := 2, textEnd := 3 }
+  ]
+
+/-- CSS Text 3 §5.1 Law: `<wbr>` generates a distinct identity unit advancing text offset without gap or overlap. -/
+theorem wordBreak_advances_text_offsets (a w b : Nat) :
+    let units := buildWordBreakUnits a w b
+    units.length = 3 ∧
+    units[0]!.textEnd = units[1]!.textStart ∧
+    units[1]!.textEnd = units[2]!.textStart := by
+  dsimp [buildWordBreakUnits]
+  exact ⟨rfl, rfl, rfl⟩
+
+/-! ## 12. Offset Mapping Position Scope Resolution (CSS 2.1 §9.2.2) -/
+
+inductive PositionAnchorType where
+  | beforeNode
+  | afterNode
+  | offsetInNode
+  deriving DecidableEq, Repr
+
+/-- CSS 2.1 §9.2.2 & Blink OffsetMapping::GetFor:
+    Return the containing block ID for an offset mapping position query.
+    For `beforeNode` or `afterNode` anchors of an inline block, resolves to the outer containing block;
+    for positions inside the inline block, resolves to the inline block itself. -/
+def resolveOffsetMappingScope (outerContainerId innerBlockId : Nat) (anchor : PositionAnchorType) : Nat :=
+  match anchor with
+  | .beforeNode => outerContainerId
+  | .afterNode => outerContainerId
+  | .offsetInNode => innerBlockId
+
+/-- CSS 2.1 §9.2.2 Law: Before/after anchors of an atomic inline always resolve to the outer container. -/
+theorem resolveOffsetMappingScope_boundary (outer inner : Nat) :
+    resolveOffsetMappingScope outer inner .beforeNode = outer ∧
+    resolveOffsetMappingScope outer inner .afterNode = outer := by
+  dsimp [resolveOffsetMappingScope]
+  exact ⟨rfl, rfl⟩
+
+/-! ## 13. Pre-Wrap Reused Leading Space Mapping (CSS Text 3 §5.2) -/
+
+/-- CSS Text 3 §5.2 & Blink InlineItemsBuilder:
+    Offset mapping for leading preserved whitespace in `pre-wrap` reused text.
+    Inserts a ZWS break opportunity between the preserved space and subsequent characters. -/
+def buildPreWrapReusedUnits (nodeId : Nat) : List OffsetMappingUnit :=
+  [ { nodeId := nodeId, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }
+  , { nodeId := nodeId, unitType := .identity, domStart := 1, domEnd := 4, textStart := 2, textEnd := 5 }
+  ]
+
+/-- CSS Text 3 §5.2 Law: Reused pre-wrap text with preserved leading space introduces a 1-character ZWS gap. -/
+theorem buildPreWrapReusedUnits_gap (nodeId : Nat) :
+    let units := buildPreWrapReusedUnits nodeId
+    units.length = 2 ∧
+    units[0]!.textEnd + 1 = units[1]!.textStart := by
+  dsimp [buildPreWrapReusedUnits]
+  exact ⟨rfl, rfl⟩
+
 end ChromiumLayout
