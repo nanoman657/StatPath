@@ -809,28 +809,28 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | shapes/ellipse_shape_test.cc:59 | ZeroRadiiWithMargin | geometry | formalized | `ellipseShape_zeroRadiiWithMargin` | CSS Shapes 1 §3.2: Ellipse shape with 0 base radii but positive shape-margin (5) expands to 10x10 |
 | shapes/ellipse_shape_test.cc:87 | NonZeroRadiiWithMargin | geometry | blocked | - | Blocked: model lacks shape-outside geometry |
 | shapes/ellipse_shape_test.cc:115 | ShapeMarginLogicalBoundingBoxWithFloatValues | geometry | formalized | `ellipseShape_shapeMarginLogicalBoundingBoxWithFloatValues` | CSS Shapes 1 §3.2: Ellipse bounding box in LayoutUnits |
-| exclusions/exclusion_space_test.cc:92 | Empty | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:122 | LineLayoutOpportunityClampsNonDominantSide | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:169 | SingleExclusion | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:232 | TwoExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:273 | SolidEdges | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:325 | OverlappingWithShelf | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:373 | InsertBetweenShelves | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:408 | InitialLetterBasic | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:451 | InitialLetterDirectionRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:92 | Empty | geometry | formalized | `exclusionSpace_empty` | CSS 2.1 §9.5 & CSS Exclusions 1 §3: Empty exclusion space returns single available opportunity |
+| exclusions/exclusion_space_test.cc:122 | LineLayoutOpportunityClampsNonDominantSide | geometry | formalized | `exclusionSpace_lineLayoutOpportunityClampsNonDominantSide` | CSS 2.1 §9.5 & CSS Writing Modes 3 §4: Clamps non-dominant side of line layout opportunity to available space |
+| exclusions/exclusion_space_test.cc:169 | SingleExclusion | geometry | formalized | `exclusionSpace_singleExclusion` | CSS 2.1 §9.5 & CSS Exclusions 1 §3: Layout opportunities surrounding a single float exclusion |
+| exclusions/exclusion_space_test.cc:232 | TwoExclusions | geometry | formalized | `exclusionSpace_twoExclusions` | CSS 2.1 §9.5: Layout opportunities with left and right float exclusions |
+| exclusions/exclusion_space_test.cc:273 | SolidEdges | geometry | formalized | `exclusionSpace_solidEdges` | CSS 2.1 §9.5 & CSS Exclusions 1 §3: Solid edge validation prevents invalid layout opportunities |
+| exclusions/exclusion_space_test.cc:325 | OverlappingWithShelf | geometry | formalized | `exclusionSpace_overlappingWithShelf` | CSS 2.1 §9.5: Shelf bounds overlap checks when adding exclusions |
+| exclusions/exclusion_space_test.cc:373 | InsertBetweenShelves | geometry | formalized | `exclusionSpace_insertBetweenShelves` | CSS 2.1 §9.5: Shelf insertion and edge tracking between existing shelves |
+| exclusions/exclusion_space_test.cc:408 | InitialLetterBasic | geometry | formalized | `exclusionSpace_initialLetterBasic` | CSS Inline 3 §3: Initial letter exclusion placement, opportunities, and clearance offset |
+| exclusions/exclusion_space_test.cc:451 | InitialLetterDirectionRight | geometry | formalized | `exclusionSpace_initialLetterDirectionRight` | CSS Inline 3 §3 & CSS 2.1 §9.5: Opportunities with left float and initial letter box |
 | exclusions/exclusion_space_test.cc:507 | InitialLetterFloatLeft1 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:560 | InitialLetterFloatLeft2 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:615 | InitialLetterFloatLeft2ClearLeft | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:672 | InitialLetterFloatLeftAndRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:560 | InitialLetterFloatLeft2 | geometry | formalized | `exclusionSpace_initialLetterFloatLeft2` | CSS Inline 3 §3 & CSS 2.1 §9.5: Multiple left floats preceding initial letter box |
+| exclusions/exclusion_space_test.cc:615 | InitialLetterFloatLeft2ClearLeft | geometry | formalized | `exclusionSpace_initialLetterFloatLeft2ClearLeft` | CSS Inline 3 §3 & CSS 2.1 §9.5.2: Left clearance with multiple floats and initial letter |
+| exclusions/exclusion_space_test.cc:672 | InitialLetterFloatLeftAndRight | geometry | formalized | `exclusionSpace_initialLetterFloatLeftAndRight` | CSS Inline 3 §3 & CSS 2.1 §9.5: Opportunities with mixed left/right floats and initial letter |
 | exclusions/exclusion_space_test.cc:738 | InitialLetterFloatLeftAfterBreak | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:796 | InitialLetterFloatRight2 | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:857 | ZeroInlineSizeOpportunity | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:877 | NegativeInlineSizeOpportunityLeft | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:907 | NegativeInlineSizeOpportunityRight | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:937 | PreInitialization | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:992 | MergeExclusionSpacesNoPreviousExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:1020 | MergeExclusionSpacesPreviousExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
-| exclusions/exclusion_space_test.cc:1060 | MergeExclusionSpacesNoOutputExclusions | geometry | blocked | - | Blocked: model lacks ExclusionSpace |
+| exclusions/exclusion_space_test.cc:796 | InitialLetterFloatRight2 | geometry | formalized | `exclusionSpace_initialLetterFloatRight2` | CSS Inline 3 §3 & CSS 2.1 §9.5: Multiple right floats and initial letter clearance |
+| exclusions/exclusion_space_test.cc:857 | ZeroInlineSizeOpportunity | geometry | formalized | `exclusionSpace_zeroInlineSizeOpportunity` | CSS 2.1 §9.5: Zero inline size layout opportunity derivation |
+| exclusions/exclusion_space_test.cc:877 | NegativeInlineSizeOpportunityLeft | geometry | formalized | `exclusionSpace_negativeInlineSizeOpportunityLeft` | CSS 2.1 §9.5: Left-floating exclusion exceeding available inline size in LTR and RTL |
+| exclusions/exclusion_space_test.cc:907 | NegativeInlineSizeOpportunityRight | geometry | formalized | `exclusionSpace_negativeInlineSizeOpportunityRight` | CSS 2.1 §9.5: Right-floating exclusion exceeding available inline size in LTR and RTL |
+| exclusions/exclusion_space_test.cc:937 | PreInitialization | geometry | formalized | `exclusionSpace_preInitialization` | CSS 2.1 §9.5: Pre-initialization and equality of exclusion spaces |
+| exclusions/exclusion_space_test.cc:992 | MergeExclusionSpacesNoPreviousExclusions | geometry | formalized | `exclusionSpace_mergeExclusionSpacesNoPreviousExclusions` | CSS 2.1 §9.5: Merging exclusion spaces with offset delta and empty previous input |
+| exclusions/exclusion_space_test.cc:1020 | MergeExclusionSpacesPreviousExclusions | geometry | formalized | `exclusionSpace_mergeExclusionSpacesPreviousExclusions` | CSS 2.1 §9.5: Merging exclusion spaces with prior input exclusions |
+| exclusions/exclusion_space_test.cc:1060 | MergeExclusionSpacesNoOutputExclusions | geometry | formalized | `exclusionSpace_mergeExclusionSpacesNoOutputExclusions` | CSS 2.1 §9.5: Merging exclusion spaces with no added output exclusions |
 | exclusions/exclusion_space_test.cc:1083 | CopyOnWriteNoAllocationOnCopy | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | exclusions/exclusion_space_test.cc:1162 | CopyOnWriteDisabledFallback | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | layout_quote_test.cc:40 | Locale | behaviour | formalized | `layoutQuote_locale` | `<q>` element delimiters use language from parent, while quote text uses element language |
