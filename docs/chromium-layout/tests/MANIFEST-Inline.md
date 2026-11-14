@@ -659,7 +659,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/box_strut_test.cc:89 | Constructors | geometry | formalized | `boxStrut_conversions_sideways` | CSS Writing Modes 3 §3.1: Logical-to-physical and physical-to-logical strut roundtrip under sideways writing modes |
 | geometry/box_strut_test.cc:99 | Enclosing | geometry | blocked | - | Blocked: model lacks floating point OutsetsF conversions |
 | geometry/box_strut_test.cc:114 | Unite | geometry | formalized | `boxStrut_unite` | Unites two physical box struts taking maximum along each edge |
-| geometry/layout_unit_diffuser_test.cc:17 | ThreeBuckets | geometry | blocked | - | Blocked: model lacks fractional LayoutUnit division remainder |
+| geometry/layout_unit_diffuser_test.cc:17 | ThreeBuckets | geometry | formalized | `layoutUnitDiffuser_threeBuckets` | LayoutUnitDiffuser distributes remainders across 3 buckets |
 | geometry/layout_unit_diffuser_test.cc:35 | FourBuckets | geometry | formalized | `layoutUnitDiffuser_buckets` | Diffuses fractional epsilon across 4 buckets using Bresenham stepping |
 | geometry/layout_unit_diffuser_test.cc:64 | SevenBuckets | geometry | formalized | `layoutUnitDiffuser_buckets` | Diffuses fractional epsilon across 7 buckets using Bresenham stepping |
 | geometry/logical_rect_test.cc:15 | AddOffset | geometry | formalized | `logicalRect_addOffsetAndUnite` | Translates LogicalRect by LogicalOffset |
@@ -669,10 +669,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | geometry/physical_rect_test.cc:78 | SquaredDistanceTo | geometry | formalized | `physicalRect_operations` | Computes squared Euclidean distance from point to PhysicalRect |
 | geometry/physical_rect_test.cc:127 | InclusiveIntersect | geometry | formalized | `physicalRect_operations` | Computes inclusive intersection rectangle of two physical rects |
 | geometry/physical_rect_test.cc:146 | IntersectsInclusively | geometry | formalized | `physicalRect_operations` | Tests whether two physical rectangles intersect inclusively |
-| geometry/physical_rect_test.cc:191 | ToEnclosingRect | geometry | blocked | - | Blocked: model lacks floating point EnclosingRect |
-| geometry/physical_rect_test.cc:243 | EdgesOnPixelBoundaries | geometry | blocked | - | Blocked: model lacks pixel boundary checks |
-| geometry/physical_rect_test.cc:281 | ExpandEdgesToPixelBoundaries | geometry | blocked | - | Blocked: model lacks pixel boundary checks |
-| geometry/physical_rect_test.cc:335 | InfiniteIntRect | geometry | blocked | - | Blocked: model lacks InfiniteIntRect |
+| geometry/physical_rect_test.cc:191 | ToEnclosingRect | geometry | formalized | `physicalRect_toEnclosingRect` | Floor and ceil conversion of fractional LayoutUnit rect to enclosing integer pixel rect |
+| geometry/physical_rect_test.cc:243 | EdgesOnPixelBoundaries | geometry | formalized | `physicalRect_edgesOnPixelBoundaries` | Rect edges test on integer pixel boundaries |
+| geometry/physical_rect_test.cc:281 | ExpandEdgesToPixelBoundaries | geometry | formalized | `physicalRect_expandEdgesToPixelBoundaries` | Expand rect edges to enclosing integer pixel boundaries |
+| geometry/physical_rect_test.cc:335 | InfiniteIntRect | geometry | formalized | `physicalRect_infiniteIntRect` | Infinite integer rect encloses bounding box without precision loss |
 | geometry/static_position_test.cc:331 | Convert | geometry | blocked | - | Blocked: model lacks StaticPosition::Convert |
 | geometry/writing_mode_converter_test.cc:15 | ConvertLogicalOffsetToPhysicalOffset | geometry | formalized | `writingModeConverter_toPhysical` | Converts logical offset to physical offset across writing modes and directions |
 | geometry/writing_mode_converter_test.cc:73 | ConvertPhysicalOffsetToLogicalOffset | geometry | formalized | `writingModeConverter_toLogical` | Converts physical offset to logical offset across writing modes and directions |

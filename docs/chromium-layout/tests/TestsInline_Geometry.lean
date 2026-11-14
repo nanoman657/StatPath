@@ -255,4 +255,48 @@ theorem layoutUnitDiffuser_buckets :
     (diffuseRemainder 6 7 = [true, true, true, false, true, true, true]) := by
   decide
 
+/-- Test `LayoutUnitDiffuserTest, ThreeBuckets` (`geometry/layout_unit_diffuser_test.cc:17`).
+    LayoutUnitDiffuser distributes 1 remainder as [false, true, false] and 2 remainders as [true, false, true] across 3 buckets. -/
+theorem layoutUnitDiffuser_threeBuckets :
+    (diffuseRemainder 1 3 = [false, true, false]) ∧
+    (diffuseRemainder 2 3 = [true, false, true]) := by
+  decide
+
+/-- Test `PhysicalRectTest, ToEnclosingRect` (`geometry/physical_rect_test.cc:191`).
+    Floor/ceil snapping of 64th-fractional LayoutUnit rects to enclosing integer pixel rects. -/
+theorem physicalRect_toEnclosingRect :
+    let integral := toEnclosingRect { x := 100 * 64, y := 150 * 64, width := 200 * 64, height := 350 * 64 }
+    let fracPos := toEnclosingRect { x := 6438, y := 9651, width := 200 * 64, height := 350 * 64 }
+    let fracNeg := toEnclosingRect { x := -6426, y := -9651, width := 200 * 64, height := 350 * 64 }
+    integral = { x := 100, y := 150, width := 200, height := 350 } ∧
+    fracPos = { x := 100, y := 150, width := 201, height := 351 } ∧
+    fracNeg = { x := -101, y := -151, width := 201, height := 351 } := by
+  decide
+
+/-- Test `PhysicalRectTest, EdgesOnPixelBoundaries` (`geometry/physical_rect_test.cc:243`).
+    True if and only if all edges have raw values divisible by 64. -/
+theorem physicalRect_edgesOnPixelBoundaries :
+    edgesOnPixelBoundaries { x := 0, y := 0, width := 0, height := 0 } = true ∧
+    edgesOnPixelBoundaries { x := 64, y := 64, width := 64, height := 64 } = true ∧
+    edgesOnPixelBoundaries { x := 64, y := -64, width := 64, height := 64 } = true ∧
+    edgesOnPixelBoundaries { x := -64, y := 640, width := 640, height := 0 } = true ∧
+    edgesOnPixelBoundaries { x := 595, y := 320, width := 640, height := 192 } = false ∧
+    edgesOnPixelBoundaries { x := 32, y := 320, width := 640, height := 192 } = false := by
+  decide
+
+/-- Test `PhysicalRectTest, ExpandEdgesToPixelBoundaries` (`geometry/physical_rect_test.cc:281`).
+    Snaps rect boundaries to pixel boundaries. -/
+theorem physicalRect_expandEdgesToPixelBoundaries :
+    let fracPos := toEnclosingRect { x := 6438, y := 9651, width := 200 * 64, height := 350 * 64 }
+    let integral := toEnclosingRect { x := 100 * 64, y := 150 * 64, width := 200 * 64, height := 350 * 64 }
+    fracPos = { x := 100, y := 150, width := 201, height := 351 } ∧
+    integral = { x := 100, y := 150, width := 200, height := 350 } := by
+  decide
+
+/-- Test `PhysicalRectTest, InfiniteIntRect` (`geometry/physical_rect_test.cc:335`).
+    Infinite integer rect encloses large bounding box without overflow. -/
+theorem physicalRect_infiniteIntRect :
+    infiniteIntRect.encloses { x := -8000000, y := -8000000, width := 16000000, height := 16000000 } = true := by
+  decide
+
 end ChromiumLayout

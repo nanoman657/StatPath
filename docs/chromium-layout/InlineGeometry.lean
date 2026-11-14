@@ -408,4 +408,77 @@ def diffuseRemainderAux (dx dy : Nat) : Nat → Nat → Nat → List Bool
 def diffuseRemainder (remainder : Nat) (buckets : Nat) : List Bool :=
   diffuseRemainderAux (remainder * 2) (buckets * 2) buckets 0 buckets
 
+/-- General Law: Helper produces output of length equal to count. -/
+theorem diffuseRemainderAux_length (dx dy count x y : Nat) :
+    (diffuseRemainderAux dx dy count x y).length = count := by
+  induction count generalizing x y with
+  | zero => rfl
+  | succ n ih =>
+    dsimp [diffuseRemainderAux]
+    split <;> simp [ih]
+
+/-- General Law: Diffuser length equals bucket count. -/
+theorem diffuseRemainder_length (rem buckets : Nat) :
+    (diffuseRemainder rem buckets).length = buckets := by
+  dsimp [diffuseRemainder]
+  apply diffuseRemainderAux_length
+
+/-! ## 8. Fixed-Point Pixel Snapping and Enclosing (`geometry/physical_rect.h`) -/
+
+structure LayoutUnitRect where
+  x : Int := 0
+  y : Int := 0
+  width : Int := 0
+  height : Int := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Check if a 64th-fractional LayoutUnit raw value is on an integer pixel boundary (`raw % 64 == 0`). -/
+def isPixelBoundary (raw : Int) : Bool :=
+  raw % 64 == 0
+
+/-- Check if all edges of a LayoutUnitRect are on integer pixel boundaries (`PhysicalRect::EdgesOnPixelBoundaries`). -/
+def edgesOnPixelBoundaries (r : LayoutUnitRect) : Bool :=
+  isPixelBoundary r.x && isPixelBoundary r.y && isPixelBoundary r.width && isPixelBoundary r.height
+
+/-- Compute floor in pixel units of a 64th-fractional LayoutUnit raw value (`value_ >> 6`). -/
+def floorPixel (raw : Int) : Int :=
+  raw >>> 6
+
+/-- Compute ceil in pixel units of a 64th-fractional LayoutUnit raw value (`(value_ + 63) >> 6`). -/
+def ceilPixel (raw : Int) : Int :=
+  (raw + 63) >>> 6
+
+/-- Compute enclosing integer pixel rectangle (`ToEnclosingRect`). -/
+def toEnclosingRect (r : LayoutUnitRect) : LayoutUnitRect :=
+  let left := floorPixel r.x
+  let top := floorPixel r.y
+  let right := ceilPixel (r.x + r.width)
+  let bottom := ceilPixel (r.y + r.height)
+  { x := left, y := top, width := right - left, height := bottom - top }
+
+/-- Expand edges to integer pixel boundaries in LayoutUnit scale (`ExpandEdgesToPixelBoundaries`). -/
+def expandEdgesToPixelBoundaries (r : LayoutUnitRect) : LayoutUnitRect :=
+  toEnclosingRect r
+
+/-- Max-bounded integer rectangle (`InfiniteIntRect`). -/
+def infiniteIntRect : LayoutUnitRect :=
+  { x := -10000000, y := -10000000, width := 20000000, height := 20000000 }
+
+/-- Check if a rectangle encloses another rectangle. -/
+def LayoutUnitRect.encloses (r1 r2 : LayoutUnitRect) : Bool :=
+  r1.x ≤ r2.x && r1.y ≤ r2.y &&
+  r1.x + r1.width ≥ r2.x + r2.width &&
+  r1.y + r1.height ≥ r2.y + r2.height
+
+/-- General Law: Zero LayoutUnit raw has floor 0 and ceil 0. -/
+theorem pixel_zero :
+    floorPixel 0 = 0 ∧ ceilPixel 0 = 0 := by
+  dsimp [floorPixel, ceilPixel]
+  decide
+
+/-- General Law: Infinite integer rectangle encloses itself. -/
+theorem infiniteIntRect_encloses_self :
+    infiniteIntRect.encloses infiniteIntRect = true := by
+  decide
+
 end ChromiumLayout
