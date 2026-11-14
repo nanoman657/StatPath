@@ -305,4 +305,61 @@ theorem fieldset_empty_min_max_eq (bp : Nat) :
     computeFieldsetMinMaxSizes inp = { minSize := bp, maxSize := bp } :=
   rfl
 
+/-- Fragmentation break avoidance specification (CSS Fragmentation 3 §3). -/
+inductive BreakAvoidance where
+  | auto
+  | avoid
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Resulting box fragment of a fieldset across fragmentainers (CSS Fragmentation 3 §2.1, HTML 5.2 §4.10.16). -/
+structure FieldsetFragment where
+  size : PhysicalSize
+  hasBreakToken : Bool
+  deriving Repr, DecidableEq, Inhabited
+
+/-- Determine whether a fieldset fragment generates a break token (CSS Fragmentation 3 §2.1). -/
+def fieldsetFragmentHasBreakToken (remainingHeight : Nat) (availableSpace : Nat) : Bool :=
+  if availableSpace = 0 then remainingHeight > 0
+  else remainingHeight > availableSpace
+
+/-- Compute fragmentation step for a fieldset given available fragmentainer space and remaining content (CSS Fragmentation 3 §2.1, HTML 5.2 §4.10.16). -/
+def layoutFieldsetFragment (totalWidth : Nat) (remainingHeight : Nat) (availableSpace : Nat) : FieldsetFragment :=
+  let h := if availableSpace = 0 then 0 else Nat.min remainingHeight availableSpace
+  { size := { width := totalWidth, height := h }
+  , hasBreakToken := fieldsetFragmentHasBreakToken remainingHeight availableSpace }
+
+/-- Step layout for a fieldset with a monolithic child (e.g. legend) or break-inside: avoid (CSS Fragmentation 3 §4.1).
+    If monolithic child height exceeds availableSpace, child cannot break inside and consumes its full height in fragment 1. -/
+def layoutFieldsetMonolithicFragment (totalWidth : Nat) (childHeight : Nat) (remainingContent : Nat) (availableSpace : Nat) : FieldsetFragment :=
+  if childHeight > availableSpace then
+    { size := { width := totalWidth, height := childHeight }, hasBreakToken := remainingContent > 0 }
+  else
+    layoutFieldsetFragment totalWidth (childHeight + remainingContent) availableSpace
+
+/-- General Law: Fragment width matches total specified width for all inputs (CSS Fragmentation 3 §2.1). -/
+theorem fieldset_fragment_size_width (w h s : Nat) :
+    (layoutFieldsetFragment w h s).size.width = w := by
+  rfl
+
+/-- General Law: Fragment height is 0 when available space is 0 (CSS Fragmentation 3 §2.1). -/
+theorem fieldset_fragment_zero_space (w h : Nat) :
+    (layoutFieldsetFragment w h 0).size.height = 0 := by
+  rfl
+
+/-- General Law: When remaining height fits in available space, no break token is generated (CSS Fragmentation 3 §2.1). -/
+theorem fieldset_fragment_no_break_when_fits (w h s : Nat) (h_pos : s > 0) (h_fits : h ≤ s) :
+    (layoutFieldsetFragment w h s).hasBreakToken = false := by
+  dsimp [layoutFieldsetFragment, fieldsetFragmentHasBreakToken]
+  split
+  · rename_i hs; omega
+  · exact decide_eq_false (by omega)
+
+/-- General Law: When remaining height strictly exceeds available space, a break token is generated (CSS Fragmentation 3 §2.1). -/
+theorem fieldset_fragment_breaks_when_exceeds (w h s : Nat) (h_pos : s > 0) (h_gt : h > s) :
+    (layoutFieldsetFragment w h s).hasBreakToken = true := by
+  dsimp [layoutFieldsetFragment, fieldsetFragmentHasBreakToken]
+  split
+  · rename_i hs; omega
+  · exact decide_eq_true (by omega)
+
 end ChromiumLayout

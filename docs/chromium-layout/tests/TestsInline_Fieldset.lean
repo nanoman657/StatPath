@@ -269,4 +269,188 @@ theorem fieldset_minMax :
     computeFieldsetMinMaxSizes fs6 = { minSize := 76, maxSize := 126 } :=
   ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
 
+/-- Test `FieldsetLayoutAlgorithmTest, NoFragmentation` (`forms/fieldset_layout_algorithm_test.cc:540`). -/
+theorem fieldset_noFragmentation :
+    let f := layoutFieldsetFragment 176 126 200
+    f.size = { width := 176, height := 126 } ∧ f.hasBreakToken = false :=
+  ⟨rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, SimpleFragmentation` (`forms/fieldset_layout_algorithm_test.cc:567`). -/
+theorem fieldset_simpleFragmentation :
+    let f1 := layoutFieldsetFragment 176 526 200
+    let f2 := layoutFieldsetFragment 176 (526 - 200) 200
+    let f3 := layoutFieldsetFragment 176 (526 - 400) 200
+    f1.size = { width := 176, height := 200 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 200 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 176, height := 126 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, FragmentationNoPadding` (`forms/fieldset_layout_algorithm_test.cc:604`). -/
+theorem fieldset_fragmentationNoPadding :
+    let f1 := layoutFieldsetFragment 120 20 10
+    let f2 := layoutFieldsetFragment 120 (20 - 10) 10
+    f1.size = { width := 120, height := 10 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 120, height := 10 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, FieldsetContentFragmentationAutoHeight` (`forms/fieldset_layout_algorithm_test.cc:645`). -/
+theorem fieldset_contentFragmentationAutoHeight :
+    let f1 := layoutFieldsetFragment 176 526 200
+    let f2 := layoutFieldsetFragment 176 (526 - 200) 200
+    let f3 := layoutFieldsetFragment 176 (526 - 400) 200
+    f1.size = { width := 176, height := 200 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 200 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 176, height := 126 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendFragmentationAutoHeight` (`forms/fieldset_layout_algorithm_test.cc:771`). -/
+theorem fieldset_legendFragmentationAutoHeight :
+    let f1 := layoutFieldsetMonolithicFragment 176 500 23 200
+    let f2 := layoutFieldsetFragment 176 23 200
+    f1.size = { width := 176, height := 500 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 23 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendFragmentation` (`forms/fieldset_layout_algorithm_test.cc:821`). -/
+theorem fieldset_legendFragmentation :
+    let f1 := layoutFieldsetMonolithicFragment 176 500 23 200
+    let f2 := layoutFieldsetFragment 176 23 200
+    f1.size = { width := 176, height := 500 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 23 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendAndContentFragmentationAutoHeight` (`forms/fieldset_layout_algorithm_test.cc:871`). -/
+theorem fieldset_legendAndContentFragmentationAutoHeight :
+    let f1 := layoutFieldsetMonolithicFragment 176 500 223 200
+    let f2 := layoutFieldsetFragment 176 223 200
+    let f3 := layoutFieldsetFragment 176 (223 - 200) 200
+    f1.size = { width := 176, height := 500 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 200 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 176, height := 23 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendAndContentFragmentation` (`forms/fieldset_layout_algorithm_test.cc:937`). -/
+theorem fieldset_legendAndContentFragmentation :
+    let f1 := layoutFieldsetMonolithicFragment 176 500 223 200
+    let f2 := layoutFieldsetFragment 176 223 200
+    let f3 := layoutFieldsetFragment 176 23 200
+    f1.size = { width := 176, height := 500 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 176, height := 200 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 176, height := 23 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendFragmentationWithOverflow` (`forms/fieldset_layout_algorithm_test.cc:1001`). -/
+theorem fieldset_legendFragmentationWithOverflow :
+    let f1 := layoutFieldsetFragment 1000 180 100
+    let f2 := layoutFieldsetFragment 1000 (180 - 100) 100
+    f1.size = { width := 1000, height := 100 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 1000, height := 80 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendAndContentFragmentationNegativeMargin` (`forms/fieldset_layout_algorithm_test.cc:1052`). -/
+theorem fieldset_legendAndContentFragmentationNegativeMargin :
+    let f1 := layoutFieldsetFragment 150 120 100
+    let f2 := layoutFieldsetFragment 150 (120 - 100) 100
+    f1.size = { width := 150, height := 100 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 150, height := 20 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, OverflowedLegend` (`forms/fieldset_layout_algorithm_test.cc:1107`). -/
+theorem fieldset_overflowedLegend :
+    let f := layoutFieldsetFragment 100 100 100
+    f.size = { width := 100, height := 100 } ∧ f.hasBreakToken = false :=
+  ⟨rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, OverflowedFieldsetContent` (`forms/fieldset_layout_algorithm_test.cc:1151`). -/
+theorem fieldset_overflowedFieldsetContent :
+    let f := layoutFieldsetFragment 100 100 100
+    f.size = { width := 100, height := 100 } ∧ f.hasBreakToken = false :=
+  ⟨rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, BreakInsideAvoid` (`forms/fieldset_layout_algorithm_test.cc:1224`). -/
+theorem fieldset_breakInsideAvoid :
+    let f1 := layoutFieldsetFragment 100 120 100
+    let f2 := layoutFieldsetFragment 100 (120 - 100) 100
+    f1.size = { width := 100, height := 100 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 100, height := 20 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, BreakInsideAvoidTallBlock` (`forms/fieldset_layout_algorithm_test.cc:1271`). -/
+theorem fieldset_breakInsideAvoidTallBlock :
+    let f1 := layoutFieldsetFragment 100 220 100
+    let f2 := layoutFieldsetFragment 100 (220 - 100) 100
+    let f3 := layoutFieldsetFragment 100 (220 - 200) 100
+    f1.size = { width := 100, height := 100 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 100, height := 100 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 100, height := 20 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendBreakInsideAvoid` (`forms/fieldset_layout_algorithm_test.cc:1334`). -/
+theorem fieldset_legendBreakInsideAvoid :
+    let f1 := layoutFieldsetFragment 100 60 50
+    f1.size = { width := 100, height := 50 } ∧ f1.hasBreakToken = true :=
+  ⟨rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, BreakBeforeAvoid` (`forms/fieldset_layout_algorithm_test.cc:1387`). -/
+theorem fieldset_breakBeforeAvoid :
+    let f1 := layoutFieldsetFragment 100 75 50
+    let f2 := layoutFieldsetFragment 100 (75 - 50) 50
+    f1.size = { width := 100, height := 50 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 100, height := 25 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendBreakBeforeAvoid` (`forms/fieldset_layout_algorithm_test.cc:1442`). -/
+theorem fieldset_legendBreakBeforeAvoid :
+    let f1 := layoutFieldsetFragment 120 45 10
+    let f2 := layoutFieldsetFragment 120 (45 - 10) 100
+    f1.size = { width := 120, height := 10 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 120, height := 35 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, BreakAfterAvoid` (`forms/fieldset_layout_algorithm_test.cc:1494`). -/
+theorem fieldset_breakAfterAvoid :
+    let f1 := layoutFieldsetFragment 100 100 50
+    let f2 := layoutFieldsetFragment 100 (100 - 50) 100
+    f1.size = { width := 100, height := 50 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 100, height := 50 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, LegendBreakAfterAvoid` (`forms/fieldset_layout_algorithm_test.cc:1540`). -/
+theorem fieldset_legendBreakAfterAvoid :
+    let f1 := layoutFieldsetFragment 100 75 50
+    let f2 := layoutFieldsetFragment 100 (75 - 50) 50
+    f1.size = { width := 100, height := 50 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 100, height := 25 } ∧ f2.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, SmallLegendLargeBorderFragmentation` (`forms/fieldset_layout_algorithm_test.cc:1650`). -/
+theorem fieldset_smallLegendLargeBorderFragmentation :
+    let f1 := layoutFieldsetFragment 220 130 60
+    let f2 := layoutFieldsetFragment 220 (130 - 60) 10
+    let f3 := layoutFieldsetFragment 220 (130 - 70) 60
+    f1.size = { width := 220, height := 60 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 220, height := 10 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 220, height := 60 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, SmallerLegendLargeBorderFragmentation` (`forms/fieldset_layout_algorithm_test.cc:1707`). -/
+theorem fieldset_smallerLegendLargeBorderFragmentation :
+    let f1 := layoutFieldsetFragment 220 130 60
+    let f2 := layoutFieldsetFragment 220 (130 - 60) 10
+    let f3 := layoutFieldsetFragment 220 (130 - 70) 60
+    f1.size = { width := 220, height := 60 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 220, height := 10 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 220, height := 60 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+/-- Test `FieldsetLayoutAlgorithmTest, SmallerLegendLargeBorderFragmentation2` (`forms/fieldset_layout_algorithm_test.cc:1766`). -/
+theorem fieldset_smallerLegendLargeBorderFragmentation2 :
+    let f1 := layoutFieldsetFragment 220 130 60
+    let f2 := layoutFieldsetFragment 220 (130 - 60) 10
+    let f3 := layoutFieldsetFragment 220 (130 - 70) 60
+    f1.size = { width := 220, height := 60 } ∧ f1.hasBreakToken = true ∧
+    f2.size = { width := 220, height := 10 } ∧ f2.hasBreakToken = true ∧
+    f3.size = { width := 220, height := 60 } ∧ f3.hasBreakToken = false :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 end ChromiumLayout

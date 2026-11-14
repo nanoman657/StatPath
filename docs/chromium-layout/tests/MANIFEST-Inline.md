@@ -761,30 +761,30 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | forms/fieldset_layout_algorithm_test.cc:404 | LegendPercentHeightQuirks | geometry | formalized | `fieldset_legendPercentHeightQuirks` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Legend percent height quirks mode |
 | forms/fieldset_layout_algorithm_test.cc:433 | FieldsetPaddingWithLegend | geometry | formalized | `fieldset_fieldsetPaddingWithLegend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset padding delegation with tall legend |
 | forms/fieldset_layout_algorithm_test.cc:472 | MinMax | geometry | formalized | `fieldset_minMax` | HTML 5.2 §4.10.16 & CSS Sizing 3 §5: Fieldset min/max content sizes with floats and legend |
-| forms/fieldset_layout_algorithm_test.cc:540 | NoFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:567 | SimpleFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:604 | FragmentationNoPadding | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:645 | FieldsetContentFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:540 | NoFragmentation | geometry | formalized | `fieldset_noFragmentation` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset that fits in available space produces single fragment with no break token |
+| forms/fieldset_layout_algorithm_test.cc:567 | SimpleFragmentation | geometry | formalized | `fieldset_simpleFragmentation` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset exceeding available space fragments across fragmentainers |
+| forms/fieldset_layout_algorithm_test.cc:604 | FragmentationNoPadding | geometry | formalized | `fieldset_fragmentationNoPadding` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset with zero padding fragments when reaching fragmentation line |
+| forms/fieldset_layout_algorithm_test.cc:645 | FieldsetContentFragmentationAutoHeight | geometry | formalized | `fieldset_contentFragmentationAutoHeight` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset auto-height fragments across fragmentainers when child content overflows |
 | forms/fieldset_layout_algorithm_test.cc:708 | FieldsetContentFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:771 | LegendFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:821 | LegendFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:871 | LegendAndContentFragmentationAutoHeight | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:937 | LegendAndContentFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1001 | LegendFragmentationWithOverflow | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1052 | LegendAndContentFragmentationNegativeMargin | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1107 | OverflowedLegend | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1151 | OverflowedFieldsetContent | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1224 | BreakInsideAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1271 | BreakInsideAvoidTallBlock | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1334 | LegendBreakInsideAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1387 | BreakBeforeAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1442 | LegendBreakBeforeAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1494 | BreakAfterAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1540 | LegendBreakAfterAvoid | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:771 | LegendFragmentationAutoHeight | geometry | formalized | `fieldset_legendFragmentationAutoHeight` | CSS Fragmentation 3 §4.1: Monolithic legend element is not fragmented across fragmentainers |
+| forms/fieldset_layout_algorithm_test.cc:821 | LegendFragmentation | geometry | formalized | `fieldset_legendFragmentation` | CSS Fragmentation 3 §4.1: Fieldset used height extends to encompass monolithic legend |
+| forms/fieldset_layout_algorithm_test.cc:871 | LegendAndContentFragmentationAutoHeight | geometry | formalized | `fieldset_legendAndContentFragmentationAutoHeight` | CSS Fragmentation 3 §2, §4.1: Monolithic legend precedes fragmented fieldset content |
+| forms/fieldset_layout_algorithm_test.cc:937 | LegendAndContentFragmentation | geometry | formalized | `fieldset_legendAndContentFragmentation` | CSS Fragmentation 3 §2, §4.1: Legend occupies first fragmentainer and content breaks across remaining |
+| forms/fieldset_layout_algorithm_test.cc:1001 | LegendFragmentationWithOverflow | geometry | formalized | `fieldset_legendFragmentationWithOverflow` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset fragmentation with overflowing legend child content |
+| forms/fieldset_layout_algorithm_test.cc:1052 | LegendAndContentFragmentationNegativeMargin | geometry | formalized | `fieldset_legendAndContentFragmentationNegativeMargin` | CSS Fragmentation 3 §2, CSS 2.1 §10: Fieldset content with negative margin block-start across break |
+| forms/fieldset_layout_algorithm_test.cc:1107 | OverflowedLegend | geometry | formalized | `fieldset_overflowedLegend` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset with overflowed legend within single fragmentainer |
+| forms/fieldset_layout_algorithm_test.cc:1151 | OverflowedFieldsetContent | geometry | formalized | `fieldset_overflowedFieldsetContent` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset content overflow does not break when within budget |
+| forms/fieldset_layout_algorithm_test.cc:1224 | BreakInsideAvoid | geometry | formalized | `fieldset_breakInsideAvoid` | CSS Fragmentation 3 §3.1: Child with break-inside: avoid shifts to subsequent fragmentainer |
+| forms/fieldset_layout_algorithm_test.cc:1271 | BreakInsideAvoidTallBlock | geometry | formalized | `fieldset_breakInsideAvoidTallBlock` | CSS Fragmentation 3 §3.1: Break-inside: avoid block too tall to fit in fragmentainer breaks unavoidable |
+| forms/fieldset_layout_algorithm_test.cc:1334 | LegendBreakInsideAvoid | geometry | formalized | `fieldset_legendBreakInsideAvoid` | CSS Fragmentation 3 §3.1: Legend with break-inside: avoid pushes fieldset across break boundary |
+| forms/fieldset_layout_algorithm_test.cc:1387 | BreakBeforeAvoid | geometry | formalized | `fieldset_breakBeforeAvoid` | CSS Fragmentation 3 §3.2: Child with break-before: avoid prevents fragmentation before it |
+| forms/fieldset_layout_algorithm_test.cc:1442 | LegendBreakBeforeAvoid | geometry | formalized | `fieldset_legendBreakBeforeAvoid` | CSS Fragmentation 3 §3.2: Legend with break-before: avoid pushes fieldset to next fragmentainer |
+| forms/fieldset_layout_algorithm_test.cc:1494 | BreakAfterAvoid | geometry | formalized | `fieldset_breakAfterAvoid` | CSS Fragmentation 3 §3.2: Child with break-after: avoid prevents breaking directly after it |
+| forms/fieldset_layout_algorithm_test.cc:1540 | LegendBreakAfterAvoid | geometry | formalized | `fieldset_legendBreakAfterAvoid` | CSS Fragmentation 3 §3.2: Legend with break-after: avoid keeps subsequent content in same fragment |
 | forms/fieldset_layout_algorithm_test.cc:1594 | MarginBottomPastEndOfFragmentainer | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1650 | SmallLegendLargeBorderFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1707 | SmallerLegendLargeBorderFragmentation | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/fieldset_layout_algorithm_test.cc:1766 | SmallerLegendLargeBorderFragmentation2 | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
+| forms/fieldset_layout_algorithm_test.cc:1650 | SmallLegendLargeBorderFragmentation | geometry | formalized | `fieldset_smallLegendLargeBorderFragmentation` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Large border fieldset with legend inside top border fragments correctly |
+| forms/fieldset_layout_algorithm_test.cc:1707 | SmallerLegendLargeBorderFragmentation | geometry | formalized | `fieldset_smallerLegendLargeBorderFragmentation` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Small legend fitting inside top border fragments across border-box |
+| forms/fieldset_layout_algorithm_test.cc:1766 | SmallerLegendLargeBorderFragmentation2 | geometry | formalized | `fieldset_smallerLegendLargeBorderFragmentation2` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset with large border and bordered small legend fragments |
 | forms/fieldset_layout_algorithm_test.cc:1818 | SmallerLegendLargeBorderWithBreak | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
 | forms/layout_fieldset_test.cc:14 | AddChildWhitespaceCrash | internal | internal | - | Crash regression test |
 | forms/layout_fieldset_test.cc:31 | AddChildAnonymousInlineCrash | internal | internal | - | Crash regression test |
