@@ -660,7 +660,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:2496 | LayoutBoxBackgroundPaintLocationTest.BorderImage | behaviour | blocked | needs LayoutBox background paint location resolution |
 | layout_box_test.cc:2509 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollEnabledForSubscroll | behaviour | blocked | needs LayoutBox background paint location resolution |
 | layout_box_test.cc:2560 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollSupportedForLayoutView | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_model_object_test.cc:48 | LayoutBoxModelObjectTest.LocalCaretRectForEmptyElementVertical | behaviour | blocked | model lacks caret rect geometry for vertical writing modes |
+| layout_box_model_object_test.cc:48 | LayoutBoxModelObjectTest.LocalCaretRectForEmptyElementVertical | behaviour | formalized | `TestsBlock.LocalCaretRectForEmptyElementVertical_vectors`, `BlockWritingMode.vertical_lr_bar_x` |
 | layout_box_model_object_test.cc:143 | LayoutBoxModelObjectTest.StickyPositionConstraints | behaviour | formalized | `TestsBlock.StickyPositionConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:184 | LayoutBoxModelObjectTest.StickyPositionVerticalRLConstraints | behaviour | formalized | `TestsBlock.StickyPositionVerticalRLConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:225 | LayoutBoxModelObjectTest.StickyPositionInlineConstraints | behaviour | formalized | `TestsBlock.StickyPositionInlineConstraints_vectors`, `BlockSticky.cb_interval_top_monotone` |

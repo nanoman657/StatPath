@@ -217,5 +217,78 @@ theorem logical_rect_in_container_vertical_rl (m : Phys) (w h : Nat) :
     (logicalRectInContainer .verticalRl m w h).2.1 = m.right := by
   exact ⟨rfl, rfl⟩
 
+/-! ## Vertical Caret Rect Geometry (CSS Writing Modes Level 3 §6.4, §3.1) -/
+
+/-- Text caret shape (`CaretShape::kBar`, `kBlock`, `kUnderscore`).
+    CSS Writing Modes Level 3 §3.1. -/
+inductive CaretShape where
+  | bar
+  | block
+  | underscore
+  deriving DecidableEq, Repr
+
+/-- Caret dimensions (width, height) for vertical writing modes.
+    CSS Writing Modes Level 3 §3.1, §6.4. -/
+def caretDimensions (shape : CaretShape) (fontHeight fontWidth caretWidth : Nat) : Nat × Nat :=
+  match shape with
+  | .bar => (fontHeight, caretWidth)
+  | .block => (fontHeight, fontWidth)
+  | .underscore => (caretWidth, fontWidth)
+
+/-- 2D Physical caret rect `(x, y, w, h)` for an empty element in vertical writing modes.
+    CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings, §3.1. -/
+def localCaretRectVertical (wm : WritingMode) (isInline : Bool) (boxWidth : Nat)
+    (padding : Phys) (fontHeight fontWidth caretWidth : Nat) (shape : CaretShape) :
+    Int × Int × Nat × Nat :=
+  let (w, h) := caretDimensions shape fontHeight fontWidth caretWidth
+  let y : Int := if isInline then (padding.top : Int) - (caretWidth : Int) else (padding.top : Int)
+  let x : Int :=
+    if isInline then
+      match wm with
+      | .verticalRl => if shape == .underscore then - (caretWidth : Int) else 0
+      | .verticalLr => if shape == .underscore then (fontHeight : Int) * 2 else (fontHeight : Int)
+      | .horizontalTb => 0
+    else
+      match wm with
+      | .verticalRl =>
+        let base := (boxWidth : Int) - (padding.right : Int) - (fontHeight : Int)
+        if shape == .underscore then base - (caretWidth : Int) else base
+      | .verticalLr =>
+        if shape == .underscore then (padding.left : Int) + (fontHeight : Int) else (padding.left : Int)
+      | .horizontalTb => (padding.left : Int)
+  (x, y, w, h)
+
+/-! ## Caret Rect Laws (CSS Writing Modes Level 3 §6.4, §3.1) -/
+
+/-- Law: Caret bar dimensions in vertical writing mode are font-height by caret-width.
+    CSS Writing Modes Level 3 §3.1. -/
+theorem caret_dimensions_bar (fh fw cw : Nat) :
+    caretDimensions .bar fh fw cw = (fh, cw) := rfl
+
+/-- Law: Caret block dimensions in vertical writing mode are font-height by font-width.
+    CSS Writing Modes Level 3 §3.1. -/
+theorem caret_dimensions_block (fh fw cw : Nat) :
+    caretDimensions .block fh fw cw = (fh, fw) := rfl
+
+/-- Law: Caret underscore dimensions in vertical writing mode are caret-width by font-width.
+    CSS Writing Modes Level 3 §3.1. -/
+theorem caret_dimensions_underscore (fh fw cw : Nat) :
+    caretDimensions .underscore fh fw cw = (cw, fw) := rfl
+
+/-- Law: In vertical-lr block, caret bar X position is the left padding edge.
+    CSS Writing Modes Level 3 §6.4. -/
+theorem vertical_lr_bar_x (w : Nat) (p : Phys) (fh fw cw : Nat) :
+    (localCaretRectVertical .verticalLr false w p fh fw cw .bar).1 = p.left := rfl
+
+/-- Law: In vertical-rl block, caret block X position is box-width minus right padding minus font-height.
+    CSS Writing Modes Level 3 §6.4. -/
+theorem vertical_rl_block_x (w : Nat) (p : Phys) (fh fw cw : Nat) :
+    (localCaretRectVertical .verticalRl false w p fh fw cw .block).1 = (w : Int) - (p.right : Int) - (fh : Int) := rfl
+
+/-- Law: Block element caret Y position is always top padding.
+    CSS Writing Modes Level 3 §6.4. -/
+theorem vertical_block_caret_y (wm : WritingMode) (w : Nat) (p : Phys) (fh fw cw : Nat) (s : CaretShape) :
+    (localCaretRectVertical wm false w p fh fw cw s).2.1 = p.top := rfl
+
 end BlockWritingMode
 end ChromiumLayout

@@ -6,11 +6,12 @@
 import BlockLength
 import BlockOverflow
 import BlockSticky
+import BlockWritingMode
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockLength BlockOverflow BlockSticky
+open BlockLength BlockOverflow BlockSticky BlockWritingMode
 
 -- layout_box_model_object_test.cc:974: StickyPositionNested
 -- Nested sticky divs: parent shifts by 50px, child is already aligned with scroll top.
@@ -372,6 +373,34 @@ theorem RemoveStickyStatusInNestedStickyElementsWithContain_vectors :
     findNearestContainingBlockShiftingAncestor nodesWithStickyContainer "child" = some "container" ∧
     findNearestContainingBlockShiftingAncestor nodesWithRelContainer "child" = some "body" := by
   decide
+
+-- layout_box_model_object_test.cc:48: LocalCaretRectForEmptyElementVertical
+-- Local caret rect for empty block and inline elements across vertical-rl and vertical-lr writing modes
+-- and caret shapes (bar, block, underscore).
+-- CSS Writing Modes Level 3 §6.4, §3.1.
+theorem LocalCaretRectForEmptyElementVertical_vectors :
+    let pad : Phys := ⟨1, 3, 5, 7⟩
+    let boxW := 40
+    let fh := 10
+    let fw := 10
+    let cw := 1
+    -- #target-rl (block, vertical-rl):
+    localCaretRectVertical .verticalRl false boxW pad fh fw cw .bar = (27, 1, 10, 1) ∧
+    localCaretRectVertical .verticalRl false boxW pad fh fw cw .block = (27, 1, 10, 10) ∧
+    localCaretRectVertical .verticalRl false boxW pad fh fw cw .underscore = (26, 1, 1, 10) ∧
+    -- #target-lr (block, vertical-lr):
+    localCaretRectVertical .verticalLr false boxW pad fh fw cw .bar = (7, 1, 10, 1) ∧
+    localCaretRectVertical .verticalLr false boxW pad fh fw cw .block = (7, 1, 10, 10) ∧
+    localCaretRectVertical .verticalLr false boxW pad fh fw cw .underscore = (17, 1, 1, 10) ∧
+    -- #target-inline-rl (inline, vertical-rl):
+    localCaretRectVertical .verticalRl true 0 pad fh fw cw .bar = (0, 0, 10, 1) ∧
+    localCaretRectVertical .verticalRl true 0 pad fh fw cw .block = (0, 0, 10, 10) ∧
+    localCaretRectVertical .verticalRl true 0 pad fh fw cw .underscore = (-1, 0, 1, 10) ∧
+    -- #target-inline-lr (inline, vertical-lr):
+    localCaretRectVertical .verticalLr true 0 pad fh fw cw .bar = (10, 0, 10, 1) ∧
+    localCaretRectVertical .verticalLr true 0 pad fh fw cw .block = (10, 0, 10, 10) ∧
+    localCaretRectVertical .verticalLr true 0 pad fh fw cw .underscore = (20, 0, 1, 10) := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 end TestsBlock
 end ChromiumLayout
