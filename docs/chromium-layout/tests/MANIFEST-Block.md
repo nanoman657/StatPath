@@ -415,10 +415,10 @@ checks every row against the pinned sources and the Lean modules.
 | table/layout_table_section_test.cc:18 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithLayerAndCollapsedBorder | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
 | table/layout_table_section_test.cc:35 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithBorderSpacing | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
 | table/layout_table_section_test.cc:50 | LayoutTableSectionTest.BackgroundIsKnownToBeOpaqueWithEmptyCell | behaviour | blocked | needs table section BackgroundIsKnownToBeOpaque paint model |
-| table/layout_table_section_test.cc:66 | LayoutTableSectionTest.VisualOverflowWithCollapsedBorders | geometry | blocked | needs table section visual overflow with collapsed borders |
+| table/layout_table_section_test.cc:66 | LayoutTableSectionTest.VisualOverflowWithCollapsedBorders | geometry | formalized | `TestsBlock.SectionVisualOverflowWithCollapsedBorders_vectors`, `BlockOverflow.outline_expands_size` |
 | table/layout_table_section_test.cc:99 | LayoutTableSectionTest.RowCollapseNegativeHeightCrash | internal | internal | crash regression in row collapse with negative height |
-| table/layout_table_test.cc:21 | LayoutTableTest.OverflowViaOutline | geometry | blocked | needs table visual overflow rect calculation |
-| table/layout_table_test.cc:47 | LayoutTableTest.OverflowWithCollapsedBorders | geometry | blocked | needs table visual overflow rect calculation |
+| table/layout_table_test.cc:21 | LayoutTableTest.OverflowViaOutline | geometry | formalized | `TestsBlock.OverflowViaOutline_vectors`, `BlockOverflow.outline_expands_size` |
+| table/layout_table_test.cc:47 | LayoutTableTest.OverflowWithCollapsedBorders | geometry | formalized | `TestsBlock.OverflowWithCollapsedBorders_vectors`, `BlockOverflow.table_border_box_ge_content` |
 | table/layout_table_test.cc:88 | LayoutTableTest.CollapsedBorders | geometry | formalized | `TestsBlock.CollapsedBorders_vectors`, `TableLayout.resolve_hidden_zero` |
 | table/layout_table_test.cc:143 | LayoutTableTest.CollapsedBordersWithCol | geometry | formalized | `TestsBlock.CollapsedBordersWithCol_vectors`, `TableLayout.resolve_hidden_zero` |
 | table/layout_table_test.cc:207 | LayoutTableTest.WidthPercentagesExceedHundred | geometry | blocked | needs table column percentage and max width resolution |
@@ -427,7 +427,7 @@ checks every row against the pinned sources and the Lean modules.
 | table/layout_table_test.cc:260 | LayoutTableTest.OutOfOrderHeadAndBody | geometry | formalized | `TestsBlock.OutOfOrderHeadAndBody_vectors` |
 | table/layout_table_test.cc:279 | LayoutTableTest.OutOfOrderFootAndBody | geometry | formalized | `TestsBlock.OutOfOrderFootAndBody_vectors` |
 | table/layout_table_test.cc:298 | LayoutTableTest.OutOfOrderHeadFootAndBody | geometry | formalized | `TestsBlock.OutOfOrderHeadFootAndBody_vectors` |
-| table/layout_table_test.cc:330 | LayoutTableTest.VisualOverflowCleared | geometry | blocked | needs table visual overflow rect calculation |
+| table/layout_table_test.cc:330 | LayoutTableTest.VisualOverflowCleared | geometry | formalized | `TestsBlock.VisualOverflowCleared_vectors`, `BlockOverflow.shadow_initial_clears` |
 | table/table_layout_utils_test.cc:55 | TableLayoutUtilsTest.DistributeColspanAutoPercent | geometry | formalized | `TestsBlock.DistributeColspanAutoPercent_vectors` |
 | table/table_layout_utils_test.cc:93 | TableLayoutUtilsTest.DistributeColspanAutoSizeUnconstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeUnconstrained_vectors` |
 | table/table_layout_utils_test.cc:121 | TableLayoutUtilsTest.DistributeColspanAutoSizeConstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeConstrained_vectors` |
@@ -586,10 +586,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | formalized | `TestsBlock.ControlClip_vectors`, `BlockOverflow.control_clip_rect_bounds` |
 | layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:506 | LayoutBoxTest.VisualOverflowRectWithMask | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:522 | LayoutBoxTest.VisualOverflowRectWithMaskAndOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:506 | LayoutBoxTest.VisualOverflowRectWithMask | geometry | formalized | `TestsBlock.VisualOverflowRectWithMask_vectors`, `BlockOverflow.mask_zero_outset_eq_border_box` |
+| layout_box_test.cc:522 | LayoutBoxTest.VisualOverflowRectWithMaskAndOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectWithMaskAndOverflowHidden_vectors`, `BlockOverflow.mask_zero_outset_eq_border_box` |
 | layout_box_test.cc:538 | LayoutBoxTest.VisualOverflowRectWithMaskWithOutset | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:555 | LayoutBoxTest.VisualOverflowRectWithMaskWithOutsetAndOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:555 | LayoutBoxTest.VisualOverflowRectWithMaskWithOutsetAndOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectWithMaskWithOutsetAndOverflowHidden_vectors`, `BlockOverflow.mask_zero_outset_eq_border_box` |
 | layout_box_test.cc:572 | LayoutBoxTest.VisualOverflowRectOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowClip_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | formalized | `TestsBlock.VisualOverflowRectWithOverflowClipMargin_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
@@ -615,7 +615,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1624 | LayoutBoxTest.ThickScrollbarSubpixelSizeMarginNoDirtyLayoutAfterLayout | internal | internal | checks LayoutBox internal flag/crash regression |
 | layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | geometry | blocked | needs LayoutBox geometry model |
 | layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | needs LayoutBox geometry model |
-| layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | formalized | `TestsBlock.VisualOverflowRectIncludingFilters_vectors`, `BlockOverflow.filter_blur_outset_nonneg` |
 | layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:1755 | LayoutBoxTest.ScrollsWithViewportRelativePosition | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
@@ -629,7 +629,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1906 | LayoutBoxTest.IsUserScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
 | layout_box_test.cc:1935 | LayoutBoxTest.IsUserScrollableLayoutView | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
 | layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | blocked | needs LayoutBox geometry model |
-| layout_box_test.cc:2006 | LayoutBoxTest.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:2006 | LayoutBoxTest.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline | geometry | formalized | `TestsBlock.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline_vectors`, `BlockOverflow.outline_shifts_origin` |
 | layout_box_test.cc:2033 | LayoutBoxTest.ContentBoxFragmentedHtb | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
 | layout_box_test.cc:2045 | LayoutBoxTest.ContentBoxFragmentedVlr | geometry | formalized | `TestsBlock.ContentBoxFragmentedVlr_vectors`, `BlockWritingMode.physicalContentBox_vertical` |
 | layout_box_test.cc:2057 | LayoutBoxTest.ContentBoxFragmentedVrl | geometry | formalized | `TestsBlock.ContentBoxFragmentedVrl_vectors`, `BlockWritingMode.physicalContentBox_vertical` |

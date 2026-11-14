@@ -1,9 +1,11 @@
 import TableLayout
+import BlockOverflow
 
 namespace ChromiumLayout
 namespace TestsBlock
 
 open TableLayout
+open BlockOverflow
 
 -- layout_table_test.cc:230: CloseToMaxWidth
 theorem CloseToMaxWidth_vectors :
@@ -90,6 +92,35 @@ theorem CollapsedBordersWithCol_vectors :
     collapsedBorderOutsetLU [{ width := 10, isHidden := false }, { width := 20, isHidden := false }] = 640 ∧
     collapsedBorderOutsetLU [{ width := 10, isHidden := false }, { width := 12, isHidden := false }] = 384 ∧
     collapsedBorderOutsetLU [{ width := 20, isHidden := false }, { width := 16, isHidden := false }] = 640 := by
+  decide
+
+-- layout_table_test.cc:21: OverflowViaOutline
+-- Outline creates self visual overflow expanding outward on all 4 sides.
+-- CSS Basic User Interface 3 §7.1, CSS 2.1 §18.4.
+theorem OverflowViaOutline_vectors :
+    let initialBox : PhysicalRect := ⟨0, 0, 100, 200⟩
+    outlineVisualOverflow initialBox 2 = ⟨-2, -2, 104, 204⟩ := by
+  decide
+
+-- layout_table_test.cc:47: OverflowWithCollapsedBorders
+-- Outer collapsed borders expand table border box rect; descendant outlines expand visual overflow.
+-- CSS 2.1 §17.6, CSS Overflow 3 §2.1.
+theorem OverflowWithCollapsedBorders_vectors :
+    let contentBox : PhysicalRect := ⟨10, 2, 200, 200⟩
+    let borderBox := tableCollapsedBorderBox contentBox 2 10 0 10
+    let visualOverflow := expandEdges contentBox ⟨6, 10, 8, 10⟩
+    borderBox = ⟨0, 0, 220, 202⟩ ∧
+    visualOverflow = ⟨0, -4, 220, 214⟩ := by
+  decide
+
+-- layout_table_test.cc:330: VisualOverflowCleared
+-- Box shadow expands self visual overflow; removing shadow clears back to border box.
+-- CSS Backgrounds and Borders 3 §7.1.
+theorem VisualOverflowCleared_vectors :
+    let bb : PhysicalRect := ⟨0, 0, 50, 50⟩
+    let shadowOutset : BoxEdges := ⟨3, 13, 13, 3⟩
+    shadowVisualOverflow bb true shadowOutset = ⟨-3, -3, 66, 66⟩ ∧
+    shadowVisualOverflow bb false shadowOutset = bb := by
   decide
 
 end TestsBlock

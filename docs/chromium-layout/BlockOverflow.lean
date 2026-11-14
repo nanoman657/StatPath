@@ -133,5 +133,112 @@ theorem control_clip_rect_bounds (w h b : Nat) (hw : 2 * b ≤ w) (hh : 2 * b �
   dsimp [controlInnerClipRect]
   omega
 
+/-- 2D integer physical rectangle with signed offset and size.
+    CSS Box Model §4, CSS Overflow 3 §2.1. -/
+structure PhysicalRect where
+  x : Int := 0
+  y : Int := 0
+  w : Int := 0
+  h : Int := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Strut or edge insets/outsets along four edges: top, right, bottom, left.
+    CSS Box Model §4. -/
+structure BoxEdges where
+  top : Int := 0
+  right : Int := 0
+  bottom : Int := 0
+  left : Int := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Expand physical rect edges outward by top, right, bottom, left amounts.
+    CSS Box Model §4, CSS Overflow 3 §2.1. -/
+def expandEdges (r : PhysicalRect) (e : BoxEdges) : PhysicalRect :=
+  ⟨r.x - e.left, r.y - e.top, r.w + e.left + e.right, r.h + e.top + e.bottom⟩
+
+/-- Uniform edge expansion (e.g. outline width or blur filter extent on all sides).
+    CSS Basic User Interface 3 §7.1, CSS 2.1 §18.4. -/
+def uniformEdges (amt : Int) : BoxEdges :=
+  ⟨amt, amt, amt, amt⟩
+
+/-- Self visual overflow rect of a box given its border box rect and outline width.
+    CSS Basic User Interface 3 §7.1, CSS 2.1 §18.4.
+    An outline expands the visual overflow rectangle by the outline width on all 4 sides. -/
+def outlineVisualOverflow (borderBox : PhysicalRect) (outlineWidth : Int) : PhysicalRect :=
+  expandEdges borderBox (uniformEdges outlineWidth)
+
+/-- Mask clipping of visual overflow rect.
+    CSS Masking 1 §3.
+    A mask clips visual overflow to the mask box (border box expanded by mask-box-image outsets). -/
+def maskVisualOverflow (borderBox : PhysicalRect) (outset : BoxEdges) : PhysicalRect :=
+  expandEdges borderBox outset
+
+/-- Box shadow visual overflow rect from border box. When shadow is none/initial, returns border box.
+    CSS Backgrounds and Borders 3 §7.1. -/
+def shadowVisualOverflow (borderBox : PhysicalRect) (hasShadow : Bool) (shadowOutset : BoxEdges) : PhysicalRect :=
+  if hasShadow then expandEdges borderBox shadowOutset else borderBox
+
+/-- Filter blur outset extent (3 * blur-radius * zoom).
+    CSS Filter Effects 1 §5. -/
+def filterBlurOutset (radius zoom : Int) : Int :=
+  3 * radius * zoom
+
+/-- Filtered visual overflow rect given unfiltered visual overflow and blur filter parameters.
+    CSS Filter Effects 1 §5. -/
+def filterVisualOverflow (unfiltered : PhysicalRect) (radius zoom : Int) : PhysicalRect :=
+  expandEdges unfiltered (uniformEdges (filterBlurOutset radius zoom))
+
+/-- Table border box rect from content box rect and outer collapsed border half-widths.
+    CSS 2.1 §17.6, §17.6.2.
+    Half of the outer collapsed border widths extend outside the table grid / content edge. -/
+def tableCollapsedBorderBox (contentBox : PhysicalRect) (topHalf rightHalf bottomHalf leftHalf : Int) : PhysicalRect :=
+  expandEdges contentBox ⟨topHalf, rightHalf, bottomHalf, leftHalf⟩
+
+/-- Law: Outline expands width and height monotonically for any non-negative outline width.
+    CSS Basic User Interface 3 §7.1. -/
+theorem outline_expands_size (r : PhysicalRect) (w : Int) (hw : w ≥ 0) :
+    (outlineVisualOverflow r w).w ≥ r.w ∧ (outlineVisualOverflow r w).h ≥ r.h := by
+  dsimp [outlineVisualOverflow, expandEdges, uniformEdges]
+  omega
+
+/-- Law: Outline shifts top-left origin outward for any non-negative outline width.
+    CSS Basic User Interface 3 §7.1. -/
+theorem outline_shifts_origin (r : PhysicalRect) (w : Int) (hw : w ≥ 0) :
+    (outlineVisualOverflow r w).x ≤ r.x ∧ (outlineVisualOverflow r w).y ≤ r.y := by
+  dsimp [outlineVisualOverflow, expandEdges, uniformEdges]
+  omega
+
+/-- Law: Removing box-shadow (initial/none) resets visual overflow back to border box.
+    CSS Backgrounds and Borders 3 §7.1. -/
+theorem shadow_initial_clears (bb : PhysicalRect) (outset : BoxEdges) :
+    shadowVisualOverflow bb false outset = bb := by
+  rfl
+
+/-- Law: A mask with zero outsets clips visual overflow exactly to the border box.
+    CSS Masking 1 §3. -/
+theorem mask_zero_outset_eq_border_box (bb : PhysicalRect) :
+    maskVisualOverflow bb ⟨0, 0, 0, 0⟩ = bb := by
+  cases bb
+  dsimp [maskVisualOverflow, expandEdges]
+  simp
+
+/-- Law: Collapsed border box dimensions are bounded below by content box dimensions.
+    CSS 2.1 §17.6. -/
+theorem table_border_box_ge_content (cb : PhysicalRect) (t r b l : Int)
+    (ht : t ≥ 0) (hr : r ≥ 0) (hb : b ≥ 0) (hl : l ≥ 0) :
+    (tableCollapsedBorderBox cb t r b l).w ≥ cb.w ∧
+    (tableCollapsedBorderBox cb t r b l).h ≥ cb.h := by
+  dsimp [tableCollapsedBorderBox, expandEdges]
+  omega
+
+/-- Law: Filter blur outset is non-negative for non-negative radius and zoom.
+    CSS Filter Effects 1 §5. -/
+theorem filter_blur_outset_nonneg (r z : Int) (hr : r ≥ 0) (hz : z ≥ 0) :
+    filterBlurOutset r z ≥ 0 := by
+  dsimp [filterBlurOutset]
+  have h3 : (3 : Int) ≥ 0 := by decide
+  have h3r : 3 * r ≥ 0 := Int.mul_nonneg h3 hr
+  exact Int.mul_nonneg h3r hz
+
 end BlockOverflow
 end ChromiumLayout

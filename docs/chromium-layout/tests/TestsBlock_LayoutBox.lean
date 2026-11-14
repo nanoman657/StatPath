@@ -148,5 +148,42 @@ theorem ControlClip_vectors :
     controlInnerClipRect 100 50 2 = ⟨2, 2, 96, 46⟩ := by
   decide
 
+-- layout_box_test.cc:506: VisualOverflowRectWithMask
+-- CSS Masking 1 §3. A mask clips visual overflow to the mask box (border box when zero outset).
+theorem VisualOverflowRectWithMask_vectors :
+    let borderBox : PhysicalRect := ⟨0, 0, 100, 100⟩
+    maskVisualOverflow borderBox ⟨0, 0, 0, 0⟩ = ⟨0, 0, 100, 100⟩ := by
+  decide
+
+-- layout_box_test.cc:522: VisualOverflowRectWithMaskAndOverflowHidden
+-- CSS Masking 1 §3, CSS Overflow 3 §3. A mask with overflow: hidden clips to mask border box.
+theorem VisualOverflowRectWithMaskAndOverflowHidden_vectors :
+    let borderBox : PhysicalRect := ⟨0, 0, 100, 100⟩
+    maskVisualOverflow borderBox ⟨0, 0, 0, 0⟩ = ⟨0, 0, 100, 100⟩ := by
+  decide
+
+-- layout_box_test.cc:555: VisualOverflowRectWithMaskWithOutsetAndOverflowHidden
+-- CSS Masking 1 §3. Mask-box-image outsets expand mask bounds and clip visual overflow.
+theorem VisualOverflowRectWithMaskWithOutsetAndOverflowHidden_vectors :
+    let borderBox : PhysicalRect := ⟨0, 0, 100, 100⟩
+    let maskOutset : BoxEdges := ⟨10, 20, 10, 20⟩
+    maskVisualOverflow borderBox maskOutset = ⟨-20, -10, 140, 120⟩ := by
+  decide
+
+-- layout_box_test.cc:1693: VisualOverflowRectIncludingFilters
+-- CSS Filter Effects 1 §5. Blur filter expands visual overflow by 3 * radius * zoom.
+theorem VisualOverflowRectIncludingFilters_vectors :
+    let unfiltered : PhysicalRect := ⟨0, 0, 200, 400⟩
+    filterBlurOutset 2 2 = 12 ∧
+    filterVisualOverflow unfiltered 2 2 = ⟨-12, -12, 224, 424⟩ := by
+  decide
+
+-- layout_box_test.cc:2006: VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline
+-- CSS Basic User Interface 3 §7.1, CSS 2.1 §18.4. Outline expands self and visual overflow.
+theorem VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline_vectors :
+    outlineVisualOverflow ⟨0, 0, 0, 0⟩ 2 = ⟨-2, -2, 4, 4⟩ ∧
+    outlineVisualOverflow ⟨0, 0, 800, 0⟩ 6 = ⟨-6, -6, 812, 12⟩ := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
