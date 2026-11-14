@@ -1,6 +1,7 @@
 import BlockFlow
 import BlockFragmentation
 import BlockOverflow
+import BlockScroll
 import BlockWritingMode
 import ColumnWidth
 import OutOfFlowAnchor
@@ -8,7 +9,7 @@ import OutOfFlowAnchor
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockOverflow BlockWritingMode ColumnWidth OutOfFlowAnchor
+open BlockFlow BlockOverflow BlockScroll BlockWritingMode ColumnWidth OutOfFlowAnchor
 
 -- layout_box_test.cc:2045: ContentBoxFragmentedVlr
 -- In vertical-lr, block-size maps to physical width and inline-size to physical height.
@@ -249,6 +250,122 @@ theorem AnchorInInlineContainingBlockWithNameConflicts_vectors :
     findTargetAnchor anchors 1 "--a" = some "anchor1" ∧
     findTargetAnchor anchors 2 "--a" = some "anchor2" ∧
     findTargetAnchor anchors 3 "--a" = some "anchor3" := by
+  decide
+
+def testScrollbarContainer (wm : WritingMode) (dir : Direction) : ContainerBox := {
+  wm := wm
+  dir := dir
+  border := ⟨20, 30, 40, 50⟩
+  padding := ⟨10, 20, 30, 40⟩
+  contentWidth := 400
+  contentHeight := 300
+  scrollbars := ⟨15, 16⟩
+}
+
+-- layout_box_test.cc:934: LocationOfAbsoluteChildWithContainerScrollbars
+-- CSS Positioned Layout 3 §2.1, CSS 2.1 §10.1, §11.1, CSS Writing Modes 3 §6.4.
+-- In non-flipped modes location is border-left + left, border-top + top.
+-- In horizontal-tb RTL, vertical scrollbar on left shifts origin right by scrollbar width.
+theorem LocationOfAbsoluteChildWithContainerScrollbars_vectors :
+    let normal := absoluteChildLocation (testScrollbarContainer .horizontalTb .ltr) 100 70
+    let vlr := absoluteChildLocation (testScrollbarContainer .verticalLr .ltr) 100 70
+    let vrl := absoluteChildLocation (testScrollbarContainer .verticalRl .ltr) 100 70
+    let rtl := absoluteChildLocation (testScrollbarContainer .horizontalTb .rtl) 100 70
+    let rtl_vlr := absoluteChildLocation (testScrollbarContainer .verticalLr .rtl) 100 70
+    let rtl_vrl := absoluteChildLocation (testScrollbarContainer .verticalRl .rtl) 100 70
+    normal = (150, 90) ∧
+    vlr = (150, 90) ∧
+    vrl = (150, 90) ∧
+    rtl = (165, 90) ∧
+    rtl_vlr = (150, 90) ∧
+    rtl_vrl = (150, 90) := by
+  decide
+
+-- layout_box_test.cc:990: LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes
+-- CSS Positioned Layout 3 §2.1, CSS 2.1 §10.1, CSS Writing Modes 3 §6.4.
+-- Child's writing mode does not alter physical location from containing block origin when insets are explicit.
+theorem LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes_vectors :
+    let vlr_in_htb := absoluteChildLocation (testScrollbarContainer .horizontalTb .ltr) 100 70
+    let vrl_in_htb := absoluteChildLocation (testScrollbarContainer .horizontalTb .ltr) 100 70
+    let htb_in_vlr := absoluteChildLocation (testScrollbarContainer .verticalLr .ltr) 100 70
+    let vrl_in_vlr := absoluteChildLocation (testScrollbarContainer .verticalLr .ltr) 100 70
+    let htb_in_vrl := absoluteChildLocation (testScrollbarContainer .verticalRl .ltr) 100 70
+    let vlr_in_vrl := absoluteChildLocation (testScrollbarContainer .verticalRl .ltr) 100 70
+    vlr_in_htb = (150, 90) ∧
+    vrl_in_htb = (150, 90) ∧
+    htb_in_vlr = (150, 90) ∧
+    vrl_in_vlr = (150, 90) ∧
+    htb_in_vrl = (150, 90) ∧
+    vlr_in_vrl = (150, 90) := by
+  decide
+
+-- layout_box_test.cc:1039: LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars
+-- CSS Positioned Layout 3 §2.1, CSS 2.1 §10.3.7, §10.6.4, CSS Writing Modes 3 §6.4.
+-- Static position reflects in-flow start position with container writing mode and direction.
+theorem LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars_vectors :
+    let normal := absoluteAutoLocation (testScrollbarContainer .horizontalTb .ltr) 150 180
+    let vlr := absoluteAutoLocation (testScrollbarContainer .verticalLr .ltr) 150 180
+    let vrl := absoluteAutoLocation (testScrollbarContainer .verticalRl .ltr) 150 180
+    let rtl := absoluteAutoLocation (testScrollbarContainer .horizontalTb .rtl) 150 180
+    let rtl_vlr := absoluteAutoLocation (testScrollbarContainer .verticalLr .rtl) 150 180
+    let rtl_vrl := absoluteAutoLocation (testScrollbarContainer .verticalRl .rtl) 150 180
+    normal = (90, 30) ∧
+    vlr = (90, 30) ∧
+    vrl = (325, 30) ∧
+    rtl = (340, 30) ∧
+    rtl_vlr = (90, 134) ∧
+    rtl_vrl = (325, 134) := by
+  decide
+
+-- layout_box_test.cc:1165: LocationOfInFlowChildWithContainerScrollbars
+-- CSS 2.1 §9.2, CSS Writing Modes 3 §6.4. In-flow child placed after preceding sibling offset.
+theorem LocationOfInFlowChildWithContainerScrollbars_vectors :
+    let normal := inFlowChildLocation (testScrollbarContainer .horizontalTb .ltr) 150 180 100 70
+    let vlr := inFlowChildLocation (testScrollbarContainer .verticalLr .ltr) 150 180 100 70
+    let vrl := inFlowChildLocation (testScrollbarContainer .verticalRl .ltr) 150 180 100 70
+    let rtl := inFlowChildLocation (testScrollbarContainer .horizontalTb .rtl) 150 180 100 70
+    let rtl_vlr := inFlowChildLocation (testScrollbarContainer .verticalLr .rtl) 150 180 100 70
+    let rtl_vrl := inFlowChildLocation (testScrollbarContainer .verticalRl .rtl) 150 180 100 70
+    normal = (90, 100) ∧
+    vlr = (190, 30) ∧
+    vrl = (225, 30) ∧
+    rtl = (340, 100) ∧
+    rtl_vlr = (190, 134) ∧
+    rtl_vrl = (225, 134) := by
+  decide
+
+-- layout_box_test.cc:1234: LocationOfRelativeChildWithContainerScrollbars
+-- CSS Positioned Layout 3 §2.1, CSS 2.1 §9.4.3. Relative child shifted by relative insets.
+theorem LocationOfRelativeChildWithContainerScrollbars_vectors :
+    let normal := relativeChildLocation (testScrollbarContainer .horizontalTb .ltr) 150 180 100 70 88 77
+    let vlr := relativeChildLocation (testScrollbarContainer .verticalLr .ltr) 150 180 100 70 88 77
+    let vrl := relativeChildLocation (testScrollbarContainer .verticalRl .ltr) 150 180 100 70 88 77
+    let rtl := relativeChildLocation (testScrollbarContainer .horizontalTb .rtl) 150 180 100 70 88 77
+    let rtl_vlr := relativeChildLocation (testScrollbarContainer .verticalLr .rtl) 150 180 100 70 88 77
+    let rtl_vrl := relativeChildLocation (testScrollbarContainer .verticalRl .rtl) 150 180 100 70 88 77
+    normal = (178, 177) ∧
+    vlr = (278, 107) ∧
+    vrl = (313, 107) ∧
+    rtl = (428, 177) ∧
+    rtl_vlr = (278, 211) ∧
+    rtl_vrl = (313, 211) := by
+  decide
+
+-- layout_box_test.cc:1289: LocationOfFloatLeftChildWithContainerScrollbars
+-- CSS 2.1 §9.5.1, CSS Writing Modes 3 §6.4. Float left child aligns to physical left of content box.
+theorem LocationOfFloatLeftChildWithContainerScrollbars_vectors :
+    let normal := floatLeftChildLocation (testScrollbarContainer .horizontalTb .ltr) 150 180
+    let vlr := floatLeftChildLocation (testScrollbarContainer .verticalLr .ltr) 150 180
+    let vrl := floatLeftChildLocation (testScrollbarContainer .verticalRl .ltr) 150 180
+    let rtl := floatLeftChildLocation (testScrollbarContainer .horizontalTb .rtl) 150 180
+    let rtl_vlr := floatLeftChildLocation (testScrollbarContainer .verticalLr .rtl) 150 180
+    let rtl_vrl := floatLeftChildLocation (testScrollbarContainer .verticalRl .rtl) 150 180
+    normal = (90, 30) ∧
+    vlr = (90, 30) ∧
+    vrl = (325, 30) ∧
+    rtl = (105, 30) ∧
+    rtl_vlr = (90, 134) ∧
+    rtl_vrl = (325, 134) := by
   decide
 
 end TestsBlock

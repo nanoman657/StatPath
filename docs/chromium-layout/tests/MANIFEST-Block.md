@@ -602,13 +602,13 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:934 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:990 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:1039 | LayoutBoxTest.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:934 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbars_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
+| layout_box_test.cc:990 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
+| layout_box_test.cc:1039 | LayoutBoxTest.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
 | layout_box_test.cc:1103 | LayoutBoxTest.LocationOfAbsoluteAutoTopLeftGrandChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:1165 | LayoutBoxTest.LocationOfInFlowChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:1234 | LayoutBoxTest.LocationOfRelativeChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:1289 | LayoutBoxTest.LocationOfFloatLeftChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:1165 | LayoutBoxTest.LocationOfInFlowChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfInFlowChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
+| layout_box_test.cc:1234 | LayoutBoxTest.LocationOfRelativeChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfRelativeChildWithContainerScrollbars_vectors`, `BlockScroll.rel_loc_eq_inflow_add` |
+| layout_box_test.cc:1289 | LayoutBoxTest.LocationOfFloatLeftChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfFloatLeftChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
 | layout_box_test.cc:1345 | LayoutBoxTest.LocationOfFloatRightChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
 | layout_box_test.cc:1405 | LayoutBoxTest.GeometriesWithScrollbarsNonScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
 | layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
