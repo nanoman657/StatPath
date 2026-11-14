@@ -459,7 +459,7 @@ checks every row against the pinned sources and the Lean modules.
 | grid/grid_layout_algorithm_test.cc:1640 | GridLayoutAlgorithmTest.AutoSizedGridWithGap | geometry | formalized | `TestsBlock.AutoSizedGridWithGap_vectors` |
 | grid/grid_layout_algorithm_test.cc:1694 | GridLayoutAlgorithmTest.AutoSizedGridWithPercentageGap | geometry | blocked | needs CSS grid gap geometry calculation |
 | grid/grid_layout_algorithm_test.cc:1739 | GridLayoutAlgorithmTest.ItemsSizeWithGap | geometry | formalized | `TestsBlock.ItemsSizeWithGap_vectors` |
-| grid/grid_layout_algorithm_test.cc:1800 | GridLayoutAlgorithmTest.PositionedOutOfFlowItems | geometry | blocked | needs CSS grid item placement and auto-placement algorithm |
+| grid/grid_layout_algorithm_test.cc:1800 | GridLayoutAlgorithmTest.PositionedOutOfFlowItems | geometry | formalized | `TestsBlock.PositionedOutOfFlowItems_vectors`, `GridLayout.resolve_grid_oof_justify_end` |
 | grid/grid_layout_algorithm_test.cc:1940 | GridLayoutAlgorithmTest.NGGridAxisType | geometry | formalized | `TestsBlock.NGGridAxisType_vectors`, `GridLayout.grid_axis_type_subgrid` |
 | grid/grid_layout_algorithm_test.cc:1973 | GridLayoutAlgorithmTest.SubgridLineNameList | geometry | formalized | `TestsBlock.SubgridLineNameList_vectors`, `GridLayout.subgrid_line_names_empty` |
 | grid/grid_layout_algorithm_test.cc:2019 | GridLayoutAlgorithmTest.SubgridLineNameListWithRepeaters | geometry | formalized | `TestsBlock.SubgridLineNameListWithRepeaters_vectors`, `GridLayout.expand_subgrid_repeater_length` |

@@ -1016,5 +1016,87 @@ theorem grid_item_is_fc_root (isContainer : Bool) :
 theorem grid_inflow_descendant_not_fc_root :
     isGridFormattingContextRoot false false = false := rfl
 
+/-- CSS Box Alignment values for out-of-flow items in a grid area.
+    CSS Box Alignment Level 3 §3. -/
+inductive GridAlignment where
+  | start
+  | center
+  | flexEnd
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Out-of-flow grid item placement and positioning parameters.
+    CSS Grid Layout Module Level 1 §9 (Absolute Positioning). -/
+structure GridOofItem where
+  id : Nat := 0
+  colStart : Option Nat := none
+  colEnd : Option Nat := none
+  rowStart : Option Nat := none
+  rowEnd : Option Nat := none
+  width : Nat := 50
+  height : Nat := 50
+  left : Option Nat := none
+  top : Option Nat := none
+  bottom : Option Nat := none
+  alignSelf : GridAlignment := .start
+  justifySelf : GridAlignment := .start
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Compute the containing block and position of an absolutely positioned item in a grid container.
+    CSS Grid Layout Module Level 1 §9 (Absolute Positioning), CSS Box Alignment Level 3 §3. -/
+def resolveGridOofPosition (paddingBox : Nat × Nat × Nat × Nat)
+                           (lineOffsetsX : List (Nat × Nat))
+                           (lineOffsetsY : List (Nat × Nat))
+                           (item : GridOofItem) : Nat × Nat :=
+  let (padL, padR, padT, padB) := paddingBox
+  let cbLeft : Nat := match item.colStart with
+    | some l => (lineOffsetsX.find? (fun (idx, _) => idx == l)).map (·.2) |>.getD padL
+    | none => padL
+  let cbRight : Nat := match item.colEnd with
+    | some l => (lineOffsetsX.find? (fun (idx, _) => idx == l)).map (·.2) |>.getD padR
+    | none => padR
+  let cbTop : Nat := match item.rowStart with
+    | some l => (lineOffsetsY.find? (fun (idx, _) => idx == l)).map (·.2) |>.getD padT
+    | none => padT
+  let cbBottom : Nat := match item.rowEnd with
+    | some l => (lineOffsetsY.find? (fun (idx, _) => idx == l)).map (·.2) |>.getD padB
+    | none => padB
+  let cbWidth : Nat := cbRight - cbLeft
+  let cbHeight : Nat := cbBottom - cbTop
+
+  let x : Nat := match item.left with
+    | some inset => cbLeft + inset
+    | none =>
+        match item.justifySelf with
+        | .start => cbLeft
+        | .center => cbLeft + (cbWidth - item.width) / 2
+        | .flexEnd => cbRight - item.width
+
+  let y : Nat := match item.top with
+    | some inset => cbTop + inset
+    | none =>
+        match item.bottom with
+        | some inset => cbBottom - inset - item.height
+        | none =>
+            match item.alignSelf with
+            | .start => cbTop
+            | .center => cbTop + (cbHeight - item.height) / 2
+            | .flexEnd => cbBottom - item.height
+  (x, y)
+
+/-- Law: An out-of-flow item with auto placement and start alignment is placed at the padding box origin.
+    CSS Grid Layout Module Level 1 §9. -/
+theorem resolve_grid_oof_position_auto (padL padR padT padB : Nat) (lx ly : List (Nat × Nat)) :
+    resolveGridOofPosition (padL, padR, padT, padB) lx ly {} = (padL, padT) := rfl
+
+/-- Law: Explicit inset `left` offsets from the containing block start.
+    CSS Grid Layout Module Level 1 §9. -/
+theorem resolve_grid_oof_left_inset (padL padR padT padB inset : Nat) (lx ly : List (Nat × Nat)) :
+    (resolveGridOofPosition (padL, padR, padT, padB) lx ly { left := some inset }).1 = padL + inset := rfl
+
+/-- Law: End alignment in horizontal axis places item right-aligned to cbRight.
+    CSS Box Alignment Level 3 §3, CSS Grid 1 §9. -/
+theorem resolve_grid_oof_justify_end (padL padR padT padB w : Nat) (lx ly : List (Nat × Nat)) :
+    (resolveGridOofPosition (padL, padR, padT, padB) lx ly { width := w, justifySelf := .flexEnd }).1 = padR - w := rfl
+
 end GridLayout
 end ChromiumLayout

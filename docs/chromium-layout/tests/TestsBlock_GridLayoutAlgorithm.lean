@@ -381,5 +381,39 @@ theorem SubgridLineNameListWithRepeaters_vectors :
     rowLineNames = [(0, "a"), (1, "b"), (2, "c"), (3, "b"), (4, "c"), (5, "d")] := by
   exact ⟨rfl, rfl, rfl, rfl, rfl⟩
 
+-- grid_layout_algorithm_test.cc:1800: GridLayoutAlgorithmTest.PositionedOutOfFlowItems
+-- Absolutely positioned items in a 3x3 grid positioned relative to their specified grid area containing blocks.
+-- CSS Grid Layout Module Level 1 §9, CSS Box Alignment Level 3 §3.
+theorem PositionedOutOfFlowItems_vectors :
+    let padBox : Nat × Nat × Nat × Nat := (5, 315, 5, 315)
+    let lines : List (Nat × Nat) := [(0, 10), (1, 110), (2, 210), (3, 310)]
+    let item1 := resolveGridOofPosition padBox lines lines {
+      id := 1, colStart := some 1, colEnd := some 2, rowStart := some 1, rowEnd := some 2,
+      alignSelf := .center, justifySelf := .flexEnd
+    }
+    let item2 := resolveGridOofPosition padBox lines lines {
+      id := 2, colStart := none, colEnd := some 1, rowStart := some 2, rowEnd := none,
+      bottom := some 30
+    }
+    let item3 := resolveGridOofPosition padBox lines lines {
+      id := 3, left := some 200
+    }
+    let item5 := resolveGridOofPosition padBox lines lines {
+      id := 5, colStart := none, colEnd := some 0, rowStart := some 1, rowEnd := some 2
+    }
+    let item6 := resolveGridOofPosition padBox lines lines {
+      id := 6, colStart := some 3, colEnd := none, rowStart := some 1, rowEnd := some 2
+    }
+    let item7 := resolveGridOofPosition padBox lines lines {
+      id := 7, colStart := none, colEnd := some 0, rowStart := some 2, rowEnd := some 3
+    }
+    item1 = (160, 135) ∧
+    item2 = (5, 235) ∧
+    item3 = (205, 5) ∧
+    item5 = (5, 110) ∧
+    item6 = (310, 110) ∧
+    item7 = (5, 210) := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 end TestsBlock
 end ChromiumLayout
