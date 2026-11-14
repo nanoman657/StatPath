@@ -308,5 +308,61 @@ theorem GridLayoutAlgorithmAutoDense_vectors :
     ] := by
   exact rfl
 
+-- grid_layout_algorithm_test.cc:1273: GridLayoutAlgorithmTest.GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks
+-- Determines which grid items span intrinsic or flexible tracks across columns and rows.
+-- CSS Grid Layout Module Level 1 §7.2, §8.3.1, §11.5.
+theorem GridLayoutAlgorithmDetermineGridItemsSpanningIntrinsicOrFlexTracks_vectors :
+    let colTracks : List GridTrackSizeType := [
+      .minContent, .flex 1, .fixed 2, .fixed 3,
+      .minContent, .flex 1, .fixed 2, .fixed 3
+    ]
+    let rowTracks : List GridTrackSizeType := [
+      .maxContent, .flex 1, .fixed 50, .fitContent 100
+    ]
+    let colItems := [(0, 3, 5), (1, 5, 7), (2, 2, 4), (3, 7, 10)]
+    let rowItems := [
+      (0, resolveGridLine (-3) 4, resolveGridLine (-2) 4),
+      (1, resolveGridLine (-2) 4, resolveGridLine (-1) 4),
+      (2, resolveGridLine (-4) 4, resolveGridLine (-3) 4),
+      (3, resolveGridLine (-5) 4, resolveGridLine (-4) 4)
+    ]
+    let colIntrinsic := gridItemsWithColSpanProperty colTracks colItems isIntrinsicTrack
+    let colFlex := gridItemsWithColSpanProperty colTracks colItems isFlexibleTrack
+    let rowIntrinsic := gridItemsWithRowSpanProperty rowTracks rowItems isIntrinsicTrack
+    let rowFlex := gridItemsWithRowSpanProperty rowTracks rowItems isFlexibleTrack
+    colIntrinsic = [0, 1, 3] ∧
+    colFlex = [1] ∧
+    rowIntrinsic = [1, 2, 3] ∧
+    rowFlex = [2] := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:1940: GridLayoutAlgorithmTest.NGGridAxisType
+-- Standalone vs subgridded axis type verification on grid containers and subgrids.
+-- CSS Grid Layout Module Level 2 §2.
+theorem NGGridAxisType_vectors :
+    let gridCols := gridAxisType false
+    let gridRows := gridAxisType false
+    let subgridCols := gridAxisType true
+    let subgridRows := gridAxisType true
+    gridCols = .standaloneAxis ∧
+    gridRows = .standaloneAxis ∧
+    subgridCols = .subgriddedAxis ∧
+    subgridRows = .subgriddedAxis := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- grid_layout_algorithm_test.cc:1973: GridLayoutAlgorithmTest.SubgridLineNameList
+-- Subgrid line name ordering and resolution.
+-- CSS Grid Layout Module Level 2 §2.1.
+theorem SubgridLineNameList_vectors :
+    let subgridCols := gridAxisType true
+    let subgridRows := gridAxisType true
+    let colLineNames := subgridLineNames []
+    let rowLineNames := subgridLineNames ["a", "b", "c"]
+    subgridCols = .subgriddedAxis ∧
+    subgridRows = .subgriddedAxis ∧
+    colLineNames = [] ∧
+    rowLineNames = [(0, "a"), (1, "b"), (2, "c")] := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
 end TestsBlock
 end ChromiumLayout

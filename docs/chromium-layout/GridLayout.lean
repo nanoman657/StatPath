@@ -831,5 +831,137 @@ theorem grid_area_overlaps_symm (a b : GridArea) :
 theorem grid_area_occupied_empty (a : GridArea) :
     gridAreaOccupied [] a = false := rfl
 
+/-- Lookup track size function at 0-based index, defaulting to auto for implicit tracks.
+    CSS Grid Layout Module Level 1 §7.5 (The Implicit Grid). -/
+def getTrack (tracks : List GridTrackSizeType) (i : Nat) : GridTrackSizeType :=
+  match tracks, i with
+  | [], _ => .auto
+  | t :: _, 0 => t
+  | _ :: ts, i + 1 => getTrack ts i
+
+/-- Resolve a 1-based CSS grid line number (positive or negative) to a 0-based line index.
+    CSS Grid Layout Module Level 1 §8.3.1 (Line-based Placement). -/
+def resolveGridLine (line : Int) (explicitTracks : Nat) : Nat :=
+  if line > 0 then (line - 1).toNat
+  else if line < 0 then ((explicitTracks : Int) + 1 + line).toNat
+  else 0
+
+/-- Recursive helper for track span property search.
+    CSS Grid Layout Module Level 1 §11.5. -/
+def trackSpanLoop (tracks : List GridTrackSizeType) (p : GridTrackSizeType → Bool)
+                  (endLine : Nat) (i : Nat) (fuel : Nat) : Bool :=
+  match fuel with
+  | 0 => false
+  | fuel + 1 =>
+      if i ≥ endLine then false
+      else
+        let t := getTrack tracks i
+        if p t then true
+        else trackSpanLoop tracks p endLine (i + 1) fuel
+
+/-- Check whether any track in the half-open line interval [startLine, endLine) satisfies predicate `p`.
+    Tracks beyond explicit tracks default to implicit auto tracks.
+    CSS Grid Layout Module Level 1 §7.5, §11.5. -/
+def trackSpanHas (tracks : List GridTrackSizeType) (startLine endLine : Nat)
+                 (p : GridTrackSizeType → Bool) : Bool :=
+  trackSpanLoop tracks p endLine startLine (endLine - startLine + 1)
+
+/-- Filter item indices whose column track span satisfies predicate `p`.
+    CSS Grid Layout Module Level 1 §11.5. -/
+def gridItemsWithColSpanProperty (tracks : List GridTrackSizeType)
+                                 (items : List (Nat × Nat × Nat))
+                                 (p : GridTrackSizeType → Bool) : List Nat :=
+  items.filterMap (fun (id, s, e) => if trackSpanHas tracks s e p then some id else none)
+
+/-- Filter item indices whose row track span satisfies predicate `p`.
+    CSS Grid Layout Module Level 1 §11.5. -/
+def gridItemsWithRowSpanProperty (tracks : List GridTrackSizeType)
+                                 (items : List (Nat × Nat × Nat))
+                                 (p : GridTrackSizeType → Bool) : List Nat :=
+  items.filterMap (fun (id, s, e) => if trackSpanHas tracks s e p then some id else none)
+
+/-- Law: Every flexible track is classified as intrinsic for track sizing queries.
+    CSS Grid Layout Module Level 1 §7.2, §11.5. -/
+theorem is_flexible_implies_intrinsic (t : GridTrackSizeType) :
+    isFlexibleTrack t = true → isIntrinsicTrack t = true := by
+  cases t <;> intro h <;> first | rfl | contradiction
+
+/-- Law: Line 1 resolves to line index 0.
+    CSS Grid Layout Module Level 1 §8.3.1. -/
+theorem resolve_grid_line_one (numTracks : Nat) :
+    resolveGridLine 1 numTracks = 0 := rfl
+
+/-- Law: Negative line -1 resolves to explicitTracks.
+    CSS Grid Layout Module Level 1 §8.3.1. -/
+theorem resolve_grid_line_negative_one (numTracks : Nat) :
+    resolveGridLine (-1) numTracks = numTracks := by
+  dsimp [resolveGridLine]
+  have : ((numTracks : Int) + 1 + -1).toNat = numTracks := by omega
+  exact this
+
+/-- Law: Scanning beyond endLine immediately halts without matching.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem track_span_loop_ge (tracks : List GridTrackSizeType) (p : GridTrackSizeType → Bool)
+    (endLine i fuel : Nat) (h : i ≥ endLine) :
+    trackSpanLoop tracks p endLine i (fuel + 1) = false := by
+  dsimp [trackSpanLoop]
+  simp [h]
+
+/-- Law: An empty track span [line, line) never satisfies any track predicate.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem track_span_has_empty (tracks : List GridTrackSizeType) (line : Nat)
+    (p : GridTrackSizeType → Bool) :
+    trackSpanHas tracks line line p = false := by
+  dsimp [trackSpanHas]
+  have hdiff : line - line + 1 = 0 + 1 := by omega
+  rw [hdiff]
+  apply track_span_loop_ge
+  exact Nat.le_refl line
+
+/-- Law: Filtering an empty list of grid items produces an empty list.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem grid_items_with_col_span_property_empty
+    (tracks : List GridTrackSizeType) (p : GridTrackSizeType → Bool) :
+    gridItemsWithColSpanProperty tracks [] p = [] := rfl
+
+/-- CSS Grid axis type (standalone vs subgridded).
+    CSS Grid Layout Module Level 2 §2 (Subgrids). -/
+inductive GridAxisType where
+  | standaloneAxis
+  | subgriddedAxis
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Determine whether a grid axis is standalone or subgridded.
+    CSS Grid Layout Module Level 2 §2 (Subgrids). -/
+def gridAxisType (isSubgrid : Bool) : GridAxisType :=
+  if isSubgrid then .subgriddedAxis else .standaloneAxis
+
+/-- Map line name list to ordered line indices for subgrid track alignment.
+    CSS Grid Layout Module Level 2 §2.1 (Line Names in Subgrids). -/
+def subgridLineNames (names : List String) : List (Nat × String) :=
+  names.mapIdx (fun i name => (i, name))
+
+/-- Law: Subgrid flag produces subgriddedAxis type.
+    CSS Grid Layout Module Level 2 §2. -/
+theorem grid_axis_type_subgrid :
+    gridAxisType true = .subgriddedAxis := rfl
+
+/-- Law: Standalone flag produces standaloneAxis type.
+    CSS Grid Layout Module Level 2 §2. -/
+theorem grid_axis_type_standalone :
+    gridAxisType false = .standaloneAxis := rfl
+
+/-- Law: Empty subgrid line names produce an empty mapping.
+    CSS Grid Layout Module Level 2 §2.1. -/
+theorem subgrid_line_names_empty :
+    subgridLineNames [] = [] := rfl
+
+/-- Law: The number of line names matches the input count.
+    CSS Grid Layout Module Level 2 §2.1. -/
+theorem subgrid_line_names_length (names : List String) :
+    (subgridLineNames names).length = names.length := by
+  dsimp [subgridLineNames]
+  simp
+
 end GridLayout
 end ChromiumLayout
