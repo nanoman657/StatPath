@@ -595,5 +595,65 @@ theorem coalesce_gap_ranges_single_none :
 theorem coalesce_gap_ranges_single_blocked :
     coalesceGapRanges [.blocked] = [⟨0, 1, .blocked⟩] := rfl
 
+/-- Sum of track sizes within a span [startIdx, endIdx) in a track collection.
+    CSS Grid Layout Module Level 1 §11.5. -/
+def sumTrackSizes (tracks : List Nat) (startIdx endIdx : Nat) : Nat :=
+  (tracks.take endIdx).drop startIdx |>.foldl (·+·) 0
+
+/-- Available space for a grid item spanning a range of tracks [startLine, endLine] (1-indexed grid lines)
+    separated by gaps of size `gap`.
+    CSS Grid Layout Module Level 1 §11.5 (Calculate the Available Grid Space),
+    §11.6 (Track Sizing Algorithm). -/
+def itemAvailableTrackSize (tracks : List Nat) (gap : Nat) (startLine endLine : Nat) : Nat :=
+  if endLine ≤ startLine then 0
+  else
+    let startIdx := startLine - 1
+    let endIdx := endLine - 1
+    let span := endIdx - startIdx
+    let totalTrack := sumTrackSizes tracks startIdx endIdx
+    let totalGap := if span > 1 then (span - 1) * gap else 0
+    totalTrack + totalGap
+
+/-- Law: An invalid track span (endLine ≤ startLine) yields 0 available space.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem item_available_size_invalid_span (tracks : List Nat) (gap startLine endLine : Nat)
+    (h : endLine ≤ startLine) :
+    itemAvailableTrackSize tracks gap startLine endLine = 0 := by
+  dsimp [itemAvailableTrackSize]
+  split
+  · rfl
+  · omega
+
+/-- Law: An empty track collection yields 0 sum of track sizes.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem sum_track_sizes_empty (startIdx endIdx : Nat) :
+    sumTrackSizes [] startIdx endIdx = 0 := by
+  dsimp [sumTrackSizes]
+  simp
+
+/-- Law: A grid item spanning a single track receives exactly the size of that track
+    with no gap space added.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem item_available_size_single_track (tracks : List Nat) (gap : Nat) (line : Nat) (h : line > 0) :
+    itemAvailableTrackSize tracks gap line (line + 1) = sumTrackSizes tracks (line - 1) line := by
+  unfold itemAvailableTrackSize
+  split
+  · omega
+  · have hend : line + 1 - 1 = line := by omega
+    have hdiff : line - (line - 1) = 1 := by omega
+    simp [hend, hdiff]
+
+/-- Law: A grid item spanning two adjacent tracks receives the sum of both track sizes
+    plus exactly one gap.
+    CSS Grid Layout Module Level 1 §11.5. -/
+theorem item_available_size_two_tracks (tracks : List Nat) (gap : Nat) (line : Nat) (h : line > 0) :
+    itemAvailableTrackSize tracks gap line (line + 2) = sumTrackSizes tracks (line - 1) (line + 1) + gap := by
+  unfold itemAvailableTrackSize
+  split
+  · omega
+  · have hend : line + 2 - 1 = line + 1 := by omega
+    have hdiff : line + 1 - (line - 1) = 2 := by omega
+    simp [hend, hdiff]
+
 end GridLayout
 end ChromiumLayout

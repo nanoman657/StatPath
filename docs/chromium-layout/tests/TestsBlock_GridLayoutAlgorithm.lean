@@ -174,5 +174,19 @@ theorem GapGeometryWithEmptyCellsAndSpanningItems_vectors :
     mainGapRanges 1 3 grid = [⟨0, 1, .emptyAfter⟩, ⟨1, 2, .emptyBoth⟩, ⟨2, 3, .blocked⟩] := by
   decide
 
+-- grid_layout_algorithm_test.cc:171: GridLayoutAlgorithmTest.GridLayoutAlgorithmAvailableRowSizes
+-- Available row size for grid items spanning rows [1/2, 2/4, 3/5, 6/7, 4/6] with grid-gap: 10px
+-- across track sizes [0, 0, 100, 100, 0, 100].
+-- CSS Grid Layout Module Level 1 §11.5, §11.6.
+theorem GridLayoutAlgorithmAvailableRowSizes_vectors :
+    let tracks := [0, 0, 100, 100, 0, 100]
+    let gap := 10
+    itemAvailableTrackSize tracks gap 1 2 = 0 ∧
+    itemAvailableTrackSize tracks gap 2 4 = 110 ∧
+    itemAvailableTrackSize tracks gap 3 5 = 210 ∧
+    itemAvailableTrackSize tracks gap 6 7 = 100 ∧
+    itemAvailableTrackSize tracks gap 4 6 = 110 := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl⟩
+
 end TestsBlock
 end ChromiumLayout
