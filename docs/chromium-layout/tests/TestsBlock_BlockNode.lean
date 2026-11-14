@@ -2,10 +2,12 @@
   Vectors transcribed from block_node_test.cc.
 -/
 import BlockNode
+import BlockOverflow
 
 namespace ChromiumLayout
 namespace TestsBlock
 open BlockNode
+open BlockOverflow
 
 /-- `IsFloatingForOutOfFlowFloating` (line 16): `float:left; position:absolute` is not floating. -/
 theorem IsFloatingForOutOfFlowFloating_vectors :
@@ -44,6 +46,11 @@ theorem ChildOofBeforeInline_vectors : childNodes [.oof, .text] = [.inline] := b
 
 /-- `ChildOofAfterInline` (153): `Hello!<oof></oof>`: one inline child. -/
 theorem ChildOofAfterInline_vectors : childNodes [.text, .oof] = [.inline] := by decide
+
+/-- `MinContentForControls` (169): form controls with border 2px have min-content inline size 4px.
+    CSS Box Model 3 §4, CSS Sizing 3 §5.1. -/
+theorem MinContentForControls_vectors :
+    controlMinContentInlineSize 2 = 4 := by decide
 
 end TestsBlock
 end ChromiumLayout

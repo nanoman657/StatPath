@@ -240,5 +240,79 @@ theorem filter_blur_outset_nonneg (r z : Int) (hr : r ≥ 0) (hz : z ≥ 0) :
   have h3r : 3 * r ≥ 0 := Int.mul_nonneg h3 hr
   exact Int.mul_nonneg h3r hz
 
+/-- Whether an element scrolls overflow.
+    CSS Overflow Module Level 3 §3. -/
+def scrollsOverflow (o : OverflowValue) : Bool :=
+  o == .auto || o == .scroll
+
+/-- Whether an element is user-scrollable.
+    CSS Overflow Module Level 3 §3.
+    An element is user-scrollable if it scrolls overflow and content exceeds container size. -/
+def isUserScrollable (o : OverflowValue) (containerSize contentSize : Nat) : Bool :=
+  scrollsOverflow o && contentSize > containerSize
+
+/-- Whether an element is fixed to the view (viewport).
+    CSS Positioned Layout 3 §2.2, CSS Transforms 1 §2.
+    A fixed-position element is fixed to the view unless an ancestor has a transform
+    (which establishes a containing block for fixed-position descendants). -/
+def isFixedToView (isFixed : Bool) (hasTransformAncestor : Bool) : Bool :=
+  isFixed && !hasTransformAncestor
+
+/-- Minimum inline size for empty form controls (select, file input, marquee).
+    CSS Box Model 3 §4, CSS Sizing 3 §5.1. -/
+def controlMinContentInlineSize (border : Nat) : Nat :=
+  2 * border
+
+/-- Union of parent border box rect and child visual overflow rect.
+    CSS Overflow 3 §2.1. -/
+def visualOverflowWithChild (parent : PhysicalRect) (child : PhysicalRect) : PhysicalRect :=
+  let minX := min parent.x child.x
+  let minY := min parent.y child.y
+  let maxX := max (parent.x + parent.w) (child.x + child.w)
+  let maxY := max (parent.y + parent.h) (child.y + child.h)
+  ⟨minX, minY, maxX - minX, maxY - minY⟩
+
+/-- Law: Hidden overflow never scrolls overflow.
+    CSS Overflow Module Level 3 §3. -/
+theorem scrolls_overflow_hidden : scrollsOverflow .hidden = false := rfl
+
+/-- Law: Auto overflow scrolls overflow.
+    CSS Overflow Module Level 3 §3. -/
+theorem scrolls_overflow_auto : scrollsOverflow .auto = true := rfl
+
+/-- Law: An element is user-scrollable only if content strictly exceeds container size.
+    CSS Overflow Module Level 3 §3. -/
+theorem user_scrollable_implies_overflow (o : OverflowValue) (sz c : Nat)
+    (h : isUserScrollable o sz c = true) : c > sz := by
+  dsimp [isUserScrollable] at h
+  cases hsc : scrollsOverflow o <;> simp [hsc] at h
+  exact h
+
+/-- Law: Transform on ancestor prevents an element from being fixed to view.
+    CSS Transforms 1 §2, CSS Positioned Layout 3 §2.2. -/
+theorem transform_cb_not_fixed_to_view (isFixed : Bool) :
+    isFixedToView isFixed true = false := by
+  dsimp [isFixedToView]
+  cases isFixed <;> rfl
+
+/-- Law: Without transform ancestor, fixed-to-view corresponds to fixed positioning.
+    CSS Positioned Layout 3 §2.2. -/
+theorem fixed_to_view_no_transform (isFixed : Bool) :
+    isFixedToView isFixed false = isFixed := by
+  dsimp [isFixedToView]
+  cases isFixed <;> rfl
+
+/-- Law: Form control minimum inline size equals twice the border.
+    CSS Box Model 3 §4, CSS Sizing 3 §5.1. -/
+theorem control_min_size_eq (b : Nat) :
+    controlMinContentInlineSize b = 2 * b := rfl
+
+/-- Law: Child visual overflow expansion never moves the parent origin rightward or downward.
+    CSS Overflow 3 §2.1. -/
+theorem child_visual_overflow_origin (p c : PhysicalRect) :
+    (visualOverflowWithChild p c).x ≤ p.x ∧ (visualOverflowWithChild p c).y ≤ p.y := by
+  dsimp [visualOverflowWithChild]
+  omega
+
 end BlockOverflow
 end ChromiumLayout

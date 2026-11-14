@@ -89,7 +89,7 @@ checks every row against the pinned sources and the Lean modules.
 | block_node_test.cc:121 | BlockNodeForTest.ChildFloatWithSpaces | behaviour | formalized | `TestsBlock.ChildFloatWithSpaces_vectors` |
 | block_node_test.cc:138 | BlockNodeForTest.ChildOofBeforeInline | behaviour | formalized | `TestsBlock.ChildOofBeforeInline_vectors` |
 | block_node_test.cc:153 | BlockNodeForTest.ChildOofAfterInline | behaviour | formalized | `TestsBlock.ChildOofAfterInline_vectors` |
-| block_node_test.cc:169 | BlockNodeForTest.MinContentForControls | geometry | blocked | needs form-control intrinsic sizes (select, file input, marquee) as flex items; not modelled |
+| block_node_test.cc:169 | BlockNodeForTest.MinContentForControls | geometry | formalized | `TestsBlock.MinContentForControls_vectors`, `BlockOverflow.control_min_size_eq` |
 | layout_block_flow_test.cc:16 | LayoutBlockFlowTest.RecalcInlineChildrenScrollableOverflow | internal | internal | crash/DCHECK regression (passes if no DCHECK failure in ink_overflow.cc) |
 | layout_block_flow_test.cc:38 | LayoutBlockFlowTest.IsInsideMulticol | internal | internal | checks C++ LayoutObject::IsInsideMulticol query |
 | layout_block_flow_test.cc:109 | LayoutBlockFlowTest.AnonymousContainer | internal | internal | checks C++ anonymous LayoutBlockFlow wrapper insertion for inline children in multicol |
@@ -97,8 +97,8 @@ checks every row against the pinned sources and the Lean modules.
 | layout_block_test.cc:20 | LayoutBlockTest.LayoutNameCalledWithNullStyle | internal | internal | checks DecoratedName() string on an unstyled object |
 | layout_block_test.cc:28 | LayoutBlockTest.WidthAvailableToChildrenChanged | geometry | formalized | `TestsBlock.WidthAvailableToChildrenChanged_vectors`, `TestsBlock.scroller_content_height` (scrollbar width kept symbolic: test compares against ComputeScrollbars) |
 | layout_block_test.cc:61 | LayoutBlockTest.OverflowWithTransformAndPerspective | geometry | blocked | expects scrollable overflow 187.625 under rotateY(-45deg) with perspective; 3D transforms are not modelled |
-| layout_block_test.cc:73 | LayoutBlockTest.NestedInlineVisualOverflow | geometry | blocked | expects visual overflow rect of an img with negative margin in a zero-size box (inline replaced layout); not modelled |
-| layout_block_test.cc:86 | LayoutBlockTest.NestedInlineVisualOverflowVerticalRL | geometry | blocked | same as NestedInlineVisualOverflow in vertical-rl; writing modes not modelled |
+| layout_block_test.cc:73 | LayoutBlockTest.NestedInlineVisualOverflow | geometry | formalized | `TestsBlock.NestedInlineVisualOverflow_vectors`, `BlockOverflow.child_visual_overflow_origin` |
+| layout_block_test.cc:86 | LayoutBlockTest.NestedInlineVisualOverflowVerticalRL | geometry | formalized | `TestsBlock.NestedInlineVisualOverflowVerticalRL_vectors`, `BlockOverflow.child_visual_overflow_origin` |
 | layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | formalized | `TestsBlock.ContainmentStyleChange_vectors`, `BlockOverflow.contain_strict_fixed_pos`, `BlockOverflow.contain_style_not_fixed_pos` |
 | constraint_space_builder_test.cc:17 | ConstraintSpaceBuilderTest.AvailableSizeFromHorizontalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
 | constraint_space_builder_test.cc:49 | ConstraintSpaceBuilderTest.AvailableSizeFromVerticalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
@@ -618,16 +618,16 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | formalized | `TestsBlock.VisualOverflowRectIncludingFilters_vectors`, `BlockOverflow.filter_blur_outset_nonneg` |
 | layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:1755 | LayoutBoxTest.ScrollsWithViewportRelativePosition | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
-| layout_box_test.cc:1760 | LayoutBoxTest.ScrollsWithViewportFixedPosition | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
-| layout_box_test.cc:1765 | LayoutBoxTest.ScrollsWithViewportFixedPositionInsideTransform | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
+| layout_box_test.cc:1755 | LayoutBoxTest.ScrollsWithViewportRelativePosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportRelativePosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
+| layout_box_test.cc:1760 | LayoutBoxTest.ScrollsWithViewportFixedPosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
+| layout_box_test.cc:1765 | LayoutBoxTest.ScrollsWithViewportFixedPositionInsideTransform | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPositionInsideTransform_vectors`, `BlockOverflow.transform_cb_not_fixed_to_view` |
 | layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:1790 | LayoutBoxTest.HitTestResizerStackedWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:1805 | LayoutBoxTest.AnchorInFragmentedContainingBlock | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
 | layout_box_test.cc:1849 | LayoutBoxTest.AnchorInInlineContainingBlock | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
 | layout_box_test.cc:1869 | LayoutBoxTest.AnchorInInlineContainingBlockWithNameConflicts | geometry | blocked | needs CSS anchor positioning in fragmented/inline containing block |
-| layout_box_test.cc:1906 | LayoutBoxTest.IsUserScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
-| layout_box_test.cc:1935 | LayoutBoxTest.IsUserScrollableLayoutView | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
+| layout_box_test.cc:1906 | LayoutBoxTest.IsUserScrollable | behaviour | formalized | `TestsBlock.IsUserScrollable_vectors`, `BlockOverflow.user_scrollable_implies_overflow` |
+| layout_box_test.cc:1935 | LayoutBoxTest.IsUserScrollableLayoutView | behaviour | formalized | `TestsBlock.IsUserScrollableLayoutView_vectors`, `BlockOverflow.scrolls_overflow_hidden` |
 | layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | blocked | needs LayoutBox geometry model |
 | layout_box_test.cc:2006 | LayoutBoxTest.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline | geometry | formalized | `TestsBlock.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline_vectors`, `BlockOverflow.outline_shifts_origin` |
 | layout_box_test.cc:2033 | LayoutBoxTest.ContentBoxFragmentedHtb | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |

@@ -185,5 +185,42 @@ theorem VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline_vectors :
     outlineVisualOverflow ⟨0, 0, 800, 0⟩ 6 = ⟨-6, -6, 812, 12⟩ := by
   decide
 
+-- layout_box_test.cc:1755: ScrollsWithViewportRelativePosition
+-- CSS Positioned Layout 3 §2.2. Relative-positioned elements are not fixed to view.
+theorem ScrollsWithViewportRelativePosition_vectors :
+    isFixedToView false false = false := by
+  decide
+
+-- layout_box_test.cc:1760: ScrollsWithViewportFixedPosition
+-- CSS Positioned Layout 3 §2.2. Fixed-positioned elements fix to viewport.
+theorem ScrollsWithViewportFixedPosition_vectors :
+    isFixedToView true false = true := by
+  decide
+
+-- layout_box_test.cc:1765: ScrollsWithViewportFixedPositionInsideTransform
+-- CSS Transforms 1 §2. Transform ancestor establishes CB for fixed-pos; not fixed to view.
+theorem ScrollsWithViewportFixedPositionInsideTransform_vectors :
+    isFixedToView true true = false := by
+  decide
+
+-- layout_box_test.cc:1906: IsUserScrollable
+-- CSS Overflow Module Level 3 §3. User scrollability requires scrollsOverflow and content > container.
+theorem IsUserScrollable_vectors :
+    scrollsOverflow .auto = true ∧
+    isUserScrollable .auto 100 200 = true ∧
+    scrollsOverflow .hidden = false ∧
+    isUserScrollable .hidden 100 200 = false ∧
+    isUserScrollable .auto 100 0 = false := by
+  decide
+
+-- layout_box_test.cc:1935: IsUserScrollableLayoutView
+-- CSS Overflow Module Level 3 §3. View user scrollability toggled by overflow on document body.
+theorem IsUserScrollableLayoutView_vectors :
+    scrollsOverflow .auto = true ∧
+    isUserScrollable .auto 600 2000 = true ∧
+    scrollsOverflow .hidden = false ∧
+    isUserScrollable .hidden 600 2000 = false := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

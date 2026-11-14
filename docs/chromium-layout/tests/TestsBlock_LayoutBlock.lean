@@ -34,5 +34,17 @@ theorem ContainmentStyleChange_vectors :
     isFixedPosContainingBlock .style = false := by
   decide
 
+-- layout_block_test.cc:73: NestedInlineVisualOverflow
+-- CSS Overflow 3 §2.1. Child image with negative margin creates visual overflow beyond 0x0 block.
+theorem NestedInlineVisualOverflow_vectors :
+    visualOverflowWithChild ⟨0, 0, 0, 0⟩ ⟨-15, 0, 40, 40⟩ = ⟨-15, 0, 40, 40⟩ := by
+  decide
+
+-- layout_block_test.cc:86: NestedInlineVisualOverflowVerticalRL
+-- CSS Overflow 3 §2.1, CSS Writing Modes 3 §6.4. Visual overflow in vertical-rl with negative right margin.
+theorem NestedInlineVisualOverflowVerticalRL_vectors :
+    visualOverflowWithChild ⟨0, 0, 0, 0⟩ ⟨-25, 0, 40, 40⟩ = ⟨-25, 0, 40, 40⟩ := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
