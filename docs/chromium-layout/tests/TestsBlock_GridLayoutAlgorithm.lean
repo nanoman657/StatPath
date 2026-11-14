@@ -242,5 +242,71 @@ theorem GridLayoutAlgorithmGridPositions_vectors :
     rowRanges = [⟨0, 1, false⟩, ⟨1, 2, false⟩, ⟨3, 1, false⟩, ⟨4, 1, false⟩, ⟨5, 1, false⟩] := by
   exact ⟨rfl, rfl⟩
 
+-- grid_layout_algorithm_test.cc:929: GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoGridPositions
+-- Grid auto-placement resolves grid areas for items with definite and auto positions.
+-- item1: row 2, col 2 -> [1..2, 1..2]
+-- item2: auto -> [1..2, 0..1]
+-- item3: auto -> [0..1, 1..2]
+-- item4: row 1, col 1 -> [0..1, 0..1]
+-- CSS Grid Layout Module Level 1 §8.5.
+theorem GridLayoutAlgorithmAutoGridPositions_vectors :
+    let items : List GridPlacementItem := [
+      { id := 1, col := some (1, 2), row := some (1, 2) },
+      { id := 2 },
+      { id := 3 },
+      { id := 4, col := some (0, 1), row := some (0, 1) }
+    ]
+    let areas := resolveAutoGridPositions 2 items false
+    areas = [
+      ⟨1, 2, 1, 2⟩,
+      ⟨1, 2, 0, 1⟩,
+      ⟨0, 1, 1, 2⟩,
+      ⟨0, 1, 0, 1⟩
+    ] := by
+  exact rfl
+
+-- grid_layout_algorithm_test.cc:1003: GridLayoutAlgorithmTest.GridLayoutAlgorithmAutoDense
+-- Grid dense auto-placement resolves grid areas for 16 items with multi-track spans and fixed/auto positions.
+-- CSS Grid Layout Module Level 1 §8.5.
+theorem GridLayoutAlgorithmAutoDense_vectors :
+    let items : List GridPlacementItem := [
+      { id := 0, col := some (0, 2), row := some (0, 2) },
+      { id := 1, col := some (3, 7), row := some (0, 3) },
+      { id := 2, col := some (8, 10), row := some (0, 1) },
+      { id := 3, col := some (0, 2), row := some (3, 5) },
+      { id := 4, col := some (3, 5), row := some (3, 4) },
+      { id := 5, col := some (6, 9), row := some (4, 5) },
+      { id := 6, col := some (5, 6), row := some (7, 8) },
+      { id := 7, col := some (5, 7), rowSpan := 2 },
+      { id := 8, row := some (3, 4), colSpan := 2 },
+      { id := 9, col := some (5, 6) },
+      { id := 10, colSpan := 5, rowSpan := 5 },
+      { id := 11, rowSpan := 9 },
+      { id := 12, colSpan := 2, rowSpan := 3 },
+      { id := 13, rowSpan := 5 },
+      { id := 14 },
+      { id := 15 }
+    ]
+    let areas := resolveAutoGridPositions 10 items true
+    areas = [
+      ⟨0, 2, 0, 2⟩,
+      ⟨3, 7, 0, 3⟩,
+      ⟨8, 10, 0, 1⟩,
+      ⟨0, 2, 3, 5⟩,
+      ⟨3, 5, 3, 4⟩,
+      ⟨6, 9, 4, 5⟩,
+      ⟨5, 6, 7, 8⟩,
+      ⟨5, 7, 5, 7⟩,
+      ⟨5, 7, 3, 4⟩,
+      ⟨5, 6, 4, 5⟩,
+      ⟨0, 5, 5, 10⟩,
+      ⟨9, 10, 1, 10⟩,
+      ⟨7, 9, 1, 4⟩,
+      ⟨2, 3, 0, 5⟩,
+      ⟨7, 8, 0, 1⟩,
+      ⟨0, 1, 2, 3⟩
+    ] := by
+  exact rfl
+
 end TestsBlock
 end ChromiumLayout

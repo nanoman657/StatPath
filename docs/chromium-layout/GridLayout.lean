@@ -692,5 +692,144 @@ theorem grid_ranges_length : ∀ (lines : List Nat),
       rw [ih]
       cases rest <;> rfl
 
+/-- A 2D grid area representing column and row track spans [startLine, endLine].
+    CSS Grid Layout Module Level 1 §8.3 (Grid Areas). -/
+structure GridArea where
+  columnStart : Nat
+  columnEnd : Nat
+  rowStart : Nat
+  rowEnd : Nat
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Item placement descriptor with optional explicit column and row placement and spans.
+    CSS Grid Layout Module Level 1 §8.1 (Grid Item Placement). -/
+structure GridPlacementItem where
+  id : Nat
+  col : Option (Nat × Nat) := none
+  row : Option (Nat × Nat) := none
+  colSpan : Nat := 1
+  rowSpan : Nat := 1
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Whether two grid areas overlap.
+    CSS Grid Layout Module Level 1 §8.5 (Grid Item Placement Algorithm). -/
+def gridAreaOverlaps (a b : GridArea) : Bool :=
+  max a.columnStart b.columnStart < min a.columnEnd b.columnEnd &&
+  max a.rowStart b.rowStart < min a.rowEnd b.rowEnd
+
+/-- Whether candidate grid area overlaps with any already placed grid area.
+    CSS Grid Layout Module Level 1 §8.5. -/
+def gridAreaOccupied (placed : List (Nat × GridArea)) (a : GridArea) : Bool :=
+  placed.any (fun (_, b) => gridAreaOverlaps a b)
+
+/-- Place grid items using the CSS Grid auto-placement algorithm.
+    CSS Grid Layout Module Level 1 §8.5 (Grid Item Placement Algorithm). -/
+def resolveAutoGridPositions (numCols : Nat) (items : List GridPlacementItem) (dense : Bool := false) : List GridArea :=
+  -- Step 1. Position anything that's not auto-positioned
+  let definite : List (Nat × GridArea) := items.filterMap (fun it =>
+    match it.col, it.row with
+    | some (cs, ce), some (rs, re) => some (it.id, ⟨cs, ce, rs, re⟩)
+    | _, _ => none)
+
+  -- Step 2. Process items locked to the major axis (row definite, column auto)
+  let rec placeMajor (rem : List GridPlacementItem) (placed : List (Nat × GridArea)) : List (Nat × GridArea) :=
+    match rem with
+    | [] => placed
+    | it :: rest =>
+        match it.col, it.row with
+        | none, some (rs, re) =>
+            let span := it.colSpan
+            let rec findCol (c : Nat) (fuel : Nat) : Nat :=
+              match fuel with
+              | 0 => c
+              | fuel + 1 =>
+                  if c + span ≤ numCols && !gridAreaOccupied placed ⟨c, c + span, rs, re⟩ then c
+                  else findCol (c + 1) fuel
+            let c := findCol 0 (numCols + 1)
+            placeMajor rest ((it.id, ⟨c, c + span, rs, re⟩) :: placed)
+        | _, _ => placeMajor rest placed
+  let placedAfterStep2 := placeMajor items definite
+
+  -- Step 4. Position remaining grid items
+  let rec placeRemaining (rem : List GridPlacementItem) (curR curC : Nat)
+                         (placed : List (Nat × GridArea)) : List (Nat × GridArea) :=
+    match rem with
+    | [] => placed
+    | it :: rest =>
+        if placed.any (fun (id, _) => id == it.id) then
+          placeRemaining rest curR curC placed
+        else
+          let colSpan := it.colSpan
+          let rowSpan := it.rowSpan
+          match it.col with
+          | some (cs, ce) =>
+              -- column definite, row auto
+              let startR := if dense then 0 else curR
+              let rec findRow (r : Nat) (fuel : Nat) : Nat :=
+                match fuel with
+                | 0 => r
+                | fuel + 1 =>
+                    if !gridAreaOccupied placed ⟨cs, ce, r, r + rowSpan⟩ then r
+                    else findRow (r + 1) fuel
+              let r := findRow startR 100
+              placeRemaining rest (if dense then 0 else r) 0 ((it.id, ⟨cs, ce, r, r + rowSpan⟩) :: placed)
+          | none =>
+              -- both auto
+              let startR := if dense then 0 else curR
+              let startC := if dense then 0 else curC
+              let rec findArea (r c : Nat) (fuel : Nat) : Nat × Nat :=
+                match fuel with
+                | 0 => (r, c)
+                | fuel + 1 =>
+                    if c + colSpan ≤ numCols then
+                      if !gridAreaOccupied placed ⟨c, c + colSpan, r, r + rowSpan⟩ then
+                        (r, c)
+                      else
+                        findArea r (c + 1) fuel
+                    else
+                      findArea (r + 1) 0 fuel
+              let (r, c) := findArea startR startC 500
+              let newArea : GridArea := ⟨c, c + colSpan, r, r + rowSpan⟩
+              let (nextR, nextC) := if dense then (0, 0) else (r, c + colSpan)
+              placeRemaining rest nextR nextC ((it.id, newArea) :: placed)
+
+  let allPlaced := placeRemaining items 0 0 placedAfterStep2
+  items.map (fun it =>
+    match allPlaced.find? (fun (id, _) => id == it.id) with
+    | some (_, a) => a
+    | none => ⟨0, 1, 0, 1⟩)
+
+/-- Law: An empty list of grid placement items produces an empty list of grid areas.
+    CSS Grid Layout Module Level 1 §8.5. -/
+theorem resolve_auto_grid_positions_empty (cols : Nat) (dense : Bool) :
+    resolveAutoGridPositions cols [] dense = [] := rfl
+
+/-- Law: The number of placed grid areas equals the number of input items.
+    CSS Grid Layout Module Level 1 §8.5. -/
+theorem resolve_auto_grid_positions_length (cols : Nat) (items : List GridPlacementItem) (dense : Bool) :
+    (resolveAutoGridPositions cols items dense).length = items.length := by
+  dsimp [resolveAutoGridPositions]
+  simp
+
+/-- Law: A single item with definite column and row placement retains its specified position.
+    CSS Grid Layout Module Level 1 §8.5. -/
+theorem resolve_auto_grid_positions_single_definite (cols cs ce rs re : Nat) (dense : Bool) :
+    resolveAutoGridPositions cols [{ id := 1, col := some (cs, ce), row := some (rs, re) }] dense = [⟨cs, ce, rs, re⟩] := rfl
+
+/-- Law: Grid area overlap relation is symmetric.
+    CSS Grid Layout Module Level 1 §8.5. -/
+theorem grid_area_overlaps_symm (a b : GridArea) :
+    gridAreaOverlaps a b = gridAreaOverlaps b a := by
+  unfold gridAreaOverlaps
+  rw [Nat.max_comm a.columnStart b.columnStart,
+      Nat.min_comm a.columnEnd b.columnEnd,
+      Nat.max_comm a.rowStart b.rowStart,
+      Nat.min_comm a.rowEnd b.rowEnd]
+
+/-- Law: An empty placed list never occupies any candidate grid area.
+    CSS Grid Layout Module Level 1 §8.5. -/
+theorem grid_area_occupied_empty (a : GridArea) :
+    gridAreaOccupied [] a = false := rfl
+
 end GridLayout
 end ChromiumLayout
