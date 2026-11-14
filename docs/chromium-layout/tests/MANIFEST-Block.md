@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -680,11 +680,11 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:843 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectContainingBlockShiftingAncestor | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:905 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectContainingBlockShiftingAncestorRoot | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:940 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectContainingBlockShiftingAncestorTable | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:974 | LayoutBoxModelObjectTest.StickyPositionNested | geometry | blocked | model lacks nested sticky position offsets |
-| layout_box_model_object_test.cc:1005 | LayoutBoxModelObjectTest.StickyPositionChildHasLargerTop | geometry | blocked | model lacks nested sticky position offsets |
-| layout_box_model_object_test.cc:1036 | LayoutBoxModelObjectTest.StickyPositionParentHasLargerTop | geometry | blocked | model lacks nested sticky position offsets |
-| layout_box_model_object_test.cc:1067 | LayoutBoxModelObjectTest.StickyPositionChildPushingOutsideParent | geometry | blocked | model lacks nested sticky position offsets |
-| layout_box_model_object_test.cc:1100 | LayoutBoxModelObjectTest.StickyPositionTripleNestedDiv | geometry | blocked | model lacks nested sticky position offsets |
+| layout_box_model_object_test.cc:974 | LayoutBoxModelObjectTest.StickyPositionNested | geometry | formalized | `TestsBlock.StickyPositionNested_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1005 | LayoutBoxModelObjectTest.StickyPositionChildHasLargerTop | geometry | formalized | `TestsBlock.StickyPositionChildHasLargerTop_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1036 | LayoutBoxModelObjectTest.StickyPositionParentHasLargerTop | geometry | formalized | `TestsBlock.StickyPositionParentHasLargerTop_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1067 | LayoutBoxModelObjectTest.StickyPositionChildPushingOutsideParent | geometry | formalized | `TestsBlock.StickyPositionChildPushingOutsideParent_vectors`, `BlockSticky.sticky_offset_le_max_shift` |
+| layout_box_model_object_test.cc:1100 | LayoutBoxModelObjectTest.StickyPositionTripleNestedDiv | geometry | formalized | `TestsBlock.StickyPositionTripleNestedDiv_vectors`, `BlockSticky.sticky_offset_le_max_shift` |
 | layout_box_model_object_test.cc:1138 | LayoutBoxModelObjectTest.StickyPositionNestedStickyTable | geometry | blocked | model lacks nested sticky table offsets |
 | layout_box_model_object_test.cc:1197 | LayoutBoxModelObjectTest.StickyPositionComplexTableNesting | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
 | layout_box_model_object_test.cc:1230 | LayoutBoxModelObjectTest.StickyPositionNestedInlineElements | geometry | blocked | model lacks nested sticky inline offsets |
@@ -1153,6 +1153,9 @@ checks every row against the pinned sources and the Lean modules.
 - `GridLayout.resolve_gap_none`: percentage gap resolves to 0 when container dimension is indefinite (CSS Box Alignment 3 §8, CSS Grid 1 §10.1).
 - `BlockWritingMode.physicalContentBox_vertical`: in vertical writing modes, physical width is logical block size and physical height is logical inline size (CSS Writing Modes 3 §6.4).
 - `BlockFlow.sliceCount_pos`: non-empty content in positive fragmentainer always requires at least one slice (CSS Fragmentation 3 §2).
+- `BlockSticky.sticky_offset_le_max_shift`: sticky offset is always bounded by the containing block headroom (CSS Positioned Layout 3 §2.3).
+- `BlockSticky.sticky_offset_none`: if no top inset is specified, sticky offset is 0 (CSS Positioned Layout 3 §2.3).
+- `BlockSticky.sticky_offset_unscrolled`: if target position is at or before starting position, sticky offset is 0 (CSS Positioned Layout 3 §2.3).
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).
