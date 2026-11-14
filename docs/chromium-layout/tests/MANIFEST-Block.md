@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `OutOfFlowAnchor.lean` (CSS anchor positioning declarations, queries, and side evaluation), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `OutOfFlowAnchor.lean` (CSS anchor positioning declarations, queries, and side evaluation), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing), `BlockOverflow.lean` (CSS overflow clipping, scroll containers, overflow-clip-margin, and paint containment).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -584,20 +584,20 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
 | layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
 | layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | blocked | needs LayoutBox geometry model |
-| layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:506 | LayoutBoxTest.VisualOverflowRectWithMask | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:522 | LayoutBoxTest.VisualOverflowRectWithMaskAndOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:538 | LayoutBoxTest.VisualOverflowRectWithMaskWithOutset | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:555 | LayoutBoxTest.VisualOverflowRectWithMaskWithOutsetAndOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:572 | LayoutBoxTest.VisualOverflowRectOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:572 | LayoutBoxTest.VisualOverflowRectOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
+| layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowClip_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
+| layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | formalized | `TestsBlock.VisualOverflowRectWithOverflowClipMargin_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | needs LayoutBox hit-testing model |
-| layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:769 | LayoutBoxTest.OverflowRectsOverflowHidden | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | formalized | `TestsBlock.OverflowRectsContainPaint_vectors`, `BlockOverflow.contain_paint_clips_both` |
+| layout_box_test.cc:769 | LayoutBoxTest.OverflowRectsOverflowHidden | geometry | formalized | `TestsBlock.OverflowRectsOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | blocked | needs LayoutBox geometry model |
 | layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
 | layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
@@ -1087,7 +1087,7 @@ checks every row against the pinned sources and the Lean modules.
 | custom/layout_worklet_test.cc:231 | LayoutWorkletTest.RegisterLayout_BadIntrinsicSizes | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
 | custom/layout_worklet_test.cc:243 | LayoutWorkletTest.RegisterLayout_NoLayout | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
 | custom/layout_worklet_test.cc:255 | LayoutWorkletTest.RegisterLayout_BadLayout | behaviour | blocked | model lacks CSS layout worklet (Houdini custom layout) |
-| paint_containment_test.cc:34 | PaintContainmentTest.BlockPaintContainment | behaviour | blocked | model lacks paint containment stacking and BFC creation |
+| paint_containment_test.cc:34 | PaintContainmentTest.BlockPaintContainment | behaviour | formalized | `TestsBlock.BlockPaintContainment_vectors`, `BlockOverflow.contain_paint_creates_nfc`, `BlockOverflow.contain_paint_clips_both` |
 | paint_containment_test.cc:47 | PaintContainmentTest.InlinePaintContainment | internal | internal | Blink object type check on non-atomic inline |
 | paint_containment_test.cc:58 | PaintContainmentTest.SvgWithContainmentShouldNotCrash | internal | internal | Blink crash regression test |
 | selection_state_test.cc:14 | SelectionStateTest.StreamOutput | internal | internal | Blink C++ string serialization operator check |

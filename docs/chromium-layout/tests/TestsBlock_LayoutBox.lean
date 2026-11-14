@@ -1,12 +1,13 @@
 import BlockFlow
 import BlockFragmentation
+import BlockOverflow
 import BlockWritingMode
 import ColumnWidth
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockWritingMode ColumnWidth
+open BlockFlow BlockOverflow BlockWritingMode ColumnWidth
 
 -- layout_box_test.cc:2045: ContentBoxFragmentedVlr
 -- In vertical-lr, block-size maps to physical width and inline-size to physical height.
@@ -69,6 +70,57 @@ theorem StitchedSizeAfterRelayout_vectors :
     sliceCount F 50 = 1 ∧ (colW, sliceTotal F 0 50 1) = (100, 50) ∧
     -- height 150px -> 2 fragments, stitched size (100, 150)
     sliceCount F 150 = 2 ∧ (colW, sliceTotal F 0 150 2) = (100, 150) := by
+  decide
+
+-- layout_box_test.cc:482: VisualOverflowRectWithBlockChild
+-- CSS Overflow Module Level 3 §3.1.
+theorem VisualOverflowRectWithBlockChild_vectors :
+    let selfRect : Rect := ⟨0, 0, 100, 100⟩
+    let visRect := visualOverflowRect 100 100 300 300 0 .visible .visible false
+    selfRect = ⟨0, 0, 100, 100⟩ ∧ visRect = ⟨0, 0, 300, 300⟩ := by
+  decide
+
+-- layout_box_test.cc:572: VisualOverflowRectOverflowHidden
+-- CSS Overflow Module Level 3 §3, §3.1.
+theorem VisualOverflowRectOverflowHidden_vectors :
+    isScrollContainer .hidden .hidden = true ∧
+    clipsAxis .hidden false = true ∧
+    visualOverflowRect 100 100 300 300 0 .hidden .hidden false = ⟨0, 0, 100, 100⟩ := by
+  decide
+
+-- layout_box_test.cc:587: VisualOverflowRectOverflowClip
+-- CSS Overflow Module Level 3 §3, §3.1.
+theorem VisualOverflowRectOverflowClip_vectors :
+    isScrollContainer .clip .clip = false ∧
+    visualOverflowRect 100 50 300 300 0 .clip .clip false = ⟨0, 0, 100, 50⟩ ∧
+    visualOverflowRect 100 50 300 300 0 .clip .visible false = ⟨0, 0, 100, 300⟩ ∧
+    visualOverflowRect 100 50 300 300 0 .visible .clip false = ⟨0, 0, 300, 50⟩ := by
+  decide
+
+-- layout_box_test.cc:623: VisualOverflowRectWithOverflowClipMargin
+-- CSS Overflow Module Level 3 §4, CSS Containment Level 2 §3.3.
+theorem VisualOverflowRectWithOverflowClipMargin_vectors :
+    visualOverflowRect 100 50 110 55 4 .clip .clip false = ⟨0, 0, 104, 54⟩ ∧
+    visualOverflowRect 100 50 110 55 11 .clip .clip false = ⟨0, 0, 110, 55⟩ ∧
+    visualOverflowRect 100 50 110 55 11 .visible .visible true = ⟨0, 0, 110, 55⟩ := by
+  decide
+
+-- layout_box_test.cc:751: OverflowRectsContainPaint
+-- CSS Containment Level 2 §3.3.
+theorem OverflowRectsContainPaint_vectors :
+    let borderBox : Rect := ⟨0, 0, 120, 220⟩
+    let overflowClip : Rect := ⟨10, 10, 100, 200⟩
+    let visRect := visualOverflowRect 120 220 310 410 0 .visible .visible true
+    borderBox = ⟨0, 0, 120, 220⟩ ∧ overflowClip = ⟨10, 10, 100, 200⟩ ∧ visRect = borderBox := by
+  decide
+
+-- layout_box_test.cc:769: OverflowRectsOverflowHidden
+-- CSS Overflow Module Level 3 §3.1.
+theorem OverflowRectsOverflowHidden_vectors :
+    let borderBox : Rect := ⟨0, 0, 120, 220⟩
+    let overflowClip : Rect := ⟨10, 10, 100, 200⟩
+    let visRect := visualOverflowRect 120 220 310 410 0 .hidden .hidden false
+    borderBox = ⟨0, 0, 120, 220⟩ ∧ overflowClip = ⟨10, 10, 100, 200⟩ ∧ visRect = borderBox := by
   decide
 
 end TestsBlock
