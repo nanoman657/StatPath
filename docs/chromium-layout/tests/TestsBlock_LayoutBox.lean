@@ -123,5 +123,30 @@ theorem OverflowRectsOverflowHidden_vectors :
     borderBox = ⟨0, 0, 120, 220⟩ ∧ overflowClip = ⟨10, 10, 100, 200⟩ ∧ visRect = borderBox := by
   decide
 
+-- layout_box_test.cc:386: TopLeftLocationFlipped
+-- CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings.
+-- In vertical-rl, block-start offset 0 on a 100px item inside a 600px container yields physical x = 500,
+-- and second item (200px) at block-offset 100 yields physical x = 300.
+theorem TopLeftLocationFlipped_vectors :
+    flowToPhysicalOffset .verticalRl 600 100 0 0 = (500, 0) ∧
+    flowToPhysicalOffset .verticalRl 600 200 100 0 = (300, 0) := by
+  decide
+
+-- layout_box_test.cc:401: TableRowCellTopLeftLocationFlipped
+-- CSS Writing Modes Level 3 §6.4.
+-- In vertical-rl section with row1 (100px) and row2 (300px), total section width is 400px:
+-- row1 is at physical offset (300, 0) and row2 is at (0, 0).
+theorem TableRowCellTopLeftLocationFlipped_vectors :
+    flowToPhysicalOffset .verticalRl 400 100 0 0 = (300, 0) ∧
+    flowToPhysicalOffset .verticalRl 400 300 100 0 = (0, 0) := by
+  decide
+
+-- layout_box_test.cc:465: ControlClip
+-- CSS Overflow Module Level 3 §3.1, HTML §4.10.
+-- Form controls establish an inner clipping rect bounded by the border.
+theorem ControlClip_vectors :
+    controlInnerClipRect 100 50 2 = ⟨2, 2, 96, 46⟩ := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

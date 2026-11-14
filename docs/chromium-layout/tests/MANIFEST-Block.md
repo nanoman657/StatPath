@@ -19,7 +19,7 @@ Classes: `geometry` (sizes/offsets/fragments), `behaviour` (another observable l
 given), `internal`.
 
 Model modules added by this lane: `BlockFlow.lean` (signed-margin block flow, auto margins,
-percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `OutOfFlowAnchor.lean` (CSS anchor positioning declarations, queries, and side evaluation), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing), `BlockOverflow.lean` (CSS overflow clipping, scroll containers, overflow-clip-margin, and paint containment).
+percent/shrink-to-fit widths, laws), `BlockFloat.lean` (floats and clearance), `BlockFragmentation.lean` (fragmentainer slicing), `BlockNode.lean` (child nodes, child iterator), `BlockScroll.lean` (scrollbar gutter), `BlockWritingMode.lean` (physical/logical mapping), `BlockLength.lean` (CSS length resolution, contributions, aspect ratio), `ColumnWidth.lean` (multicol column width and count), `ColumnLayout.lean` (multicol column layout, column balancing), `FlexLayout.lean` (CSS flex container and line layout, item sizing, line wrapping), `BlockRelative.lean` (relative positioning insets), `BlockAbsolute.lean` (out-of-flow positioning constraints), `BlockSticky.lean` (sticky positioning constraints and scroll offsets), `OutOfFlowAnchor.lean` (CSS anchor positioning declarations, queries, and side evaluation), `GridLayout.lean` (CSS Grid track sizing, gaps, placement, and ranges), `TableLayout.lean` (CSS table section ordering, colspan/rowspan distribution, and block sizing), `BlockOverflow.lean` (CSS overflow clipping, scroll containers, overflow-clip-margin, and paint containment), `BlockReplaced.lean` (replaced element intrinsic dimensions and zoom).
 Vectors live in `tests/TestsBlock_<File>.lean`. `tests/check_tests.sh` (called from `check.sh`)
 checks every row against the pinned sources and the Lean modules.
 
@@ -99,7 +99,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_block_test.cc:61 | LayoutBlockTest.OverflowWithTransformAndPerspective | geometry | blocked | expects scrollable overflow 187.625 under rotateY(-45deg) with perspective; 3D transforms are not modelled |
 | layout_block_test.cc:73 | LayoutBlockTest.NestedInlineVisualOverflow | geometry | blocked | expects visual overflow rect of an img with negative margin in a zero-size box (inline replaced layout); not modelled |
 | layout_block_test.cc:86 | LayoutBlockTest.NestedInlineVisualOverflowVerticalRL | geometry | blocked | same as NestedInlineVisualOverflow in vertical-rl; writing modes not modelled |
-| layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | blocked | model lacks layout containment containing block resolution on box trees |
+| layout_block_test.cc:101 | LayoutBlockTest.ContainmentStyleChange | behaviour | formalized | `TestsBlock.ContainmentStyleChange_vectors`, `BlockOverflow.contain_strict_fixed_pos`, `BlockOverflow.contain_style_not_fixed_pos` |
 | constraint_space_builder_test.cc:17 | ConstraintSpaceBuilderTest.AvailableSizeFromHorizontalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
 | constraint_space_builder_test.cc:49 | ConstraintSpaceBuilderTest.AvailableSizeFromVerticalICB | internal | internal | checks C++ ConstraintSpaceBuilder orthogonal fallback plumbing |
 | length_utils_test.cc:120 | LengthUtilsTest.TestResolveInlineLength | geometry | formalized | `TestsBlock.TestResolveInlineLength_vectors` |
@@ -580,10 +580,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
 | layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
 | layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | formalized | `TestsBlock.TopLeftLocationFlipped_vectors` |
+| layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | formalized | `TestsBlock.TableRowCellTopLeftLocationFlipped_vectors` |
 | layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | formalized | `TestsBlock.ControlClip_vectors`, `BlockOverflow.control_clip_rect_bounds` |
 | layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:506 | LayoutBoxTest.VisualOverflowRectWithMask | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
@@ -1106,10 +1106,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_media_test.cc:46 | LayoutMediaTest.DisallowFloatingChild | internal | internal | Blink media controls pseudo child layout object creation rules |
 | layout_media_test.cc:58 | LayoutMediaTest.BlockifyInlineFlex | internal | internal | Blink media controls pseudo child layout object creation rules |
 | layout_media_test.cc:71 | LayoutMediaTest.DisallowContainerBeyondMedia | internal | internal | Blink media controls pseudo child layout object creation rules |
-| layout_video_test.cc:38 | LayoutVideoTest.PosterSizeWithNormal | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
-| layout_video_test.cc:55 | LayoutVideoTest.PosterSizeWithZoom | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
-| layout_video_test.cc:72 | LayoutVideoTest.PosterSizeAfterPlay | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
-| layout_video_test.cc:98 | LayoutVideoTest.DefaultPosterImageSize | behaviour | blocked | model lacks HTMLVideoElement poster sizing with zoom |
+| layout_video_test.cc:38 | LayoutVideoTest.PosterSizeWithNormal | behaviour | formalized | `TestsBlock.PosterSizeWithNormal_vectors`, `BlockReplaced.applyZoom_hundred` |
+| layout_video_test.cc:55 | LayoutVideoTest.PosterSizeWithZoom | behaviour | formalized | `TestsBlock.PosterSizeWithZoom_vectors`, `BlockReplaced.applyZoom_monotone` |
+| layout_video_test.cc:72 | LayoutVideoTest.PosterSizeAfterPlay | behaviour | formalized | `TestsBlock.PosterSizeAfterPlay_vectors`, `BlockReplaced.video_author_poster_dimensions` |
+| layout_video_test.cc:98 | LayoutVideoTest.DefaultPosterImageSize | behaviour | formalized | `TestsBlock.DefaultPosterImageSize_vectors`, `BlockReplaced.video_default_poster_fallback` |
 | layout_theme_test.cc:47 | LayoutThemeTest.ChangeFocusRingColor | behaviour | blocked | model lacks platform theme color resolution |
 | layout_theme_test.cc:79 | LayoutThemeTest.AppearanceDoesNotAdjustDisplayOfNonWidgets | behaviour | blocked | model lacks platform theme color resolution |
 | layout_theme_test.cc:99 | LayoutThemeTest.AppearanceAdjustsDisplayOfWidgets | behaviour | blocked | model lacks platform theme color resolution |

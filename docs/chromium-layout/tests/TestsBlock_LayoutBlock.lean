@@ -1,11 +1,12 @@
 /-
   Vectors transcribed from layout_block_test.cc.
 -/
+import BlockOverflow
 import BlockScroll
 
 namespace ChromiumLayout
 namespace TestsBlock
-open BlockFlow
+open BlockFlow BlockOverflow
 
 /-- The scroller of `WidthAvailableToChildrenChanged` (line 28): `overflow-y:auto; width:150px;
     height:100px` with six 20px items. -/
@@ -23,6 +24,15 @@ theorem WidthAvailableToChildrenChanged_vectors (sb : Nat) :
     childInlineSize 150 sb true 100 120 = 150 - sb ∧
     childInlineSize 150 sb false 100 120 = 150 := by
   simp [childInlineSize, needsVerticalScrollbar]
+
+-- layout_block_test.cc:101: ContainmentStyleChange
+-- CSS Containment Module Level 2 §3.4, §3.5.
+-- contain: strict creates a containing block for fixed-position objects (HasOutOfFlowFragmentChild = true);
+-- contain: style does not (HasOutOfFlowFragmentChild = false, delegated to LayoutView).
+theorem ContainmentStyleChange_vectors :
+    isFixedPosContainingBlock .strict = true ∧
+    isFixedPosContainingBlock .style = false := by
+  decide
 
 end TestsBlock
 end ChromiumLayout
