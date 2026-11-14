@@ -1,11 +1,12 @@
 import BlockFlow
 import BlockSticky
 import BlockAbsolute
+import ColumnLayout
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockSticky BlockAbsolute
+open BlockFlow BlockSticky BlockAbsolute ColumnLayout
 
 -- physical_fragment_test.cc:84: StickyFragmentPropagationTest.StickyAxisEnabled
 -- Single-axis scroll container (overflow-y: scroll; overflow-x: clip) consumes vertical sticky
@@ -109,6 +110,25 @@ theorem DumpFragmentTreeWithAbsposInRelpos_vectors :
     docAbs.id = 3 ∧ docAbs.w = 0 ∧ docAbs.h = 0 ∧
     docRel.relX docAbs = 10 ∧ docRel.relY docAbs = 20 := by
   decide
+
+-- physical_fragment_test.cc:213: DumpFragmentTreeWithTargetInsideColumn
+-- Multicolumn fragmentation splits a 150px child across 3 balanced columns of width 100px, height 50px, gap 10px.
+-- CSS Multi-column Layout Level 1 §3.4, §4, CSS Fragmentation Level 3 §2.
+theorem DumpFragmentTreeWithTargetInsideColumn_vectors :
+    let mc : Multicol := { cols := 3, gap := 10, width := 320, height := 50, children := [{ id := 2, height := 150 }] }
+    let res := layoutMulticol mc
+    res.colWidth = 100 ∧
+    res.columns.length = 3 ∧
+    (match res.columns with
+     | [col0, col1, col2] =>
+         col0.relX = 0 ∧ col0.w = 100 ∧ col0.h = 50 ∧
+         col1.relX = 110 ∧ col1.w = 100 ∧ col1.h = 50 ∧
+         col2.relX = 220 ∧ col2.w = 100 ∧ col2.h = 50 ∧
+         col0.slices = [⟨2, 0, 0, 100, 50⟩] ∧
+         col1.slices = [⟨2, 0, 0, 100, 50⟩] ∧
+         col2.slices = [⟨2, 0, 0, 100, 50⟩]
+     | _ => false) := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
 
 end TestsBlock
 end ChromiumLayout

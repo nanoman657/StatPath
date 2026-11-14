@@ -87,6 +87,38 @@ theorem MayHaveDescendantAboveBlockStartBlockInInline_vectors :
     container2HasDescendant = true := by
   decide
 
+-- physical_box_fragment_test.cc:169: PhysicalBoxFragmentTest.IsFragmentationContextRootFieldset
+-- A fieldset with columns:3 creates a legend and an anonymous fieldset content wrapper.
+-- The anonymous wrapper establishes the multicol container (isFragmentationContextRoot = true),
+-- while the fieldset, legend, column box, and child do not (isFragmentationContextRoot = false).
+-- HTML Living Standard §4.10.15, §15.3.11, CSS Multi-column Layout Level 1 §2.
+theorem IsFragmentationContextRootFieldset_vectors :
+    let childId : Nat := 2
+    let legendId : Nat := 1
+    let childFrag := FragNode.mk .normalChild (some childId) false []
+    let fsFrag := layoutFieldsetFragments true true legendId [childFrag]
+    isFragContextRoot fsFrag = false ∧
+    fsFrag.children.length = 2 ∧
+    (match fsFrag.children with
+     | [legend, wrapper] =>
+         legend.nodeId = some legendId ∧
+         isFragContextRoot legend = false ∧
+         wrapper.nodeId = none ∧
+         isFragContextRoot wrapper = true ∧
+         wrapper.children.length = 1 ∧
+         (match wrapper.children with
+          | [col] =>
+              isColumnBox col = true ∧
+              isFragContextRoot col = false ∧
+              (match col.children with
+               | [c] =>
+                   c.nodeId = some childId ∧
+                   isFragContextRoot c = false
+               | _ => false)
+          | _ => false)
+     | _ => false) := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
 -- physical_box_fragment_test.cc:233: PhysicalBoxFragmentTest.OverflowClipMarginVisualBox
 -- overflow-clip-margin expands the clipping rect from content-box, padding-box, or border-box.
 -- With width: 50px, border: 5px, padding: 5px, margin: 15px:

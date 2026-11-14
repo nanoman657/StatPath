@@ -1,8 +1,10 @@
 import BlockAbsolute
+import ColumnLayout
 
 namespace TestsBlock
 
 open ChromiumLayout.BlockAbsolute
+open ChromiumLayout.ColumnLayout
 
 -- out_of_flow_layout_part_test.cc:46: FixedInsideAbs
 -- #abs is at top:49, left:0. #pad has height:50.
@@ -89,5 +91,49 @@ theorem ChildBreakAfterAvoid_vectors :
       ⟨1, 0, 0, 40, 50, [⟨1, 0, 0, 20, 50⟩, ⟨1, 0, 50, 10, 20⟩]⟩
     ] := by
   decide
+
+-- out_of_flow_layout_part_test.cc:1549: OutOfFlowLayoutPartTest.PositionedObjectsInMulticol
+-- Out-of-flow positioned descendants in multicolumn are attached to column fragmentainers,
+-- not directly to the multicol fragmentation context root.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2.
+theorem PositionedObjectsInMulticol_vectors :
+    let abs1 : FragNode := FragNode.mk .normalChild (some 101) true []
+    let abs2 : FragNode := FragNode.mk .normalChild (some 102) true []
+    let innerMulticol := makeMulticolFrag (some 2) 2 [abs2]
+    let outerMulticol := makeMulticolFrag (some 1) 2 [abs1, innerMulticol]
+    isFragContextRoot outerMulticol = true ∧
+    hasOutOfFlowChild outerMulticol = false ∧
+    isFragContextRoot innerMulticol = true ∧
+    hasOutOfFlowChild innerMulticol = false ∧
+    outerMulticol.children.length = 2 ∧
+    (match outerMulticol.children with
+     | col0 :: _ =>
+         isColumnBox col0 = true ∧
+         hasOutOfFlowChild col0 = true
+     | _ => false) ∧
+    (match innerMulticol.children with
+     | col0 :: _ =>
+         isColumnBox col0 = true ∧
+         hasOutOfFlowChild col0 = true
+     | _ => false) := by
+  exact ⟨rfl, rfl, rfl, rfl, rfl, ⟨rfl, rfl⟩, ⟨rfl, rfl⟩⟩
+
+-- out_of_flow_layout_part_test.cc:1572: OutOfFlowLayoutPartTest.PositionedObjectsInMulticolWithInline
+-- Out-of-flow positioned objects inside an inline (span) within multicolumn are attached
+-- to the column fragmentainer, not directly to the multicol fragmentation context root.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2.
+theorem PositionedObjectsInMulticolWithInline_vectors :
+    let abs1 : FragNode := FragNode.mk .normalChild (some 101) true []
+    let abs2 : FragNode := FragNode.mk .normalChild (some 102) true []
+    let multicol := makeMulticolFrag (some 1) 2 [abs1, abs2]
+    isFragContextRoot multicol = true ∧
+    hasOutOfFlowChild multicol = false ∧
+    multicol.children.length = 2 ∧
+    (match multicol.children with
+     | col0 :: _ =>
+         isColumnBox col0 = true ∧
+         hasOutOfFlowChild col0 = true
+     | _ => false) := by
+  exact ⟨rfl, rfl, rfl, ⟨rfl, rfl⟩⟩
 
 end TestsBlock
