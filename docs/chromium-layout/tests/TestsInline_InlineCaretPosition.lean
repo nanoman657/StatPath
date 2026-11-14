@@ -162,4 +162,25 @@ theorem inlineCaretPosition_inlineBoxesRTL :
     (resolveTextCaret box2Frag 2 = { fragmentId := box2Frag, positionType := .atTextOffset, textOffset := some 2 }) := by
   decide
 
+/-- Test `InlineCaretPositionTest.MultiColumnSingleText` (`inline/inline_caret_position_test.cc:345`).
+    CSS Multicol 1 §2 & CSS Inline 3 §2: Caret position across columns maps offsets to corresponding fragments. -/
+theorem inlineCaretPosition_multiColumnSingleText :
+    let frags : List CaretFragment := [
+      { id := 0, startOffset := 0, endOffset := 4 },
+      { id := 1, startOffset := 4, endOffset := 8 },
+      { id := 2, startOffset := 8, endOffset := 12 },
+      { id := 3, startOffset := 12, endOffset := 16 }
+    ]
+    let p0 := computeCaretPosition frags (.atOffset 0) .downstream
+    let p3 := computeCaretPosition frags (.atOffset 3) .downstream
+    let p4 := computeCaretPosition frags (.atOffset 4) .downstream
+    let p8 := computeCaretPosition frags (.atOffset 8) .downstream
+    let p12 := computeCaretPosition frags (.atOffset 12) .downstream
+    p0 = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 0 } ∧
+    p3 = { fragmentId := 0, positionType := .atTextOffset, textOffset := some 3 } ∧
+    p4 = { fragmentId := 1, positionType := .atTextOffset, textOffset := some 4 } ∧
+    p8 = { fragmentId := 2, positionType := .atTextOffset, textOffset := some 8 } ∧
+    p12 = { fragmentId := 3, positionType := .atTextOffset, textOffset := some 12 } := by
+  decide
+
 end ChromiumLayout.TestsInline

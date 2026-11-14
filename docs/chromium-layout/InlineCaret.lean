@@ -276,4 +276,11 @@ theorem atomic_image_caret_law (id : String) :
   dsimp [buildCaretFragments, buildCaretFragmentsAux, computeCaretPosition]
   simp
 
+/-- CSS Inline 3 §2 Law: Multi-column text fragment without break opportunities maps offset to identity text offset. -/
+theorem multicol_fragment_caret_offset (fragId startOff endOff off : Nat) (hRange : startOff ≤ off ∧ off ≤ endOff) :
+    let frags : List CaretFragment := [{ id := fragId, startOffset := startOff, endOffset := endOff }]
+    (computeCaretPosition frags (.atOffset off) .downstream).textOffset = some off := by
+  dsimp [computeCaretPosition, computeCaretPosition.fallback]
+  simp [hRange.1, hRange.2]
+
 end ChromiumLayout

@@ -135,4 +135,20 @@ theorem fragmentItem_ellipsizedAtomicInline :
     classifyEllipsizedAtomicInlineFragments 200 100 = some (.box, true) := by
   decide
 
+/-- Test `FragmentItemsBuilderTest.MultipleLogicalLineItems` (`inline/fragment_items_builder_test.cc:23`).
+    CSS 2.1 §9.4.2: FragmentItemsBuilder supports sequential line assembly, reordering, and filtering. -/
+theorem fragmentItemsBuilder_multipleLogicalLineItems :
+    let line1 := 101
+    let line2 := 102
+    -- Case 1: Sequential add
+    let b1 := (({} : FragmentItemsBuilder).addLine line1).addLine line2
+    -- Case 2: Reversed add
+    let b2 := (({} : FragmentItemsBuilder).addLine line2).addLine line1
+    -- Case 3: Filtered add (line 2 only)
+    let b3 := ({} : FragmentItemsBuilder).addLine line2
+    (b1.items = [line1, line2]) ∧
+    (b2.items = [line2, line1]) ∧
+    (b3.items = [line2]) := by
+  decide
+
 end ChromiumLayout.TestsInline

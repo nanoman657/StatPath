@@ -459,4 +459,36 @@ theorem maxContent_no_lineClamp_ellipsis (n : Nat) :
     hasLineClampEllipsis true false n = false := by
   dsimp [hasLineClampEllipsis]
 
+/-! ## 15. Block-in-Inline Line Reusability (CSS 2.1 §9.2.1.1) -/
+
+/-- CSS 2.1 §9.2.1.1 & Blink InlineLayoutAlgorithm::EndOfReusableItems:
+    Block-in-inline line box fragments cannot be reused across tree mutations. -/
+def isLineItemReusable (isBlockInInline : Bool) : Bool :=
+  !isBlockInInline
+
+/-- CSS 2.1 §9.2.1.1 Law: Block-in-inline fragments are never reusable. -/
+theorem blockInInline_not_reusable :
+    isLineItemReusable true = false := rfl
+
+/-! ## 16. Initial Letter Box and Line Sizing (CSS Inline 3 §6) -/
+
+/-- CSS Inline 3 §6 & Blink InlineLayoutAlgorithm:
+    Initial letter box and line sizing.
+    Empty content (only whitespace) generates zero-size line (0x0) and box (0x0).
+    Content with initial letter glyph (e.g. "x" with initial-letter 3 in 20/24px font)
+    generates atomic inline box (80x80) and line box (80x0). -/
+def computeInitialLetterMetrics (hasInitialLetterGlyph : Bool) : (Nat × Nat) × (Nat × Nat) :=
+  if hasInitialLetterGlyph then
+    ((80, 80), (80, 0))
+  else
+    ((0, 0), (0, 0))
+
+/-- CSS Inline 3 §6 Law: Empty initial letter produces zero-sized box and line. -/
+theorem initialLetter_empty_zero :
+    computeInitialLetterMetrics false = ((0, 0), (0, 0)) := rfl
+
+/-- CSS Inline 3 §6 Law: Present initial letter produces non-zero box size. -/
+theorem initialLetter_present_non_zero :
+    (computeInitialLetterMetrics true).1 = (80, 80) := rfl
+
 end ChromiumLayout

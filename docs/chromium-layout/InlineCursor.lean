@@ -589,4 +589,39 @@ theorem isLineBoxEmpty_no_text_or_atomic (items : List CursorNode)
   rw [h]
   rfl
 
+/-! ## 13. Visual Ordering and Extremum Selection (UAX #9 L2, CSS Writing Modes 3 §3.1) -/
+
+structure VisualCursorItem where
+  name : String
+  layoutObjectId : Nat
+  visualX : Nat
+  deriving DecidableEq, Repr, Inhabited
+
+/-- UAX #9 L2 & CSS Writing Modes 3 §3.1 & Blink InlineCursor::MoveToVisualFirstForSameLayoutObject:
+    Find the item belonging to `layoutObjectId` with minimum visual horizontal coordinate. -/
+def visualFirstForLayoutObject (items : List VisualCursorItem) (objId : Nat) : Option String :=
+  let matching := items.filter (fun it => it.layoutObjectId == objId)
+  match matching with
+  | [] => none
+  | first :: rest =>
+    let best := rest.foldl (fun acc it => if it.visualX < acc.visualX then it else acc) first
+    some best.name
+
+/-- UAX #9 L2 & CSS Writing Modes 3 §3.1 & Blink InlineCursor::MoveToVisualLastForSameLayoutObject:
+    Find the item belonging to `layoutObjectId` with maximum visual horizontal coordinate. -/
+def visualLastForLayoutObject (items : List VisualCursorItem) (objId : Nat) : Option String :=
+  let matching := items.filter (fun it => it.layoutObjectId == objId)
+  match matching with
+  | [] => none
+  | first :: rest =>
+    let best := rest.foldl (fun acc it => if it.visualX > acc.visualX then it else acc) first
+    some best.name
+
+/-- UAX #9 L2 Law: For a single item matching the object ID, both visualFirst and visualLast select that item. -/
+theorem visualExtrema_singleton (item : VisualCursorItem) :
+    visualFirstForLayoutObject [item] item.layoutObjectId = some item.name ∧
+    visualLastForLayoutObject [item] item.layoutObjectId = some item.name := by
+  dsimp [visualFirstForLayoutObject, visualLastForLayoutObject]
+  simp
+
 end ChromiumLayout

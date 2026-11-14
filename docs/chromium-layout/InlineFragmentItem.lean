@@ -296,4 +296,29 @@ theorem classifyEllipsizedAtomicInlineFragments_overflow (w cW : Nat) (h : w > c
 theorem classifyRubyLineFragments_both :
     classifyRubyLineFragments true true = [(.line, false), (.line, true)] := rfl
 
+/-! ## 7. FragmentItemsBuilder Line Box Assembly (CSS 2.1 §9.4.2) -/
+
+/-- CSS 2.1 §9.4.2 & Blink FragmentItemsBuilder:
+    Container collecting line box fragments in order.
+    Supports sequential additions, reordering (e.g. for custom layout worklets),
+    and selective line emission. -/
+structure FragmentItemsBuilder where
+  lines : List Nat := []
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Append a line box fragment to the builder (`FragmentItemsBuilder::AddLine`). -/
+def FragmentItemsBuilder.addLine (b : FragmentItemsBuilder) (lineId : Nat) : FragmentItemsBuilder :=
+  { lines := b.lines ++ [lineId] }
+
+/-- Finalize items into physical order (`FragmentItemsBuilder::ConvertToPhysical`). -/
+def FragmentItemsBuilder.items (b : FragmentItemsBuilder) : List Nat :=
+  b.lines
+
+/-- CSS 2.1 §9.4.2 Law: Adding lines preserves the exact sequence and count in final items. -/
+theorem fragmentItemsBuilder_preserves_lines (b : FragmentItemsBuilder) (lineId : Nat) :
+    (b.addLine lineId).items.length = b.items.length + 1 ∧
+    (b.addLine lineId).items.getLast? = some lineId := by
+  dsimp [FragmentItemsBuilder.addLine, FragmentItemsBuilder.items]
+  simp
+
 end ChromiumLayout

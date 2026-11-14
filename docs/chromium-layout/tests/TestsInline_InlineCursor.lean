@@ -764,4 +764,20 @@ theorem inlineCursor_positionForPointInChildVerticalRTL :
     (positionForPointInChild true true offset (15, 35) size chars = (0, .downstream)) := by
   decide
 
+/-- Test `InlineCursorTest.MoveToVisualFirstOrLast` (`inline/inline_cursor_test.cc:1292`).
+    UAX #9 L2 & CSS Writing Modes 3 §3.1: In RTL mixed-bidi line, visual first of span is
+    "MIXED" (visual x=50) and visual last is "some" (visual x=150). -/
+theorem inlineCursor_moveToVisualFirstOrLast :
+    let items : List VisualCursorItem := [
+      { name := "FragmentItem Text \"TEXT\"", layoutObjectId := 3, visualX := 0 },
+      { name := "FragmentItem Text \"MIXED\"", layoutObjectId := 1, visualX := 50 },
+      { name := "FragmentItem Text \"here is \"", layoutObjectId := 2, visualX := 100 },
+      { name := "FragmentItem Text \"some\"", layoutObjectId := 1, visualX := 150 }
+    ]
+    let firstSpan := visualFirstForLayoutObject items 1
+    let lastSpan := visualLastForLayoutObject items 1
+    firstSpan = some "FragmentItem Text \"MIXED\"" ∧
+    lastSpan = some "FragmentItem Text \"some\"" := by
+  decide
+
 end ChromiumLayout.TestsInline

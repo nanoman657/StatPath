@@ -316,4 +316,22 @@ theorem inlineLayoutAlgorithm_lineClampAndMaxContent :
     hasLineClampEllipsis true false 1 = false := by
   decide
 
+/-- Test `InlineLayoutAlgorithmTest.BlockInInlineAppend` (`inline/inline_layout_algorithm_test.cc:635`).
+    CSS 2.1 §9.2.1.1: Block-in-inline fragment is not reusable and must be regenerated on append. -/
+theorem inlineLayoutAlgorithm_blockInInlineAppend :
+    isLineItemReusable true = false := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.InitialLetterEmpty` (`inline/inline_layout_algorithm_test.cc:775`).
+    CSS Inline 3 §6: Empty initial-letter produces zero-size line (0x0) and box (0x0). -/
+theorem inlineLayoutAlgorithm_initialLetterEmpty :
+    computeInitialLetterMetrics false = ((0, 0), (0, 0)) := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest.InitialLetterWithEmptyInline` (`inline/inline_layout_algorithm_test.cc:790`).
+    CSS Inline 3 §6: Initial letter with 3 lines produces 80x80 atomic inline box and 80x0 line box. -/
+theorem inlineLayoutAlgorithm_initialLetterWithEmptyInline :
+    computeInitialLetterMetrics true = ((80, 80), (80, 0)) := by
+  decide
+
 end ChromiumLayout.TestsInline
