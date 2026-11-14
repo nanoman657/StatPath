@@ -1183,6 +1183,11 @@ checks every row against the pinned sources and the Lean modules.
 | geometry/box_edge_test.cc:28 | BoxEdgeTest.Move | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
 | geometry/box_edge_test.cc:39 | BoxEdgeTest.Equality | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
 | geometry/box_edge_test.cc:47 | BoxEdgeTest.MathOperators | internal | internal | value-type accessors of the BoxEdge (offset,size) pair; no layout rule |
+| geometry/axis_test.cc:14 | AxisTest.StreamOperators | internal | internal | debug stream output of axis flag names; no layout rule |
+| geometry/axis_test.cc:72 | AxisTest.LogicalAxesOperators | internal | internal | bit-flag operator overloads (| & ^ -) on axis sets; no layout rule |
+| geometry/axis_test.cc:138 | AxisTest.PhysicalAxesOperators | internal | internal | bit-flag operator overloads (| & ^ -) on axis sets; no layout rule |
+| geometry/axis_test.cc:213 | AxisTest.ToPhysicalAxes | geometry | formalized | `TestsBlock.AxisMap_vectors`, `BlockAxis.mapAxes` |
+| geometry/axis_test.cc:239 | AxisTest.ToLogicalAxes | geometry | formalized | `TestsBlock.AxisMap_vectors`, `BlockAxis.mapAxes` |
 
 
 
@@ -1236,6 +1241,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockBoxSides.toLogical_inline_or`: physical-to-logical side conversion keeps an axis's presence (CSS Writing Modes 4 §6.2).
 - `BlockFieldset.legend_above_anon`: the rendered legend never overlaps the fieldset's anonymous content box in the block axis (HTML §15.3.13).
 - `BlockDiffuser.given_all`: spreading a total over n buckets hands out exactly the total (no CSS text; browser rounding rule read from tests).
+- `BlockAxis.mapAxes_mapAxes`: logical/physical axis mapping is an involution for every writing mode (CSS Writing Modes 4 §6.1).
 
 ## Merge notes
 
