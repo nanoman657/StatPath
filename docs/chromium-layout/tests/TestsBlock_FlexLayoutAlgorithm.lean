@@ -450,5 +450,44 @@ theorem GapDecorationsContentDistributionGapsBetweenLines_vectors :
     geom.blockGapSize = 0 := by
   decide
 
+-- flex/flex_layout_algorithm_test.cc:790: FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGaps
+-- Under justify-content: space-between, effective gap is freeSpace / (numItems - 1).
+-- Line 0 (5 items, 50px free): gap is 12.5px.
+-- Line 1 (4 items, 120px free): gap is 40px.
+-- CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5.
+theorem GapDecorationsContentDistributionGaps_vectors :
+    spaceBetweenGapScaled 50 5 10 = 125 ∧
+    spaceBetweenGap 120 4 = 40 := by
+  decide
+
+-- flex/flex_layout_algorithm_test.cc:1012: FlexLayoutAlgorithmTest.DevtoolsBaseline
+-- align-items: baseline groups items into lines and preserves baseline metrics.
+-- CSS Flexible Box Layout Level 1 §8.3, CSS Box Alignment Level 3 §5.1.
+theorem DevtoolsBaseline_vectors :
+    let c : FlexContainer := {
+      mainSize := some 250,
+      wrap := .wrap,
+      items := [
+        { id := 0, minMain := some 100, marginMainStart := 10, marginMainEnd := 10, baseline := 15 },
+        { id := 1, minMain := some 100, marginMainStart := 10, marginMainEnd := 10, baseline := 8 },
+        { id := 2, minMain := some 100, marginMainStart := 10, marginMainEnd := 10, baseline := 8 },
+        { id := 3, minMain := some 100, marginMainStart := 10, marginMainEnd := 10, baseline := 8 }
+      ]
+    }
+    let res := layoutFlex c
+    res.lines.length = 2 ∧
+    (match res.lines with
+     | [l0, l1] =>
+         l0.items.length = 2 ∧
+         l1.items.length = 2 ∧
+         (match l0.items, l1.items with
+          | [i0, i1], [i2, i3] =>
+              i0.baseline > i1.baseline ∧
+              i2.baseline = i3.baseline
+          | _, _ => false)
+     | _ => false) := by
+  refine ⟨rfl, rfl, rfl, ?_, rfl⟩
+  decide
+
 end TestsBlock
 end ChromiumLayout

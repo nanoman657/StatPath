@@ -377,14 +377,14 @@ checks every row against the pinned sources and the Lean modules.
 | flex/flex_layout_algorithm_test.cc:538 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStart | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
 | flex/flex_layout_algorithm_test.cc:623 | FlexLayoutAlgorithmTest.GapDecorationsVerticalFlexAlignedStretch | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
 | flex/flex_layout_algorithm_test.cc:708 | FlexLayoutAlgorithmTest.GapDecorationsColumnFlexDirection | geometry | formalized | `TestsBlock.GapDecorationsColumnFlexDirection_vectors`, `FlexLayout.compute_cross_gaps_empty` |
-| flex/flex_layout_algorithm_test.cc:790 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGaps | geometry | blocked | needs CSS gap decorations geometry calculation in flexbox |
+| flex/flex_layout_algorithm_test.cc:790 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGaps | geometry | formalized | `TestsBlock.GapDecorationsContentDistributionGaps_vectors`, `FlexLayout.space_between_gap_two_items` |
 | flex/flex_layout_algorithm_test.cc:878 | FlexLayoutAlgorithmTest.GapDecorationsContentDistributionGapsBetweenLines | geometry | formalized | `TestsBlock.GapDecorationsContentDistributionGapsBetweenLines_vectors`, `FlexLayout.compute_main_gaps_empty` |
 | flex/flex_layout_algorithm_test.cc:939 | FlexLayoutAlgorithmTest.DevtoolsBasic | behaviour | formalized | `TestsBlock.DevtoolsBasic_vectors` |
 | flex/flex_layout_algorithm_test.cc:953 | FlexLayoutAlgorithmTest.DevtoolsWrap | behaviour | formalized | `TestsBlock.DevtoolsWrap_vectors` |
 | flex/flex_layout_algorithm_test.cc:968 | FlexLayoutAlgorithmTest.DevtoolsCoordinates | behaviour | formalized | `TestsBlock.DevtoolsCoordinates_vectors` |
 | flex/flex_layout_algorithm_test.cc:983 | FlexLayoutAlgorithmTest.DevtoolsOverflow | behaviour | formalized | `TestsBlock.DevtoolsOverflow_vectors` |
 | flex/flex_layout_algorithm_test.cc:993 | FlexLayoutAlgorithmTest.DevtoolsWithRelPosItem | behaviour | formalized | `TestsBlock.DevtoolsWithRelPosItem_vectors`, `FlexLayout.flex_nowrap_at_most_one_line` |
-| flex/flex_layout_algorithm_test.cc:1012 | FlexLayoutAlgorithmTest.DevtoolsBaseline | behaviour | blocked | needs devtools flex data layout inspector model |
+| flex/flex_layout_algorithm_test.cc:1012 | FlexLayoutAlgorithmTest.DevtoolsBaseline | behaviour | formalized | `TestsBlock.DevtoolsBaseline_vectors`, `FlexLayout.space_between_gap_zero_free` |
 | flex/flex_layout_algorithm_test.cc:1032 | FlexLayoutAlgorithmTest.DevtoolsOneImageItemCrash | internal | internal | crash regression with devtools flex layout on lone image item |
 | flex/flex_layout_algorithm_test.cc:1040 | FlexLayoutAlgorithmTest.DevtoolsColumnWrap | behaviour | formalized | `TestsBlock.DevtoolsColumnWrap_vectors` |
 | flex/flex_layout_algorithm_test.cc:1052 | FlexLayoutAlgorithmTest.DevtoolsColumnWrapOrtho | behaviour | formalized | `TestsBlock.DevtoolsColumnWrapOrtho_vectors` |

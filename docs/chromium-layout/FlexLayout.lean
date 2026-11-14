@@ -38,6 +38,7 @@ structure FlexItem where
   marginMainEnd : Nat := 0
   marginCrossStart : Nat := 0
   marginCrossEnd : Nat := 0
+  baseline : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- A flex container specification. CSS Flexbox 1 §3, §5. -/
@@ -68,6 +69,7 @@ structure LaidOutItem where
   y : Nat
   w : Nat
   h : Nat
+  baseline : Nat := 0
   deriving Inhabited, DecidableEq, Repr
 
 /-- Laid-out flex line containing items. CSS Flexbox 1 §6. -/
@@ -166,7 +168,7 @@ def layoutFlexLine (isRow : Bool) (innerMain : Option Nat) (gapMain : Nat) (bpMa
         (curPos, currCross + it.marginCrossStart, itMain, itCross)
       else
         (currCross + it.marginCrossStart, curPos, itCross, itMain)
-    let itemOut : LaidOutItem := ⟨it.id, ix, iy, iw, ih⟩
+    let itemOut : LaidOutItem := ⟨it.id, ix, iy, iw, ih, it.baseline⟩
     (itAcc ++ [itemOut], curPos + itMain + gapMain)) ([], bpMainStart)
   let actualLineMain := if lItems.isEmpty then 0 else lineMainUsed - gapMain - bpMainStart
   (⟨lineIdx, currCross, lineCross, laidItems⟩, actualLineMain)
@@ -367,6 +369,52 @@ theorem compute_gap_geometry_empty (c : FlexContainer) :
     (computeGapGeometry c []).mainGaps = [] ∧
     (computeGapGeometry c []).crossGaps = [] := by
   exact ⟨rfl, rfl⟩
+
+/-- Effective gap between items under justify-content: space-between.
+    If there are N items (with N > 1) and leftover free space F,
+    the distributed space between each pair of adjacent items is F / (N - 1).
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+def spaceBetweenGap (freeSpace : Nat) (numItems : Nat) : Nat :=
+  if numItems ≤ 1 then 0
+  else freeSpace / (numItems - 1)
+
+/-- Fractional effective gap between items scaled by a factor (e.g. 10 for tenths).
+    In a flex line with 5 items and 50px free space, the effective gap is 50 / 4 = 12.5px = 125 tenths.
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+def spaceBetweenGapScaled (freeSpace : Nat) (numItems : Nat) (scale : Nat) : Nat :=
+  if numItems ≤ 1 then 0
+  else (freeSpace * scale) / (numItems - 1)
+
+/-- Law: With zero free space, space-between distribution produces 0 effective gap.
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+theorem space_between_gap_zero_free (n : Nat) :
+    spaceBetweenGap 0 n = 0 := by
+  dsimp [spaceBetweenGap]
+  split
+  · rfl
+  · rw [Nat.zero_div]
+
+/-- Law: A single item has no adjacent items and produces 0 space-between gap.
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+theorem space_between_gap_single_item (f : Nat) :
+    spaceBetweenGap f 1 = 0 := by
+  rfl
+
+/-- Law: Two items distribute all free space into the single space between them.
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+theorem space_between_gap_two_items (f : Nat) :
+    spaceBetweenGap f 2 = f := by
+  dsimp [spaceBetweenGap]
+  rw [Nat.div_one]
+
+/-- Law: Scaled space-between distribution with zero free space produces 0 gap.
+    CSS Box Alignment Level 3 §8.2, CSS Flexible Box Layout Level 1 §9.5. -/
+theorem space_between_gap_scaled_zero (n scale : Nat) :
+    spaceBetweenGapScaled 0 n scale = 0 := by
+  dsimp [spaceBetweenGapScaled]
+  split
+  · rfl
+  · simp
 
 end FlexLayout
 end ChromiumLayout
