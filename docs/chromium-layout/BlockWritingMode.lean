@@ -157,5 +157,21 @@ theorem layout_two_items_horizontal_tb (cw : Nat) (i1 i2 : BlockItem) :
   dsimp [layoutWritingModeBlock, layoutWritingModeBlock.loop, flowToPhysicalOffset]
   omega
 
+/-- Physical rect (x, y, w, h) of a box's content box from its border, padding, and logical sizes.
+    CSS Writing Modes Level 3 §6.4 Abstract-to-Physical Mappings, CSS 2.1 §8.1. -/
+def physicalContentBox (wm : WritingMode) (border padding : Phys) (inlineSize blockSize : Nat) : Nat × Nat × Nat × Nat :=
+  let x := border.left + padding.left
+  let y := border.top + padding.top
+  let (w, h) := if isVertical wm then (blockSize, inlineSize) else (inlineSize, blockSize)
+  (x, y, w, h)
+
+/-- Law: In vertical writing modes, physical width is logical block size and physical height is logical inline size.
+    CSS Writing Modes Level 3 §6.4. -/
+theorem physicalContentBox_vertical (wm : WritingMode) (h : isVertical wm = true) (b p : Phys) (is bs : Nat) :
+    (physicalContentBox wm b p is bs).2.2 = (bs, is) := by
+  dsimp [physicalContentBox]
+  rw [h]
+  rfl
+
 end BlockWritingMode
 end ChromiumLayout

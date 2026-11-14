@@ -631,13 +631,13 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1957 | LayoutBoxTest.LogicalRectInContainer | geometry | blocked | needs LayoutBox geometry model |
 | layout_box_test.cc:2006 | LayoutBoxTest.VisualOverflowRectWithEmptyInlineChildAndReflectAndOutline | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:2033 | LayoutBoxTest.ContentBoxFragmentedHtb | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
-| layout_box_test.cc:2045 | LayoutBoxTest.ContentBoxFragmentedVlr | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
-| layout_box_test.cc:2057 | LayoutBoxTest.ContentBoxFragmentedVrl | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
+| layout_box_test.cc:2045 | LayoutBoxTest.ContentBoxFragmentedVlr | geometry | formalized | `TestsBlock.ContentBoxFragmentedVlr_vectors`, `BlockWritingMode.physicalContentBox_vertical` |
+| layout_box_test.cc:2057 | LayoutBoxTest.ContentBoxFragmentedVrl | geometry | formalized | `TestsBlock.ContentBoxFragmentedVrl_vectors`, `BlockWritingMode.physicalContentBox_vertical` |
 | layout_box_test.cc:2069 | LayoutBoxTest.StitchedBlockSize | geometry | formalized | `TestsBlock.StitchedBlockSize_vectors`, `BlockFlow.fragmentation_conserves_size` |
-| layout_box_test.cc:2087 | LayoutBoxTest.StitchedBlockSizeVrl | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
+| layout_box_test.cc:2087 | LayoutBoxTest.StitchedBlockSizeVrl | geometry | formalized | `TestsBlock.StitchedBlockSizeVrl_vectors`, `BlockFlow.fragmentation_conserves_size` |
 | layout_box_test.cc:2105 | LayoutBoxTest.StitchedSizeWithOverflow | geometry | formalized | `TestsBlock.StitchedSizeWithOverflow_vectors` |
 | layout_box_test.cc:2124 | LayoutBoxTest.StitchedSizeWithOverflowVrl | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
-| layout_box_test.cc:2143 | LayoutBoxTest.StitchedSizeAfterRelayout | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
+| layout_box_test.cc:2143 | LayoutBoxTest.StitchedSizeAfterRelayout | geometry | formalized | `TestsBlock.StitchedSizeAfterRelayout_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2166 | LayoutBoxTest.StitchedSizeRepeatedWhenPrinting | geometry | blocked | needs LayoutBox stitched size across writing modes / printing |
 | layout_box_test.cc:2232 | LayoutBoxBackgroundPaintLocationTest.ContentBoxClipZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
 | layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
@@ -1151,6 +1151,8 @@ checks every row against the pinned sources and the Lean modules.
 - `GridLayout.grid_ranges_start_zero`: first grid range always starts at line 0 (CSS Grid 1 §7.2.3).
 - `GridLayout.normalize_no_flex_min`: a flex factor is never a track minimum in normalized track sizes (CSS Grid 1 §7.2.5).
 - `GridLayout.resolve_gap_none`: percentage gap resolves to 0 when container dimension is indefinite (CSS Box Alignment 3 §8, CSS Grid 1 §10.1).
+- `BlockWritingMode.physicalContentBox_vertical`: in vertical writing modes, physical width is logical block size and physical height is logical inline size (CSS Writing Modes 3 §6.4).
+- `BlockFlow.sliceCount_pos`: non-empty content in positive fragmentainer always requires at least one slice (CSS Fragmentation 3 §2).
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).

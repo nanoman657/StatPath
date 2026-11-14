@@ -74,5 +74,26 @@ theorem fragmentation_conserves_size (F : Nat) (y : Int) (h : Nat) (hy : 0 ≤ y
   have := sliceTotal_eq F y h hy n
   omega
 
+/-- Number of fragmentainer slices needed to hold content of height `h` in fragmentainers of size `F`.
+    CSS Fragmentation Level 3 §2. -/
+def sliceCount (F : Nat) (h : Nat) : Nat :=
+  if F = 0 then 0
+  else if h = 0 then 1
+  else (h + F - 1) / F
+
+/-- Law: Non-empty content in positive fragmentainer always requires at least one slice.
+    CSS Fragmentation Level 3 §2. -/
+theorem sliceCount_pos (F h : Nat) (hF : 0 < F) :
+    1 ≤ sliceCount F h := by
+  dsimp [sliceCount]
+  split
+  · omega
+  · split
+    · omega
+    · have hle : F ≤ h + F - 1 := by omega
+      have hdiv : F / F ≤ (h + F - 1) / F := Nat.div_le_div_right hle
+      rw [Nat.div_self hF] at hdiv
+      exact hdiv
+
 end BlockFlow
 end ChromiumLayout
