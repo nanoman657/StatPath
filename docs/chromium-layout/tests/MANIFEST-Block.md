@@ -419,8 +419,8 @@ checks every row against the pinned sources and the Lean modules.
 | table/layout_table_section_test.cc:99 | LayoutTableSectionTest.RowCollapseNegativeHeightCrash | internal | internal | crash regression in row collapse with negative height |
 | table/layout_table_test.cc:21 | LayoutTableTest.OverflowViaOutline | geometry | blocked | needs table visual overflow rect calculation |
 | table/layout_table_test.cc:47 | LayoutTableTest.OverflowWithCollapsedBorders | geometry | blocked | needs table visual overflow rect calculation |
-| table/layout_table_test.cc:88 | LayoutTableTest.CollapsedBorders | geometry | blocked | needs table collapsed borders layout model |
-| table/layout_table_test.cc:143 | LayoutTableTest.CollapsedBordersWithCol | geometry | blocked | needs table collapsed borders layout model |
+| table/layout_table_test.cc:88 | LayoutTableTest.CollapsedBorders | geometry | formalized | `TestsBlock.CollapsedBorders_vectors`, `TableLayout.resolve_hidden_zero` |
+| table/layout_table_test.cc:143 | LayoutTableTest.CollapsedBordersWithCol | geometry | formalized | `TestsBlock.CollapsedBordersWithCol_vectors`, `TableLayout.resolve_hidden_zero` |
 | table/layout_table_test.cc:207 | LayoutTableTest.WidthPercentagesExceedHundred | geometry | blocked | needs table column percentage and max width resolution |
 | table/layout_table_test.cc:230 | LayoutTableTest.CloseToMaxWidth | geometry | formalized | `TestsBlock.CloseToMaxWidth_vectors` |
 | table/layout_table_test.cc:250 | LayoutTableTest.PaddingWithCollapsedBorder | geometry | formalized | `TestsBlock.PaddingWithCollapsedBorder_vectors`, `TableLayout.collapsed_border_padding_zero` |
@@ -431,8 +431,8 @@ checks every row against the pinned sources and the Lean modules.
 | table/table_layout_utils_test.cc:55 | TableLayoutUtilsTest.DistributeColspanAutoPercent | geometry | formalized | `TestsBlock.DistributeColspanAutoPercent_vectors` |
 | table/table_layout_utils_test.cc:93 | TableLayoutUtilsTest.DistributeColspanAutoSizeUnconstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeUnconstrained_vectors` |
 | table/table_layout_utils_test.cc:121 | TableLayoutUtilsTest.DistributeColspanAutoSizeConstrained | geometry | formalized | `TestsBlock.DistributeColspanAutoSizeConstrained_vectors` |
-| table/table_layout_utils_test.cc:149 | TableLayoutUtilsTest.DistributeColspanAutoExactMaxSize | geometry | blocked | needs table colspan column width distribution algorithm |
-| table/table_layout_utils_test.cc:187 | TableLayoutUtilsTest.ComputeGridInlineMinMax | geometry | blocked | needs table grid inline min/max sizes algorithm |
+| table/table_layout_utils_test.cc:149 | TableLayoutUtilsTest.DistributeColspanAutoExactMaxSize | geometry | formalized | `TestsBlock.DistributeColspanAutoExactMaxSize_vectors`, `TableLayout.sync_exact_max` |
+| table/table_layout_utils_test.cc:187 | TableLayoutUtilsTest.ComputeGridInlineMinMax | geometry | formalized | `TestsBlock.ComputeGridInlineMinMax_vectors`, `TableLayout.grid_min_sum` |
 | table/table_layout_utils_test.cc:246 | TableLayoutUtilsTest.DistributeRowspanCellToRows | geometry | blocked | needs table rowspan row height distribution algorithm |
 | table/table_layout_utils_test.cc:280 | TableLayoutUtilsTest.DistributeSectionFixedBlockSizeToRows | geometry | formalized | `TestsBlock.DistributeSectionFixedBlockSizeToRows_vectors` |
 | table/table_layout_utils_test.cc:294 | TableLayoutUtilsTest.DistributeTableBlockSizeToSections | geometry | formalized | `TestsBlock.DistributeTableBlockSizeToSections_vectors` |
@@ -1145,6 +1145,9 @@ checks every row against the pinned sources and the Lean modules.
 - `FlexLayout.flex_empty_no_lines`: an empty flex container produces no lines (CSS Flexible Box Layout Level 1 §9.3).
 - `FlexLayout.flex_nowrap_at_most_one_line`: a flex container with flex-wrap: nowrap always generates at most one line of items (CSS Flexible Box Layout Level 1 §5.2).
 - `FlexLayout.flex_empty_container_lines`: layout of an empty flex container produces no laid out lines (CSS Flexible Box Layout Level 1 §9.3).
+- `TableLayout.resolve_hidden_zero`: any border set containing a hidden border resolves to 0 width (CSS 2.1 §17.6.2.1).
+- `TableLayout.sync_exact_max`: when assignable table size equals total max size, columns equal their max sizes without redistribution (CSS 2.1 §17.5.2).
+- `TableLayout.grid_min_sum`: table grid minimum inline size is always the sum of column minimum sizes (CSS 2.1 §17.5.2.1, CSS Table 3 §3).
 
 
 - `BlockFlow.collapse_pair`: two adjoining margins collapse to max-positive plus min-negative (CSS 2.1 8.3.1).

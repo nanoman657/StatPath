@@ -25,6 +25,42 @@ theorem DistributeColspanAutoSizeConstrained_vectors :
     distributeColspanAuto [10, 10, 20] 100 = [25, 25, 50] := by
   decide
 
+-- table_layout_utils_test.cc:149: DistributeColspanAutoExactMaxSize
+-- When assignable table size matches the sum of column max sizes, column sizes are preserved exactly.
+-- CSS Table 3 §3, CSS 2.1 §17.5.2.
+theorem DistributeColspanAutoExactMaxSize_vectors :
+    let cols : List Nat := [1, 22, 34, 2000]
+    synchronizeColumns (cols.foldl (·+·) 0) cols = [1, 22, 34, 2000] := by
+  decide
+
+-- table_layout_utils_test.cc:187: ComputeGridInlineMinMax
+-- Table grid inline min/max sizes with and without percent columns across layout and measure passes.
+-- CSS Table 3 §3, CSS 2.1 §17.5.2.1.
+theorem ComputeGridInlineMinMax_vectors :
+    -- Case 1: no percentages, sums up min/max
+    let cols1 : List TableColConstraint := [
+      { minSize := 10, maxSize := 100 },
+      { minSize := 20, maxSize := 200 },
+      { minSize := 30, maxSize := 300 }
+    ]
+    -- Case 2 & 3: 99px/10% column
+    let cols2 : List TableColConstraint := [
+      { minSize := 10, maxSize := 99, pct := some 10 },
+      { minSize := 10, maxSize := 10 },
+      { minSize := 10, maxSize := 10 }
+    ]
+    -- Case 4: total 20% and non-percent 800px
+    let cols3 : List TableColConstraint := [
+      { minSize := 10, maxSize := 100, pct := some 10 },
+      { minSize := 10, maxSize := 10, pct := some 10 },
+      { minSize := 10, maxSize := 800 }
+    ]
+    computeGridInlineMinMax cols1 true = (60, 600) ∧
+    computeGridInlineMinMax cols2 true = (30, 990) ∧
+    computeGridInlineMinMax cols2 false = (30, 119) ∧
+    computeGridInlineMinMax cols3 true = (30, 1000) := by
+  decide
+
 -- table_layout_utils_test.cc:280: DistributeSectionFixedBlockSizeToRows
 theorem DistributeSectionFixedBlockSizeToRows_vectors :
     -- Row 1 has 50% of 1000 -> 500, rows 0 and 2 get 250 each

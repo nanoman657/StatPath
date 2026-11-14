@@ -115,5 +115,82 @@ theorem collapsed_border_padding_zero (p : Nat) :
     tablePadding true p = 0 := by
   rfl
 
+/-- A border specification for table elements in collapsed borders model. CSS 2.1 §17.6.2. -/
+structure TableBorder where
+  width : Nat := 0
+  isHidden : Bool := false
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Resolve conflict between borders on a shared edge. CSS 2.1 §17.6.2.1.
+    A border with 'hidden' takes precedence over all other borders and collapses to 0.
+    Otherwise, the widest border wins. -/
+def resolveBorderConflict (borders : List TableBorder) : Nat :=
+  if borders.any (·.isHidden) then 0
+  else borders.foldl (fun acc b => Nat.max acc b.width) 0
+
+/-- Outset of a collapsed border in LayoutUnit quanta (1/64th px), which is (resolved width / 2) * 64 = resolved width * 32.
+    CSS 2.1 §17.6.2. -/
+def collapsedBorderOutsetLU (borders : List TableBorder) : Nat :=
+  resolveBorderConflict borders * 32
+
+/-- Synchronize assignable table inline size and columns. CSS Table 3 §3, CSS 2.1 §17.5.2.
+    When assignable table inline size equals the sum of column maximum sizes, each column
+    size is exactly its maximum size (no redistribution). -/
+def synchronizeColumns (assignableTableSize : Nat) (colMaxSizes : List Nat) : List Nat :=
+  let totalMax := colMaxSizes.foldl (·+·) 0
+  if assignableTableSize == totalMax then
+    colMaxSizes
+  else
+    distributeColspanAuto colMaxSizes assignableTableSize
+
+/-- Column constraints for computing table grid min/max inline sizes. CSS Table 3 §3. -/
+structure TableColConstraint where
+  minSize : Nat := 0
+  maxSize : Nat := 0
+  pct : Option Nat := none
+  deriving Inhabited, DecidableEq, Repr
+
+/-- Compute grid inline min/max sizes. CSS 2.1 §17.5.2.1, CSS Table 3 §3. -/
+def computeGridInlineMinMax (cols : List TableColConstraint) (isLayoutPass : Bool) : Nat × Nat :=
+  let minSize := cols.foldl (fun acc c => acc + c.minSize) 0
+  let rawMaxSize := cols.foldl (fun acc c => acc + c.maxSize) 0
+  if !isLayoutPass then
+    (minSize, rawMaxSize)
+  else
+    let totalPct := cols.foldl (fun acc c => acc + match c.pct with | some p => p | none => 0) 0
+    let nonPctMax := cols.foldl (fun acc c => acc + match c.pct with | some _ => 0 | none => c.maxSize) 0
+    let maxFromNonPct :=
+      if totalPct > 0 && totalPct < 100 then
+        nonPctMax + (totalPct * nonPctMax / (100 - totalPct))
+      else rawMaxSize
+    let maxFromPcts := cols.foldl (fun acc c =>
+      match c.pct with
+      | some p => if p > 0 then Nat.max acc (c.maxSize * 100 / p) else acc
+      | none => acc) 0
+    let maxSize := Nat.max rawMaxSize (Nat.max maxFromNonPct maxFromPcts)
+    (minSize, maxSize)
+
+/-- Law: Any border set containing a hidden border resolves to 0 width.
+    CSS 2.1 §17.6.2.1. -/
+theorem resolve_hidden_zero (borders : List TableBorder) (h : borders.any (·.isHidden) = true) :
+    resolveBorderConflict borders = 0 := by
+  dsimp [resolveBorderConflict]
+  rw [h]
+  rfl
+
+/-- Law: When assignable size equals total max size, columns equal their max sizes without redistribution.
+    CSS 2.1 §17.5.2. -/
+theorem sync_exact_max (colMaxSizes : List Nat) :
+    synchronizeColumns (colMaxSizes.foldl (·+·) 0) colMaxSizes = colMaxSizes := by
+  dsimp [synchronizeColumns]
+  simp
+
+/-- Law: Table grid minimum inline size is always the sum of column minimum sizes.
+    CSS 2.1 §17.5.2.1, CSS Table 3 §3. -/
+theorem grid_min_sum (cols : List TableColConstraint) (pass : Bool) :
+    (computeGridInlineMinMax cols pass).1 = cols.foldl (fun acc c => acc + c.minSize) 0 := by
+  dsimp [computeGridInlineMinMax]
+  split <;> rfl
+
 end TableLayout
 end ChromiumLayout
