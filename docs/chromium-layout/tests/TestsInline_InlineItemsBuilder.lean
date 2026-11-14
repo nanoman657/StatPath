@@ -95,4 +95,109 @@ theorem inlineItemsBuilder_bidiIsolateOverride :
     "Hello \u2068\u202E\u05E2\u05D1\u05E8\u05D9\u05EA\u202C\u2069 World" := by
   decide
 
+/-- Test 15: CollapseBeforeAndAfterNewline (inline_items_builder_test.cc:295).
+    CSS Text 3 §4.1.1: Spaces before and after newline in pre-line mode are removed. -/
+theorem inlineItemsBuilder_collapseBeforeAndAfterNewline :
+    buildInlineString [.text "text  \n  text" .preLine] = "text\ntext" := by
+  decide
+
+/-- Test 16: CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements (inline_items_builder_test.cc:301).
+    CSS Text 3 §4.1.2: Collapsible space following non-collapsible space in pre-wrap does not collapse. -/
+theorem inlineItemsBuilder_collapsibleSpaceAfterNonCollapsibleSpaceAcrossElements :
+    buildInlineString [.text "text " .preWrap, .text " text" .normal] = "text  text" := by
+  decide
+
+/-- Test 17: CollapseZeroWidthSpaces (inline_items_builder_test.cc:309).
+    CSS Text 3 §4.1.3: Newline adjacent to zero-width space is removed, collapsing surrounding spaces. -/
+theorem inlineItemsBuilder_collapseZeroWidthSpaces :
+    (buildInlineString [.text "text\u200B\ntext" .normal] = "text\u200Btext") ∧
+    (buildInlineString [.text "text\n\u200Btext" .normal] = "text\u200Btext") ∧
+    (buildInlineString [.text "text\u200B\n\u200Btext" .normal] = "text\u200B\u200Btext") ∧
+    (buildInlineString [.text "text\n" .normal, .text "\u200Btext" .normal] = "text\u200Btext") ∧
+    (buildInlineString [.text "text\u200B" .normal, .text "\ntext" .normal] = "text\u200Btext") ∧
+    (buildInlineString [.text "text \n" .normal, .text "\u200Btext" .normal] = "text\u200Btext") ∧
+    (buildInlineString [.text "text\u200B\n" .normal, .text " text" .normal] = "text\u200B text") ∧
+    (buildInlineString [.text "text\u200B " .normal, .text "\ntext" .normal] = "text\u200Btext") := by
+  decide
+
+/-- Test 18: CollapseZeroWidthSpaceAndNewLineAtEnd (inline_items_builder_test.cc:334).
+    CSS Text 3 §4.1.3: Trailing newline following zero-width space is removed. -/
+theorem inlineItemsBuilder_collapseZeroWidthSpaceAndNewLineAtEnd :
+    buildInlineString [.text "\u200B\n" .normal] = "\u200B" := by
+  decide
+
+/-- Test 19: OpaqueToSpaceCollapsing (inline_items_builder_test.cc:357).
+    CSS Text 3 §4.1.2: Bidi controls are opaque to space collapsing across boundaries. -/
+theorem inlineItemsBuilder_opaqueToSpaceCollapsing :
+    buildInlineString [.text "Hello " .normal, .opaqueChar .bidiControl '\u2068',
+                       .text " " .normal, .opaqueChar .bidiControl '\u2068',
+                       .text " World" .normal] = "Hello \u2068\u2068World" := by
+  decide
+
+/-- Test 20: CollapseAroundReplacedElement (inline_items_builder_test.cc:367).
+    CSS Text 3 §4.1.2: Atomic inline preserves collapsible spaces around it. -/
+theorem inlineItemsBuilder_collapseAroundReplacedElement :
+    buildInlineString [.text "Hello " .normal, .atomicInline, .text " World" .normal] = "Hello \uFFFC World" := by
+  decide
+
+/-- Test 21: AppendEmptyString (inline_items_builder_test.cc:387).
+    CSS Text 3 §4: Appending an empty string produces a 0-length text item. -/
+theorem inlineItemsBuilder_appendEmptyString :
+    let st := appendBuilderInput {} (.text "" .normal)
+    st.items = [{ type := .text, startOffset := 0, endOffset := 0 }] ∧
+    buildInlineString [.text "" .normal] = "" := by
+  decide
+
+/-- Test 22: NewLines (inline_items_builder_test.cc:393).
+    CSS Text 3 §4.1: Preserved newlines in pre mode generate control items separating text items. -/
+theorem inlineItemsBuilder_newLines :
+    let st := appendBuilderInput {} (.text "apple\norange\ngrape\n" .pre)
+    buildInlineString [.text "apple\norange\ngrape\n" .pre] = "apple\norange\ngrape\n" ∧
+    st.items.length = 6 ∧
+    (st.items.map (·.type)) = [.text, .control, .text, .control, .text, .control] := by
+  decide
+
+/-- Test 23: IgnorablePre (inline_items_builder_test.cc:405).
+    CSS Text 3 §4.1: Form feeds and newlines in pre mode generate control items separating text items. -/
+theorem inlineItemsBuilder_ignorablePre :
+    let st := appendBuilderInput {} (.text "apple\x0corange\ngrape" .pre)
+    buildInlineString [.text "apple\x0corange\ngrape" .pre] = "apple\x0corange\ngrape" ∧
+    st.items.length = 5 ∧
+    (st.items.map (·.type)) = [.text, .control, .text, .control, .text] := by
+  decide
+
+/-- Test 24: CollapsedSpaceAfterNoWrap (inline_items_builder_test.cc:446).
+    CSS Text 3 §5.1: Transition from nowrap with trailing space to wrap inserts a break opportunity (ZWS). -/
+theorem inlineItemsBuilder_collapsedSpaceAfterNoWrap :
+    buildInlineString [.text "nowrap " .nowrap, .text " wrap" .normal] = "nowrap \u200Bwrap" := by
+  decide
+
+/-- Test 25: GenerateBreakOpportunityAfterLeadingSpaces (inline_items_builder_test.cc:455).
+    CSS Text 3 §5.1: Leading preserved spaces in pre-wrap generate a break opportunity (ZWS). -/
+theorem inlineItemsBuilder_generateBreakOpportunityAfterLeadingSpaces :
+    (buildInlineString [.text " a" .preWrap] = " \u200Ba") ∧
+    (buildInlineString [.text "  a" .preWrap] = "  \u200Ba") ∧
+    (buildInlineString [.text "a\n " .preWrap] = "a\n \u200B") := by
+  decide
+
+/-- Test 26: BlockInInline (inline_items_builder_test.cc:551).
+    CSS 2.1 §9.2.1.1: Collapsible spaces before and after a block-in-inline are collapsed. -/
+theorem inlineItemsBuilder_blockInInline :
+    buildInlineString [.text "Hello " .normal, .blockInInline, .text " World" .normal] = "Hello\uFFFCWorld" := by
+  decide
+
+/-- Test 29: OpenCloseRubyColumns (inline_items_builder_test.cc:561).
+    CSS Ruby 1 §2.3: Nested ruby and annotation tags emit structured ruby items. -/
+theorem inlineItemsBuilder_openCloseRubyColumns :
+    let inputs : List BuilderInput := [
+      .openTag, .openRubyColumn, .rubyLinePlaceholder, .text "base1", .rubyLinePlaceholder,
+      .openTag, .rubyLinePlaceholder, .text "anno1", .rubyLinePlaceholder, .closeTag, .closeRubyColumn,
+      .openRubyColumn, .rubyLinePlaceholder, .text "base2", .rubyLinePlaceholder,
+      .openTag, .rubyLinePlaceholder, .text "anno2", .rubyLinePlaceholder, .closeTag, .closeRubyColumn, .closeTag,
+      .openRubyColumn, .rubyLinePlaceholder, .openTag, .rubyLinePlaceholder, .text "anno3", .rubyLinePlaceholder, .closeTag
+    ]
+    let st := inputs.foldl appendBuilderInput {}
+    st.items.length = 29 := by
+  decide
+
 end ChromiumLayout.TestsInline

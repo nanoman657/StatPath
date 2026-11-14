@@ -11,6 +11,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
+import InlineBreakCandidate
 
 namespace ChromiumLayout
 
@@ -49,9 +50,7 @@ structure InlineCaretPosition where
   deriving DecidableEq, Repr
 
 /-- Caret resolution at soft wrap boundary between two consecutive fragments
-    (`inline/inline_caret_position.cc:350-420`).
-    `upstream` affinity binds to the end of `frag1`;
-    `downstream` affinity binds to the start of `frag2`. -/
+    (`inline/inline_caret_position.cc:350-420`). -/
 def resolveSoftWrapCaret (frag1 frag2 : Nat) (wrapOffset : Nat) (affinity : TextAffinity) :
     InlineCaretPosition :=
   match affinity with
@@ -59,9 +58,7 @@ def resolveSoftWrapCaret (frag1 frag2 : Nat) (wrapOffset : Nat) (affinity : Text
   | .downstream => { fragmentId := frag2, positionType := .atTextOffset, textOffset := some wrapOffset }
 
 /-- CSS Inline 3 §2 & Blink ComputeInlineCaretPosition:
-    Caret resolution at soft wrap boundary between two consecutive atomic inline boxes (e.g. images).
-    - Upstream affinity binds to the end of the first box (afterBox).
-    - Downstream affinity binds to the start of the second box (beforeBox). -/
+    Caret resolution at soft wrap boundary between two consecutive atomic inline boxes. -/
 def resolveSoftWrapBoxCaret (box1 box2 : Nat) (affinity : TextAffinity) : InlineCaretPosition :=
   match affinity with
   | .upstream => { fragmentId := box1, positionType := .afterBox, textOffset := none }
@@ -98,14 +95,14 @@ structure CaretFragment where
   hasTrailingSpace : Bool := false
   deriving DecidableEq, Repr
 
-/-- Helper to split character list at target delimiter character. -/
-def splitAtChar (c : Char) (s : List Char) : Option (List Char × List Char) :=
-  let rec loop acc
-    | [] => none
-    | x :: xs => if x == c then some (acc.reverse, xs) else loop (x :: acc) xs
-  loop [] s
+/-- CSS Text 3 §5: Find break opportunities using LineBreaker candidates. -/
+def findBreakOpportunity (s : String) : Option (Nat × Bool × Bool) :=
+  let cands := computeLineBreakCandidates [⟨0, .text s⟩]
+  match cands.find? (fun c => c.isHyphenated || c.endOffset.textOffset < c.offset.textOffset) with
+  | some c => some (if c.isHyphenated then c.offset.textOffset else c.endOffset.textOffset, c.isHyphenated, ¬c.isHyphenated)
+  | none => none
 
-/-- Fuel-bounded fragment builder. -/
+/-- Fuel-bounded fragment builder reusing LineBreaker break opportunities and available width. -/
 def buildCaretFragmentsAux (items : List CaretDocItem) (avail : Option Nat) (nextId : Nat) (offset : Nat) (lineOff : Nat) (prevBr : Bool) : List CaretFragment :=
   match items with
   | [] => []
@@ -122,47 +119,39 @@ def buildCaretFragmentsAux (items : List CaretDocItem) (avail : Option Nat) (nex
   | .span id isCulled content :: rest =>
     let fits := match avail with | some w => decide (lineOff + content.length ≤ w) | none => true
     let wrap := !fits ∨ (!rest.isEmpty ∧ avail.isSome)
+    let nOff := offset + content.length
+    let nLine := if fits then lineOff + content.length else content.length
     if isCulled then
       let f : CaretFragment := { id := nextId, elementId := id, isCulled := true,
-                                 startOffset := offset, endOffset := offset + content.length, hasSoftWrapToNext := wrap }
-      f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + content.length) (if fits then lineOff + content.length else content.length) false
+                                 startOffset := offset, endOffset := nOff, hasSoftWrapToNext := wrap }
+      f :: buildCaretFragmentsAux rest avail (nextId + 1) nOff nLine false
     else
       let fBox : CaretFragment := { id := nextId, elementId := id, isBox := true,
-                                    startOffset := offset, endOffset := offset + content.length }
+                                    startOffset := offset, endOffset := nOff }
       let fTxt : CaretFragment := { id := nextId + 1, elementId := id,
-                                    startOffset := offset, endOffset := offset + content.length, hasSoftWrapToNext := wrap }
-      fBox :: fTxt :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + content.length) (if fits then lineOff + content.length else content.length) false
+                                    startOffset := offset, endOffset := nOff, hasSoftWrapToNext := wrap }
+      fBox :: fTxt :: buildCaretFragmentsAux rest avail (nextId + 2) nOff nLine false
   | .text s :: rest =>
     match avail with
-    | none =>
-      let f : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + s.length }
-      f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + s.length) (lineOff + s.length) false
     | some w =>
-      let chars := s.toList
-      match splitAtChar '\u00AD' chars with
-      | some (b, a) =>
-        let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + b.length + 1,
-                                    isSoftHyphen := true, hasSoftWrapToNext := true }
-        let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + b.length + 1,
-                                    endOffset := offset + b.length + 1 + a.length }
-        f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + b.length + 1 + a.length) a.length false
+      match findBreakOpportunity s with
+      | some (bOff, isHyphen, isSpace) =>
+        let off2 := if isSpace then bOff + 1 else bOff
+        let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + bOff,
+                                    isSoftHyphen := isHyphen, hasSoftWrapToNext := true, hasTrailingSpace := isSpace }
+        let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + off2, endOffset := offset + s.length }
+        f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + s.length) (s.length - off2) false
       | none =>
         if s.length > w then
-          match splitAtChar ' ' chars with
-          | some (b, a) =>
-            let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + b.length,
-                                        hasSoftWrapToNext := true, hasTrailingSpace := true }
-            let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + b.length + 1,
-                                        endOffset := offset + b.length + 1 + a.length }
-            f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + b.length + 1 + a.length) a.length false
-          | none =>
-            let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + w,
-                                        hasSoftWrapToNext := true }
-            let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + w, endOffset := offset + s.length }
-            f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + s.length) (s.length - w) false
+          let f1 : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + w, hasSoftWrapToNext := true }
+          let f2 : CaretFragment := { id := nextId + 1, startOffset := offset + w, endOffset := offset + s.length }
+          f1 :: f2 :: buildCaretFragmentsAux rest avail (nextId + 2) (offset + s.length) (s.length - w) false
         else
           let f : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + s.length }
           f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + s.length) (lineOff + s.length) false
+    | none =>
+      let f : CaretFragment := { id := nextId, startOffset := offset, endOffset := offset + s.length }
+      f :: buildCaretFragmentsAux rest avail (nextId + 1) (offset + s.length) (lineOff + s.length) false
 
 /-- CSS Text 3 §5 & CSS Inline 3 §2: Partition input document items into layout fragments. -/
 def buildCaretFragments (items : List CaretDocItem) (availWidth : Option Nat := none) : List CaretFragment :=
@@ -181,56 +170,39 @@ def computeCaretPosition (frags : List CaretFragment) (q : CaretQuery) (affinity
     match frags.find? (fun f => f.elementId == nid && f.isBox) with
     | some b => { fragmentId := b.id, positionType := .afterBox, textOffset := none }
     | none =>
-      match frags.find? (fun f => f.elementId == nid && ¬f.isBox) with
-      | some t => { fragmentId := t.id, positionType := .atTextOffset, textOffset := some t.endOffset }
-      | none => { fragmentId := 0, positionType := .afterBox, textOffset := none }
+      let t := frags.find? (fun f => f.elementId == nid && ¬f.isBox)
+      { fragmentId := t.map (·.id) |>.getD 0, positionType := if t.isSome then .atTextOffset else .afterBox,
+        textOffset := t.map (·.endOffset) }
   | .atOffset off =>
     match frags.find? (fun f => f.isAtomic && (f.startOffset == off || f.endOffset == off)) with
     | some atom =>
-      if off == atom.startOffset then
-        { fragmentId := atom.id, positionType := .beforeBox, textOffset := none }
+      if off == atom.startOffset then { fragmentId := atom.id, positionType := .beforeBox, textOffset := none }
       else
-        match frags.find? (fun f => f.id == atom.id + 1 && f.isAtomic) with
-        | some nextAtom =>
-          match affinity with
-          | .upstream => { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
-          | .downstream => { fragmentId := nextAtom.id, positionType := .beforeBox, textOffset := none }
-        | none => { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
+        let nextAtom := frags.find? (fun f => f.id == atom.id + 1 && f.isAtomic)
+        if nextAtom.isSome ∧ affinity == .downstream
+        then { fragmentId := atom.id + 1, positionType := .beforeBox, textOffset := none }
+        else { fragmentId := atom.id, positionType := .afterBox, textOffset := none }
     | none =>
       match frags.find? (fun f => f.hasSoftWrapToNext) with
       | some f1 =>
-        if f1.isSoftHyphen && off == f1.endOffset then
+        if f1.isSoftHyphen ∧ off == f1.endOffset then
           { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some off }
-        else if f1.hasTrailingSpace && off == f1.endOffset + 1 then
-          match affinity with
-          | .upstream => { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some f1.endOffset }
-          | .downstream =>
-            match frags.find? (fun f => f.id > f1.id && ¬f.isBox) with
-            | some f2 => { fragmentId := f2.id, positionType := .atTextOffset, textOffset := some f2.startOffset }
-            | none => { fragmentId := f1.id + 1, positionType := .atTextOffset, textOffset := some off }
-        else if off == f1.endOffset then
-          match affinity with
-          | .upstream => { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some off }
-          | .downstream =>
-            match frags.find? (fun f => f.id > f1.id && ¬f.isBox) with
-            | some f2 => { fragmentId := f2.id, positionType := .atTextOffset, textOffset := some off }
-            | none => { fragmentId := f1.id + 1, positionType := .atTextOffset, textOffset := some off }
-        else
-          let valid := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
-          let target := if affinity == .downstream
-            then valid.find? (fun f => f.startOffset == off) <|> valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
-            else valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) <|> valid.find? (fun f => f.startOffset == off)
-          match target with
-          | some f => { fragmentId := f.id, positionType := .atTextOffset, textOffset := some off }
-          | none => { fragmentId := 0, positionType := .atTextOffset, textOffset := some off }
-      | none =>
-        let valid := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
-        let target := if affinity == .downstream
-          then valid.find? (fun f => f.startOffset == off) <|> valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
-          else valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) <|> valid.find? (fun f => f.startOffset == off)
-        match target with
-        | some f => { fragmentId := f.id, positionType := .atTextOffset, textOffset := some off }
-        | none => { fragmentId := 0, positionType := .atTextOffset, textOffset := some off }
+        else if (f1.hasTrailingSpace ∧ off == f1.endOffset + 1) ∨ off == f1.endOffset then
+          if affinity == .upstream then
+            { fragmentId := f1.id, positionType := .atTextOffset, textOffset := some f1.endOffset }
+          else
+            let f2 := frags.find? (fun f => f.id > f1.id && ¬f.isBox)
+            { fragmentId := f2.map (·.id) |>.getD (f1.id + 1), positionType := .atTextOffset,
+              textOffset := some (if f1.hasTrailingSpace then f1.endOffset + 1 else off) }
+        else fallback frags off affinity
+      | none => fallback frags off affinity
+where
+  fallback frags off aff :=
+    let valid := frags.filter (fun f => ¬f.isLineBreak ∨ f.isEmptyLine)
+    let target := if aff == .downstream
+      then valid.find? (fun f => f.startOffset == off) <|> valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset)
+      else valid.find? (fun f => f.startOffset ≤ off ∧ off ≤ f.endOffset) <|> valid.find? (fun f => f.startOffset == off)
+    { fragmentId := target.map (·.id) |>.getD 0, positionType := .atTextOffset, textOffset := some off }
 
 /-! ## 4. General Laws for Inline Caret Position -/
 

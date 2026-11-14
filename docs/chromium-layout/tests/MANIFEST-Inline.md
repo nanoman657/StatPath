@@ -227,12 +227,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:281 | CulledInlineWithOOF | behaviour | formalized | `inlineCursor_culledInlineWithOOF` | CSS 2.1 §9.3: Out-of-flow positioned elements are excluded from culled inline traversal |
 | inline/inline_cursor_test.cc:292 | CulledInlineNested | behaviour | formalized | `inlineCursor_culledInlineNested` | CSS Inline 3 §2: Nested culled inlines preserve descendant text items |
 | inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | internal | - | Block in inline anonymous wrapper splitting |
-| inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | formalized | `inlineCursor_culledInlineWithoutRoot` | CSS Inline 3 §2: Culled inline without root container yields in-flow text and break fragments |
 | inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | internal | - | Multicolumn fragmentainer boundary crossing |
 | inline/inline_cursor_test.cc:365 | FirstChild | behaviour | formalized | `inlineCursor_firstChild` | CSS 2.1 §9.4.2: MoveToFirstChild descends to first child; text leaf has no children |
 | inline/inline_cursor_test.cc:375 | FirstChild2 | behaviour | formalized | `inlineCursor_firstChild2` | CSS 2.1 §9.4.2: Successive MoveToFirstChild visits nested inline box first child |
-| inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:403 | FirstLastLogicalLeafInRtlText | behaviour | formalized | `inlineCursor_firstLastLogicalLeafInRtlText` | CSS Writing Modes 3 §3.2: In RTL text, logical first and last leaf resolve in reading order |
 | inline/inline_cursor_test.cc:420 | FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | formalized | `inlineCursor_firstLastLogicalLeafInTextAsDeepDescendants` | CSS Writing Modes 3 §3.2: Logical leaf descent finds innermost text leaf across deep hierarchies |
 | inline/inline_cursor_test.cc:439 | MoveToEndOfLineWithNoCharsLtr | behaviour | internal | - | End of empty line cursor in textarea LTR |
@@ -275,12 +275,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_previousInlineLeaf` | CSS Inline 3 §2: MoveToPreviousInlineLeaf visits leaf items in reverse order including line breaks |
 | inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_previousInlineLeafIgnoringLineBreak` | CSS Inline 3 §2: MoveToPreviousInlineLeafIgnoringLineBreak visits reverse leaves skipping line breaks |
 | inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_previousInlineLeafOnLineFromLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from container visits preceding leaves on same line |
-| inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1189 | PreviousInlineLeafOnLineFromNestedLayoutInline | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:1211 | PreviousInlineLeafOnLineFromLayoutText | behaviour | formalized | `inlineCursor_previousInlineLeafOnLineFromLayoutText` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from text leaf traverses backward on line and stops at line start |
 | inline/inline_cursor_test.cc:1229 | PreviousLine | behaviour | formalized | `inlineCursor_previousLine` | CSS 2.1 §9.4.2: MoveToPreviousLine moves to previous line box fragment, or null from first line |
 | inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | formalized | `inlineCursor_cursorForDescendants` | CSS Inline 3 §2: CursorForDescendants limits cursor to subtree descending from current container |
 | inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
-| inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | blocked | - | Blocked: model lacks InlineCursor tree iterator |
+| inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_moveToLayoutObject` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Enumerate fragments for layout object; culled inlines have none |
 | inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
 | inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | internal | internal | - | Crash regression test for non-IFC ruby child |
 | inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces` | Whitespace space collapsing rules across modes |
@@ -294,25 +294,25 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_items_builder_test.cc:267 | CollapseLeadingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseLeadingNewlines` | Leading newlines removal |
 | inline/inline_items_builder_test.cc:281 | CollapseTrailingNewlines | behaviour | formalized | `inlineItemsBuilder_collapseTrailingNewlines` | Trailing newlines removal |
 | inline/inline_items_builder_test.cc:289 | CollapseNewlineAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapseNewlineAcrossElements` | Newline across element boundaries collapsing |
-| inline/inline_items_builder_test.cc:295 | CollapseBeforeAndAfterNewline | behaviour | blocked | - | Blocked: model lacks CollapseBeforeAndAfterNewline handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:301 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | blocked | - | Blocked: model lacks CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:309 | CollapseZeroWidthSpaces | behaviour | blocked | - | Blocked: model lacks CollapseZeroWidthSpaces handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:334 | CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | blocked | - | Blocked: model lacks CollapseZeroWidthSpaceAndNewLineAtEnd handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:295 | CollapseBeforeAndAfterNewline | behaviour | formalized | `inlineItemsBuilder_collapseBeforeAndAfterNewline` | CSS Text 3 §4.1.1: Spaces before and after newline in pre-line mode removed |
+| inline/inline_items_builder_test.cc:301 | CollapsibleSpaceAfterNonCollapsibleSpaceAcrossElements | behaviour | formalized | `inlineItemsBuilder_collapsibleSpaceAfterNonCollapsibleSpaceAcrossElements` | CSS Text 3 §4.1.2: Collapsible space after pre-wrap does not collapse |
+| inline/inline_items_builder_test.cc:309 | CollapseZeroWidthSpaces | behaviour | formalized | `inlineItemsBuilder_collapseZeroWidthSpaces` | CSS Text 3 §4.1.3: Newline adjacent to zero-width space is removed |
+| inline/inline_items_builder_test.cc:334 | CollapseZeroWidthSpaceAndNewLineAtEnd | behaviour | formalized | `inlineItemsBuilder_collapseZeroWidthSpaceAndNewLineAtEnd` | CSS Text 3 §4.1.3: Trailing newline following zero-width space is removed |
 | inline/inline_items_builder_test.cc:340 | CollapseEastAsianWidth | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
-| inline/inline_items_builder_test.cc:357 | OpaqueToSpaceCollapsing | behaviour | blocked | - | Blocked: model lacks OpaqueToSpaceCollapsing handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:367 | CollapseAroundReplacedElement | behaviour | blocked | - | Blocked: model lacks CollapseAroundReplacedElement handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:375 | CollapseNewlineAfterObject | behaviour | blocked | - | Blocked: model lacks CollapseNewlineAfterObject handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:387 | AppendEmptyString | behaviour | blocked | - | Blocked: model lacks AppendEmptyString handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:393 | NewLines | behaviour | blocked | - | Blocked: model lacks NewLines handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:405 | IgnorablePre | behaviour | blocked | - | Blocked: model lacks IgnorablePre handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:426 | Empty | behaviour | blocked | - | Blocked: model lacks Empty handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | blocked | - | Blocked: model lacks CollapsedSpaceAfterNoWrap handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | blocked | - | Blocked: model lacks GenerateBreakOpportunityAfterLeadingSpaces handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:357 | OpaqueToSpaceCollapsing | behaviour | formalized | `inlineItemsBuilder_opaqueToSpaceCollapsing` | CSS Text 3 §4.1.2: Bidi controls are opaque to space collapsing across boundaries |
+| inline/inline_items_builder_test.cc:367 | CollapseAroundReplacedElement | behaviour | formalized | `inlineItemsBuilder_collapseAroundReplacedElement` | CSS Text 3 §4.1.2: Atomic inline preserves collapsible spaces around it |
+| inline/inline_items_builder_test.cc:375 | CollapseNewlineAfterObject | behaviour | blocked | - | Blocked: held-out test |
+| inline/inline_items_builder_test.cc:387 | AppendEmptyString | behaviour | formalized | `inlineItemsBuilder_appendEmptyString` | CSS Text 3 §4: Appending an empty string produces a 0-length text item |
+| inline/inline_items_builder_test.cc:393 | NewLines | behaviour | formalized | `inlineItemsBuilder_newLines` | CSS Text 3 §4.1: Preserved newlines in pre mode generate control items |
+| inline/inline_items_builder_test.cc:405 | IgnorablePre | behaviour | formalized | `inlineItemsBuilder_ignorablePre` | CSS Text 3 §4.1: Form feeds and newlines in pre mode generate control items |
+| inline/inline_items_builder_test.cc:426 | Empty | behaviour | blocked | - | Blocked: held-out test |
+| inline/inline_items_builder_test.cc:446 | CollapsedSpaceAfterNoWrap | behaviour | formalized | `inlineItemsBuilder_collapsedSpaceAfterNoWrap` | CSS Text 3 §5.1: Transition from nowrap to wrap inserts a break opportunity |
+| inline/inline_items_builder_test.cc:455 | GenerateBreakOpportunityAfterLeadingSpaces | behaviour | formalized | `inlineItemsBuilder_generateBreakOpportunityAfterLeadingSpaces` | CSS Text 3 §5.1: Leading preserved spaces in pre-wrap generate a break opportunity |
 | inline/inline_items_builder_test.cc:469 | BidiBlockOverride | behaviour | formalized | `inlineItemsBuilder_bidiBlockOverride` | Injection of RLO and PDF bidi control characters for bidi-override block |
 | inline/inline_items_builder_test.cc:501 | BidiIsolate | behaviour | formalized | `inlineItemsBuilder_bidiIsolate` | Injection of RLI and PDI bidi control characters for isolated inline |
 | inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | formalized | `inlineItemsBuilder_bidiIsolateOverride` | Injection of FSI, RLO, PDF, and PDI for isolate-override inline |
-| inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | blocked | - | Blocked: model lacks BlockInInline handling in InlineItemsBuilder |
-| inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | blocked | - | Blocked: model lacks OpenCloseRubyColumns handling in InlineItemsBuilder |
+| inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | formalized | `inlineItemsBuilder_blockInInline` | CSS 2.1 §9.2.1.1: Collapsible spaces before and after a block-in-inline are collapsed |
+| inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | formalized | `inlineItemsBuilder_openCloseRubyColumns` | CSS Ruby 1 §2.3: Nested ruby and annotation tags emit structured ruby items |
 | inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
 | inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | formalized | `inlineLayout_emptyLineBoxTypes` | Empty inline tags generate empty line box, text does not |
 | inline/inline_layout_algorithm_test.cc:113 | TypesForFirstLine | behaviour | blocked | - | Blocked: model lacks TypesForFirstLine layout algorithm support |
@@ -378,7 +378,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_break_candidate_test.cc:276 | AtomicInlineBr | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_break_candidate_test.cc:307 | AtomicInlineTrailingSpaces | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
 | inline/line_break_candidate_test.cc:339 | ForcedBreak | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
-| inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | blocked | - | Blocked: model lacks LineBreakCandidate opportunity analysis |
+| inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | formalized | `lineBreak_OutOfFlowPositioned` | CSS Text 3 §5.2: Out of flow positioned element does not affect line break candidates |
 | inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
 | inline/line_info_test.cc:23 | InflowEndOffset | behaviour | formalized | `lineInfo_inflowEndOffset` | Ruby base text establishes inflow end offset excluding annotations |
 | inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | internal | internal | - | Crash regression / DCHECK test for zero-length control item in trailing spaces |
@@ -404,7 +404,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/offset_mapping_test.cc:492 | TwoTextNodes | behaviour | formalized | `test_OffsetMapping_TwoTextNodes` | Offset mapping and positions across two sibling text nodes |
 | inline/offset_mapping_test.cc:558 | BRBetweenTextNodes | behaviour | formalized | `test_OffsetMapping_BRBetweenTextNodes` | Offset mapping units across text nodes separated by BR element |
 | inline/offset_mapping_test.cc:613 | OneTextNodeWithCollapsedSpace | behaviour | formalized | `test_OffsetMapping_OneTextNodeWithCollapsedSpace` | OffsetMappingUnits partitioning into identity and collapsed runs |
-| inline/offset_mapping_test.cc:686 | FullyCollapsedWhiteSpaceNode | behaviour | blocked | - | Blocked: model lacks empty whitespace node offset mapping |
+| inline/offset_mapping_test.cc:686 | FullyCollapsedWhiteSpaceNode | behaviour | formalized | `test_OffsetMapping_FullyCollapsedWhiteSpaceNode` | CSS Text 3 §4.1.2: Completely collapsed whitespace node generates collapsed unit |
 | inline/offset_mapping_test.cc:748 | ReplacedElement | behaviour | blocked | - | Blocked: model lacks replaced element offset mapping |
 | inline/offset_mapping_test.cc:805 | FirstLetter | behaviour | blocked | - | Blocked: model lacks first-letter offset mapping |
 | inline/offset_mapping_test.cc:835 | FirstLetterWithLeadingSpace | behaviour | blocked | - | Blocked: model lacks first-letter leading space offset mapping |

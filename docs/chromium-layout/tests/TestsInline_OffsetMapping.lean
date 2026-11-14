@@ -167,4 +167,17 @@ theorem test_OffsetMapping_PreLine :
     ]) := by
   decide
 
+/-- Test: FullyCollapsedWhiteSpaceNode (offset_mapping_test.cc:686)
+    CSS Text 3 §4.1.2: Completely collapsed whitespace node generates collapsed unit. -/
+theorem test_OffsetMapping_FullyCollapsedWhiteSpaceNode :
+    let nodes := [DomNode.text 1 "foo ", DomNode.text 2 " ", DomNode.text 3 "bar"]
+    let units := buildDomOffsetMapping nodes
+    (renderedTextContent nodes = "foo bar") ∧
+    (units = [
+      { nodeId := 1, unitType := .identity, domStart := 0, domEnd := 4, textStart := 0, textEnd := 4 },
+      { nodeId := 2, unitType := .collapsed, domStart := 0, domEnd := 1, textStart := 4, textEnd := 4 },
+      { nodeId := 3, unitType := .identity, domStart := 0, domEnd := 3, textStart := 4, textEnd := 7 }
+    ]) := by
+  decide
+
 end ChromiumLayout.TestsInline

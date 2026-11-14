@@ -634,4 +634,21 @@ theorem inlineCursor_cursorForDescendants :
     descendantNames nodes 4 = ["text3"] := by
   decide
 
+
+/-- Test: MoveToLayoutObject (inline_cursor_test.cc:1318)
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2: Enumerate all fragments for a given layout object;
+    culled inline boxes have no fragment items. -/
+theorem inlineCursor_moveToLayoutObject :
+    let nodes : List CursorNode := [
+      { id := "text1", name := "1111", lineIndex := 0 },
+      { id := "text1", name := "22", lineIndex := 1 },
+      { id := "text2", name := "33", lineIndex := 2 },
+      { id := "text2", name := "4444", lineIndex := 2 }
+    ]
+    itemsForLayoutObject nodes "text1" = ["1111", "22"] ∧
+    itemsForLayoutObject nodes "text2" = ["33", "4444"] ∧
+    itemsForLayoutObject nodes "span1" = [] ∧
+    itemsForLayoutObject nodes "span2" = [] := by
+  decide
+
 end ChromiumLayout.TestsInline

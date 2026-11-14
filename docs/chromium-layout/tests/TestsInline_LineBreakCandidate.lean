@@ -95,4 +95,22 @@ theorem lineBreak_SpanCloseAfterSpace :
         { offset := { itemIndex := 4, textOffset := 11 }, endOffset := { itemIndex := 4, textOffset := 11 }, posNoBreak := 110, posIfBreak := 110 } ] := by
   decide
 
+/-! ### Test 7: OutOfFlowPositioned (`line_break_candidate_test.cc:368`) -/
+def target_OutOfFlowPositioned : List IndexedInlineToken :=
+  [ ⟨0, .text "012 456 89 012 456 89 01"⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨2, .closeTag⟩ ]
+
+theorem lineBreak_OutOfFlowPositioned :
+    computeLineBreakCandidates target_OutOfFlowPositioned =
+      [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
+        { offset := { itemIndex := 0, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
+        { offset := { itemIndex := 0, textOffset := 8 }, endOffset := { itemIndex := 0, textOffset := 7 }, posNoBreak := 80, posIfBreak := 70 },
+        { offset := { itemIndex := 0, textOffset := 11 }, endOffset := { itemIndex := 0, textOffset := 10 }, posNoBreak := 110, posIfBreak := 100 },
+        { offset := { itemIndex := 0, textOffset := 15 }, endOffset := { itemIndex := 0, textOffset := 14 }, posNoBreak := 150, posIfBreak := 140 },
+        { offset := { itemIndex := 0, textOffset := 19 }, endOffset := { itemIndex := 0, textOffset := 18 }, posNoBreak := 190, posIfBreak := 180 },
+        { offset := { itemIndex := 0, textOffset := 22 }, endOffset := { itemIndex := 0, textOffset := 21 }, posNoBreak := 220, posIfBreak := 210 },
+        { offset := { itemIndex := 2, textOffset := 24 }, endOffset := { itemIndex := 2, textOffset := 24 }, posNoBreak := 240, posIfBreak := 240 } ] := by
+  decide
+
 end ChromiumLayout.TestsInline
