@@ -856,5 +856,32 @@ theorem multicol_total_columns_empty (initCols : Nat) :
 theorem multicol_total_columns_single (initCols col y bh ch : Nat) :
     multicolTotalColumns initCols [⟨col, y, bh, ch⟩] = max initCols (col + 1) := rfl
 
+/-- Resolve the starting column and block offset for an out-of-flow element in multi-column flow,
+    handling positive, negative, and static offsets across fragmentainers.
+    CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2. -/
+def resolveMulticolOofStart (cbCol : Nat) (cbOffsetY : Nat) (topInset : Int) (fragH : Nat) : Nat × Nat :=
+  if fragH = 0 then (cbCol, cbOffsetY)
+  else if ((cbCol * fragH : Nat) : Int) + cbOffsetY + topInset ≤ 0 then (0, 0)
+  else
+    let totalOffset : Int := ((cbCol * fragH : Nat) : Int) + cbOffsetY + topInset
+    let col := (totalOffset / (fragH : Int)).toNat
+    let rem := (totalOffset % (fragH : Int)).toNat
+    (col, rem)
+
+/-- Law: Indefinite/zero fragmentainer height keeps containing block position.
+    CSS Multi-column Layout Level 1 §2. -/
+theorem resolve_multicol_oof_start_zero_frag (cbCol cbOffsetY : Nat) (topInset : Int) :
+    resolveMulticolOofStart cbCol cbOffsetY topInset 0 = (cbCol, cbOffsetY) := rfl
+
+/-- Law: Non-positive total offset clamps out-of-flow start to the first column at top zero.
+    CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2. -/
+theorem resolve_multicol_oof_start_clamp_zero (cbCol cbOffsetY fragH : Nat) (topInset : Int)
+    (hfrag : 0 < fragH) (hnonpos : ((cbCol * fragH : Nat) : Int) + cbOffsetY + topInset ≤ 0) :
+    resolveMulticolOofStart cbCol cbOffsetY topInset fragH = (0, 0) := by
+  unfold resolveMulticolOofStart
+  split
+  · next h0 => omega
+  · rfl
+
 end ColumnLayout
 end ChromiumLayout

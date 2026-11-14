@@ -175,6 +175,62 @@ theorem ChildBreakAfterAvoid_vectors :
     ] := by
   decide
 
+-- out_of_flow_layout_part_test.cc:568: OutOfFlowLayoutPartTest.PositionedFragmentationWithNegativeTopPropertyAndNewEmptyColumn
+-- A positioned element with negative top property moves to the previous fragmentainer and fragments across columns.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem PositionedFragmentationWithNegativeTopPropertyAndNewEmptyColumn_vectors :
+    let fragH := 40
+    let (startCol, startOffsetY) := resolveMulticolOofStart 1 20 (-40) fragH
+    let slices := fragmentOofWithContent startCol startOffsetY 80 80 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    startCol = 0 ∧
+    startOffsetY = 20 ∧
+    slices = [⟨0, 20, 20, 20⟩, ⟨1, 0, 40, 40⟩, ⟨2, 0, 20, 20⟩] ∧
+    totalCols = 3 := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:649: OutOfFlowLayoutPartTest.PositionedFragmentationInFlowWithAddedColumns
+-- A positioned element in static position fragments across columns and expands multi-column column count.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem PositionedFragmentationInFlowWithAddedColumns_vectors :
+    let fragH := 40
+    let (startCol, startOffsetY) := resolveMulticolOofStart 1 20 0 fragH
+    let slices := fragmentOofWithContent startCol startOffsetY 80 80 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    startCol = 1 ∧
+    startOffsetY = 20 ∧
+    slices = [⟨1, 20, 20, 20⟩, ⟨2, 0, 40, 40⟩, ⟨3, 0, 20, 20⟩] ∧
+    totalCols = 4 := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:1175: OutOfFlowLayoutPartTest.AbsposFragmentationPctResolution
+-- Out-of-flow positioned element with percentage block size resolved in fragmentainer before spanner.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem AbsposFragmentationPctResolution_vectors :
+    let fragH := 30
+    let (startCol, startOffsetY) := resolveMulticolOofStart 0 0 30 fragH
+    let slices := fragmentOofWithContent startCol startOffsetY 30 30 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    startCol = 1 ∧
+    startOffsetY = 0 ∧
+    slices = [⟨1, 0, 30, 30⟩] ∧
+    totalCols = 2 := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
+-- out_of_flow_layout_part_test.cc:1278: OutOfFlowLayoutPartTest.SimpleAbsposNestedFragmentation
+-- Out-of-flow positioned element fragments inside a nested multi-column container.
+-- CSS Multi-column Layout Level 1 §2, CSS Positioned Layout Level 3 §2, CSS Fragmentation Level 3 §2.
+theorem SimpleAbsposNestedFragmentation_vectors :
+    let fragH := 60
+    let (startCol, startOffsetY) := resolveMulticolOofStart 0 0 0 fragH
+    let slices := fragmentOofWithContent startCol startOffsetY 80 80 fragH
+    let totalCols := multicolTotalColumns 2 slices
+    startCol = 0 ∧
+    startOffsetY = 0 ∧
+    slices = [⟨0, 0, 60, 60⟩, ⟨1, 0, 20, 20⟩] ∧
+    totalCols = 2 := by
+  exact ⟨rfl, rfl, rfl, rfl⟩
+
 -- out_of_flow_layout_part_test.cc:1549: OutOfFlowLayoutPartTest.PositionedObjectsInMulticol
 -- Out-of-flow positioned descendants in multicolumn are attached to column fragmentainers,
 -- not directly to the multicol fragmentation context root.
