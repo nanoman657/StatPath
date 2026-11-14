@@ -6,9 +6,12 @@
   StickyPositionChildPushingOutsideParent, StickyPositionTripleNestedDiv).
   Owned by the block lane (Block*).
 -/
+import BlockOverflow
 
 namespace ChromiumLayout
 namespace BlockSticky
+
+open BlockOverflow
 
 /-- Specification of a sticky box constraint in the block axis. CSS Positioned Layout 3 §2.3. -/
 structure StickyConstraint where
@@ -263,6 +266,30 @@ theorem find_nearest_sticky_box_empty (id : String) :
     CSS Positioned Layout 3 §2.3. -/
 theorem find_nearest_containing_block_empty (id : String) :
     findNearestContainingBlockShiftingAncestor [] id = none := rfl
+
+/-- Whether an overflow value establishes a scroll container.
+    CSS Overflow Module Level 3 §3 Scrollable Overflow. -/
+def isScrollContainer (ox oy : OverflowValue) : Bool :=
+  ox != .visible || oy != .visible
+
+/-- Find the containing scroll container for a sticky box: the nearest ancestor establishing
+    a scroll container, defaulting to the root view.
+    CSS Positioned Layout Module Level 3 §2.3, CSS Overflow Module Level 3 §3. -/
+def findContainingScrollContainer (ancestorOverflows : List (String × OverflowValue × OverflowValue))
+    (rootId : String) : String :=
+  match ancestorOverflows.find? (fun (_, ox, oy) => isScrollContainer ox oy) with
+  | some (id, _, _) => id
+  | none => rootId
+
+/-- Law: If no ancestor establishes a scroll container, the containing scroll container is the root view.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+theorem find_containing_scroll_container_empty (rootId : String) :
+    findContainingScrollContainer [] rootId = rootId := rfl
+
+/-- Law: Visible overflow on all ancestors falls through to the root view.
+    CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3. -/
+theorem find_containing_scroll_container_visible (ancId rootId : String) :
+    findContainingScrollContainer [(ancId, .visible, .visible)] rootId = rootId := rfl
 
 end BlockSticky
 end ChromiumLayout

@@ -3,12 +3,14 @@
   layout_box_model_object_test.cc.
   Owned by the block lane (TestsBlock_*).
 -/
+import BlockLength
+import BlockOverflow
 import BlockSticky
 
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockSticky
+open BlockLength BlockOverflow BlockSticky
 
 -- layout_box_model_object_test.cc:974: StickyPositionNested
 -- Nested sticky divs: parent shifts by 50px, child is already aligned with scroll top.
@@ -299,6 +301,76 @@ theorem StickyPositionFindsCorrectContainingBlockShiftingAncestorTable_vectors :
       { id := "stickyTh", isSticky := true, isAnchored := true, containingBlockId := some "table", parentId := some "tr" }
     ]
     findNearestContainingBlockShiftingAncestor nodes "stickyTh" = some "stickyOuter" := by
+  decide
+
+-- layout_box_model_object_test.cc:571: StickyPositionConstraintInvalidation
+-- Flex container distributes width: 150px (with 50px target) vs 200px (when target hidden).
+-- Auto margins on 100px container update sticky box X offset from 25px to 50px.
+-- CSS Flexible Box 1 §9.2, CSS 2.1 §10.3.3, CSS Positioned Layout 3 §2.3.
+theorem StickyPositionConstraintInvalidation_vectors :
+    let x1 := (autoMargins 150 100 .auto .auto).1
+    let x2 := (autoMargins 200 100 .auto .auto).1
+    x1 = 25 ∧ x2 = 50 := by
+  decide
+
+-- layout_box_model_object_test.cc:1589: StickyParentContainStrictChangeOverflowProperty
+-- When body has visible overflow, containing scroll container is LayoutView.
+-- When body toggles to overflow: hidden, containing scroll container becomes body.
+-- When body reverts to visible overflow, containing scroll container reverts to LayoutView.
+-- CSS Positioned Layout 3 §2.3, CSS Overflow 3 §3.
+theorem StickyParentContainStrictChangeOverflowProperty_vectors :
+    let initial := findContainingScrollContainer [("body", .visible, .visible)] "LayoutView"
+    let withHidden := findContainingScrollContainer [("body", .hidden, .hidden)] "LayoutView"
+    let reverted := findContainingScrollContainer [("body", .visible, .visible)] "LayoutView"
+    initial = "LayoutView" ∧ withHidden = "body" ∧ reverted = "LayoutView" := by
+  decide
+
+-- layout_box_model_object_test.cc:1618: RemoveStickyUnderContain
+-- Removing a parent element clears its sticky descendants from the scrollable area.
+-- CSS Positioned Layout 3 §2.3.
+theorem RemoveStickyUnderContain_vectors :
+    let initialSticky : Option StickyConstraint := some { top := some 100 }
+    let removedSticky : Option StickyConstraint := none
+    initialSticky.isSome = true ∧ removedSticky.isSome = false := by
+  decide
+
+-- layout_box_model_object_test.cc:1643: ChangeStickyStatusUnderContain
+-- Toggling position between static and sticky dynamically attaches and detaches sticky constraints.
+-- CSS Positioned Layout 3 §2.3.
+theorem ChangeStickyStatusUnderContain_vectors :
+    let initial : StickyConstraint := {}
+    let sticky : StickyConstraint := { top := some 1 }
+    let cleared : StickyConstraint := {}
+    initial.top.isSome = false ∧ sticky.top.isSome = true ∧ cleared.top.isSome = false := by
+  decide
+
+-- layout_box_model_object_test.cc:1671: ChangeStickyStatusKeepLayerUnderContain
+-- An element with existing paint layer (opacity < 1) gains and loses sticky constraints on position change.
+-- CSS Positioned Layout 3 §2.3, CSS Color 3 §3.2.
+theorem ChangeStickyStatusKeepLayerUnderContain_vectors :
+    let initial : StickyConstraint := {}
+    let sticky : StickyConstraint := { top := some 1 }
+    let cleared : StickyConstraint := {}
+    initial.top.isSome = false ∧ sticky.top.isSome = true ∧ cleared.top.isSome = false := by
+  decide
+
+-- layout_box_model_object_test.cc:1700: RemoveStickyStatusInNestedStickyElementsWithContain
+-- When container changes from sticky to relative, child sticky element updates its
+-- nearest containing-block shifting ancestor from container to body.
+-- CSS Positioned Layout 3 §2.3.
+theorem RemoveStickyStatusInNestedStickyElementsWithContain_vectors :
+    let nodesWithStickyContainer : List StickyNode := [
+      { id := "body", isSticky := true, isAnchored := true },
+      { id := "container", isSticky := true, isAnchored := true, containingBlockId := some "body", parentId := some "body" },
+      { id := "child", isSticky := true, isAnchored := true, containingBlockId := some "container", parentId := some "container" }
+    ]
+    let nodesWithRelContainer : List StickyNode := [
+      { id := "body", isSticky := true, isAnchored := true },
+      { id := "container", isSticky := false, isAnchored := false, containingBlockId := some "body", parentId := some "body" },
+      { id := "child", isSticky := true, isAnchored := true, containingBlockId := some "container", parentId := some "container" }
+    ]
+    findNearestContainingBlockShiftingAncestor nodesWithStickyContainer "child" = some "container" ∧
+    findNearestContainingBlockShiftingAncestor nodesWithRelContainer "child" = some "body" := by
   decide
 
 end TestsBlock

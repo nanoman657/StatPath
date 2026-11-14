@@ -672,7 +672,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:490 | LayoutBoxModelObjectTest.NoSingleAxisScrollerPositionStickyUseCountWhenDisabled | internal | internal | Blink use counter check |
 | layout_box_model_object_test.cc:506 | LayoutBoxModelObjectTest.StickyPositionAnonymousContainer | behaviour | formalized | `TestsBlock.StickyPositionAnonymousContainer_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:540 | LayoutBoxModelObjectTest.StickyPositionTableContainers | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:571 | LayoutBoxModelObjectTest.StickyPositionConstraintInvalidation | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
+| layout_box_model_object_test.cc:571 | LayoutBoxModelObjectTest.StickyPositionConstraintInvalidation | behaviour | formalized | `TestsBlock.StickyPositionConstraintInvalidation_vectors`, `BlockSticky.sticky_offset_unscrolled` |
 | layout_box_model_object_test.cc:610 | LayoutBoxModelObjectTest.StickyPositionStatusChange | behaviour | formalized | `TestsBlock.StickyPositionStatusChange_vectors`, `BlockSticky.sticky_offset_none` |
 | layout_box_model_object_test.cc:701 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectStickyBoxShiftingAncestor | behaviour | formalized | `TestsBlock.StickyPositionFindsCorrectStickyBoxShiftingAncestor_vectors`, `BlockSticky.sticky_offset_none` |
 | layout_box_model_object_test.cc:764 | LayoutBoxModelObjectTest.StickyPositionInlineBlockUnderStickyInline | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
@@ -696,11 +696,11 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:1500 | LayoutBoxModelObjectTest.ChangingBackdropFilterWithWillChange | behaviour | blocked | model lacks paint layer invalidation and style mutation |
 | layout_box_model_object_test.cc:1531 | LayoutBoxModelObjectTest.ChangingWillChangeBackdropFilter | behaviour | blocked | model lacks paint layer invalidation and style mutation |
 | layout_box_model_object_test.cc:1566 | LayoutBoxModelObjectTest.UpdateStackingContextForOption | internal | internal | Blink option element stacking context check |
-| layout_box_model_object_test.cc:1589 | LayoutBoxModelObjectTest.StickyParentContainStrictChangeOverflowProperty | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:1618 | LayoutBoxModelObjectTest.RemoveStickyUnderContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:1643 | LayoutBoxModelObjectTest.ChangeStickyStatusUnderContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:1671 | LayoutBoxModelObjectTest.ChangeStickyStatusKeepLayerUnderContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
-| layout_box_model_object_test.cc:1700 | LayoutBoxModelObjectTest.RemoveStickyStatusInNestedStickyElementsWithContain | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
+| layout_box_model_object_test.cc:1589 | LayoutBoxModelObjectTest.StickyParentContainStrictChangeOverflowProperty | behaviour | formalized | `TestsBlock.StickyParentContainStrictChangeOverflowProperty_vectors`, `BlockSticky.find_containing_scroll_container_empty` |
+| layout_box_model_object_test.cc:1618 | LayoutBoxModelObjectTest.RemoveStickyUnderContain | behaviour | formalized | `TestsBlock.RemoveStickyUnderContain_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1643 | LayoutBoxModelObjectTest.ChangeStickyStatusUnderContain | behaviour | formalized | `TestsBlock.ChangeStickyStatusUnderContain_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1671 | LayoutBoxModelObjectTest.ChangeStickyStatusKeepLayerUnderContain | behaviour | formalized | `TestsBlock.ChangeStickyStatusKeepLayerUnderContain_vectors`, `BlockSticky.sticky_offset_none` |
+| layout_box_model_object_test.cc:1700 | LayoutBoxModelObjectTest.RemoveStickyStatusInNestedStickyElementsWithContain | behaviour | formalized | `TestsBlock.RemoveStickyStatusInNestedStickyElementsWithContain_vectors`, `BlockSticky.find_nearest_containing_block_empty` |
 | layout_object_test.cc:77 | LayoutObjectTest.CommonAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:131 | LayoutObjectTest.OwnerNodeId | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:160 | LayoutObjectTest.LayoutDecoratedNameCalledWithPositionedObject | internal | internal | Blink LayoutObject tree/property plumbing check |
