@@ -21,7 +21,7 @@ namespace ChromiumLayout
 theorem hitTest_occlusion :
     let target : PhysicalRect := { x := 0, y := 0, width := 100, height := 100 }
     let occluder_initial : PhysicalRect := { x := 0, y := 100, width := 100, height := 100 }
-    let occluder_shifted : PhysicalRect := { x := 0, y := 90, width := 100, height := 100 }
+    let occluder_shifted : PhysicalRect := { occluder_initial with y := occluder_initial.y - 10 }
     occludes2D target occluder_initial = false ∧
     occludes2D target occluder_shifted = true := by
   decide
@@ -41,11 +41,14 @@ theorem hitTest_withCallback :
 theorem hitTest_occlusionWithClipPath :
     let target : PhysicalRect := { x := 0, y := 0, width := 100, height := 100 }
     let occ1 : PhysicalRect := { x := 0, y := 100, width := 100, height := 100 }
-    let occ2 : PhysicalRect := { x := 0, y := 96, width := 100, height := 100 }
-    let occ3 : PhysicalRect := { x := 0, y := 94, width := 100, height := 100 }
-    occludesWithClipCircle target occ1 50 50 45 = false ∧
-    occludesWithClipCircle target occ2 50 50 45 = false ∧
-    occludesWithClipCircle target occ3 50 50 45 = true := by
+    let occ2 : PhysicalRect := { occ1 with y := occ1.y - 4 }
+    let occ3 : PhysicalRect := { occ1 with y := occ1.y - 6 }
+    let cx := 50
+    let cy := 50
+    let r := 45
+    occludesWithClipCircle target occ1 cx cy r = false ∧
+    occludesWithClipCircle target occ2 cx cy r = false ∧
+    occludesWithClipCircle target occ3 cx cy r = true := by
   decide
 
 /-- Test `HitTestingTest, OcclusionHitTestWithBorderShapeStrokeMode` (`hit_testing_test.cc:253`).
@@ -75,8 +78,11 @@ theorem hitTest_occlusionWithBorderShapeFillMode :
 /-- Test `HitTestingTest, ScrolledInline` (`hit_testing_test.cc:384`).
     CSS Overflow 3 §3, CSSOM View §8: Scrolled inline hit testing maps point (5, 5) with scrollTop 100 to line 3 start. -/
 theorem hitTest_scrolledInline :
-    let lineLengths : List Nat := [6, 6, 6, 6, 6, 6, 6, 6, 6]
-    hitTestScrolledLine 100 5 50 lineLengths = 12 := by
+    let lines : List String := ["line1\n", "line2\n", "line3\n", "line4\n", "line5\n", "line6\n", "line7\n", "line8\n", "line9"]
+    let lineLengths := lines.map String.length
+    let lineHeight := 50
+    let scrollTop := 100
+    hitTestScrolledLine scrollTop 5 lineHeight lineLengths = 12 := by
   rfl
 
 /-- Test `HitTestingTest, ReferenceFilter` (`hit_testing_test.cc:421`).

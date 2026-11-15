@@ -143,6 +143,18 @@ done: TestsInline_InlineLayout +0
   - `inlineLayout_blockWithSingleTextNode`, `inlineLayout_blockWithTextAndAtomicInline`: run inline DOM streams (text, span tags, atomic inlines) through `collectInlines` to produce line text buffer and object replacement characters (\uFFFC).
   - `inlineLayout_emptyLineBoxTypes`: evaluates empty line box predicate `isLineBoxEmpty` across text items versus empty span tags.
 
+done: TestsInline_HitTesting +0
+- Rewrote thin theorems:
+  - `hitTest_occlusion`: derives shifted occluder rect by subtracting CSS margin-top (10px) from initial box offset.
+  - `hitTest_occlusionWithClipPath`: derives occluder rects from CSS margin-top shifts (-4px, -6px) against clip circle (cx 50, cy 50, r 45) per CSS Masking 1 §3.
+  - `hitTest_scrolledInline`: flows DOM text lines through `String.length` and container font-size (50px) into scrolled line hit testing per CSS Overflow 3 §3.
+- Other theorems in file verified not thin:
+  - `hitTest_withCallback`: evaluates hit test traversal with callback stopper.
+  - `hitTest_occlusionWithBorderShapeStrokeMode`, `hitTest_occlusionWithBorderShapeFillMode`: evaluate border shape stroke/fill mode geometric occlusion per CSS Backgrounds and Borders 3 §7.1.
+  - `hitTest_referenceFilter`: computes filter expansion on visual overflow rect per CSS Filter Effects 1 §3.1.
+  - `hitTest_occlusionWith3DTransform`, `hitTest_occlusionWithFlattenedPreserve3DOccluder`: evaluate 3D transform occlusion and flat context flattening per CSS Transforms 2 §4.
+
+
 
 
 
