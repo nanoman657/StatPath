@@ -479,15 +479,15 @@ checks every row against the pinned sources and the Lean modules.
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:310 | GridLanesLayoutAlgorithmTest.GridLanesAutoPlacedItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:346 | GridLanesLayoutAlgorithmTest.ConstructGridLanesItemsParentAutoPlacedMarksAll | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:378 | GridLanesLayoutAlgorithmTest.BuildRanges | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:425 | GridLanesLayoutAlgorithmTest.BuildFixedTrackSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:425 | GridLanesLayoutAlgorithmTest.BuildFixedTrackSizes | geometry | formalized | `TestsBlock.GridLanesBuildFixedTrackSizes_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:455 | GridLanesLayoutAlgorithmTest.CollectGridLanesItemGroups | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:499 | GridLanesLayoutAlgorithmTest.CollectGridLanesItemGroupsWithBaseline | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:559 | GridLanesLayoutAlgorithmTest.ExplicitlyPlacedVirtualItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:608 | GridLanesLayoutAlgorithmTest.AutoPlacedVirtualItems | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:662 | GridLanesLayoutAlgorithmTest.BuildIntrinsicTrackSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:697 | GridLanesLayoutAlgorithmTest.MaximizeAndStretchAutoTracks | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:737 | GridLanesLayoutAlgorithmTest.ExpandFlexibleTracks | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:766 | GridLanesLayoutAlgorithmTest.BuildRowSizes | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:662 | GridLanesLayoutAlgorithmTest.BuildIntrinsicTrackSizes | geometry | formalized | `TestsBlock.GridLanesBuildIntrinsicTrackSizes_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:697 | GridLanesLayoutAlgorithmTest.MaximizeAndStretchAutoTracks | geometry | formalized | `TestsBlock.GridLanesMaximizeAndStretchAutoTracks_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:737 | GridLanesLayoutAlgorithmTest.ExpandFlexibleTracks | geometry | blocked | held-out row (not transcribed or marked); its source was seen by accident while reading neighbouring tests |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:766 | GridLanesLayoutAlgorithmTest.BuildRowSizes | geometry | formalized | `TestsBlock.GridLanesBuildRowSizes_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:797 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:837 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:877 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
@@ -1242,6 +1242,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockFieldset.legend_above_anon`: the rendered legend never overlaps the fieldset's anonymous content box in the block axis (HTML §15.3.13).
 - `BlockDiffuser.given_all`: spreading a total over n buckets hands out exactly the total (no CSS text; browser rounding rule read from tests).
 - `BlockAxis.mapAxes_mapAxes`: logical/physical axis mapping is an involution for every writing mode (CSS Writing Modes 4 §6.1).
+- `GridTrackSizing.fixedLen_pct_le`: a percentage track resolves to at most the container size for percentages up to 100 (CSS Grid 1 §11.4).
 
 ## Merge notes
 
