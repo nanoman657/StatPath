@@ -71,6 +71,7 @@ def isLineBoxEmpty (tokens : List InlineCollectionToken) : Bool :=
     | .text s => s.isEmpty
     | .openTag _ => true
     | .closeTag => true
+    | .floating => true
     | .atomicInline _ => false
     | .br => false
 

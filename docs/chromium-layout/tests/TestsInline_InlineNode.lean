@@ -48,6 +48,26 @@ theorem inlineNode_collectInlinesBR :
     (res.items[2]! = { itemType := .text, startOffset := 6, endOffset := 11 }) := by
   decide
 
+/-- Test: CollectInlinesFloat (inline_node_test.cc:284)
+    CSS 2.1 §9.5, §9.4.2: Floats in an inline formatting context produce zero-length floating items without emitting text. -/
+theorem inlineNode_collectInlinesFloat :
+    let tokens := [
+      InlineCollectionToken.text "abc",
+      InlineCollectionToken.floating,
+      InlineCollectionToken.text "ghi",
+      InlineCollectionToken.floating,
+      InlineCollectionToken.text "mno"
+    ]
+    let res := collectInlines tokens
+    (res.text = "abcghimno") ∧
+    (res.items.length = 5) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 3 }) ∧
+    (res.items[1]! = { itemType := .floating, startOffset := 3, endOffset := 3 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 3, endOffset := 6 }) ∧
+    (res.items[3]! = { itemType := .floating, startOffset := 6, endOffset := 6 }) ∧
+    (res.items[4]! = { itemType := .text, startOffset := 6, endOffset := 9 }) := by
+  decide
+
 /-- Test: CollectInlinesInlineBlock (inline_node_test.cc:306)
     Inline-block appears as an object replacement character \uFFFC and an atomic inline item. -/
 theorem inlineNode_collectInlinesInlineBlock :

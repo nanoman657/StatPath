@@ -78,7 +78,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | internal | internal | - | String sharing optimization for single Text node |
 | inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | internal | internal | - | String sharing optimization with whitespace collapse |
 | inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
-| inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | internal | - | Float items in inline formatting context |
+| inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | formalized | `inlineNode_collectInlinesFloat` | CSS 2.1 §9.5, §9.4.2: Float items in inline formatting context produce zero-length items without emitting text |
 | inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlinesInlineBlock` | Inline block flattening to object replacement character and atomic inline item |
 | inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | internal | - | UTF-16 surrogate pairs in inline items |
 | inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | internal | - | LTR text does not enable bidi |

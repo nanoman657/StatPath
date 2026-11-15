@@ -42,6 +42,9 @@ inductive InlineCollectionToken where
   | closeTag
   | atomicInline (widthPx : Nat := 10)
   | br
+  /-- CSS 2.1 §9.5 Floats: Floating box inside an inline formatting context.
+      Floats are out-of-flow and produce a zero-length inline item in the text buffer. -/
+  | floating
   deriving DecidableEq, Repr, Inhabited
 
 structure CollectionResult where
@@ -51,27 +54,39 @@ structure CollectionResult where
 
 /-! ## 2. Flattening and Item Collection (`InlineNode::CollectInlines`) -/
 
+/-- CSS 2.1 §9.5 Floats & §9.4.2 Inline formatting contexts: Single step of inline collection
+    attributing character offsets, item types, and text buffer emission. -/
+def collectInlinesStep (offset : Nat) : InlineCollectionToken → Nat × InlineCollectedItem × List Char
+  | .text s => (offset + s.length, { itemType := .text, startOffset := offset, endOffset := offset + s.length }, s.toList)
+  | .openTag _ => (offset, { itemType := .openTag, startOffset := offset, endOffset := offset }, [])
+  | .closeTag => (offset, { itemType := .closeTag, startOffset := offset, endOffset := offset }, [])
+  | .atomicInline _ => (offset + 1, { itemType := .atomicInline, startOffset := offset, endOffset := offset + 1 }, ['\uFFFC'])
+  | .br => (offset + 1, { itemType := .control, startOffset := offset, endOffset := offset + 1 }, ['\n'])
+  | .floating => (offset, { itemType := .floating, startOffset := offset, endOffset := offset }, [])
+
+/-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context do not advance the inline offset. -/
+theorem collectInlinesStep_floating_zero_advance (offset : Nat) :
+    (collectInlinesStep offset .floating).1 = offset := by
+  rfl
+
+/-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context produce zero character length. -/
+theorem collectInlinesStep_floating_zero_length (offset : Nat) :
+    (collectInlinesStep offset .floating).2.1.startOffset = (collectInlinesStep offset .floating).2.1.endOffset := by
+  rfl
+
+/-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context emit no characters into the text buffer. -/
+theorem collectInlinesStep_floating_empty_chars (offset : Nat) :
+    (collectInlinesStep offset .floating).2.2 = [] := by
+  rfl
+
 /-- Flatten input inline node tokens into character text and classified inline items. -/
 def collectInlines (tokens : List InlineCollectionToken) : CollectionResult :=
   let rec loop (offset : Nat) (accItems : List InlineCollectedItem) (accChars : List Char) :
       List InlineCollectionToken → Nat × List InlineCollectedItem × List Char
     | [] => (offset, accItems, accChars)
-    | .text s :: rest =>
-      let len := s.length
-      let item : InlineCollectedItem := { itemType := .text, startOffset := offset, endOffset := offset + len }
-      loop (offset + len) (item :: accItems) (accChars ++ s.toList) rest
-    | .openTag _ :: rest =>
-      let item : InlineCollectedItem := { itemType := .openTag, startOffset := offset, endOffset := offset }
-      loop offset (item :: accItems) accChars rest
-    | .closeTag :: rest =>
-      let item : InlineCollectedItem := { itemType := .closeTag, startOffset := offset, endOffset := offset }
-      loop offset (item :: accItems) accChars rest
-    | .atomicInline _ :: rest =>
-      let item : InlineCollectedItem := { itemType := .atomicInline, startOffset := offset, endOffset := offset + 1 }
-      loop (offset + 1) (item :: accItems) (accChars ++ ['\uFFFC']) rest
-    | .br :: rest =>
-      let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1 }
-      loop (offset + 1) (item :: accItems) (accChars ++ ['\n']) rest
+    | tok :: rest =>
+      let (nxtOffset, item, chars) := collectInlinesStep offset tok
+      loop nxtOffset (item :: accItems) (accChars ++ chars) rest
   let (_, revItems, chars) := loop 0 [] [] tokens
   { text := String.ofList chars, items := revItems.reverse }
 
@@ -141,6 +156,8 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
     | .openTag _ :: rest =>
       toSegments curWordLen words totalChars rest
     | .closeTag :: rest =>
+      toSegments curWordLen words totalChars rest
+    | .floating :: rest =>
       toSegments curWordLen words totalChars rest
     | .atomicInline wPx :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words
