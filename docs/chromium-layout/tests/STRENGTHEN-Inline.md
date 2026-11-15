@@ -3,33 +3,18 @@
 Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f18-89cc-a881895cc7cc/scratchpad/agy-tests/strengthen-inline.txt`.
 
 done: TestsInline_FragmentItem +0
+- Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
+
 done: TestsInline_LineBreaker +0
+- Rewrote `lineBreaker_bidiControlEnter` to flow CSS input `font: 10px/1 Ahem; width: 40px; xxx-<bdi>xx</bdi>` through general line breaking and line box stacking.
+
 done: TestsInline_InlineLayoutAlgorithm +0
+- Rewrote 9 theorems (`test_BreakToken_chain`, `inlineLayoutAlgorithm_boxForEndMargin`, `test_PositionFloatsWithMargins`, `test_InkOverflow`, `test_LineBoxWithHangingWidthRTLRightAligned`, `test_LineBoxWithHangingWidthRTLCenterAligned`, `test_TextFloatsAroundFloatsBefore`, `inlineLayoutAlgorithm_textBoxTrimOnInlineBox`, `inlineLayoutAlgorithm_textCombineBasic`) to flow test setup through `breakLines`, `createLineBox`, float positioning, and font metrics.
+
 done: TestsInline_InlineNode +0
-done: TestsInline_InlineItemsBuilder +0
-done: TestsInline_OffsetMapping +0
-done: TestsInline_InlineCursor +0
-done: TestsInline_InlineCaretPosition +0
-done: TestsInline_PhysicalLineBoxFragment +0
-done: TestsInline_LineInfo +0
-done: TestsInline_LineWidths +0
-done: TestsInline_ParagraphLineBreaker +0
-done: TestsInline_LineBreakCandidate +0
-done: TestsInline_LayoutText +0
-done: TestsInline_LayoutTextFragment +0
-done: TestsInline_LayoutInline +0
-done: TestsInline_LayoutBR +0
-done: TestsInline_LayoutTextCombine +0
-done: TestsInline_TextAutoSpace +0
-done: TestsInline_HyphenResult +0
-done: TestsInline_RubyUtils +0
-done: TestsInline_List +0
-done: TestsInline_LayoutQuote +0
-done: TestsInline_InlineLayout +0
-done: TestsInline_HitTesting +0
-done: TestsInline_Geometry +0
-done: TestsInline_ExclusionSpace +0
-done: TestsInline_Shapes +0
-done: TestsInline_Fieldset +0
-done: TestsInline_SVG +0
-done: TestsInline_TextControl +0
+- Rewrote `inlineNode_textCombineWordSpacing` to take CSS style properties (`writing-mode: vertical-rl`, `text-combine-upright: all`, `letter-spacing: 1px`, `word-spacing: 1px`) and flow them through `isTextCombineActive` into `effectiveLetterSpacing` and `effectiveWordSpacing`, asserting suppression to 0 per CSS Writing Modes 3 §5.1.4.
+- Other theorems in file verified not thin:
+  - `inlineNode_collectInlinesText`, `inlineNode_collectInlinesBR`, `inlineNode_collectInlinesInlineBlock`: run DOM text and element tokens directly through general `collectInlines`.
+  - `inlineNode_minMaxData`: runs input token sequences through general `computeMinMaxSizesAhem`.
+  - `inlineNode_minMaxSizesSaturated`: runs extreme atomic inline size through `computeMinMaxSizesAhem` to test LayoutUnit saturation.
+  - `inlineNode_needsCollectInlinesOnStyle`, `inlineNode_needsCollectInlinesOnInsert`, `inlineNode_needsCollectInlinesOnRemove`: run mutation operations through general `computeNeedsCollectInlines`.

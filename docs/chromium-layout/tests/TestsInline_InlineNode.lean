@@ -98,12 +98,16 @@ theorem inlineNode_minMaxData :
 
 /-- Test: TextCombineWordSpacing (`inline/inline_node_test.cc:1713`).
     CSS Writing Modes 3 §5.1.4 & CSS Text 3 §7.1, §7.2:
+    `<div style="font: 10px/20px Ahem; letter-spacing: 1px; word-spacing: 1px; text-combine-upright: all; writing-mode: vertical-rl">ab</div>`
     Inside text-combine-upright, letter-spacing and word-spacing are suppressed to 0. -/
 theorem inlineNode_textCombineWordSpacing :
-    let active := isTextCombineActive .verticalRl .all
-    let effLetterSpacing := effectiveLetterSpacing active 1
-    let effWordSpacing := effectiveWordSpacing active 1
-    (active = true) ∧
+    let wm : WritingMode := .verticalRl
+    let tcu : TextCombineUpright := .all
+    let letterSpacing : Nat := 1
+    let wordSpacing : Nat := 1
+    let active := isTextCombineActive wm tcu
+    let effLetterSpacing := effectiveLetterSpacing active letterSpacing
+    let effWordSpacing := effectiveWordSpacing active wordSpacing
     (effLetterSpacing = 0) ∧
     (effWordSpacing = 0) := by
   decide
