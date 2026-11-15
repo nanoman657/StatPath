@@ -11,3 +11,4 @@ done: TestsInline_OffsetMapping +0
 done: TestsInline_InlineCursor +0
 done: TestsInline_InlineCaretPosition +0
 done: TestsInline_PhysicalLineBoxFragment +0
+done: TestsInline_LineInfo +0
