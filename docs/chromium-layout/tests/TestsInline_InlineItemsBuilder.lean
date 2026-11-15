@@ -42,40 +42,62 @@ theorem inlineItemsBuilder_collapseNewlinesAsSpaces :
     String.ofList (collapseText .normal "text \n\n text".toList) = "text text" := by
   decide
 
-/-- Test 5: CollapseAcrossElements (inline_items_builder_test.cc:243) -/
+/-- Test 5: CollapseAcrossElements (inline_items_builder_test.cc:243).
+    CSS Text 3 §4.1.2: Spaces are collapsed across element boundaries. -/
 theorem inlineItemsBuilder_collapseAcrossElements :
-    String.ofList (collapseText .normal "text  text".toList) = "text text" := by
+    buildInlineString [.text "text " .normal, .text " text" .normal] = "text text" := by
   decide
 
-/-- Test 6: CollapseLeadingSpaces (inline_items_builder_test.cc:248) -/
+/-- Test 6: CollapseLeadingSpaces (inline_items_builder_test.cc:248).
+    CSS Text 3 §4.1.2: Leading collapsible spaces across elements are stripped. -/
 theorem inlineItemsBuilder_collapseLeadingSpaces :
-    String.ofList (collapseText .normal "  text".toList) = "text" := by
+    (buildInlineString [.text "  text" .normal] = "text") ∧
+    (buildInlineString [.text " " .normal, .text "text" .normal] = "text") ∧
+    (buildInlineString [.text " " .normal, .text " text" .normal] = "text") := by
   decide
 
-/-- Test 7: CollapseTrailingSpaces (inline_items_builder_test.cc:254) -/
+/-- Test 7: CollapseTrailingSpaces (inline_items_builder_test.cc:254).
+    CSS Text 3 §4.1.2: Trailing collapsible spaces across elements are stripped. -/
 theorem inlineItemsBuilder_collapseTrailingSpaces :
-    String.ofList (collapseText .normal "text  ".toList) = "text" := by
+    (buildInlineString [.text "text  " .normal] = "text") ∧
+    (buildInlineString [.text "text" .normal, .text " " .normal] = "text") ∧
+    (buildInlineString [.text "text " .normal, .text " " .normal] = "text") := by
   decide
 
-/-- Test 8: CollapseAllSpaces (inline_items_builder_test.cc:260) -/
+/-- Test 8: CollapseAllSpaces (inline_items_builder_test.cc:260).
+    CSS Text 3 §4.1.2: All collapsible spaces across elements collapse to empty string. -/
 theorem inlineItemsBuilder_collapseAllSpaces :
-    String.ofList (collapseText .normal "  ".toList) = "" ∧
-    String.ofList (collapseText .normal "  \n  ".toList) = "" := by
+    (buildInlineString [.text "  " .normal] = "") ∧
+    (buildInlineString [.text "  \n  " .normal] = "") := by
   decide
 
-/-- Test 9: CollapseLeadingNewlines (inline_items_builder_test.cc:267) -/
+/-- Test 9: CollapseLeadingNewlines (inline_items_builder_test.cc:267).
+    CSS Text 3 §4.1.2: Leading newlines and spaces across elements are stripped. -/
 theorem inlineItemsBuilder_collapseLeadingNewlines :
-    String.ofList (collapseText .normal "\n\ntext".toList) = "text" := by
+    (buildInlineString [.text "\ntext" .normal] = "text") ∧
+    (buildInlineString [.text "\n\ntext" .normal] = "text") ∧
+    (buildInlineString [.text "\n" .normal, .text "text" .normal] = "text") ∧
+    (buildInlineString [.text "\n\n" .normal, .text "text" .normal] = "text") ∧
+    (buildInlineString [.text " \n" .normal, .text "text" .normal] = "text") ∧
+    (buildInlineString [.text "\n" .normal, .text " text" .normal] = "text") := by
   decide
 
-/-- Test 10: CollapseTrailingNewlines (inline_items_builder_test.cc:281) -/
+/-- Test 10: CollapseTrailingNewlines (inline_items_builder_test.cc:281).
+    CSS Text 3 §4.1.2: Trailing newlines across elements are stripped. -/
 theorem inlineItemsBuilder_collapseTrailingNewlines :
-    String.ofList (collapseText .normal "text\n\n".toList) = "text" := by
+    (buildInlineString [.text "text\n" .normal] = "text") ∧
+    (buildInlineString [.text "text" .normal, .text "\n" .normal] = "text") ∧
+    (buildInlineString [.text "text\n" .normal, .text "\n" .normal] = "text") ∧
+    (buildInlineString [.text "text\n" .normal, .text " " .normal] = "text") ∧
+    (buildInlineString [.text "text " .normal, .text "\n" .normal] = "text") := by
   decide
 
-/-- Test 11: CollapseNewlineAcrossElements (inline_items_builder_test.cc:289) -/
+/-- Test 11: CollapseNewlineAcrossElements (inline_items_builder_test.cc:289).
+    CSS Text 3 §4.1.2: Newlines across elements collapse to a single space. -/
 theorem inlineItemsBuilder_collapseNewlineAcrossElements :
-    String.ofList (collapseText .normal "text \ntext".toList) = "text text" := by
+    (buildInlineString [.text "text " .normal, .text "\ntext" .normal] = "text text") ∧
+    (buildInlineString [.text "text " .normal, .text "\n text" .normal] = "text text") ∧
+    (buildInlineString [.text "text" .normal, .text " " .normal, .text "\ntext" .normal] = "text text") := by
   decide
 
 /-- Test 12: BidiBlockOverride (inline_items_builder_test.cc:469) -/
