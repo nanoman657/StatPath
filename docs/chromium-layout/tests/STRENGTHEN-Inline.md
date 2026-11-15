@@ -166,6 +166,16 @@ done: TestsInline_Geometry +0
   - `layoutUnitDiffuser_buckets`, `layoutUnitDiffuser_threeBuckets`: remainder distribution across fractional pixel buckets.
   - `physicalRect_toEnclosingRect`, `physicalRect_edgesOnPixelBoundaries`, `physicalRect_expandEdgesToPixelBoundaries`: fractional 1/64th layout unit boundary snapping.
 
+done: TestsInline_ExclusionSpace +0
+- Verified all 20 theorems in file are not thin:
+  - All test cases run exclusion geometries directly through `ExclusionSpace.add`, `computeLineLayoutOpportunity`, `allLayoutOpportunities`, `findLayoutOpportunity`, and `mergeExclusionSpaces` per CSS 2.1 §9.5, CSS Inline 3 §3, and CSS Exclusions 1 §3:
+  - `exclusionSpace_empty`, `lineLayoutOpportunityClampsNonDominantSide`: empty space layout opportunities and BFC directional opportunity clamping.
+  - `exclusionSpace_singleExclusion`, `twoExclusions`, `solidEdges`, `overlappingWithShelf`, `insertBetweenShelves`: multi-float shelf and opportunity partitioning.
+  - `exclusionSpace_initialLetterBasic`, `initialLetterDirectionRight`, `initialLetterFloatLeft2`, `initialLetterFloatLeft2ClearLeft`, `initialLetterFloatLeftAndRight`, `initialLetterFloatRight2`: initial letter exclusion boxes with multi-line clearance offsets.
+  - `exclusionSpace_zeroInlineSizeOpportunity`, `negativeInlineSizeOpportunityLeft`, `negativeInlineSizeOpportunityRight`: boundary handling of zero and negative inline size opportunities under LTR/RTL.
+  - `exclusionSpace_preInitialization`, `mergeExclusionSpacesNoPreviousExclusions`, `mergeExclusionSpacesPreviousExclusions`, `mergeExclusionSpacesNoOutputExclusions`: exclusion space copy-on-write preservation and delta merging across nested BFCs.
+
+
 
 
 
