@@ -42,14 +42,15 @@ theorem lineBreaker_fitWithEpsilon :
   decide
 
 /-! ### Test 2: SingleNode (line_breaker_test.cc:171) -/
+def lineBreaker_singleNode_items : List InlineItem :=
+  [ mkWord 1 30  -- "123"
+  , mkSpace 2 10 -- " "
+  , mkWord 3 30  -- "456"
+  , mkSpace 4 10 -- " "
+  , mkWord 5 30  -- "789"
+  ]
+
 theorem lineBreaker_singleNode :
-    let lineBreaker_singleNode_items : List InlineItem :=
-      [ mkWord 1 30  -- "123"
-      , mkSpace 2 10 -- " "
-      , mkWord 3 30  -- "456"
-      , mkSpace 4 10 -- " "
-      , mkWord 5 30  -- "789"
-      ]
     let lines80 := breakLines 80 lineBreaker_singleNode_items
     let lines60 := breakLines 60 lineBreaker_singleNode_items
     lines80.length = 2 ∧
@@ -73,12 +74,13 @@ theorem lineBreaker_overflowTab :
   decide
 
 /-! ### Test 10: OverflowAtomicInline (line_breaker_test.cc:346) -/
+def lineBreaker_overflowAtomic_items : List InlineItem :=
+  [ mkWord 1 50
+  , mkAtomic 2 30 10
+  , mkWord 3 30
+  ]
+
 theorem lineBreaker_overflowAtomic :
-    let lineBreaker_overflowAtomic_items : List InlineItem :=
-      [ mkWord 1 50
-      , mkAtomic 2 30 10
-      , mkWord 3 30
-      ]
     let lines80 := breakLines 80 lineBreaker_overflowAtomic_items
     let lines70 := breakLines 70 lineBreaker_overflowAtomic_items
     let lines40 := breakLines 40 lineBreaker_overflowAtomic_items
@@ -109,11 +111,12 @@ theorem lineBreaker_overflowAfterSpaces :
   decide
 
 /-! ### Test 13: WrapLastWord (line_breaker_test.cc:447) -/
+def lineBreaker_wrapLastWord_items : List InlineItem :=
+  [ mkWord 1 30, mkSpace 2 10, mkWord 3 30, mkSpace 4 10, mkWord 5 30, mkSpace 6 10
+  , mkOpen 7, mkWord 8 20, mkClose 9, mkSpace 10 10, mkWord 11 20
+  ]
+
 theorem lineBreaker_wrapLastWord :
-    let lineBreaker_wrapLastWord_items : List InlineItem :=
-      [ mkWord 1 30, mkSpace 2 10, mkWord 3 30, mkSpace 4 10, mkWord 5 30, mkSpace 6 10
-      , mkOpen 7, mkWord 8 20, mkClose 9, mkSpace 10 10, mkWord 11 20
-      ]
     let lines := breakLines 100 lineBreaker_wrapLastWord_items
     lines.length = 2 ∧
     (lines.getD 0 default).inlineSize = 70 ∧
