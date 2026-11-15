@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
 import InlineCaret
+import InlineBidi
 
 namespace ChromiumLayout.TestsInline
 
@@ -145,21 +146,23 @@ theorem inlineCaretPosition_inlineBlockBeforeContent :
   decide
 
 /-- Test `InlineCaretPositionTest.InlineBoxesLTR` (`inline/inline_caret_position_test.cc:528`).
-    CSS Writing Modes 3: Carets inside bdo dir=ltr resolve atTextOffset accounting for bidi isolate and override codes. -/
+    CSS Writing Modes 3 §2.4: Carets inside bdo dir=ltr resolve atTextOffset accounting for bidi isolate and override codes. -/
 theorem inlineCaretPosition_inlineBoxesLTR :
+    let prefixLen := (bidiControlPrefix .isolateOverride .ltr).length
     let box1Frag := 1
     let box2Frag := 2
-    (resolveTextCaret box1Frag 6 = { fragmentId := box1Frag, positionType := .atTextOffset, textOffset := some 6 }) ∧
-    (resolveTextCaret box2Frag 2 = { fragmentId := box2Frag, positionType := .atTextOffset, textOffset := some 2 }) := by
+    (resolveTextCaret box1Frag (prefixLen + 4) = { fragmentId := box1Frag, positionType := .atTextOffset, textOffset := some 6 }) ∧
+    (resolveTextCaret box2Frag (prefixLen + 0) = { fragmentId := box2Frag, positionType := .atTextOffset, textOffset := some 2 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.InlineBoxesRTL` (`inline/inline_caret_position_test.cc:559`).
-    CSS Writing Modes 3: Carets inside bdo dir=rtl resolve atTextOffset accounting for bidi isolate and override codes. -/
+    CSS Writing Modes 3 §2.4: Carets inside bdo dir=rtl resolve atTextOffset accounting for bidi isolate and override codes. -/
 theorem inlineCaretPosition_inlineBoxesRTL :
+    let prefixLen := (bidiControlPrefix .isolateOverride .rtl).length
     let box1Frag := 1
     let box2Frag := 2
-    (resolveTextCaret box1Frag 6 = { fragmentId := box1Frag, positionType := .atTextOffset, textOffset := some 6 }) ∧
-    (resolveTextCaret box2Frag 2 = { fragmentId := box2Frag, positionType := .atTextOffset, textOffset := some 2 }) := by
+    (resolveTextCaret box1Frag (prefixLen + 4) = { fragmentId := box1Frag, positionType := .atTextOffset, textOffset := some 6 }) ∧
+    (resolveTextCaret box2Frag (prefixLen + 0) = { fragmentId := box2Frag, positionType := .atTextOffset, textOffset := some 2 }) := by
   decide
 
 /-- Test `InlineCaretPositionTest.MultiColumnSingleText` (`inline/inline_caret_position_test.cc:345`).
