@@ -337,7 +337,7 @@ theorem layoutTextFragment_isBeforeAfterNonCollapsedCharacterNoLineWrap :
 /-- Test `LayoutTextFragmentTest, TransformedTextWithCapitalizationAfterSupplementaryCharacter` (`layout_text_fragment_test.cc:61`).
     CSS Text 3 §2.1: First-letter supplementary character leaves 'bc' lowercase and capitalizes 'def' to 'Def'. -/
 theorem layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter :
-    String.mk (applyCapitalizeTransform true "bc def".toList) = "bc Def" := by
+    String.ofList (applyCapitalizeTransform true "bc def".toList) = "bc Def" := by
   decide
 
 /-! ## 13. IsBeforeAfterNonCollapsedLineWrapSpace (`layout_text_fragment_test.cc:356`) -/
