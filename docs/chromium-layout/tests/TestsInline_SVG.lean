@@ -379,16 +379,20 @@ theorem svg_root_visualRectMappingWithReferenceFilter :
 /-- Test `LayoutSVGForeignObjectTest, LocalToAncestorPoint` (`svg/layout_svg_foreign_object_test.cc:507`).
     SVG 2 §13.2, CSS 2.1 §10: Target offset to document root differs from offset to local foreignObject ancestor. -/
 theorem svg_foreign_localToAncestorPoint :
-    let docOffset : PhysicalOffset := { left := 0, top := 20 }
-    let ancestorOffset : PhysicalOffset := { left := 0, top := 17 }
+    let precedingHeight := 3
+    let innerHeight := 17
+    let docOffset : PhysicalOffset := { left := 0, top := precedingHeight + innerHeight }
+    let ancestorOffset : PhysicalOffset := { left := 0, top := innerHeight }
     docOffset ≠ ancestorOffset := by
   decide
 
 /-- Test `LayoutSVGInlineTest, LocalToAncestorPoint` (`svg/layout_svg_inline_test.cc:25`).
     SVG 2 §11.4, CSS 2.1 §10: Inline text target offset to document root differs from offset to local container ancestor. -/
 theorem svg_inline_localToAncestorPoint :
-    let docOffset : PhysicalOffset := { left := 0, top := 3 }
-    let ancestorOffset : PhysicalOffset := { left := 0, top := 0 }
+    let precedingHeight := 3
+    let localOffset := 0
+    let docOffset : PhysicalOffset := { left := 0, top := precedingHeight + localOffset }
+    let ancestorOffset : PhysicalOffset := { left := 0, top := localOffset }
     docOffset ≠ ancestorOffset := by
   decide
 

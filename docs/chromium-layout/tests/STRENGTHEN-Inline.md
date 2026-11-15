@@ -189,6 +189,18 @@ done: TestsInline_Fieldset +0
   - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
   - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
 
+done: TestsInline_SVG +0
+- Rewrote thin theorems:
+  - `svg_foreign_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and inner div height (17px) per SVG 2 §13.2 & CSS 2.1 §10 instead of hardcoding raw point literals.
+  - `svg_inline_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and local container offset (0px) per SVG 2 §11.4 & CSS 2.1 §10.
+- Other theorems in file verified not thin:
+  - `svg_container_transformAffectsVectorEffect`, `nestedSVG`, `hiddenContainerAndUse`, `svg_text_transformAffectsVectorEffect`: evaluate vector-effect: non-scaling-stroke tree propagation on SvgNode trees per SVG 2 §13.3.
+  - `svg_shape_strokeBoundingBoxOnEmptyShape`: computes zero stroke bounding box on empty circle shape per SVG 2 §13.5.
+  - `svg_inline_isChildAllowed`: evaluates textPath child restriction rules per SVG 2 §11.3.3.
+  - `svg_root_visualRectMappingWithoutViewportClipWithBorder`, `visualRectMappingWithViewportClipAndBorder`, `visualRectMappingWithReferenceFilter`: evaluate visual rect mapping to document with viewport clipping and reference filter expansion.
+  - `svg_text_rectBasedHitTest`, `svg_root_rectBasedHitTestPartialOverlap`, `svg_shape_rectBasedHitTest_*`, `svg_foreignObject_hitTest*`: evaluate rect-based and point-based hit testing across SVG containers, foreignObjects, zoom, and clip paths per CSSOM View §8.
+
+
 
 
 
