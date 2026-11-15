@@ -31,3 +31,4 @@ done: TestsInline_Geometry +0
 done: TestsInline_ExclusionSpace +0
 done: TestsInline_Shapes +0
 done: TestsInline_Fieldset +0
+done: TestsInline_SVG +0
