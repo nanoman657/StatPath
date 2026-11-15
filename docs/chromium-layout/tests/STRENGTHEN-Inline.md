@@ -180,6 +180,16 @@ done: TestsInline_Shapes +0
   - `boxShape_zeroRadii`, `boxShape_getIntervals`: evaluate box shapes with margin outsets, bounding box calculation, line overlap tests, and excluded interval queries per CSS Shapes 1 §3.1.
   - `ellipseShape_zeroRadii`, `ellipseShape_zeroRadiusX`, `ellipseShape_zeroRadiusY`, `ellipseShape_zeroRadiiWithMargin`, `ellipseShape_shapeMarginLogicalBoundingBoxWithFloatValues`: evaluate ellipse geometry, zero-radii degeneracy, shape-margin expansion, and 64th fractional pixel LayoutUnit bounding boxes per CSS Shapes 1 §3.2.
 
+done: TestsInline_Fieldset +0
+- Verified all 37 theorems in file are not thin:
+  - All test cases evaluate the full fieldset formatting model via `layoutFieldset inp` per HTML 5.2 §4.10.16 and CSS 2.1 §10:
+  - `fieldset_empty`, `noLegend`, `legend`, `smallLegendLargeBorder`: basic fieldset dimensioning, content offsets, and legend placement.
+  - `fieldset_legendOrthogonalWritingMode`, `verticalLr`, `verticalRl`: orthogonal and vertical writing mode legend layout.
+  - `fieldset_percentageWidth`, `percentageHeight`: percentage sizing resolution against containing blocks.
+  - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
+  - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
+
+
 
 
 
