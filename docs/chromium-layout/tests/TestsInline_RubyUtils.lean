@@ -98,9 +98,11 @@ theorem rubyBlockPositionCalculator_groupLinesAnnotationForAnnotation :
     - First annotation inner base (first2) has ascent 30 = 10 (nested emphasis) + 20 (nested anno).
     - First annotation leaf (first1) has zero ascent. -/
 theorem rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis :
-    let anno1 : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
-    let annoNested : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
-    let anno2 : NestedRubyAnnotation := { textHeight := 20, emphasisHeight := 10 }
+    let fontSize := 20
+    let emphasisHeight := computeTextEmphasisHeight fontSize
+    let anno1 : NestedRubyAnnotation := { textHeight := fontSize, emphasisHeight := emphasisHeight }
+    let annoNested : NestedRubyAnnotation := { textHeight := fontSize, emphasisHeight := emphasisHeight }
+    let anno2 : NestedRubyAnnotation := { textHeight := fontSize, emphasisHeight := emphasisHeight }
     let baseAscent := computeNestedRubyAscent [anno1, annoNested, anno2]
     let first2Ascent := computeNestedRubyAscent [annoNested]
     let first1Ascent := computeNestedRubyAscent []
