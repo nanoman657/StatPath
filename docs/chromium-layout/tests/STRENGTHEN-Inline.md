@@ -20,3 +20,4 @@ done: TestsInline_LayoutTextFragment +0
 done: TestsInline_LayoutInline +0
 done: TestsInline_LayoutBR +0
 done: TestsInline_LayoutTextCombine +0
+done: TestsInline_TextAutoSpace +0
