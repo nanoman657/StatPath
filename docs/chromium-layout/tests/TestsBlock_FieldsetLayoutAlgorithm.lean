@@ -186,4 +186,62 @@ theorem FieldsetSmallLegendLargeBorderFragmentation_vectors :
        { size := (220, 10), anon := some (60, 0, 100, 10) },
        { size := (220, 60) }] := by decide +kernel
 
+-- :1707 SmallerLegendLargeBorderFragmentation and :1818 SmallerLegendLargeBorderWithBreak
+-- (border 60, width 100, height 10, legend 10x5 with optional margin-top 16, fragH 40)
+theorem FieldsetSmallerLegendLargeBorder_vectors :
+    fragment 40 { border := ⟨60, 60, 60, 60⟩, padding := p0, inlineSize := 100, height := some 10,
+                  legend := leg 10 5 } =
+      [{ size := (220, 60), legend := some (60, 27, 10, 5) },
+       { size := (220, 10), anon := some (60, 0, 100, 10) },
+       { size := (220, 60) }] ∧
+    fragment 40 { border := ⟨60, 60, 60, 60⟩, padding := p0, inlineSize := 100, height := some 10,
+                  legend := leg 10 5 ⟨16, 0, 0, 0⟩ } =
+      [{ size := (220, 60), legend := some (60, 27, 10, 5) },
+       { size := (220, 10), anon := some (60, 0, 100, 10) },
+       { size := (220, 60) }] := by decide +kernel
+
+-- :1334 LegendBreakInsideAvoid, :1442 LegendBreakBeforeAvoid,
+-- :1540 LegendBreakAfterAvoid, :1766 SmallerLegendLargeBorderFragmentation2
+theorem FieldsetAfterSiblingBreakAvoid_vectors :
+    fragmentAfterSibling 1000 100 20 50
+      { border := p0, padding := p0, inlineSize := 100, height := some 50, legend := leg 10 60 } =
+      ((1000, 100, (0, 0, 20, 50)),
+       (1000, 60, { size := (100, 60), legend := some (0, 0, 10, 60), anon := (0, 60, 100, 0), child := none })) ∧
+    fragmentAfterSibling 1000 100 20 90
+      { border := ⟨10, 10, 10, 10⟩, padding := p0, inlineSize := 100,
+        legend := leg 10 25 ⟨10, 10, 10, 10⟩ } =
+      ((1000, 100, (0, 0, 20, 90)),
+       (1000, 45, { size := (120, 45), legend := some (20, 0, 10, 25), anon := (10, 35, 100, 0), child := none })) ∧
+    fragmentAfterSibling 1000 100 20 50
+      { border := p0, padding := p0, inlineSize := 100, legend := leg 10 50,
+        child := .fixed 25 (some 15) } true true =
+      ((1000, 100, (0, 0, 20, 50)),
+       (1000, 75, { size := (100, 75), legend := some (0, 0, 10, 50), anon := (0, 50, 100, 25),
+                    child := some (0, 0, 15, 25) })) ∧
+    fragmentAfterSibling 300 100 33 70
+      { border := ⟨30, 30, 30, 30⟩, padding := p0, inlineSize := 100, legend := leg 10 5,
+        child := .fixed 30 (some 44) } false true =
+      ((300, 100, (0, 0, 33, 70)),
+       (300, 90, { size := (160, 90), legend := some (30, 12, 10, 5), anon := (30, 30, 100, 30),
+                   child := some (0, 0, 44, 30) })) := ⟨rfl, rfl, rfl, rfl⟩
+
+-- :1224 BreakInsideAvoid, :1271 BreakInsideAvoidTallBlock,
+-- :1387 BreakBeforeAvoid, :1494 BreakAfterAvoid
+theorem FieldsetChildrenBreakAvoid_vectors :
+    fragmentChildren 100 0 100 (some 100)
+      [(10, 50, false, false, false, false), (20, 70, false, false, true, false)] =
+      [(100, 100, [(0, 0, 10, 50)]), (100, 0, [(0, 0, 20, 70)])] ∧
+    fragmentChildren 100 0 100 (some 100)
+      [(10, 50, false, false, false, false), (20, 170, false, false, true, false)] =
+      [(100, 100, [(0, 0, 10, 50)]), (100, 0, [(0, 0, 20, 100)]), (100, 0, [(0, 0, 20, 70)])] ∧
+    fragmentChildren 100 50 100 none
+      [(10, 25, false, false, false, false), (30, 25, false, false, false, false),
+       (15, 25, true, false, false, false)] =
+      [(100, 50, [(0, 0, 10, 25)]), (100, 50, [(0, 0, 30, 25), (0, 25, 15, 25)])] ∧
+    fragmentChildren 100 50 100 (some 50)
+      [(10, 25, false, false, false, false), (30, 25, false, true, false, false),
+       (15, 25, false, false, false, true), (12, 25, false, false, false, false)] =
+      [(100, 50, [(0, 0, 10, 25)]), (100, 0, [(0, 0, 30, 25), (0, 25, 15, 25)]),
+       (100, 0, [(0, 0, 12, 25)])] := ⟨rfl, rfl, rfl, rfl⟩
+
 end TestsBlock

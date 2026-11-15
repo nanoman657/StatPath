@@ -188,5 +188,81 @@ theorem fragment_tall_header (fragH : Nat) (f : Fieldset) (l : Legend)
   have hlt : ¬ (anonTop f < fragH) := Nat.not_lt.mpr ht
   simp [fragment, hl, hlt]
 
+/-- Whether a valid breakpoint exists before the end of the fieldset's first in-flow child.
+    A Class C breakpoint exists at the start of the anonymous content box iff the legend
+    extends below the block-start border (`b.blockStart < anonTop f`, CSS Fragmentation 3 §4.1)
+    and the legend does not have `break-after: avoid`; otherwise a break can only occur inside
+    the child when `childAvoidInside = false` (CSS Fragmentation 3 §4.4). -/
+def canBreakInFirstChild (f : Fieldset) (legendAvoidAfter childAvoidInside : Bool) : Bool :=
+  (!legendAvoidAfter && decide ((toLogical f.wm f.border).blockStart < anonTop f)) || !childAvoidInside
+
+/-- Law: when a legend does not extend past the block-start border (`legendExtent ≤ border`),
+    there is no Class C breakpoint before the anonymous content box, so an unbreakable first
+    child (`childAvoidInside = true`) allows no break after the legend. CSS Fragmentation 3 §4.1. -/
+theorem no_class_c_when_border_covers_legend (f : Fieldset) (l : Legend) (avA : Bool)
+    (hLeg : f.legend = some l)
+    (hBorder : legendExtent f.wm l ≤ (toLogical f.wm f.border).blockStart) :
+    canBreakInFirstChild f avA true = false := by
+  have hnot : ¬ ((toLogical f.wm f.border).blockStart < legendExtent f.wm l) :=
+    Nat.not_lt.mpr hBorder
+  simp [canBreakInFirstChild, anonTop, hLeg, hnot]
+
+/-- Lay out a container of width `cw` and fragmentainer height `fragH` containing a sibling
+    `(sibW, sibH)` followed by `f` when `sibH` plus the unbreakable initial block extent of `f`
+    exceeds `fragH`, pushing `f` to the second fragmentainer. CSS Fragmentation 3 §4.1, §4.4. -/
+def fragmentAfterSibling (cw fragH sibW sibH : Nat) (f : Fieldset)
+    (legendAvoidAfter : Bool := false) (childAvoidInside : Bool := false) :
+    (Nat × Nat × Rect) × (Nat × Nat × Result) :=
+  let firstChildH := if canBreakInFirstChild f legendAvoidAfter childAvoidInside then 0
+                     else match f.child with | .fixed n _ => n | _ => 0
+  let r := layout f
+  if fragH < sibH + anonTop f + firstChildH then
+    ((cw, fragH, (0, 0, sibW, sibH)), (cw, r.size.2, r))
+  else
+    ((cw, sibH + r.size.2, (0, 0, sibW, sibH)), (cw, 0, r))
+
+/-- An in-flow child `(w, h, avoidBefore, avoidAfter, avoidInside, forceAfter)` of a fieldset's
+    anonymous content box. CSS Fragmentation 3 §3.1–§3.3. -/
+abbrev FChild := Nat × Nat × Bool × Bool × Bool × Bool
+
+/-- Partition and slice `FChild` items across fragmentainers of available heights `avail` (first)
+    and `fragH` (subsequent). CSS Fragmentation 3 §4.1–§4.4. -/
+def splitFChildren (fragH : Nat) :
+    Nat → Nat → Nat → List FChild → List Rect → List (List Rect)
+  | 0, _, _, _, cur => if cur.isEmpty then [] else [cur.reverse]
+  | _ + 1, _, _, [], cur => if cur.isEmpty then [] else [cur.reverse]
+  | fuel + 1, avail, cy, (w, h, avB, avA, avIn, forceA) :: rest, cur =>
+    let nextAv := match rest with
+      | (_, nh, nAvB, _, _, _) :: _ => if avA || nAvB then nh else 0
+      | [] => 0
+    if cy + h + nextAv ≤ avail then
+      let cur' := (0, cy, w, h) :: cur
+      if forceA && !rest.isEmpty then
+        cur'.reverse :: splitFChildren fragH fuel fragH 0 rest []
+      else
+        splitFChildren fragH fuel avail (cy + h) rest cur'
+    else if cy > 0 && (avIn || nextAv > 0 || cy + h > avail) then
+      cur.reverse :: splitFChildren fragH fuel fragH 0 ((w, h, avB, avA, avIn, forceA) :: rest) []
+    else
+      let slice := avail - cy
+      let cur' := (0, cy, w, slice) :: cur
+      cur'.reverse :: splitFChildren fragH fuel fragH 0 ((w, h - slice, false, avA, avIn, forceA) :: rest) []
+
+/-- Fragment a borderless, paddingless fieldset of inline size `fw` and optional fixed block size
+    `fh` starting at offset `y0` in the first fragmentainer of height `fragH` across its children
+    `kids`, returning `(fieldsetWidth, fieldsetBlockSize, childRects)` per fragmentainer. -/
+def fragmentChildren (fragH y0 fw : Nat) (fh : Option Nat) (kids : List FChild) :
+    List (Nat × Nat × List Rect) :=
+  let groups := splitFChildren fragH (kids.length + 4) (fragH - y0) 0 kids []
+  let rec assign (avail : Nat) (remH : Option Nat) : List (List Rect) → List (Nat × Nat × List Rect)
+    | [] => []
+    | g :: gs =>
+      let h := match remH with
+        | some r => min r avail
+        | none => if gs.isEmpty then (g.map (·.2.2.2)).sum else avail
+      let remH' := remH.map (· - h)
+      (fw, h, g) :: assign fragH remH' gs
+  assign (fragH - y0) fh groups
+
 end BlockFieldset
 end ChromiumLayout
