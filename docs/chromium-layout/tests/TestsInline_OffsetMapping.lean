@@ -15,13 +15,14 @@ open ChromiumLayout
 
 /-! ### Tests from offset_mapping_test.cc -/
 
-/-- Test: CollapseSpaces (offset_mapping_test.cc:213) -/
+/-- Test: CollapseSpaces (offset_mapping_test.cc:213).
+    CSS Text 3 §4.1.2: Spaces collapse in normal and nowrap, but are preserved in pre and preWrap. -/
 theorem test_OffsetMapping_CollapseSpaces :
     let input := "text text  text   text"
-    collapsedIndices .normal input = [10, 16, 17] ∧
-    collapsedIndices .nowrap input = [10, 16, 17] ∧
-    collapsedIndices .pre input = [] ∧
-    collapsedIndices .preWrap input = [] := by
+    collapsedIndicesForNode (buildDomOffsetMapping [DomNode.text 0 input .normal]) 0 = [10, 16, 17] ∧
+    collapsedIndicesForNode (buildDomOffsetMapping [DomNode.text 0 input .nowrap]) 0 = [10, 16, 17] ∧
+    collapsedIndicesForNode (buildDomOffsetMapping [DomNode.text 0 input .pre]) 0 = [] ∧
+    collapsedIndicesForNode (buildDomOffsetMapping [DomNode.text 0 input .preWrap]) 0 = [] := by
   decide
 
 /-- Test: CollapseTabs (offset_mapping_test.cc:224) -/
@@ -48,9 +49,10 @@ theorem test_OffsetMapping_CollapseNewlinesAsSpaces :
     collapsedIndices .normal "text \n \n text" = [5, 6, 7, 8] := by
   decide
 
-/-- Test: CollapseLeadingSpaces (offset_mapping_test.cc:258) -/
+/-- Test: CollapseLeadingSpaces (offset_mapping_test.cc:258).
+    CSS Text 3 §4.1.2: Leading spaces in normal mode are collapsed. -/
 theorem test_OffsetMapping_CollapseLeadingSpaces :
-    collapsedIndices .normal "  text" = [0, 1] := by
+    collapsedIndicesForNode (buildDomOffsetMapping [DomNode.text 0 "  text" .normal]) 0 = [0, 1] := by
   decide
 
 /-- Test: OneTextNode (offset_mapping_test.cc:429) -/
