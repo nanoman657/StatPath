@@ -175,6 +175,12 @@ done: TestsInline_ExclusionSpace +0
   - `exclusionSpace_zeroInlineSizeOpportunity`, `negativeInlineSizeOpportunityLeft`, `negativeInlineSizeOpportunityRight`: boundary handling of zero and negative inline size opportunities under LTR/RTL.
   - `exclusionSpace_preInitialization`, `mergeExclusionSpacesNoPreviousExclusions`, `mergeExclusionSpacesPreviousExclusions`, `mergeExclusionSpacesNoOutputExclusions`: exclusion space copy-on-write preservation and delta merging across nested BFCs.
 
+done: TestsInline_Shapes +0
+- Verified all 7 theorems in file are not thin:
+  - `boxShape_zeroRadii`, `boxShape_getIntervals`: evaluate box shapes with margin outsets, bounding box calculation, line overlap tests, and excluded interval queries per CSS Shapes 1 §3.1.
+  - `ellipseShape_zeroRadii`, `ellipseShape_zeroRadiusX`, `ellipseShape_zeroRadiusY`, `ellipseShape_zeroRadiiWithMargin`, `ellipseShape_shapeMarginLogicalBoundingBoxWithFloatValues`: evaluate ellipse geometry, zero-radii degeneracy, shape-margin expansion, and 64th fractional pixel LayoutUnit bounding boxes per CSS Shapes 1 §3.2.
+
+
 
 
 
