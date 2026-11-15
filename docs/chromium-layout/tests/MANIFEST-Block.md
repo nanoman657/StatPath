@@ -488,18 +488,18 @@ checks every row against the pinned sources and the Lean modules.
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:697 | GridLanesLayoutAlgorithmTest.MaximizeAndStretchAutoTracks | geometry | formalized | `TestsBlock.GridLanesMaximizeAndStretchAutoTracks_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:737 | GridLanesLayoutAlgorithmTest.ExpandFlexibleTracks | geometry | blocked | held-out row (not transcribed or marked); its source was seen by accident while reading neighbouring tests |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:766 | GridLanesLayoutAlgorithmTest.BuildRowSizes | geometry | formalized | `TestsBlock.GridLanesBuildRowSizes_vectors`, `GridTrackSizing.sizes` (CSS Grid 1 §11; item contributions hand-resolved from Ahem 10px, see test file) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:797 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:837 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:877 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:919 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:797 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoPlacement | geometry | formalized | `TestsBlock.AutoFitAutoPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:837 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoAndExplicitPlacement | geometry | formalized | `TestsBlock.AutoFitAutoAndExplicitPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:877 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoPlacement | geometry | formalized | `TestsBlock.AutoFillAutoFitAutoPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:919 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitNoCollapse | geometry | formalized | `TestsBlock.AutoFillAutoFitNoCollapse_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:962 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoSizeAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1005 | GridLanesLayoutAlgorithmTest.ColumnAutoFitAutoSizeAndAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1050 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoAndAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1095 | GridLanesLayoutAlgorithmTest.ColumnAutoFillAutoFitAutoNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:1138 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:1180 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:1222 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:1266 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitNoCollapse | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1138 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoPlacement | geometry | formalized | `TestsBlock.AutoFitAutoPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1180 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoAndExplicitPlacement | geometry | formalized | `TestsBlock.AutoFitAutoAndExplicitPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1222 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoPlacement | geometry | formalized | `TestsBlock.AutoFillAutoFitAutoPlacement_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:1266 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitNoCollapse | geometry | formalized | `TestsBlock.AutoFillAutoFitNoCollapse_vectors`, `GridLanes.laneSizes` (CSS Grid 1 §7.2.3.2, CSS Grid 3 lane placement) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1311 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoSizeAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1356 | GridLanesLayoutAlgorithmTest.RowAutoFitAutoSizeAndAutoAndExplicitPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:1401 | GridLanesLayoutAlgorithmTest.RowAutoFillAutoFitAutoAndAutoPlacement | geometry | blocked | needs grid lanes auto-fit / auto-fill placement algorithm |
@@ -1243,6 +1243,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockDiffuser.given_all`: spreading a total over n buckets hands out exactly the total (no CSS text; browser rounding rule read from tests).
 - `BlockAxis.mapAxes_mapAxes`: logical/physical axis mapping is an involution for every writing mode (CSS Writing Modes 4 §6.1).
 - `GridTrackSizing.fixedLen_pct_le`: a percentage track resolves to at most the container size for percentages up to 100 (CSS Grid 1 §11.4).
+- `GridLanes.minPos_le`: an auto-placed grid-lanes item lands in a lane whose running position is minimal (CSS Grid 3 lane placement).
 
 ## Merge notes
 
