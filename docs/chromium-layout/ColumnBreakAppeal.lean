@@ -129,5 +129,42 @@ theorem avoid_before_dominates_orphans (avoidIn : Bool) (orphans widows j n : Na
   simp only [insideAppeal, Bool.false_eq_true, ↓reduceIte]
   split <;> omega
 
+/-- Whether a Class C breakpoint exists between a wrapper block's block-start edge and its
+    first in-flow child when preceded by a float of block size `floatH`. If the wrapper itself
+    clears the float (`clearOnW = true`), the float is above the wrapper; otherwise the child
+    is pushed down by `floatH`, creating a positive gap beyond the wrapper's border `bW` and
+    the child's collapsed top margin `mC` iff `bW + mC < floatH`.
+    CSS Fragmentation 3 §4.1, CSS 2.1 §9.5.2. -/
+def hasClassCBreakpoint (clearOnW : Bool) (bW mC floatH : Nat) : Bool :=
+  !clearOnW && decide (bW + mC < floatH)
+
+/-- Law: when the wrapper's top border plus its child's collapsed top margin reaches or exceeds
+    the float's block size (`floatH ≤ bW + mC`), no clearance gap is introduced, so no Class C
+    breakpoint exists before the child. CSS Fragmentation 3 §4.1, CSS 2.1 §9.5.2. -/
+theorem no_class_c_when_margin_clears_float (clearOnW : Bool) (bW mC floatH : Nat)
+    (h : floatH ≤ bW + mC) :
+    hasClassCBreakpoint clearOnW bW mC floatH = false := by
+  have hnot : ¬ (bW + mC < floatH) := Nat.not_lt.mpr h
+  simp [hasClassCBreakpoint, hnot]
+
+/-- Lay out a two-column fragment pair `(col0Rects, col1WrapperAndChild)` for a leading block
+    `(50, h0)`, a float `(floatW, floatH)`, and a wrapper block of content width `wW` and border
+    `bW` containing an unbreakable child `(wC, hC)` with collapsed top margin `mC`.
+    CSS Fragmentation 3 §4.1. -/
+def layoutClassC (fragH h0 floatW floatH wW bW mC wC hC : Nat) (clearOnW : Bool) :
+    List (Nat × Nat × Nat × Nat) × (Nat × Nat × Nat × Nat × Nat × Nat) :=
+  let bw := wW + 2 * bW
+  if hasClassCBreakpoint clearOnW bW mC floatH then
+    ([(0, 0, 50, h0), (0, h0, floatW, floatH), (0, h0, bw, fragH - h0)],
+     (bw, hC + bW, bW, 0, wC, hC))
+  else
+    ([(0, 0, 50, h0), (0, h0, floatW, floatH)],
+     (bw, mC + hC + 2 * bW, bW, bW + mC, wC, hC))
+
+/-- Adjoining block-start margin after a fragmentation break: retained after a forced break,
+    truncated to zero after an unforced break (CSS Fragmentation 3 §5.2). -/
+def marginAfterBreak (forced : Bool) (m : Nat) : Nat :=
+  if forced then m else 0
+
 end ColumnBreakAppeal
 end ChromiumLayout

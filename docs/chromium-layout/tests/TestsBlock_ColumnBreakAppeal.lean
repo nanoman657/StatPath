@@ -113,11 +113,13 @@ theorem AvoidBreakReplacedContent_vectors :
       ([(0, 44, 150, [])], []) := ⟨rfl, rfl⟩
 
 -- column_layout_algorithm_test.cc:5246 ForcedBreakBetweenSpanners, :5279 ForcedBreakBetweenSpanners2,
+-- :5351 ForcedBreakBetweenSpanners4, :5390 ForcedBreakBetweenSpanners5,
 -- :5424 SoftBreakBetweenSpanners, :5458 SoftBreakBetweenSpanners2,
 -- :5530 AvoidSoftBreakBetweenSpanners2, :5574 AvoidSoftBreakBetweenSpanners3
 theorem AvoidSoftBreakBetweenSpanners_vectors :
     layoutAppeal 100 [.leaf 55 40 false false true, .leaf 66 40] =
       ([(0, 55, 40, [])], [(0, 66, 40, [])]) ∧
+    marginAfterBreak true 10 = 10 ∧
     layoutAppeal 100 [.leaf 55 60, .leaf 66 60] =
       ([(0, 55, 60, [])], [(0, 66, 60, [])]) ∧
     layoutAppeal 100 [.box 11 [(22, 20, false), (33, 20, false), (44, 20, false)], .leaf 55 60 true] =
@@ -125,6 +127,45 @@ theorem AvoidSoftBreakBetweenSpanners_vectors :
        [(0, 11, 20, [(0, 44, 20)]), (20, 55, 60, [])]) ∧
     layoutAppeal 100 [.box 11 (List.replicate 3 (0, 20, false)) false false false 3 3, .leaf 55 60 true] =
       ([(0, 11, 100, [(0, 0, 20), (20, 0, 20)])],
-       [(0, 11, 20, [(0, 0, 20)]), (20, 55, 60, [])]) := ⟨rfl, rfl, rfl, rfl⟩
+       [(0, 11, 20, [(0, 0, 20)]), (20, 55, 60, [])]) := ⟨rfl, rfl, rfl, rfl, rfl⟩
+
+-- column_layout_algorithm_test.cc:3660 NoClassCBreakPointBeforeBfc,
+-- :3696 ClassCBreakPointBeforeBfcWithClearance, :3733 ClassCBreakPointBeforeBfcWithMargin,
+-- :3770 ClassCBreakPointBeforeBlockMarginCollapsing, :3813 NoClassCBreakPointBeforeBlockMarginCollapsing,
+-- :3856 ClassCBreakPointBeforeLine, :3894 ForcedBreakAtClassCBreakPoint
+theorem ClassCBreakPoint_vectors :
+    layoutClassC 100 50 100 40 55 0 0 44 60 true =
+      ([(0, 0, 50, 50), (0, 50, 100, 40)], (55, 60, 0, 0, 44, 60)) ∧
+    layoutClassC 100 50 1 40 55 0 0 44 60 false =
+      ([(0, 0, 50, 50), (0, 50, 1, 40), (0, 50, 55, 50)], (55, 60, 0, 0, 44, 60)) ∧
+    layoutClassC 100 50 100 40 55 0 39 44 60 false =
+      ([(0, 0, 50, 50), (0, 50, 100, 40), (0, 50, 55, 50)], (55, 60, 0, 0, 44, 60)) ∧
+    layoutClassC 100 70 100 20 55 1 (max 10 18) 44 20 false =
+      ([(0, 0, 50, 70), (0, 70, 100, 20), (0, 70, 57, 30)], (57, 21, 1, 0, 44, 20)) ∧
+    layoutClassC 100 70 100 20 55 1 (max 10 19) 44 20 false =
+      ([(0, 0, 50, 70), (0, 70, 100, 20)], (57, 41, 1, 20, 44, 20)) ∧
+    layoutClassC 100 70 100 20 55 0 0 33 20 false =
+      ([(0, 0, 50, 70), (0, 70, 100, 20), (0, 70, 55, 30)], (55, 20, 0, 0, 33, 20)) ∧
+    layoutClassC 100 50 100 40 55 0 0 44 20 false =
+      ([(0, 0, 50, 50), (0, 50, 100, 40), (0, 50, 55, 50)], (55, 20, 0, 0, 44, 20)) :=
+  ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+-- column_layout_algorithm_test.cc:4746 SpannerInBlock, :4781 SpannerWithSiblingsInBlock,
+-- :4824 SpannerInBlockWithSiblings, :5624 SoftBreakBetweenRowAndSpanner
+theorem SpannerInBlockAndRow_vectors :
+    let m1 := ChromiumLayout.ColumnLayout.layoutMulticolWithSpanners {
+      cols := 3, gap := 10, width := 320, border := 1,
+      items := [{ isSpanner := true, height := 44 }] ++ List.replicate 4 { height := 20, avoid := true }
+    }
+    let m2 := ChromiumLayout.ColumnLayout.layoutMulticolWithSpanners {
+      cols := 2, gap := 10, width := 100,
+      items := List.replicate 3 { height := 20, avoid := true }
+    }
+    (m1.w, m1.h, m1.fragments.map fun f => (f.isSpanner, f.relX, f.relY, f.w, f.h)) =
+      (322, 86, [(false, 1, 1, 100, 0), (true, 1, 1, 320, 44), (false, 1, 45, 100, 40), (false, 111, 45, 100, 40)]) ∧
+    (m2.w, m2.h, m2.fragments.map fun f => (f.relX, f.relY, f.w, f.h)) =
+      (100, 40, [(0, 0, 45, 40), (55, 0, 45, 40)]) ∧
+    layoutAppeal 100 [.leaf 100 m2.h, .leaf 44 70 false false false true] =
+      ([(0, 100, 40, [])], [(0, 44, 70, [])]) := ⟨rfl, rfl, rfl⟩
 
 end TestsBlock
