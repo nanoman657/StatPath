@@ -12,13 +12,12 @@ Cites:
 - CSS Exclusions 1 §3: Exclusion Areas and Opportunities
 -/
 
-/-- Helper creating test opportunities matching Blink's `CreateLayoutOpportunity`. -/
-def testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
-  { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
-              end_offset := { line_offset := inline_end, block_offset := block_end } } }
 
 /-! ## 1. exclusions/exclusion_space_test.cc:92 - Empty -/
 theorem exclusionSpace_empty :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp : ExclusionSpace := {}
     sp.allLayoutOpportunities { line_offset := 0, block_offset := 0 } 100 =
       [testOpportunity 0 0 100] ∧
@@ -26,11 +25,14 @@ theorem exclusionSpace_empty :
       [testOpportunity (-30) (-100) 20] ∧
     sp.allLayoutOpportunities { line_offset := 30, block_offset := 100 } 50 =
       [testOpportunity 30 100 80] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 2. exclusions/exclusion_space_test.cc:122 - LineLayoutOpportunityClampsNonDominantSide -/
 theorem exclusionSpace_lineLayoutOpportunityClampsNonDominantSide :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let ltr_space : ConstraintSpace :=
       { direction := TextDirection.kLtr,
         bfc_offset := { line_offset := 10, block_offset := 0 },
@@ -51,12 +53,15 @@ theorem exclusionSpace_lineLayoutOpportunityClampsNonDominantSide :
     ltr_line_past.line_left_offset = 120 ∧ ltr_line_past.line_right_offset = 120 ∧
     rtl_line.line_left_offset = 10 ∧ rtl_line.line_right_offset = 100 ∧
     rtl_line_past.line_left_offset = 0 ∧ rtl_line_past.line_right_offset = 0 := by
-  dsimp [LayoutOpportunity.computeLineLayoutOpportunity, testOpportunity,
+  dsimp [LayoutOpportunity.computeLineLayoutOpportunity,
          BfcRect.lineStartOffset, BfcRect.lineEndOffset]
   decide
 
 /-! ## 3. exclusions/exclusion_space_test.cc:169 - SingleExclusion -/
 theorem exclusionSpace_singleExclusion :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 10, block_offset := 20 },
         end_offset := { line_offset := 60, block_offset := 90 } } EFloat.kLeft)
@@ -68,11 +73,14 @@ theorem exclusionSpace_singleExclusion :
       [testOpportunity 10 10 60 20, testOpportunity 60 10 60, testOpportunity 10 90 60] ∧
     sp.allLayoutOpportunities { line_offset := 10, block_offset := 10 } 49 =
       [testOpportunity 10 10 59 20, testOpportunity 60 10 60, testOpportunity 10 90 59] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 4. exclusions/exclusion_space_test.cc:232 - TwoExclusions -/
 theorem exclusionSpace_twoExclusions :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := (ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 150, block_offset := 75 } } EFloat.kLeft)).add
@@ -81,11 +89,14 @@ theorem exclusionSpace_twoExclusions :
         end_offset := { line_offset := 400, block_offset := 150 } } EFloat.kRight)
     sp.allLayoutOpportunities { line_offset := 0, block_offset := 0 } 400 =
       [testOpportunity 150 0 400 75, testOpportunity 0 75 100, testOpportunity 0 150 400] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 5. exclusions/exclusion_space_test.cc:273 - SolidEdges -/
 theorem exclusionSpace_solidEdges :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ((((ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 20, block_offset := 15 } } EFloat.kLeft)).add
@@ -104,11 +115,14 @@ theorem exclusionSpace_solidEdges :
        testOpportunity 0 15 80 25,
        testOpportunity 30 35 80,
        testOpportunity 0 40 80] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 6. exclusions/exclusion_space_test.cc:325 - OverlappingWithShelf -/
 theorem exclusionSpace_overlappingWithShelf :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := (((ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 20, block_offset := 15 } } EFloat.kLeft)).add
@@ -123,11 +137,14 @@ theorem exclusionSpace_overlappingWithShelf :
        testOpportunity 0 15 80 25,
        testOpportunity 0 15 70,
        testOpportunity 0 35 80] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 7. exclusions/exclusion_space_test.cc:373 - InsertBetweenShelves -/
 theorem exclusionSpace_insertBetweenShelves :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := (((ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 30, block_offset := 10 } } EFloat.kLeft)).add
@@ -141,11 +158,14 @@ theorem exclusionSpace_insertBetweenShelves :
       [testOpportunity 30 15 60,
        testOpportunity 30 25 60,
        testOpportunity 30 35 60] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 8. exclusions/exclusion_space_test.cc:408 - InitialLetterBasic -/
 theorem exclusionSpace_initialLetterBasic :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ExclusionSpace.add {} (ExclusionArea.createForInitialLetterBox
       { start_offset := { line_offset := 9, block_offset := 9 },
         end_offset := { line_offset := 73, block_offset := 73 } } EFloat.kLeft)
@@ -160,11 +180,14 @@ theorem exclusionSpace_initialLetterBasic :
     sp.allLayoutOpportunities { line_offset := 9, block_offset := 124 } 300 =
       [testOpportunity 9 124 309] ∧
     sp.initialLetterClearanceOffsets = [73, 73, layoutUnitMin] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 9. exclusions/exclusion_space_test.cc:451 - InitialLetterDirectionRight -/
 theorem exclusionSpace_initialLetterDirectionRight :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp1 := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 9, block_offset := 9 },
         end_offset := { line_offset := 59, block_offset := 59 } } EFloat.kLeft)
@@ -190,11 +213,14 @@ theorem exclusionSpace_initialLetterDirectionRight :
       [testOpportunity 9 124 309] ∧
     sp3.initialLetterClearanceOffsets = [73, 73, layoutUnitMin] := by
   dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.findLayoutOpportunity,
-         ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+         ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 10. exclusions/exclusion_space_test.cc:560 - InitialLetterFloatLeft2 -/
 theorem exclusionSpace_initialLetterFloatLeft2 :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ((ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 9, block_offset := 59 },
         end_offset := { line_offset := 59, block_offset := 59 } } EFloat.kLeft)).add
@@ -215,11 +241,14 @@ theorem exclusionSpace_initialLetterFloatLeft2 :
     sp.allLayoutOpportunities { line_offset := 9, block_offset := 124 } 300 =
       [testOpportunity 9 124 309] ∧
     sp.initialLetterClearanceOffsets = [73, 73, layoutUnitMin] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 11. exclusions/exclusion_space_test.cc:615 - InitialLetterFloatLeft2ClearLeft -/
 theorem exclusionSpace_initialLetterFloatLeft2ClearLeft :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ((ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 9, block_offset := 59 },
         end_offset := { line_offset := 59, block_offset := 59 } } EFloat.kLeft)).add
@@ -240,11 +269,14 @@ theorem exclusionSpace_initialLetterFloatLeft2ClearLeft :
     sp.allLayoutOpportunities { line_offset := 9, block_offset := 124 } 300 =
       [testOpportunity 9 124 309] ∧
     sp.initialLetterClearanceOffsets = [73, 73, layoutUnitMin] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 12. exclusions/exclusion_space_test.cc:672 - InitialLetterFloatLeftAndRight -/
 theorem exclusionSpace_initialLetterFloatLeftAndRight :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp1 := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 9, block_offset := 59 },
         end_offset := { line_offset := 59, block_offset := 59 } } EFloat.kLeft)
@@ -270,11 +302,14 @@ theorem exclusionSpace_initialLetterFloatLeftAndRight :
       [testOpportunity 9 124 309] ∧
     sp3.initialLetterClearanceOffsets = [73, 73, layoutUnitMin] := by
   dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.findLayoutOpportunity,
-         ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+         ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 13. exclusions/exclusion_space_test.cc:796 - InitialLetterFloatRight2 -/
 theorem exclusionSpace_initialLetterFloatRight2 :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp1 := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 259, block_offset := 9 },
         end_offset := { line_offset := 309, block_offset := 59 } } EFloat.kLeft)
@@ -300,21 +335,27 @@ theorem exclusionSpace_initialLetterFloatRight2 :
       [testOpportunity 9 174 309] ∧
     sp3.initialLetterClearanceOffsets = [123, 123, layoutUnitMin] := by
   dsimp [ExclusionSpace.allLayoutOpportunities, ExclusionSpace.findLayoutOpportunity,
-         ExclusionSpace.initialLetterClearanceOffsets, testOpportunity]
+         ExclusionSpace.initialLetterClearanceOffsets]
   decide
 
 /-! ## 14. exclusions/exclusion_space_test.cc:857 - ZeroInlineSizeOpportunity -/
 theorem exclusionSpace_zeroInlineSizeOpportunity :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 100, block_offset := 10 } } EFloat.kLeft)
     sp.allLayoutOpportunities { line_offset := 0, block_offset := 0 } 100 =
       [testOpportunity 100 0 100, testOpportunity 0 10 100] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 15. exclusions/exclusion_space_test.cc:877 - NegativeInlineSizeOpportunityLeft -/
 theorem exclusionSpace_negativeInlineSizeOpportunityLeft :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := 0, block_offset := 0 },
         end_offset := { line_offset := 120, block_offset := 10 } } EFloat.kLeft)
@@ -322,11 +363,14 @@ theorem exclusionSpace_negativeInlineSizeOpportunityLeft :
       [testOpportunity 120 0 120, testOpportunity 0 10 100] ∧
     sp.allLayoutOpportunities { line_offset := 0, block_offset := 0 } 100 TextDirection.kRtl =
       [testOpportunity 100 0 100, testOpportunity 0 10 100] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 16. exclusions/exclusion_space_test.cc:907 - NegativeInlineSizeOpportunityRight -/
 theorem exclusionSpace_negativeInlineSizeOpportunityRight :
+    let testOpportunity (inline_start block_start inline_end : Int) (block_end : Int := layoutUnitMax) : LayoutOpportunity :=
+      { rect := { start_offset := { line_offset := inline_start, block_offset := block_start },
+                  end_offset := { line_offset := inline_end, block_offset := block_end } } }
     let sp := ExclusionSpace.add {} (ExclusionArea.create
       { start_offset := { line_offset := -20, block_offset := 0 },
         end_offset := { line_offset := 100, block_offset := 10 } } EFloat.kRight)
@@ -338,7 +382,7 @@ theorem exclusionSpace_negativeInlineSizeOpportunityRight :
       [testOpportunity 0 0 0, testOpportunity 0 10 100] ∧
     sp.allLayoutOpportunities { line_offset := 0, block_offset := 0 } 100 TextDirection.kRtl =
       [testOpportunity (-20) 0 (-20), testOpportunity 0 10 100] := by
-  dsimp [ExclusionSpace.allLayoutOpportunities, testOpportunity]
+  dsimp [ExclusionSpace.allLayoutOpportunities]
   decide
 
 /-! ## 17. exclusions/exclusion_space_test.cc:937 - PreInitialization -/
