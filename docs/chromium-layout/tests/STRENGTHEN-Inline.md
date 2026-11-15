@@ -154,6 +154,19 @@ done: TestsInline_HitTesting +0
   - `hitTest_referenceFilter`: computes filter expansion on visual overflow rect per CSS Filter Effects 1 §3.1.
   - `hitTest_occlusionWith3DTransform`, `hitTest_occlusionWithFlattenedPreserve3DOccluder`: evaluate 3D transform occlusion and flat context flattening per CSS Transforms 2 §4.
 
+done: TestsInline_Geometry +0
+- Verified all 23 theorems in file are not thin:
+  - Unit tests directly evaluate core Blink geometry operations per CSS Writing Modes 3 §3-4 and CSS 2.1 §8-10:
+  - `axis_toPhysicalAxes`, `axis_toLogicalAxes`, `axis_logicalAxesOperators`, `axis_physicalAxesOperators`: bitwise logical/physical axis mapping across writing modes.
+  - `boxSides_logicalToLineLogical`, `boxSides_physicalToLogical`: box side orientation mapping under horizontal and vertical modes with LTR/RTL directions.
+  - `boxEdge_properties`: box edge expansion, emptiness checks, and offset translations.
+  - `boxStrut_convertPhysicalToLogical`, `boxStrut_convertLogicalToPhysical`, `boxStrut_conversions_sideways`, `boxStrut_enclosing`, `boxStrut_unite`: strut conversions and fixed-point enclosures.
+  - `writingModeConverter_toPhysical`, `writingModeConverter_toLogical`: 2D offset coordinate conversions between container outer and inner boxes across modes.
+  - `logicalRect_addOffsetAndUnite`, `physicalRect_operations`: rect arithmetic, inclusive intersection, and distance calculations.
+  - `layoutUnitDiffuser_buckets`, `layoutUnitDiffuser_threeBuckets`: remainder distribution across fractional pixel buckets.
+  - `physicalRect_toEnclosingRect`, `physicalRect_edgesOnPixelBoundaries`, `physicalRect_expandEdgesToPixelBoundaries`: fractional 1/64th layout unit boundary snapping.
+
+
 
 
 
