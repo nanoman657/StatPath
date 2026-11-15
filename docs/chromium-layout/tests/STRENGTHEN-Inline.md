@@ -113,6 +113,11 @@ done: TestsInline_TextAutoSpace +0
   - `textAutoSpace_mayApply`: evaluates early script rejection predicate `mayApplyTextAutoSpace` directly on DOM character sequences.
   - `textAutoSpace_apply`: tests all 10 inter-script text boundary patterns through general `computeAutoSpaceOffsets`.
 
+done: TestsInline_HyphenResult +0
+- Verified all theorems in file are not thin:
+  - `hyphenResult_horizontal`, `verticalUpright`, `verticalMixed`: run hyphenation characters ("+=") with writing mode (horizontal-tb vs vertical-rl), text orientation (mixed vs upright), and feature fix flags directly through general shaping function `shapeHyphenResult` to evaluate glyph canvas rotation per CSS Writing Modes 3 §5.1.
+
+
 
 
 
