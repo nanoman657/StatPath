@@ -70,3 +70,15 @@ done: TestsInline_LineBreakCandidate +0
 - Verified all theorems in file are not thin:
   - `lineBreak_Text`, `SoftHyphen`, `SoftHyphenDisabled`, `Span`, `SpanMidWord`, `SpanCloseAfterSpace`, `OutOfFlowPositioned`, `ForcedBreak`, `AtomicInlineBr`, `AtomicInlineTrailingSpaces`, `TrailingSpacesCollapsed`: run input `IndexedInlineToken` sequences (text with soft hyphens, inline spans, atomic inlines, br elements) directly through the general line breaking candidate engine `computeLineBreakCandidates` per CSS Text 3 §4 and §5.2. No bare numbers or indices are bypassed.
 
+done: TestsInline_LayoutText +0
+- Rewrote thin theorem `layoutText_floatFirstLetterPlainText` to flow the full input string ("Foo") through `splitFirstLetter` into `firstLetterLength` and `reconstructFirstLetterPlainText` per CSS Pseudo-Elements 4 §2.2 instead of using pre-split strings.
+- Other theorems in file verified not thin:
+  - `layoutText_caretMinMaxOffset`, `resolvedTextLength`, `wordBreakElement`: run string inputs through `computeOffsetMappingUnits` extracting min/max non-collapsed offsets and resolved lengths.
+  - `layoutText_containsCaretOffset`, `containsCaretOffsetInPre`, `isBeforeAfterNonCollapsedCharacterNoLineWrap`: run whitespace mode strings through `getSnapCode` and `computeOffsetMappingUnits`.
+  - `layoutText_isBeforeAfterNonCollapsedCharacterBR`, `containsCaretOffsetInPreLine`, `containsCaretOffsetWithTrailingSpace*`, `isBeforeAfterNonCollapsedLineWrapSpace`, `mapDOMOffsetToTextContentOffset`: run DOM node structures through `buildDomOffsetMapping` and evaluate `domNodeSnapCode` and `mapDOMRangeToTextContent`.
+  - `layoutText_transformedTextWithCapitalizationAfterInlineAbsolute`, `TransformedTextWithCapitalizationAfterSupplementaryCharacter`: run raw character sequences with inline preceding context through `applyCapitalizeTransform`.
+  - `layoutText_characterAfterWhitespaceCollapsing`: runs preceding and trailing space contexts through `firstAndLastCharAfterCollapsing`.
+  - `layoutText_getTextBoxInfoWith*`: run legacy text box run streams through `computeLineTextBoxes`.
+  - `layoutText_localSelectionRect*`: run horizontal and vertical selection slice streams through `computeSelectionVisualRect`.
+  - `layoutText_absoluteQuadsVRL`, `physicalLinesBoundingBox*`: run line boxes through `computeLinePhysicalRects` and `physicalLinesBoundingBox`.
+

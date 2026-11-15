@@ -277,13 +277,13 @@ theorem layoutText_physicalLinesBoundingBoxVerticalRL :
 /-- Test `LayoutTextTest, TransformedTextWithCapitalizationAfterInlineAbsolute` (`layout_text_test.cc:1694`).
     CSS Text 3 §2.1: Preceding inline letter 'h' prevents following text 'ome' from capitalizing. -/
 theorem layoutText_transformedTextWithCapitalizationAfterInlineAbsolute :
-    String.mk (applyCapitalizeTransform true "ome".toList) = "ome" := by
+    String.ofList (applyCapitalizeTransform true "ome".toList) = "ome" := by
   decide
 
 /-- Test `LayoutTextTest, TransformedTextWithCapitalizationAfterSupplementaryCharacter` (`layout_text_test.cc:1707`).
     CSS Text 3 §2.1: Preceding supplementary letter prevents 'bc' from capitalizing, while 'def' is capitalized. -/
 theorem layoutText_transformedTextWithCapitalizationAfterSupplementaryCharacter :
-    String.mk (applyCapitalizeTransform true "bc def".toList) = "bc Def" := by
+    String.ofList (applyCapitalizeTransform true "bc def".toList) = "bc Def" := by
   decide
 
 /-! ## 14. IsBeforeAfterNonCollapsedLineWrapSpace (`layout_text_test.cc:907`) -/
@@ -517,7 +517,11 @@ theorem layoutText_localSelectionRectLineHeightVertical :
 /-- Test `LayoutTextTest, FloatFirstLetterPlainText` (`layout_text_test.cc:1321`).
     CSS Pseudo-Elements 4 §2.2: PlainText reconstructs unified string from floating first-letter and remaining parts. -/
 theorem layoutText_floatFirstLetterPlainText :
-    reconstructFirstLetterPlainText "F" "oo" = "Foo" := by
+    let s := "Foo"
+    let (firstFrag, remFrag) := splitFirstLetter s
+    let firstPart := String.ofList (s.toList.take firstFrag.fragmentLength)
+    let remPart := String.ofList (s.toList.drop remFrag.start)
+    reconstructFirstLetterPlainText firstPart remPart = "Foo" := by
   decide
 
 end ChromiumLayout
