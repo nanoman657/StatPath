@@ -29,3 +29,4 @@ done: TestsInline_InlineLayout +0
 done: TestsInline_HitTesting +0
 done: TestsInline_Geometry +0
 done: TestsInline_ExclusionSpace +0
+done: TestsInline_Shapes +0
