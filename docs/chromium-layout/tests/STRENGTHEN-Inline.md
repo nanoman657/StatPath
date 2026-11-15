@@ -53,3 +53,6 @@ done: TestsInline_PhysicalLineBoxFragment +0
 - Verified neither theorem is thin:
   - `physicalLineBoxFragment_hasPropagatedDescendantsFloat` and `physicalLineBoxFragment_hasPropagatedDescendantsOOF` directly test `hasPropagatedDescendants` (the general model predicate in `InlineLineBox.lean` for `PhysicalLineBoxFragment::HasPropagatedDescendants()` per CSS 2.1 §9.5 and §9.3) on line item streams partitioned into normal flow items vs lines containing float / out-of-flow items, verifying propagation flags to the containing block. No bare numbers or indices are used.
 
+done: TestsInline_LineInfo +0
+- Rewrote thin theorem `lineInfo_inflowEndOffset` to flow the test input strings ("abc", "def", "rt") through cumulative text and ruby column offsets per CSS Ruby 1 §3.1 into `lineInflowEndOffset` instead of hardcoding raw numbers.
+

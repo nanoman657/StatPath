@@ -15,15 +15,23 @@ namespace ChromiumLayout
 /-! ## 1. Inflow End Offset (`inline/line_info_test.cc:23`) -/
 
 /-- Test `LineInfoTest, InflowEndOffset` (`inline/line_info_test.cc:23`).
-    InflowEndOffset returns the end offset of text in the ruby base (7 == "abc" (3) + kOpenRubyColumn (1) + "def" (3)),
-    excluding annotation text ("rt"). -/
+    InflowEndOffset returns the end offset of text in the ruby base (7 == "abc" + kOpenRubyColumn + "def"),
+    excluding annotation text ("rt") per CSS Ruby 1 §3.1. -/
 theorem lineInfo_inflowEndOffset :
+    let textPrefix := "abc"
+    let rubyBase := "def"
+    let rubyAnno := "rt"
+    let off0 := 0
+    let off1 := off0 + textPrefix.length
+    let offOpen := off1 + 1
+    let offBaseEnd := offOpen + rubyBase.length
+    let offAnnoEnd := offBaseEnd + rubyAnno.length
     let results : List LineResultItem := [
-      .text 0 3,
-      .openRubyColumn 3 4,
-      .rubyColumn 4 7 9
+      .text off0 off1,
+      .openRubyColumn off1 offOpen,
+      .rubyColumn offOpen offBaseEnd offAnnoEnd
     ]
-    lineInflowEndOffset 0 results = 7 := by
+    lineInflowEndOffset off0 results = 7 := by
   decide
 
 end ChromiumLayout
