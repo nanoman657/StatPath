@@ -66,3 +66,7 @@ done: TestsInline_ParagraphLineBreaker +0
   - `scoreLineBreaker_disabledByLineBreakerData`: tests runtime constraint evaluation `isScoreLineBreakDisabledByRuntime` across 8 line breaking configurations (overflow, break-spaces, box-decoration-break: clone).
   - `scoreLineBreaker_lastLines`, `blockInInlineBeforeAfter`, `forcedBreak`, `floatRetry`, `lineCountMismatchFallback`: run paragraph segment classifications and windowing optimizations through `optimalWindowConsumptionCount`, `classifyScoreLineBreakerBlockInInline`, `computeScoreLineBreakPoints`, and `resolveOptimalLineCountMismatch`.
 
+done: TestsInline_LineBreakCandidate +0
+- Verified all theorems in file are not thin:
+  - `lineBreak_Text`, `SoftHyphen`, `SoftHyphenDisabled`, `Span`, `SpanMidWord`, `SpanCloseAfterSpace`, `OutOfFlowPositioned`, `ForcedBreak`, `AtomicInlineBr`, `AtomicInlineTrailingSpaces`, `TrailingSpacesCollapsed`: run input `IndexedInlineToken` sequences (text with soft hyphens, inline spans, atomic inlines, br elements) directly through the general line breaking candidate engine `computeLineBreakCandidates` per CSS Text 3 §4 and §5.2. No bare numbers or indices are bypassed.
+
