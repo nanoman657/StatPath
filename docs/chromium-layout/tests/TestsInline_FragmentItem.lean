@@ -14,24 +14,72 @@ namespace ChromiumLayout.TestsInline
 open ChromiumLayout
 
 /-- Test `FragmentItemTest.BasicText` (`inline/fragment_item_test.cc:126`).
-    Text node wrapping produces two fragments: first is first-for-node, second is last-for-node. -/
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2:
+    `<div style="width: 10ch; font-family: Ahem; font-size: 10px; line-height: 1">1234567 98765</div>`
+    Wrapping text (70px + 10px space + 50px in 100px width) breaks into 2 lines through general layout:
+    - line 1 at (0, 0) with fragment 0: isFirstForNode = true, isLastForNode = false;
+    - line 2 at (0, 10) with fragment 1: isFirstForNode = false, isLastForNode = true. -/
 theorem fragmentItem_basicText :
+    let fh : FontHeight := { ascent := 10, descent := 0 }
+    let w1 : InlineItem := .TextSeg 1 70 fh true false
+    let sp : InlineItem := .TextSeg 1 10 fh true true
+    let w2 : InlineItem := .TextSeg 1 50 fh true false
+    let lines := breakLines 100 [w1, sp, w2]
+    let (stacked, totalH) := stackLineBoxes fh 0 lines
+    (lines.length = 2) ∧
+    (totalH = 20) ∧
+    (stacked.length = 2) ∧
+    ((stacked.headD {}).bfcOffset.blockOffset = 0) ∧
+    (((stacked.headD {}).items.headD {}).inlineSize = 70) ∧
     (isFirstFragmentForNode 0 = true) ∧
-    (isLastFragmentForNode 0 2 = false) ∧
+    (isLastFragmentForNode 0 stacked.length = false) ∧
+    (((stacked.tailD []).headD {}).bfcOffset.blockOffset = 10) ∧
+    ((((stacked.tailD []).headD {}).items.headD {}).inlineSize = 50) ∧
     (isFirstFragmentForNode 1 = false) ∧
-    (isLastFragmentForNode 1 2 = true) := by
+    (isLastFragmentForNode 1 stacked.length = true) := by
   decide
 
 /-- Test `FragmentItemTest.BasicInlineBox` (`inline/fragment_item_test.cc:235`).
-    Wrapped span produces 2 fragments; non-wrapped span produces 1 fragment that is both first and last. -/
+    CSS 2.1 §9.4.2 & CSS Inline 3 §2:
+    `<div id="container" style="width: 10ch">000 <span id="span1">1234 5678</span> 999 <span id="span2">12345678</span></div>`
+    Lays out through general inline line breaking and stacking:
+    - span1 wraps, producing two fragments: first at (40, 0), second at (0, 10);
+    - span2 does not wrap, producing one fragment at (0, 20). -/
 theorem fragmentItem_basicInlineBox :
-    -- span1 fragment 0 (first, not last)
+    let fh : FontHeight := { ascent := 10, descent := 0 }
+    let t0 : InlineItem := .TextSeg 0 30 fh true false
+    let sp0 : InlineItem := .TextSeg 0 10 fh true true
+    let s1_w1 : InlineItem := .TextSeg 1 40 fh true false
+    let s1_sp : InlineItem := .TextSeg 1 10 fh true true
+    let s1_w2 : InlineItem := .TextSeg 1 40 fh true false
+    let t2 : InlineItem := .TextSeg 2 30 fh true false
+    let sp2 : InlineItem := .TextSeg 2 10 fh true true
+    let s2_w : InlineItem := .TextSeg 3 80 fh true false
+    let lines := breakLines 100 [t0, sp0, s1_w1, s1_sp, s1_w2, t2, sp2, s2_w]
+    let (stacked, _) := stackLineBoxes fh 0 lines
+    let l0 := stacked.headD {}
+    let l1 := (stacked.tailD []).headD {}
+    let l2 := ((stacked.tailD []).tailD []).headD {}
+    let s1_frag0 := l0.items.filter (fun it => it.itemId == 1) |>.headD {}
+    let s1_frag1 := l1.items.filter (fun it => it.itemId == 1) |>.headD {}
+    let s2_frag0 := l2.items.filter (fun it => it.itemId == 3) |>.headD {}
+    (lines.length = 3) ∧
+    -- span1 fragment 0 at (40, 0)
+    (s1_frag0.inlineOffset = 40) ∧
+    (l0.bfcOffset.blockOffset + s1_frag0.blockOffset = 0) ∧
+    (s1_frag0.inlineSize = 40) ∧
     (isFirstFragmentForNode 0 = true) ∧
     (isLastFragmentForNode 0 2 = false) ∧
-    -- span1 fragment 1 (not first, last)
+    -- span1 fragment 1 at (0, 10)
+    (s1_frag1.inlineOffset = 0) ∧
+    (l1.bfcOffset.blockOffset + s1_frag1.blockOffset = 10) ∧
+    (s1_frag1.inlineSize = 40) ∧
     (isFirstFragmentForNode 1 = false) ∧
     (isLastFragmentForNode 1 2 = true) ∧
-    -- span2 fragment 0 (both first and last)
+    -- span2 fragment 0 at (0, 20)
+    (s2_frag0.inlineOffset = 0) ∧
+    (l2.bfcOffset.blockOffset + s2_frag0.blockOffset = 20) ∧
+    (s2_frag0.inlineSize = 80) ∧
     (isFirstFragmentForNode 0 = true) ∧
     (isLastFragmentForNode 0 1 = true) := by
   decide
