@@ -535,11 +535,11 @@ checks every row against the pinned sources and the Lean modules.
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:2842 | GridLanesLayoutAlgorithmTest.GridLanesDirectionChangeMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:2870 | GridLanesLayoutAlgorithmTest.GridLanesPackChangeMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:2899 | GridLanesLayoutAlgorithmTest.ResolvedGridAxisFlipMarksPlacementDirty | geometry | blocked | needs grid lanes layout algorithm (masonry / lanes layout) |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:2925 | GridLanesLayoutAlgorithmTest.GapGeometryColumn | geometry | blocked | needs grid lanes gap geometry calculation |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:2979 | GridLanesLayoutAlgorithmTest.GapGeometryRow | geometry | blocked | needs grid lanes gap geometry calculation |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:3031 | GridLanesLayoutAlgorithmTest.GapGeometryEmptyExplicitTracks | geometry | blocked | needs grid lanes gap geometry calculation |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:3066 | GridLanesLayoutAlgorithmTest.GapGeometrySingleTrack | geometry | blocked | needs grid lanes gap geometry calculation |
-| grid_lanes/grid_lanes_layout_algorithm_test.cc:3096 | GridLanesLayoutAlgorithmTest.GapGeometryRequiresGapRule | geometry | blocked | needs grid lanes gap geometry calculation |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2925 | GridLanesLayoutAlgorithmTest.GapGeometryColumn | geometry | partly formalized | `TestsBlock.GapGeometryColumn_vectors`, `GridLanesGap.gridAxisGaps` (grid-axis gap offsets and content bounds; the gap-geometry container type and direction fields are not modelled) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:2979 | GridLanesLayoutAlgorithmTest.GapGeometryRow | geometry | partly formalized | `TestsBlock.GapGeometryRow_vectors`, `GridLanesGap.gridAxisGaps` (grid-axis gap offsets and content bounds; the gap-geometry container type and direction fields are not modelled) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3031 | GridLanesLayoutAlgorithmTest.GapGeometryEmptyExplicitTracks | geometry | formalized | `TestsBlock.GapGeometryEmptyExplicitTracks_vectors`, `GridLanesGap.gridAxisGaps` (CSS Gap Decorations 1 §3.1, §3.2) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3066 | GridLanesLayoutAlgorithmTest.GapGeometrySingleTrack | geometry | formalized | `TestsBlock.GapGeometrySingleTrack_vectors`, `GridLanesGap.gridAxisGaps` (CSS Gap Decorations 1 §3.1, §3.2) |
+| grid_lanes/grid_lanes_layout_algorithm_test.cc:3096 | GridLanesLayoutAlgorithmTest.GapGeometryRequiresGapRule | geometry | formalized | `TestsBlock.GapGeometryRequiresGapRule_vectors`, `GridLanesGap.gridAxisGaps` (CSS Gap Decorations 1 §3.1, §3.2) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:3125 | GridLanesLayoutAlgorithmTest.GapGeometryCollapsedAutoFitTracks | geometry | blocked | needs grid lanes gap geometry calculation |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:3171 | GridLanesLayoutAlgorithmTest.GapGeometryGridAxisAlignment | geometry | blocked | needs grid lanes gap geometry calculation |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:3219 | GridLanesLayoutAlgorithmTest.GapGeometryColumnStackingAxisOverflow | geometry | blocked | needs grid lanes gap geometry calculation |
@@ -1244,6 +1244,7 @@ checks every row against the pinned sources and the Lean modules.
 - `BlockAxis.mapAxes_mapAxes`: logical/physical axis mapping is an involution for every writing mode (CSS Writing Modes 4 §6.1).
 - `GridTrackSizing.fixedLen_pct_le`: a percentage track resolves to at most the container size for percentages up to 100 (CSS Grid 1 §11.4).
 - `GridLanes.minPos_le`: an auto-placed grid-lanes item lands in a lane whose running position is minimal (CSS Grid 3 lane placement).
+- `GridLanesGap.gridAxisGaps_no_rule`, `GridLanesGap.gridAxisGaps_single`: gap decorations need a gap rule and at least two tracks (CSS Gap Decorations 1 §3.1).
 
 ## Merge notes
 
