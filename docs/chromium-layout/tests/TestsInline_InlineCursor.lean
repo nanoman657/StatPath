@@ -71,7 +71,16 @@ theorem inlineCursor_bidiLevelSimpleLTR :
 /-- Test: BidiLevelSimpleRTL (inline_cursor_test.cc:155)
     CSS Writing Modes 3 §3.1 & UAX #9 L2: Visual order of directional runs in RTL line. -/
 theorem inlineCursor_bidiLevelSimpleRTL :
-    (reorderBidiRunsVisual .rtl [("GHI", 3), ("abc", 6), ("DEF", 3)] = [("DEF", 3), ("abc", 6), ("GHI", 3)]) ∧
+    let line1Items := [
+      BidiItem.openBdo .rtl,
+      BidiItem.text "GHI",
+      BidiItem.openBdo .ltr,
+      BidiItem.text "abc",
+      BidiItem.closeBdo,
+      BidiItem.text "DEF",
+      BidiItem.closeBdo
+    ]
+    (reorderBidiRunsVisual .rtl (bidiLevels .rtl line1Items []) = [("DEF", 3), ("abc", 6), ("GHI", 3)]) ∧
     (reorderBidiRunsVisual .rtl [("123", 2), (",", 1), ("jkl", 2), (" ", 1), ("MNO", 3)] = [("MNO", 3), (" ", 1), ("jkl", 2), (",", 1), ("123", 2)]) := by
   decide
 
