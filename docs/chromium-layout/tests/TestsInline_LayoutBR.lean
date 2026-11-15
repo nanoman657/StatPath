@@ -22,6 +22,7 @@ theorem layoutBR_textMethods :
     let nodes := [DomNode.br 0]
     let units := buildDomOffsetMapping nodes
     (units = [{ nodeId := 0, unitType := .identity, domStart := 0, domEnd := 1, textStart := 0, textEnd := 1 }]) ∧
+    (domNodeResolvedTextLength units 0 = 1) ∧
     (domNodeSnapCode units nodes[0]! 0 = "BC-") ∧
     (domNodeSnapCode units nodes[0]! 1 = "--A") := by
   decide
