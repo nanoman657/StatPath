@@ -36,7 +36,9 @@ theorem inlineLayout_emptyLineBoxTypes :
 
 /-! ### MAYBE_VerticalAlignBottomReplaced (`inline/inline_layout_algorithm_test.cc:431`) -/
 theorem inlineLayout_verticalAlignBottomReplaced :
-    let r := layoutReplacedLineBox 10 96 .bottom
+    let strutFontSize := 10
+    let imgHeight := 96
+    let r := layoutReplacedLineBox strutFontSize imgHeight .bottom
     r.lineHeight = 96 ∧ r.itemTopOffset = 0 := by
   decide
 

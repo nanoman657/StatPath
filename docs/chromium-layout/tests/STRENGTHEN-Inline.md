@@ -137,6 +137,13 @@ done: TestsInline_LayoutQuote +0
 - Verified `layoutQuote_locale` is not thin:
   - Evaluates quote node language inheritance and pseudo-element quote delimiters (::before / ::after) across nested quotes directly through general `quoteContentLocale`, `quoteBeforeLocale`, and `quoteAfterLocale` per CSS 2.1 §12.3 and HTML 5 §4.5.8.
 
+done: TestsInline_InlineLayout +0
+- Rewrote thin theorem `inlineLayout_verticalAlignBottomReplaced` to derive line box height from strut font size (10px) and replaced image height (96px) through `layoutReplacedLineBox` per CSS 2.1 §10.8 instead of bare numbers.
+- Other theorems in file verified not thin:
+  - `inlineLayout_blockWithSingleTextNode`, `inlineLayout_blockWithTextAndAtomicInline`: run inline DOM streams (text, span tags, atomic inlines) through `collectInlines` to produce line text buffer and object replacement characters (\uFFFC).
+  - `inlineLayout_emptyLineBoxTypes`: evaluates empty line box predicate `isLineBoxEmpty` across text items versus empty span tags.
+
+
 
 
 
