@@ -13,3 +13,4 @@ done: TestsInline_InlineCaretPosition +0
 done: TestsInline_PhysicalLineBoxFragment +0
 done: TestsInline_LineInfo +0
 done: TestsInline_LineWidths +0
+done: TestsInline_ParagraphLineBreaker +0
