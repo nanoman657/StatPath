@@ -107,6 +107,13 @@ done: TestsInline_LayoutTextCombine +0
   - `layoutTextCombine_listMarkerWidthOfSymbol`: constructs inside list marker tree via `buildInsideListMarkerTree`.
   - `layoutTextCombine_outline`: computes focus and standard outlines via `computeTextCombineOutlineRects`.
 
+done: TestsInline_TextAutoSpace +0
+- Rewrote thin theorem `textAutoSpace_insertSpacing` to derive nominal advance (10 * 8 eighths) and inter-script spacing (advance / 8 eighths) from 10px Ahem font metrics per CSS Text 4 §9.1 instead of hardcoded numbers.
+- Other theorems in file verified not thin:
+  - `textAutoSpace_mayApply`: evaluates early script rejection predicate `mayApplyTextAutoSpace` directly on DOM character sequences.
+  - `textAutoSpace_apply`: tests all 10 inter-script text boundary patterns through general `computeAutoSpaceOffsets`.
+
+
 
 
 

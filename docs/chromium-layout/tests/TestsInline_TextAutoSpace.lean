@@ -32,7 +32,10 @@ theorem textAutoSpace_mayApply :
     10px Ahem font with 1/8 em (1.25px = 10 eighths) inter-script spacing at boundaries 3 and 6
     produces cumulative start positions [0, 10, 20, 31.25, 41.25, 51.25, 62.5] (in 1/8 pixel units: [0, 80, 160, 250, 330, 410, 500]). -/
 theorem textAutoSpace_insertSpacing :
-    computeCharacterPositionsEighths "AAAあああa".toList 80 10 =
+    let fontPx := 10
+    let advanceEighths := fontPx * 8
+    let spacingEighths := advanceEighths / 8
+    computeCharacterPositionsEighths "AAAあああa".toList advanceEighths spacingEighths =
       [0, 80, 160, 250, 330, 410, 500] := by
   decide
 
