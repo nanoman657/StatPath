@@ -198,7 +198,8 @@ theorem layoutTextCombine_inVertical :
     Text-combine in vertical-rl has cross-axis half-leading box placement at (5, 100) of size 100x100,
     with local ink overflow (-5, 0 110x100) and unscaled text run (0, 0 1000x100). -/
 theorem layoutTextCombine_inkOverflow :
-    let m := computeTextCombineInkMetrics 110 100 300 100 [10]
+    let lineAdvance := 100 + 100 + 100
+    let m := computeTextCombineInkMetrics 110 100 lineAdvance 100 ["0123456789".length]
     (m.lineRect = { x := 0, y := 0, width := 110, height := 300 }) ∧
     (m.lineInkOverflow = { x := 0, y := 0, width := 110, height := 300 }) ∧
     (m.boxRect = { x := 5, y := 100, width := 100, height := 100 }) ∧
@@ -214,7 +215,8 @@ theorem layoutTextCombine_inkOverflow :
     Text emphasis mark (50px dot) expands line and combine box ink overflow to 155px width,
     while inside LayoutTextCombine line ink overflow remains 110px. -/
 theorem layoutTextCombine_inkOverflowEmphasisMark :
-    let m := computeTextCombineInkMetrics 110 100 300 100 [10] (.emphasisMark 50)
+    let lineAdvance := 100 + 100 + 100
+    let m := computeTextCombineInkMetrics 110 100 lineAdvance 100 ["0123456789".length] (.emphasisMark 50)
     (m.lineInkOverflow = { x := 0, y := 0, width := 155, height := 300 }) ∧
     (m.boxTotalInkOverflow = { x := -5, y := 0, width := 155, height := 100 }) ∧
     (m.innerLineInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
@@ -225,7 +227,8 @@ theorem layoutTextCombine_inkOverflowEmphasisMark :
     CSS Text Decoration 3 §2 & CSS Writing Modes 3 §5.1:
     Overline text decoration expands line ink overflow to 115px, with box ink overflow (0, 0 110x100). -/
 theorem layoutTextCombine_inkOverflowOverline :
-    let m := computeTextCombineInkMetrics 110 100 300 100 [10] .overline
+    let lineAdvance := 100 + 100 + 100
+    let m := computeTextCombineInkMetrics 110 100 lineAdvance 100 ["0123456789".length] .overline
     (m.lineInkOverflow = { x := 0, y := 0, width := 115, height := 300 }) ∧
     (m.boxTotalInkOverflow = { x := 0, y := 0, width := 110, height := 100 }) ∧
     (m.innerLineInkOverflow = { x := 0, y := 0, width := 100, height := 100 }) := by
@@ -236,7 +239,8 @@ theorem layoutTextCombine_inkOverflowOverline :
     Combined text split by `<wbr>` creates two 500x100 text runs within LayoutTextCombine,
     while preserve outer box ink overflow (-5, 0 110x100). -/
 theorem layoutTextCombine_inkOverflowWBR :
-    let m := computeTextCombineInkMetrics 110 100 300 100 [5, 5]
+    let lineAdvance := 100 + 100 + 100
+    let m := computeTextCombineInkMetrics 110 100 lineAdvance 100 ["01234".length, "56789".length]
     (m.boxTotalInkOverflow = { x := -5, y := 0, width := 110, height := 100 }) ∧
     (m.innerContentRects = [
       { x := 0, y := 0, width := 500, height := 100 },
@@ -294,7 +298,9 @@ theorem layoutTextCombine_outline :
     LayoutTextCombine unscaled text run rect in container fragment is (0, 0 60x20),
     unaffected by the containing block's `text-indent: 100px`. -/
 theorem layoutTextCombine_withTextIndent :
-    let r := textCombineContentRectInContainer 100 3 20
+    let text := "XYZ"
+    let fontSize := 20
+    let r := textCombineContentRectInContainer 100 text.length fontSize
     r = { x := 0, y := 0, width := 60, height := 20 } := by
   decide
 

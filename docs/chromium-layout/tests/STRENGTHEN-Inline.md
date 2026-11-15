@@ -97,5 +97,16 @@ done: TestsInline_LayoutInline +0
 done: TestsInline_LayoutBR +0
 - Verified `layoutBR_textMethods` is not thin: flows DOM node `[DomNode.br 0]` through `buildDomOffsetMapping` and validates mapping units, resolved text length via `domNodeResolvedTextLength`, and caret snap codes per CSS Text 3 §4 and HTML §4.5.27.
 
+done: TestsInline_LayoutTextCombine +0
+- Rewrote thin theorems (`layoutTextCombine_inkOverflow`, `inkOverflowEmphasisMark`, `inkOverflowOverline`, `inkOverflowWBR`, `withTextIndent`) to flow line advances (100 + 100 + 100), character strings ("0123456789", "01234", "56789", "XYZ") through `.length` into `computeTextCombineInkMetrics` and `textCombineContentRectInContainer` per CSS Writing Modes 3 §5.1, CSS Text Decoration 3 §2, and CSS 2.1 §9.4.2 instead of passing bare numbers.
+- Other theorems in file verified not thin:
+  - `layoutTextCombine_propageWritingModeFromBodyToHorizontal`, `propageWritingModeFromBodyToVertical`: evaluate writing mode inheritance via `propagateWritingMode` and `buildInlineDisplay`.
+  - `layoutTextCombine_styleToTextCombineUprightAll`, `styleToTextCombineUprightNone`, `styleToHorizontalWritingMode*`, `styleToVerticalWritingMode`: model dynamic style updates between `.none` and `.all` or horizontal/vertical modes through `isTextCombineActive` and `buildInlineDisplay`.
+  - `layoutTextCombine_verticalWritingModeByWBR`, `withBidiControl`, `withBR`, `withMarker`, `withOrderedList`, `withQuote`, `withTab`, `withWordBreak`, `inVertical`: run inline content streams (wbr, bidi, br, marker fragments, counters, quotes, tabs) through `buildInlineDisplay`.
+  - `layoutTextCombine_scrollableOverflow`: runs block flow dimensions through `computeBlockFlowScrollableOverflow`.
+  - `layoutTextCombine_listMarkerWidthOfSymbol`: constructs inside list marker tree via `buildInsideListMarkerTree`.
+  - `layoutTextCombine_outline`: computes focus and standard outlines via `computeTextCombineOutlineRects`.
+
+
 
 
