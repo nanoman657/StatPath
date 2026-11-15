@@ -70,6 +70,18 @@ def isolateLevel (curLvl : Nat) (dir : TextDirection) : Nat :=
   | .rtl => if curLvl % 2 == 1 then curLvl else curLvl + 1
   | .ltr => if curLvl % 2 == 0 then curLvl else curLvl + 1
 
+/-- CSS Writing Modes 3 §2.1 & UAX #9 Law: LTR isolate on an even embedding level preserves the level. -/
+theorem isolateLevel_ltr_even (curLvl : Nat) (h : curLvl % 2 = 0) :
+    isolateLevel curLvl .ltr = curLvl := by
+  unfold isolateLevel
+  simp [h]
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9 Law: RTL isolate on an odd embedding level preserves the level. -/
+theorem isolateLevel_rtl_odd (curLvl : Nat) (h : curLvl % 2 = 1) :
+    isolateLevel curLvl .rtl = curLvl := by
+  unfold isolateLevel
+  simp [h]
+
 /-- Calculate override embedding level given current level and target direction. -/
 def overrideLevel (curLvl : Nat) (dir : TextDirection) : Nat :=
   match dir with

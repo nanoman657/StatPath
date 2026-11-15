@@ -84,6 +84,50 @@ theorem inlineNode_collectInlinesInlineBlock :
     (res.items[2]! = { itemType := .text, startOffset := 4, endOffset := 7 }) := by
   decide
 
+/-- Test: CollectInlinesUTF16 (inline_node_test.cc:322)
+    CSS Writing Modes 3 §2.1: Non-ASCII LTR text (Hiragana) does not enable bidi in collect inlines or segment text. -/
+theorem inlineNode_collectInlinesUTF16 :
+    let tokens := [InlineCollectionToken.text "Hello \u3042"]
+    let res := collectInlines tokens
+    (res.isBidiEnabled = false) ∧ (detectBidiInSegmentText res.text = false) := by
+  decide
+
+/-- Test: CollectInlinesMaybeRtl (inline_node_test.cc:331)
+    CSS Writing Modes 3 §2.1: Surrogate pairs enable bidi in collect inlines, but reset to false in segment text when characters are LTR. -/
+theorem inlineNode_collectInlinesMaybeRtl :
+    let tokens := [InlineCollectionToken.text "Hello 𐀀"]
+    let res := collectInlines tokens
+    (res.isBidiEnabled = true) ∧ (detectBidiInSegmentText res.text = false) := by
+  decide
+
+/-- Test: CollectInlinesRtl (inline_node_test.cc:344)
+    CSS Writing Modes 3 §2.1: Hebrew RTL text enables bidi in both collect inlines and segment text. -/
+theorem inlineNode_collectInlinesRtl :
+    let tokens := [InlineCollectionToken.text "Hello \u05E2"]
+    let res := collectInlines tokens
+    (res.isBidiEnabled = true) ∧ (detectBidiInSegmentText res.text = true) := by
+  decide
+
+/-- Test: CollectInlinesRtlWithSpan (inline_node_test.cc:353)
+    CSS Writing Modes 3 §2.1, §2.4: RTL container propagates bidi level 1 across inline elements and text items. -/
+theorem inlineNode_collectInlinesRtlWithSpan :
+    let tokens := [
+      InlineCollectionToken.text "\u05E2 ",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "\u05E2",
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.text " \u05E2"
+    ]
+    let res := collectInlines tokens .rtl
+    (res.isBidiEnabled = true) ∧ (detectBidiInSegmentText res.text = true) ∧
+    (res.items.length = 5) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 2, bidiLevel := 1 }) ∧
+    (res.items[1]! = { itemType := .openTag, startOffset := 2, endOffset := 2, bidiLevel := 1 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 2, endOffset := 3, bidiLevel := 1 }) ∧
+    (res.items[3]! = { itemType := .closeTag, startOffset := 3, endOffset := 3, bidiLevel := 1 }) ∧
+    (res.items[4]! = { itemType := .text, startOffset := 3, endOffset := 5, bidiLevel := 1 }) := by
+  decide
+
 /-- Test: MinMaxTest.Data (inline_node_test.cc:649)
     Intrinsic min/max size computation under 10px fixed-width Ahem font. -/
 theorem inlineNode_minMaxData :

@@ -80,10 +80,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
 | inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | formalized | `inlineNode_collectInlinesFloat` | CSS 2.1 §9.5, §9.4.2: Float items in inline formatting context produce zero-length items without emitting text |
 | inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlinesInlineBlock` | Inline block flattening to object replacement character and atomic inline item |
-| inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | internal | - | UTF-16 surrogate pairs in inline items |
-| inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | internal | - | LTR text does not enable bidi |
-| inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | internal | - | RTL text sets bidi enabled |
-| inline/inline_node_test.cc:353 | CollectInlinesRtlWithSpan | behaviour | internal | - | RTL inside span enables bidi |
+| inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | formalized | `inlineNode_collectInlinesUTF16` | CSS Writing Modes 3 §2.1: Non-ASCII LTR text (Hiragana) does not enable bidi |
+| inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | formalized | `inlineNode_collectInlinesMaybeRtl` | CSS Writing Modes 3 §2.1: Surrogate pairs enable bidi in collect inlines, but reset to false in segment text when characters are LTR |
+| inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | formalized | `inlineNode_collectInlinesRtl` | CSS Writing Modes 3 §2.1: Hebrew RTL text enables bidi in both collect inlines and segment text |
+| inline/inline_node_test.cc:353 | CollectInlinesRtlWithSpan | behaviour | formalized | `inlineNode_collectInlinesRtlWithSpan` | CSS Writing Modes 3 §2.1, §2.4: RTL container propagates bidi level 1 across inline elements and text items |
 | inline/inline_node_test.cc:369 | CollectInlinesMixedText | behaviour | internal | - | Mixed LTR/RTL text |
 | inline/inline_node_test.cc:385 | CollectInlinesMixedTextEndWithON | behaviour | internal | - | Bidi neutral character resolution |
 | inline/inline_node_test.cc:402 | CollectInlinesTextCombineBR | geometry | internal | - | Text combine with BR |

@@ -15,6 +15,7 @@
 -/
 import LayoutTypes
 import LayoutInline
+import InlineGeometry
 
 namespace ChromiumLayout
 
@@ -34,6 +35,7 @@ structure InlineCollectedItem where
   itemType : InlineItemType := .text
   startOffset : Nat := 0
   endOffset : Nat := 0
+  bidiLevel : Nat := 0
   deriving DecidableEq, Repr, Inhabited
 
 inductive InlineCollectionToken where
@@ -50,9 +52,20 @@ inductive InlineCollectionToken where
 structure CollectionResult where
   text : String := ""
   items : List InlineCollectedItem := []
+  isBidiEnabled : Bool := false
   deriving DecidableEq, Repr
 
 /-! ## 2. Flattening and Item Collection (`InlineNode::CollectInlines`) -/
+
+/-- CSS Writing Modes 3 §2.1: Preliminary bidi detection during CollectInlines.
+    Flags true for non-ASCII surrogate pairs or RTL scripts. -/
+def detectBidiInCollectInlines (text : String) : Bool :=
+  text.toList.any (fun c => c.val > 0xFFFF || (c.val ≥ 0x0590 && c.val ≤ 0x08FF))
+
+/-- CSS Writing Modes 3 §2.1: Resolved bidi enablement during SegmentText.
+    Resets to false if no characters are strong RTL. -/
+def detectBidiInSegmentText (text : String) : Bool :=
+  text.toList.any (fun c => c.val ≥ 0x0590 && c.val ≤ 0x08FF)
 
 /-- CSS 2.1 §9.5 Floats & §9.4.2 Inline formatting contexts: Single step of inline collection
     attributing character offsets, item types, and text buffer emission. -/
@@ -80,15 +93,18 @@ theorem collectInlinesStep_floating_empty_chars (offset : Nat) :
   rfl
 
 /-- Flatten input inline node tokens into character text and classified inline items. -/
-def collectInlines (tokens : List InlineCollectionToken) : CollectionResult :=
+def collectInlines (tokens : List InlineCollectionToken) (dir : TextDirection := .ltr) : CollectionResult :=
+  let baseLevel := match dir with | .ltr => 0 | .rtl => 1
   let rec loop (offset : Nat) (accItems : List InlineCollectedItem) (accChars : List Char) :
       List InlineCollectionToken → Nat × List InlineCollectedItem × List Char
     | [] => (offset, accItems, accChars)
     | tok :: rest =>
       let (nxtOffset, item, chars) := collectInlinesStep offset tok
-      loop nxtOffset (item :: accItems) (accChars ++ chars) rest
+      let itemWithLevel := { item with bidiLevel := baseLevel }
+      loop nxtOffset (itemWithLevel :: accItems) (accChars ++ chars) rest
   let (_, revItems, chars) := loop 0 [] [] tokens
-  { text := String.ofList chars, items := revItems.reverse }
+  let textStr := String.ofList chars
+  { text := textStr, items := revItems.reverse, isBidiEnabled := detectBidiInCollectInlines textStr }
 
 /-! ## 3. Grapheme Cluster & Combining Mark Segmentation -/
 
