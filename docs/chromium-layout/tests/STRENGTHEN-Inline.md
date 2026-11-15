@@ -56,3 +56,6 @@ done: TestsInline_PhysicalLineBoxFragment +0
 done: TestsInline_LineInfo +0
 - Rewrote thin theorem `lineInfo_inflowEndOffset` to flow the test input strings ("abc", "def", "rt") through cumulative text and ruby column offsets per CSS Ruby 1 §3.1 into `lineInflowEndOffset` instead of hardcoding raw numbers.
 
+done: TestsInline_LineWidths +0
+- Verified `lineWidthsDataTest_data` is not thin: runs all 16 test cases from `line_widths_test.cc:175` with container widths, line heights, and item sequences (floats, text runs with strut metrics, baseline alignment tags, atomic inlines) through the general precomputation function `computeLineWidths` and `getLineWidthsList`. No bare indices or pre-formatted numbers are used.
+
