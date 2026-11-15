@@ -17,3 +17,4 @@ done: TestsInline_ParagraphLineBreaker +0
 done: TestsInline_LineBreakCandidate +0
 done: TestsInline_LayoutText +0
 done: TestsInline_LayoutTextFragment +0
+done: TestsInline_LayoutInline +0
