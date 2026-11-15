@@ -19,8 +19,16 @@ def gridAxisGaps (border gap : Nat) (hasRule : Bool) (tracks : List Nat) :
     some ((computeGridGapMidpoints gap tracks).map (border + ·), border, border + gridTotalSpan gap tracks)
   else none
 
-/-- Along the stacking axis the content box spans the border box minus the borders. -/
-def stackContent (border size : Nat) : Nat × Nat := (border, size - border)
+/-- Start offset of the track grid along the grid axis under `justify-content`/`align-content: center`
+    (CSS Box Alignment 3 §5.3): `border + (size - 2 * border - gridTotalSpan gap tracks) / 2`. -/
+def centerStart (border size gap : Nat) (tracks : List Nat) : Nat :=
+  border + (size - 2 * border - gridTotalSpan gap tracks) / 2
+
+/-- Along the stacking axis the content extent spans from `border` to the maximum of the content-box
+    end (`size - border`) and any overflowing lane content (`border + contentSpan`).
+    CSS Gap Decorations 1 §3.3. -/
+def stackContent (border size : Nat) (contentSpan : Nat := 0) : Nat × Nat :=
+  (border, max (size - border) (border + contentSpan))
 
 /-- Law: no gap rule means no gap geometry (`GapGeometryRequiresGapRule`). -/
 theorem gridAxisGaps_no_rule (b g : Nat) (ts : List Nat) : gridAxisGaps b g false ts = none := by
@@ -29,6 +37,11 @@ theorem gridAxisGaps_no_rule (b g : Nat) (ts : List Nat) : gridAxisGaps b g fals
 /-- Law: fewer than two tracks means no gap geometry (`GapGeometrySingleTrack`). -/
 theorem gridAxisGaps_single (b g : Nat) (r : Bool) (t : Nat) : gridAxisGaps b g r [t] = none := by
   simp [gridAxisGaps]
+
+/-- Law: stacking-axis content end is at least the content-box end (`size - border`), and extends
+    further when lane items overflow (CSS Gap Decorations 1 §3.3). -/
+theorem stackContent_ge_box (b sz span : Nat) : sz - b ≤ (stackContent b sz span).2 :=
+  Nat.le_max_left (sz - b) (b + span)
 
 end GridLanesGap
 end ChromiumLayout
