@@ -15,14 +15,12 @@ open ChromiumLayout
 Transcribed from `inline/line_widths_test.cc`.
 -/
 
-/-- Helper returning the widths for each line of an optional LineWidths. -/
-def getLineWidthsList (optLw : Option LineWidths) (count : Nat) : List Nat :=
-  match optLw with
-  | none => []
-  | some lw => (List.range count).map lw.get
-
 /-! ### Test 1: LineWidthsDataTest.Data (`inline/line_widths_test.cc:175`) -/
 theorem lineWidthsDataTest_data :
+    let getLineWidthsList (optLw : Option LineWidths) (count : Nat) : List Nat :=
+      match optLw with
+      | none => []
+      | some lw => (List.range count).map lw.get
     -- Case 0: No floats
     getLineWidthsList (computeLineWidths (100 * 4) (10 * 4) [.text "0123 5678"]) 2 = [100, 100] ∧
     -- Case 1: Inflow tags, no floats
