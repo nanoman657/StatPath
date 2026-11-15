@@ -7,3 +7,4 @@ done: TestsInline_LineBreaker +0
 done: TestsInline_InlineLayoutAlgorithm +0
 done: TestsInline_InlineNode +0
 done: TestsInline_InlineItemsBuilder +0
+done: TestsInline_OffsetMapping +0
