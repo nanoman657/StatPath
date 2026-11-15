@@ -59,3 +59,10 @@ done: TestsInline_LineInfo +0
 done: TestsInline_LineWidths +0
 - Verified `lineWidthsDataTest_data` is not thin: runs all 16 test cases from `line_widths_test.cc:175` with container widths, line heights, and item sequences (floats, text runs with strut metrics, baseline alignment tags, atomic inlines) through the general precomputation function `computeLineWidths` and `getLineWidthsList`. No bare indices or pre-formatted numbers are used.
 
+done: TestsInline_ParagraphLineBreaker +0
+- Verified all theorems in file are not thin:
+  - `paragraphLineBreaker_isDisabledBy*` and `scoreLineBreaker_ruby`: test CSS Text 4 §5.3 / §5.4 and CSS Ruby 1 §3 paragraph feature classification (`isBisectLineBreakDisabled`, `isScoreLineBreakDisabled`, `attemptParagraphBalancing`) across block-in-inline, floats, forced breaks, initial letter, tabulation, and ruby containers.
+  - `scoreLineBreaker_balanceMaxLinesExceeded`: tests threshold logic `shouldBalanceParagraph` against `maxLinesForBalance`.
+  - `scoreLineBreaker_disabledByLineBreakerData`: tests runtime constraint evaluation `isScoreLineBreakDisabledByRuntime` across 8 line breaking configurations (overflow, break-spaces, box-decoration-break: clone).
+  - `scoreLineBreaker_lastLines`, `blockInInlineBeforeAfter`, `forcedBreak`, `floatRetry`, `lineCountMismatchFallback`: run paragraph segment classifications and windowing optimizations through `optimalWindowConsumptionCount`, `classifyScoreLineBreakerBlockInInline`, `computeScoreLineBreakPoints`, and `resolveOptimalLineCountMismatch`.
+
