@@ -200,6 +200,14 @@ done: TestsInline_SVG +0
   - `svg_root_visualRectMappingWithoutViewportClipWithBorder`, `visualRectMappingWithViewportClipAndBorder`, `visualRectMappingWithReferenceFilter`: evaluate visual rect mapping to document with viewport clipping and reference filter expansion.
   - `svg_text_rectBasedHitTest`, `svg_root_rectBasedHitTestPartialOverlap`, `svg_shape_rectBasedHitTest_*`, `svg_foreignObject_hitTest*`: evaluate rect-based and point-based hit testing across SVG containers, foreignObjects, zoom, and clip paths per CSSOM View §8.
 
+done: TestsInline_TextControl +0
+- Verified all 12 theorems in file are not thin:
+  - `layoutTextControl_addChildWithoutTrailingLf`, `addChildWithTrailingLf`, `removeChildWithoutTrailingLf`, `addChildBeforeTestRenderingHolder`, `enableDynamic`: run raw text strings through `buildTextareaAnonymousBlocks` to construct anonymous line boxes and placeholder `<br>` elements per HTML 5.2 §4.10.11 and CSS 2.1 §9.2.1.1.
+  - `layoutTextControl_changingPseudoSelectionStyleSingle`, `changingPseudoSelectionStyleMulti`, `addingPseudoSelectionStyleSingle`, `removingPseudoSelectionStyleSingle`, `removingPseudoSelectionStyleMulti`: evaluate dynamic pseudo style selection updates through `updateSelectionPseudoStyle` per CSS Pseudo 4 §4.1.
+  - `layoutTextControl_hitTestSearchInput`: maps search input click point through `mapPointToInnerEditor` considering 20px border per HTML 5.2 §4.10.5.
+  - `layoutTextControl_visualOverflowCleared`: evaluates self visual overflow with and without box-shadow per CSS Backgrounds and Borders 3 §7.1.
+
+
 
 
 
