@@ -87,3 +87,11 @@ done: TestsInline_LayoutTextFragment +0
   - `layoutTextFragment_basics`, `caretMinMaxOffset`, `caretMinMaxOffsetCollapsedRemainingText`, `resolvedTextLength`, `resolvedTextLengthSpacesInBetween`, `resolvedTextLengthCollapsedRemainingText`, `containsCaretOffset`, `containsCaretOffsetSpacesInBetween`, `containsCaretOffsetPre`, `containsCaretOffsetPreLine`, `isBeforeAfterNonCollapsedCharacterNoLineWrap`, `isBeforeAfterNonCollapsedLineWrapSpace`: all run input DOM strings through `buildDomOffsetMapping` and `splitFirstLetter` into `fragmentCaretMinOffset`, `fragmentCaretMaxOffset`, `fragmentResolvedTextLength`, `fragmentContainsCaretOffset`, and `fragmentIsBeforeNonCollapsed` / `fragmentIsAfterNonCollapsed`. No bare numbers or bypass helpers are used.
   - `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter`: tests `applyCapitalizeTransform` with preceding letter context.
 
+done: TestsInline_LayoutInline +0
+- Rewrote thin theorem `layoutInline_absoluteBoundingBoxRectHandlingEmptyInline` to compute continuation bounding box `t6` from container width, line origin, and continuation child dimensions ((30 + 4) * 2 + 100) per CSS 2.1 §9.4.2 & §10.8 instead of hardcoded literal.
+- Other theorems in file verified not thin:
+  - `layoutInline_physicalLinesBoundingBox`: runs line boxes through `physicalLinesBoundingBox`.
+  - `layoutInline_regionHitTest`, `relativePositionedHitTest`, `multilineRelativePositionedHitTest`, `hitTestCulledInlinePreWrap`: run item bounds through `hitTestCulledInlineIntersects` and `hitTestInlineItems`.
+  - `layoutInline_addDraggableRegions`, `addDraggableRegionsVerticalRL`: run multiline rect sequences through `computeDraggableRegions`.
+
+

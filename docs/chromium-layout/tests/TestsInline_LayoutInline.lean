@@ -41,7 +41,13 @@ theorem layoutInline_absoluteBoundingBoxRectHandlingEmptyInline :
     let t3 := emptyInlineAbsoluteBoundingBox 50 30 20 4
     let t4 := emptyInlineAbsoluteBoundingBox 50 30 20 5
     let t5 := emptyInlineAbsoluteBoundingBox 50 30 20 6
-    let t6 : PhysicalRect := { x := 50, y := 170, width := 400, height := 168 }
+    let containerWidth := 400
+    let fontDescent := 4
+    let imgHeight := 30
+    let divHeight := 100
+    let continuationHeight := (imgHeight + fontDescent) * 2 + divHeight
+    let continuationY := 30 + 7 * 20
+    let t6 : PhysicalRect := { x := 50, y := continuationY, width := containerWidth, height := continuationHeight }
     (t1 = { x := 50, y := 70, width := 0, height := 0 }) ∧
     (t2 = { x := 50, y := 90, width := 0, height := 0 }) ∧
     (t3 = { x := 50, y := 110, width := 0, height := 0 }) ∧
