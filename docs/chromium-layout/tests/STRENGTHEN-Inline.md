@@ -22,3 +22,4 @@ done: TestsInline_LayoutBR +0
 done: TestsInline_LayoutTextCombine +0
 done: TestsInline_TextAutoSpace +0
 done: TestsInline_HyphenResult +0
+done: TestsInline_RubyUtils +0
