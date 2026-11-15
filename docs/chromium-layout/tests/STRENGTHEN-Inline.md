@@ -5,3 +5,4 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 done: TestsInline_LineBreaker +0
 done: TestsInline_InlineLayoutAlgorithm +0
+done: TestsInline_InlineNode +0
