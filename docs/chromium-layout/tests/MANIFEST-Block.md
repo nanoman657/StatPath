@@ -573,16 +573,16 @@ checks every row against the pinned sources and the Lean modules.
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4191 | GridLanesLayoutAlgorithmTest.PopulateColumnFillAndTrackReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateColumnFillAndTrackReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.placeFillReverse_end_pos` (opened grid_lanes_layout_algorithm.cc to resolve fill-reverse alignment adjustment) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4236 | GridLanesLayoutAlgorithmTest.PopulateRowFillAndTrackReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateRowFillAndTrackReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.orderForFillReverse` (opened grid_lanes_layout_algorithm.cc to resolve fill-reverse alignment adjustment) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4281 | GridLanesLayoutAlgorithmTest.PopulateIndefiniteFillReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateIndefiniteFillReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.orderForFillReverse` (opened grid_lanes_layout_algorithm.cc to resolve deferred fill-reverse in pre-fragmentation collection) |
-| layout_box_test.cc:45 | LayoutBoxTest.BackgroundIsKnownToBeObscured | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:59 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedChild | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:88 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedGrandChild | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:45 | LayoutBoxTest.BackgroundIsKnownToBeObscured | behaviour | formalized | `TestsBlock_BoxPaint.backgroundIsKnownToBeObscured`, `BlockBoxPaint.backgroundKnownObscured` |
+| layout_box_test.cc:59 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedChild | behaviour | formalized | `TestsBlock_BoxPaint.backgroundNotObscuredWithCssClippedChild`, `BlockBoxPaint.backgroundKnownObscured`, `BlockBoxPaint.backgroundKnownObscured_false_when_clipped` |
+| layout_box_test.cc:88 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedGrandChild | behaviour | formalized | `TestsBlock_BoxPaint.backgroundNotObscuredWithCssClippedGrandChild`, `BlockBoxPaint.backgroundKnownObscured`, `BlockBoxPaint.backgroundKnownObscured_false_when_clipped` |
+| layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | formalized | `TestsBlock_BoxPaint.foregroundIsKnownToBeOpaqueInRect`, `BlockBoxPaint.foregroundKnownOpaqueInRect` |
+| layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | formalized | `TestsBlock_BoxPaint.foregroundIsKnownToBeOpaqueInRectVerticalRL`, `BlockBoxPaint.foregroundKnownOpaqueInRect` |
+| layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | formalized | `TestsBlock_BoxPaint.backgroundRect`, `BlockBoxPaint.physicalBackgroundRects` |
+| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | formalized | `TestsBlock_BoxPaint.locationContainer`, `BlockBoxPaint.resolveLocationContainer` |
 | layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | formalized | `TestsBlock.TopLeftLocationFlipped_vectors` |
 | layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | formalized | `TestsBlock.TableRowCellTopLeftLocationFlipped_vectors` |
-| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | formalized | `TestsBlock_BoxPaint.locationContainerOfSVG`, `BlockBoxPaint.resolveLocationContainer` |
 | layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | formalized | `TestsBlock.ControlClip_vectors`, `BlockOverflow.control_clip_rect_bounds` |
 | layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
@@ -593,15 +593,15 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:572 | LayoutBoxTest.VisualOverflowRectOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowClip_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | formalized | `TestsBlock.VisualOverflowRectWithOverflowClipMargin_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
-| layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | blocked | needs LayoutBox hit-testing model |
-| layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | needs LayoutBox hit-testing model |
+| layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | formalized | `TestsBlock_BoxPaint.contentsVisualOverflowPropagation`, `BlockBoxPaint.rectUnion`, `BlockBoxPaint.rectUnion_comm` |
+| layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | formalized | `TestsBlock_BoxPaint.hitTestOverflowClipMargin`, `BlockBoxPaint.hitTestBoxWithClipAndResizer` |
+| layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | formalized | `TestsBlock_BoxPaint.hitTestContainPaint`, `BlockBoxPaint.hitTestBoxWithClipAndResizer` |
 | layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | formalized | `TestsBlock.OverflowRectsContainPaint_vectors`, `BlockOverflow.contain_paint_clips_both` |
 | layout_box_test.cc:769 | LayoutBoxTest.OverflowRectsOverflowHidden | geometry | formalized | `TestsBlock.OverflowRectsOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | formalized | `TestsBlock.SetTextFieldIntrinsicInlineSize_vectors`, `BlockLength.textFieldIntrinsicInlineSize_fixed` |
-| layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | formalized | `TestsBlock_BoxPaint.delayedInvalidation`, `BlockBoxPaint.imageChangedInvalidation` |
+| layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | formalized | `TestsBlock_BoxPaint.delayedInvalidationLayoutViewScrolled`, `BlockBoxPaint.imageChangedInvalidation` |
+| layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | formalized | `TestsBlock_BoxPaint.markerContainerScrollableOverflowRect` |
 | layout_box_test.cc:934 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbars_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
 | layout_box_test.cc:990 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
 | layout_box_test.cc:1039 | LayoutBoxTest.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
@@ -613,15 +613,15 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1405 | LayoutBoxTest.GeometriesWithScrollbarsNonScrollable | geometry | formalized | `TestsBlock.FlexScroll_nonScrollable`, `FlexScroll.no_overflow_zero_scroll`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | geometry | formalized | `TestsBlock.FlexScroll_row`, `TestsBlock.FlexScroll_rtlRow`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1624 | LayoutBoxTest.ThickScrollbarSubpixelSizeMarginNoDirtyLayoutAfterLayout | internal | internal | checks LayoutBox internal flag/crash regression |
-| layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | geometry | blocked | needs LayoutBox geometry model |
-| layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | internal | internal | crash regression test for content-visibility: hidden select menu list (crbug.com/1108270) |
+| layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | formalized | `TestsBlock_BoxPaint.hasReflection`, `BlockBoxPaint.supportsLayerAndReflection` |
 | layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | formalized | `TestsBlock.VisualOverflowRectIncludingFilters_vectors`, `BlockOverflow.filter_blur_outset_nonneg` |
-| layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
+| layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | formalized | `TestsBlock_BoxPaint.setNeedsOverflowRecalcLayoutBox`, `BlockBoxPaint.overflowRecalcOnTransformChange` |
+| layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | formalized | `TestsBlock_BoxPaint.setNeedsOverflowRecalcFlexBox`, `BlockBoxPaint.overflowRecalcOnTransformChange` |
 | layout_box_test.cc:1755 | LayoutBoxTest.ScrollsWithViewportRelativePosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportRelativePosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
 | layout_box_test.cc:1760 | LayoutBoxTest.ScrollsWithViewportFixedPosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
 | layout_box_test.cc:1765 | LayoutBoxTest.ScrollsWithViewportFixedPositionInsideTransform | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPositionInsideTransform_vectors`, `BlockOverflow.transform_cb_not_fixed_to_view` |
-| layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
+| layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | formalized | `TestsBlock_BoxPaint.hitTestResizerWithTextAreaChild`, `BlockBoxPaint.hitTestBoxWithClipAndResizer` |
 | layout_box_test.cc:1790 | LayoutBoxTest.HitTestResizerStackedWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:1805 | LayoutBoxTest.AnchorInFragmentedContainingBlock | geometry | formalized | `TestsBlock.AnchorInFragmentedContainingBlock_vectors`, `OutOfFlowAnchor.find_anchor_matches` |
 | layout_box_test.cc:1849 | LayoutBoxTest.AnchorInInlineContainingBlock | geometry | formalized | `TestsBlock.AnchorInInlineContainingBlock_vectors`, `OutOfFlowAnchor.implicit_anchor_none` |
@@ -640,26 +640,26 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:2143 | LayoutBoxTest.StitchedSizeAfterRelayout | geometry | formalized | `TestsBlock.StitchedSizeAfterRelayout_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2166 | LayoutBoxTest.StitchedSizeRepeatedWhenPrinting | geometry | formalized | `TestsBlock.StitchedSizeRepeatedWhenPrinting_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2232 | LayoutBoxBackgroundPaintLocationTest.ContentBoxClipZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2259 | LayoutBoxBackgroundPaintLocationTest.NonLocalImage | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2274 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndColor | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2288 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipPaddingColor | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2306 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipContentColorNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2323 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorNoBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2335 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2349 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorderWithBorderShape | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2365 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorTranslucentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2381 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorDashedBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2395 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2407 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2420 | LayoutBoxBackgroundPaintLocationTest.CustomScrollbar | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2438 | LayoutBoxBackgroundPaintLocationTest.TranslucentColorAndTranslucentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
+| layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | formalized | `TestsBlock_BoxPaint.attachmentLocalContentBoxClipNonZeroPadding`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2259 | LayoutBoxBackgroundPaintLocationTest.NonLocalImage | behaviour | formalized | `TestsBlock_BoxPaint.nonLocalImage`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2274 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndColor | behaviour | formalized | `TestsBlock_BoxPaint.localImageAndColor`, `BlockBoxPaint.backgroundPaintLocation`, `BlockBoxPaint.backgroundPaintLocation_local_contentsSpace` |
+| layout_box_test.cc:2288 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipPaddingColor | behaviour | formalized | `TestsBlock_BoxPaint.localImageAndNonLocalClipPaddingColor`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2306 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipContentColorNonZeroPadding | behaviour | formalized | `TestsBlock_BoxPaint.localImageAndNonLocalClipContentColorNonZeroPadding`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2323 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorNoBorder | behaviour | formalized | `TestsBlock_BoxPaint.borderBoxClipColorNoBorder`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2335 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorder | behaviour | formalized | `TestsBlock_BoxPaint.borderBoxClipColorSolidBorder`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2349 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorderWithBorderShape | behaviour | formalized | `TestsBlock_BoxPaint.borderBoxClipColorSolidBorderWithBorderShape`, `BlockBoxPaint.backgroundPaintLocation`, `BlockBoxPaint.backgroundPaintLocation_borderShape_borderBox` |
+| layout_box_test.cc:2365 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorTranslucentBorder | behaviour | formalized | `TestsBlock_BoxPaint.borderBoxClipColorTranslucentBorder`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2381 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorDashedBorder | behaviour | formalized | `TestsBlock_BoxPaint.borderBoxClipColorDashedBorder`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2395 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorZeroPadding | behaviour | formalized | `TestsBlock_BoxPaint.contentClipColorZeroPadding`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2407 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorNonZeroPadding | behaviour | formalized | `TestsBlock_BoxPaint.contentClipColorNonZeroPadding`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2420 | LayoutBoxBackgroundPaintLocationTest.CustomScrollbar | behaviour | formalized | `TestsBlock_BoxPaint.customScrollbar`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2438 | LayoutBoxBackgroundPaintLocationTest.TranslucentColorAndTranslucentBorder | behaviour | formalized | `TestsBlock_BoxPaint.translucentColorAndTranslucentBorder`, `BlockBoxPaint.backgroundPaintLocation` |
 | layout_box_test.cc:2454 | LayoutBoxBackgroundPaintLocationTest.LocalImageTranslucentColorAndTransparentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2471 | LayoutBoxBackgroundPaintLocationTest.InsetBoxShadow | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2485 | LayoutBoxBackgroundPaintLocationTest.OutsetBoxShadow | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2496 | LayoutBoxBackgroundPaintLocationTest.BorderImage | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2509 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollEnabledForSubscroll | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2560 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollSupportedForLayoutView | behaviour | blocked | needs LayoutBox background paint location resolution |
+| layout_box_test.cc:2471 | LayoutBoxBackgroundPaintLocationTest.InsetBoxShadow | behaviour | formalized | `TestsBlock_BoxPaint.insetBoxShadow`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2485 | LayoutBoxBackgroundPaintLocationTest.OutsetBoxShadow | behaviour | formalized | `TestsBlock_BoxPaint.outsetBoxShadow`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2496 | LayoutBoxBackgroundPaintLocationTest.BorderImage | behaviour | formalized | `TestsBlock_BoxPaint.borderImage`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2509 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollEnabledForSubscroll | behaviour | formalized | `TestsBlock_BoxPaint.elasticOverscrollEnabledForSubscroll`, `BlockBoxPaint.backgroundPaintLocation` |
+| layout_box_test.cc:2560 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollSupportedForLayoutView | behaviour | formalized | `TestsBlock_BoxPaint.elasticOverscrollSupportedForLayoutView`, `BlockBoxPaint.backgroundPaintLocation` |
 | layout_box_model_object_test.cc:48 | LayoutBoxModelObjectTest.LocalCaretRectForEmptyElementVertical | behaviour | formalized | `TestsBlock.LocalCaretRectForEmptyElementVertical_vectors`, `BlockWritingMode.vertical_lr_bar_x` |
 | layout_box_model_object_test.cc:143 | LayoutBoxModelObjectTest.StickyPositionConstraints | behaviour | formalized | `TestsBlock.StickyPositionConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:184 | LayoutBoxModelObjectTest.StickyPositionVerticalRLConstraints | behaviour | formalized | `TestsBlock.StickyPositionVerticalRLConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
