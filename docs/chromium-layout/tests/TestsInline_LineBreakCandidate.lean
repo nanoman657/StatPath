@@ -16,9 +16,10 @@ Corresponds to `core/layout/inline/line_break_candidate_test.cc`.
 -/
 
 /-! ### Test 1: Text (`line_break_candidate_test.cc:50`) -/
+def target_Text : List IndexedInlineToken :=
+  [ ⟨0, .text "01 345"⟩ ]
+
 theorem lineBreak_Text :
-    let target_Text : List IndexedInlineToken :=
-      [ ⟨0, .text "01 345"⟩ ]
     computeLineBreakCandidates target_Text =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 2 }, posNoBreak := 30, posIfBreak := 20 },
@@ -26,9 +27,10 @@ theorem lineBreak_Text :
   decide
 
 /-! ### Test 2: SoftHyphen (`line_break_candidate_test.cc:76`) -/
+def target_SoftHyphen : List IndexedInlineToken :=
+  [ ⟨0, .text "01\u00AD345\u00AD7890\u00AD"⟩ ]
+
 theorem lineBreak_SoftHyphen :
-    let target_SoftHyphen : List IndexedInlineToken :=
-      [ ⟨0, .text "01\u00AD345\u00AD7890\u00AD"⟩ ]
     computeLineBreakCandidates target_SoftHyphen =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 20, posIfBreak := 30, isHyphenated := true },
@@ -37,22 +39,24 @@ theorem lineBreak_SoftHyphen :
   decide
 
 /-! ### Test 3: SoftHyphenDisabled (`line_break_candidate_test.cc:104`) -/
+def target_SoftHyphenDisabled : List IndexedInlineToken :=
+  [ ⟨0, .text "01\u00AD345\u00AD7890"⟩ ]
+
 theorem lineBreak_SoftHyphenDisabled :
-    let target_SoftHyphenDisabled : List IndexedInlineToken :=
-      [ ⟨0, .text "01\u00AD345\u00AD7890"⟩ ]
     computeLineBreakCandidates target_SoftHyphenDisabled .none =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 11 }, endOffset := { itemIndex := 0, textOffset := 11 }, posNoBreak := 90, posIfBreak := 90 } ] := by
   decide
 
 /-! ### Test 4: Span (`line_break_candidate_test.cc:130`) -/
+def target_Span : List IndexedInlineToken :=
+  [ ⟨0, .text "01 "⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨2, .text "345"⟩,
+    ⟨3, .closeTag⟩,
+    ⟨4, .text " 7890"⟩ ]
+
 theorem lineBreak_Span :
-    let target_Span : List IndexedInlineToken :=
-      [ ⟨0, .text "01 "⟩,
-        ⟨1, .openTag "span"⟩,
-        ⟨2, .text "345"⟩,
-        ⟨3, .closeTag⟩,
-        ⟨4, .text " 7890"⟩ ]
     computeLineBreakCandidates target_Span =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 2 }, posNoBreak := 30, posIfBreak := 20 },
@@ -61,13 +65,14 @@ theorem lineBreak_Span :
   decide
 
 /-! ### Test 5: SpanMidWord (`line_break_candidate_test.cc:157`) -/
+def target_SpanMidWord : List IndexedInlineToken :=
+  [ ⟨0, .text "0"⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨2, .text "12"⟩,
+    ⟨3, .closeTag⟩,
+    ⟨4, .text "345 7890"⟩ ]
+
 theorem lineBreak_SpanMidWord :
-    let target_SpanMidWord : List IndexedInlineToken :=
-      [ ⟨0, .text "0"⟩,
-        ⟨1, .openTag "span"⟩,
-        ⟨2, .text "12"⟩,
-        ⟨3, .closeTag⟩,
-        ⟨4, .text "345 7890"⟩ ]
     computeLineBreakCandidates target_SpanMidWord =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 4, textOffset := 7 }, endOffset := { itemIndex := 4, textOffset := 6 }, posNoBreak := 70, posIfBreak := 60 },
@@ -75,13 +80,14 @@ theorem lineBreak_SpanMidWord :
   decide
 
 /-! ### Test 6: SpanCloseAfterSpace (`line_break_candidate_test.cc:183`) -/
+def target_SpanCloseAfterSpace : List IndexedInlineToken :=
+  [ ⟨0, .text "01 "⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨2, .text "345 "⟩,
+    ⟨3, .closeTag⟩,
+    ⟨4, .text "7890"⟩ ]
+
 theorem lineBreak_SpanCloseAfterSpace :
-    let target_SpanCloseAfterSpace : List IndexedInlineToken :=
-      [ ⟨0, .text "01 "⟩,
-        ⟨1, .openTag "span"⟩,
-        ⟨2, .text "345 "⟩,
-        ⟨3, .closeTag⟩,
-        ⟨4, .text "7890"⟩ ]
     computeLineBreakCandidates target_SpanCloseAfterSpace =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 2 }, posNoBreak := 30, posIfBreak := 20 },
@@ -90,11 +96,12 @@ theorem lineBreak_SpanCloseAfterSpace :
   decide
 
 /-! ### Test 7: OutOfFlowPositioned (`line_break_candidate_test.cc:368`) -/
+def target_OutOfFlowPositioned : List IndexedInlineToken :=
+  [ ⟨0, .text "012 456 89 012 456 89 01"⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨2, .closeTag⟩ ]
+
 theorem lineBreak_OutOfFlowPositioned :
-    let target_OutOfFlowPositioned : List IndexedInlineToken :=
-      [ ⟨0, .text "012 456 89 012 456 89 01"⟩,
-        ⟨1, .openTag "span"⟩,
-        ⟨2, .closeTag⟩ ]
     computeLineBreakCandidates target_OutOfFlowPositioned =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
@@ -107,14 +114,15 @@ theorem lineBreak_OutOfFlowPositioned :
   decide
 
 /-! ### Test 8: ForcedBreak (`line_break_candidate_test.cc:339`) -/
+def target_ForcedBreak : List IndexedInlineToken :=
+  [ ⟨0, .text "01 345"⟩,
+    ⟨1, .br⟩,
+    ⟨2, .text "01 3456"⟩,
+    ⟨3, .br⟩ ]
+
 /-- Test `LineBreakCandidateTest.ForcedBreak` (`inline/line_break_candidate_test.cc:339`).
     CSS Text 3 §4: Forced breaks (<br>) create unconditional candidates with posIfBreak = posNoBreak. -/
 theorem lineBreak_ForcedBreak :
-    let target_ForcedBreak : List IndexedInlineToken :=
-      [ ⟨0, .text "01 345"⟩,
-        ⟨1, .br⟩,
-        ⟨2, .text "01 3456"⟩,
-        ⟨3, .br⟩ ]
     computeLineBreakCandidates target_ForcedBreak =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 3 }, endOffset := { itemIndex := 0, textOffset := 2 }, posNoBreak := 30, posIfBreak := 20 },
@@ -124,30 +132,32 @@ theorem lineBreak_ForcedBreak :
   decide
 
 /-! ### Test 9: AtomicInlineBr (`line_break_candidate_test.cc:276`) -/
+def target_AtomicInlineBr : List IndexedInlineToken :=
+  [ ⟨0, .atomicInline 10⟩,
+    ⟨1, .closeTag⟩,
+    ⟨2, .br⟩ ]
+
 /-- Test `LineBreakCandidateTest.AtomicInlineBr` (`inline/line_break_candidate_test.cc:276`).
     CSS Text 3 §4 & CSS 2.1 §9.5.1: Atomic inline followed by <br> produces forced break candidate. -/
 theorem lineBreak_AtomicInlineBr :
-    let target_AtomicInlineBr : List IndexedInlineToken :=
-      [ ⟨0, .atomicInline 10⟩,
-        ⟨1, .closeTag⟩,
-        ⟨2, .br⟩ ]
     computeLineBreakCandidates target_AtomicInlineBr =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 2, textOffset := 2 }, endOffset := { itemIndex := 1, textOffset := 1 }, posNoBreak := 10, posIfBreak := 10 } ] := by
   decide
 
 /-! ### Test 10: AtomicInlineTrailingSpaces (`line_break_candidate_test.cc:307`) -/
+def target_AtomicInlineTrailingSpaces : List IndexedInlineToken :=
+  [ ⟨0, .openTag "span"⟩,
+    ⟨1, .atomicInline 10⟩,
+    ⟨2, .closeTag⟩,
+    ⟨3, .text " "⟩,
+    ⟨4, .openTag "span"⟩,
+    ⟨5, .text "23"⟩,
+    ⟨7, .closeTag⟩ ]
+
 /-- Test `LineBreakCandidateTest.AtomicInlineTrailingSpaces` (`inline/line_break_candidate_test.cc:307`).
     CSS Text 3 §4.1: Whitespace between atomic inline and text produces soft wrap opportunity. -/
 theorem lineBreak_AtomicInlineTrailingSpaces :
-    let target_AtomicInlineTrailingSpaces : List IndexedInlineToken :=
-      [ ⟨0, .openTag "span"⟩,
-        ⟨1, .atomicInline 10⟩,
-        ⟨2, .closeTag⟩,
-        ⟨3, .text " "⟩,
-        ⟨4, .openTag "span"⟩,
-        ⟨5, .text "23"⟩,
-        ⟨7, .closeTag⟩ ]
     computeLineBreakCandidates target_AtomicInlineTrailingSpaces =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 3, textOffset := 2 }, endOffset := { itemIndex := 2, textOffset := 1 }, posNoBreak := 20, posIfBreak := 10 },
@@ -155,14 +165,15 @@ theorem lineBreak_AtomicInlineTrailingSpaces :
   decide
 
 /-! ### Test 11: TrailingSpacesCollapsed (`line_break_candidate_test.cc:210`) -/
+def target_TrailingSpacesCollapsed : List IndexedInlineToken :=
+  [ ⟨0, .text "012 "⟩,
+    ⟨1, .openTag "span"⟩,
+    ⟨3, .closeTag⟩,
+    ⟨4, .text "456"⟩ ]
+
 /-- Test `LineBreakCandidateTest.TrailingSpacesCollapsed` (`inline/line_break_candidate_test.cc:210`).
     CSS Text 3 §4.1 & §5.2: Boundary sentinels emitted under constrained available width. -/
 theorem lineBreak_TrailingSpacesCollapsed :
-    let target_TrailingSpacesCollapsed : List IndexedInlineToken :=
-      [ ⟨0, .text "012 "⟩,
-        ⟨1, .openTag "span"⟩,
-        ⟨3, .closeTag⟩,
-        ⟨4, .text "456"⟩ ]
     (computeLineBreakCandidates target_TrailingSpacesCollapsed =
       [ { offset := { itemIndex := 0, textOffset := 0 }, endOffset := { itemIndex := 0, textOffset := 0 }, posNoBreak := 0, posIfBreak := 0 },
         { offset := { itemIndex := 0, textOffset := 4 }, endOffset := { itemIndex := 0, textOffset := 3 }, posNoBreak := 40, posIfBreak := 30 },
