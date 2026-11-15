@@ -26,10 +26,10 @@ checks every row against the pinned sources and the Lean modules.
 | file:line | test | class | status | evidence / reason |
 |---|---|---|---|---|
 | block_layout_algorithm_test.cc:90 | BlockLayoutAlgorithmTest.FixedSize | geometry | formalized | `TestsBlock.FixedSize_size` |
-| block_layout_algorithm_test.cc:106 | BlockLayoutAlgorithmTest.Caching | behaviour | blocked | layout-result cache hit/miss on ConstraintSpace comparison not modelled (cache is outside BlockFlow) |
-| block_layout_algorithm_test.cc:166 | BlockLayoutAlgorithmTest.MinInlineSizeCaching | behaviour | blocked | layout-result cache not modelled |
-| block_layout_algorithm_test.cc:216 | BlockLayoutAlgorithmTest.PercentageBlockSizeQuirkDescendantsCaching | behaviour | blocked | quirks-mode %-descendant tracking and result cache not modelled |
-| block_layout_algorithm_test.cc:310 | BlockLayoutAlgorithmTest.LineOffsetCaching | behaviour | blocked | layout-result cache not modelled |
+| block_layout_algorithm_test.cc:106 | BlockLayoutAlgorithmTest.Caching | behaviour | formalized | `TestsBlock_ResultCaching.blockCaching`, `BlockResultCache.checkSizeAndQuirksCache`, `BlockResultCache.checkSizeAndQuirksCache_dirty` (opened layout_utils.cc to resolve CalculateSizeBasedLayoutCacheStatus) |
+| block_layout_algorithm_test.cc:166 | BlockLayoutAlgorithmTest.MinInlineSizeCaching | behaviour | formalized | `TestsBlock_ResultCaching.minInlineSizeCaching`, `BlockResultCache.checkSizeAndQuirksCache` |
+| block_layout_algorithm_test.cc:216 | BlockLayoutAlgorithmTest.PercentageBlockSizeQuirkDescendantsCaching | behaviour | formalized | `TestsBlock_ResultCaching.percentageBlockSizeQuirkDescendantsCaching`, `BlockResultCache.checkSizeAndQuirksCache` |
+| block_layout_algorithm_test.cc:310 | BlockLayoutAlgorithmTest.LineOffsetCaching | behaviour | formalized | `TestsBlock_ResultCaching.lineOffsetCaching`, `BlockResultCache.checkBfcCache` |
 | block_layout_algorithm_test.cc:341 | BlockLayoutAlgorithmTest.LayoutBlockChildren | geometry | formalized | `TestsBlock.LayoutBlockChildren_container`, `TestsBlock.LayoutBlockChildren_children` |
 | block_layout_algorithm_test.cc:380 | BlockLayoutAlgorithmTest.LayoutBlockChildrenWithWritingMode | geometry | formalized | `TestsBlock.LayoutBlockChildrenWithWritingMode_vectors` |
 | block_layout_algorithm_test.cc:418 | BlockLayoutAlgorithmTest.CollapsingMarginsCase1WithFloats | geometry | formalized | `TestsBlock.CollapsingMarginsCase1WithFloats_vectors` |
@@ -813,64 +813,64 @@ checks every row against the pinned sources and the Lean modules.
 | layout_view_test.cc:1263 | LayoutViewHitTestTest.TextAndInputsWithRtlDirection | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:1353 | LayoutViewHitTestTest.TextCombineOneTextNode | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:1399 | LayoutViewHitTestTest.TextCombineTwoTextNodes | behaviour | blocked | model lacks hit testing engine |
-| layout_result_caching_test.cc:51 | LayoutResultCachingTest.HitDifferentExclusionSpace | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:84 | LayoutResultCachingTest.HitDifferentBFCOffset | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:144 | LayoutResultCachingTest.HitDifferentBFCOffsetSameMarginStrut | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:170 | LayoutResultCachingTest.MissDescendantAboveBlockStart1 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:204 | LayoutResultCachingTest.MissDescendantAboveBlockStart2 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:238 | LayoutResultCachingTest.HitOOFDescendantAboveBlockStart | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:51 | LayoutResultCachingTest.HitDifferentExclusionSpace | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentExclusionSpace`, `BlockResultCache.checkBfcCache` (opened layout_utils.cc to resolve MaySkipLayoutWithinBlockFormattingContext) |
+| layout_result_caching_test.cc:84 | LayoutResultCachingTest.HitDifferentBFCOffset | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentBFCOffset`, `BlockResultCache.checkBfcCache`, `BlockResultCache.shiftedExclusionOpportunities` |
+| layout_result_caching_test.cc:144 | LayoutResultCachingTest.HitDifferentBFCOffsetSameMarginStrut | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentBFCOffsetSameMarginStrut`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:170 | LayoutResultCachingTest.MissDescendantAboveBlockStart1 | behaviour | formalized | `TestsBlock_ResultCaching.missDescendantAboveBlockStart1`, `BlockResultCache.checkBfcCache`, `BlockResultCache.checkBfcCache_aboveStart_floats` |
+| layout_result_caching_test.cc:204 | LayoutResultCachingTest.MissDescendantAboveBlockStart2 | behaviour | formalized | `TestsBlock_ResultCaching.missDescendantAboveBlockStart2`, `BlockResultCache.checkBfcCache`, `BlockResultCache.checkBfcCache_aboveStart_floats` |
+| layout_result_caching_test.cc:238 | LayoutResultCachingTest.HitOOFDescendantAboveBlockStart | behaviour | formalized | `TestsBlock_ResultCaching.hitOOFDescendantAboveBlockStart`, `BlockResultCache.checkBfcCache` |
 | layout_result_caching_test.cc:272 | LayoutResultCachingTest.HitLineBoxDescendantAboveBlockStart | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:311 | LayoutResultCachingTest.MissFloatInitiallyIntruding1 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:343 | LayoutResultCachingTest.MissFloatInitiallyIntruding2 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:375 | LayoutResultCachingTest.MissFloatWillIntrude1 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:406 | LayoutResultCachingTest.MissFloatWillIntrude2 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:437 | LayoutResultCachingTest.HitPushedByFloats1 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:468 | LayoutResultCachingTest.HitPushedByFloats2 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:499 | LayoutResultCachingTest.MissPushedByFloats1 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:531 | LayoutResultCachingTest.MissPushedByFloats2 | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:563 | LayoutResultCachingTest.HitDifferentRareData | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:311 | LayoutResultCachingTest.MissFloatInitiallyIntruding1 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatInitiallyIntruding1`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:343 | LayoutResultCachingTest.MissFloatInitiallyIntruding2 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatInitiallyIntruding2`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:375 | LayoutResultCachingTest.MissFloatWillIntrude1 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatWillIntrude1`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:406 | LayoutResultCachingTest.MissFloatWillIntrude2 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatWillIntrude2`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:437 | LayoutResultCachingTest.HitPushedByFloats1 | behaviour | formalized | `TestsBlock_ResultCaching.hitPushedByFloats1`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:468 | LayoutResultCachingTest.HitPushedByFloats2 | behaviour | formalized | `TestsBlock_ResultCaching.hitPushedByFloats2`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:499 | LayoutResultCachingTest.MissPushedByFloats1 | behaviour | formalized | `TestsBlock_ResultCaching.missPushedByFloats1`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:531 | LayoutResultCachingTest.MissPushedByFloats2 | behaviour | formalized | `TestsBlock_ResultCaching.missPushedByFloats2`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:563 | LayoutResultCachingTest.HitDifferentRareData | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentRareData`, `BlockResultCache.checkSizeAndQuirksCache` |
 | layout_result_caching_test.cc:588 | LayoutResultCachingTest.HitPercentageMinWidth | behaviour | blocked | model lacks incremental layout result caching |
 | layout_result_caching_test.cc:613 | LayoutResultCachingTest.HitFixedMinWidth | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:638 | LayoutResultCachingTest.HitShrinkToFit | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:685 | LayoutResultCachingTest.MissShrinkToFit | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:765 | LayoutResultCachingTest.HitShrinkToFitSameIntrinsicSizes | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:796 | LayoutResultCachingTest.HitShrinkToFitDifferentParent | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:826 | LayoutResultCachingTest.MissQuirksModePercentageBasedChild | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:856 | LayoutResultCachingTest.HitQuirksModePercentageBasedParentAndChild | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:891 | LayoutResultCachingTest.HitStandardsModePercentageBasedChild | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:920 | LayoutResultCachingTest.ChangeTableCellBlockSizeConstrainedness | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:979 | LayoutResultCachingTest.OptimisticFloatPlacementNoRelayout | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:638 | LayoutResultCachingTest.HitShrinkToFit | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFit`, `BlockResultCache.checkShrinkToFitCache` |
+| layout_result_caching_test.cc:685 | LayoutResultCachingTest.MissShrinkToFit | behaviour | formalized | `TestsBlock_ResultCaching.missShrinkToFit`, `BlockResultCache.checkShrinkToFitCache` |
+| layout_result_caching_test.cc:765 | LayoutResultCachingTest.HitShrinkToFitSameIntrinsicSizes | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFitSameIntrinsicSizes`, `BlockResultCache.checkShrinkToFitCache` |
+| layout_result_caching_test.cc:796 | LayoutResultCachingTest.HitShrinkToFitDifferentParent | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFitDifferentParent`, `BlockResultCache.checkShrinkToFitCache`, `BlockResultCache.checkShrinkToFitCache_same_avail` |
+| layout_result_caching_test.cc:826 | LayoutResultCachingTest.MissQuirksModePercentageBasedChild | behaviour | formalized | `TestsBlock_ResultCaching.missQuirksModePercentageBasedChild`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:856 | LayoutResultCachingTest.HitQuirksModePercentageBasedParentAndChild | behaviour | formalized | `TestsBlock_ResultCaching.hitQuirksModePercentageBasedParentAndChild`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:891 | LayoutResultCachingTest.HitStandardsModePercentageBasedChild | behaviour | formalized | `TestsBlock_ResultCaching.hitStandardsModePercentageBasedChild`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:920 | LayoutResultCachingTest.ChangeTableCellBlockSizeConstrainedness | behaviour | formalized | `TestsBlock_ResultCaching.changeTableCellBlockSizeConstrainedness`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:979 | LayoutResultCachingTest.OptimisticFloatPlacementNoRelayout | behaviour | formalized | `TestsBlock_ResultCaching.optimisticFloatPlacementNoRelayout`, `BlockResultCache.forcedBfcForSelfCollapsing` |
 | layout_result_caching_test.cc:1003 | LayoutResultCachingTest.SelfCollapsingShifting | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1078 | LayoutResultCachingTest.ClearancePastAdjoiningFloatsMovement | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1078 | LayoutResultCachingTest.ClearancePastAdjoiningFloatsMovement | behaviour | formalized | `TestsBlock_ResultCaching.clearancePastAdjoiningFloatsMovement`, `BlockResultCache.checkBfcCache` |
 | layout_result_caching_test.cc:1136 | LayoutResultCachingTest.MarginStrutMovementSelfCollapsing | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1199 | LayoutResultCachingTest.MarginStrutMovementInFlow | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1286 | LayoutResultCachingTest.MarginStrutMovementPercentage | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1321 | LayoutResultCachingTest.HitIsFixedBlockSizeIndefinite | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1350 | LayoutResultCachingTest.MissIsFixedBlockSizeIndefinite | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1380 | LayoutResultCachingTest.HitColumnFlexBoxMeasureAndLayout | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1433 | LayoutResultCachingTest.HitRowFlexBoxMeasureAndLayout | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1488 | LayoutResultCachingTest.MissFlexReplaced | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1516 | LayoutResultCachingTest.HitFlexDefiniteChange | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1539 | LayoutResultCachingTest.HitOrthogonalRoot | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1562 | LayoutResultCachingTest.SimpleTable | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1592 | LayoutResultCachingTest.MissTableCellMiddleAlignment | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1615 | LayoutResultCachingTest.MissTableCellBottomAlignment | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1638 | LayoutResultCachingTest.HitTableCellBaselineAlignment | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1661 | LayoutResultCachingTest.MissTableCellBaselineAlignment | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1687 | LayoutResultCachingTest.MissTablePercent | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1718 | LayoutResultCachingTest.HitTableRowAdd | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1739 | LayoutResultCachingTest.MissTableRowAdd | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1760 | LayoutResultCachingTest.HitTableRowRemove | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1781 | LayoutResultCachingTest.MissTableRowRemove | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1802 | LayoutResultCachingTest.HitTableSectionAdd | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1823 | LayoutResultCachingTest.HitTableSectionRemove | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1844 | LayoutResultCachingTest.FragmentainerSizeChange | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1921 | LayoutResultCachingTest.BlockOffsetChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1963 | LayoutResultCachingTest.BfcRootBlockOffsetChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:2005 | LayoutResultCachingTest.HitBlockOffsetUnchangedInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:2035 | LayoutResultCachingTest.HitNewFormattingContextInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:1199 | LayoutResultCachingTest.MarginStrutMovementInFlow | behaviour | formalized | `TestsBlock_ResultCaching.marginStrutMovementInFlow`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:1286 | LayoutResultCachingTest.MarginStrutMovementPercentage | behaviour | formalized | `TestsBlock_ResultCaching.marginStrutMovementPercentage`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:1321 | LayoutResultCachingTest.HitIsFixedBlockSizeIndefinite | behaviour | formalized | `TestsBlock_ResultCaching.hitIsFixedBlockSizeIndefinite`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:1350 | LayoutResultCachingTest.MissIsFixedBlockSizeIndefinite | behaviour | formalized | `TestsBlock_ResultCaching.missIsFixedBlockSizeIndefinite`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:1380 | LayoutResultCachingTest.HitColumnFlexBoxMeasureAndLayout | behaviour | formalized | `TestsBlock_ResultCaching.hitColumnFlexBoxMeasureAndLayout`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1433 | LayoutResultCachingTest.HitRowFlexBoxMeasureAndLayout | behaviour | formalized | `TestsBlock_ResultCaching.hitRowFlexBoxMeasureAndLayout`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1488 | LayoutResultCachingTest.MissFlexReplaced | behaviour | formalized | `TestsBlock_ResultCaching.missFlexReplaced`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:1516 | LayoutResultCachingTest.HitFlexDefiniteChange | behaviour | formalized | `TestsBlock_ResultCaching.hitFlexDefiniteChange`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1539 | LayoutResultCachingTest.HitOrthogonalRoot | behaviour | formalized | `TestsBlock_ResultCaching.hitOrthogonalRoot`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:1562 | LayoutResultCachingTest.SimpleTable | behaviour | formalized | `TestsBlock_ResultCaching.simpleTable`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1592 | LayoutResultCachingTest.MissTableCellMiddleAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellMiddleAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1615 | LayoutResultCachingTest.MissTableCellBottomAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellBottomAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1638 | LayoutResultCachingTest.HitTableCellBaselineAlignment | behaviour | formalized | `TestsBlock_ResultCaching.hitTableCellBaselineAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1661 | LayoutResultCachingTest.MissTableCellBaselineAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellBaselineAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
+| layout_result_caching_test.cc:1687 | LayoutResultCachingTest.MissTablePercent | behaviour | formalized | `TestsBlock_ResultCaching.missTablePercent`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:1718 | LayoutResultCachingTest.HitTableRowAdd | behaviour | formalized | `TestsBlock_ResultCaching.hitTableRowAdd`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1739 | LayoutResultCachingTest.MissTableRowAdd | behaviour | formalized | `TestsBlock_ResultCaching.missTableRowAdd`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1760 | LayoutResultCachingTest.HitTableRowRemove | behaviour | formalized | `TestsBlock_ResultCaching.hitTableRowRemove`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1781 | LayoutResultCachingTest.MissTableRowRemove | behaviour | formalized | `TestsBlock_ResultCaching.missTableRowRemove`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1802 | LayoutResultCachingTest.HitTableSectionAdd | behaviour | formalized | `TestsBlock_ResultCaching.hitTableSectionAdd`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1823 | LayoutResultCachingTest.HitTableSectionRemove | behaviour | formalized | `TestsBlock_ResultCaching.hitTableSectionRemove`, `BlockResultCache.checkTableRowSectionCache` |
+| layout_result_caching_test.cc:1844 | LayoutResultCachingTest.FragmentainerSizeChange | behaviour | formalized | `TestsBlock_ResultCaching.fragmentainerSizeChange`, `BlockResultCache.checkFragmentationCache` |
+| layout_result_caching_test.cc:1921 | LayoutResultCachingTest.BlockOffsetChangeInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.blockOffsetChangeInFragmentainer`, `BlockResultCache.checkFragmentationCache`, `BlockResultCache.checkFragmentationCache_overflow` |
+| layout_result_caching_test.cc:1963 | LayoutResultCachingTest.BfcRootBlockOffsetChangeInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.bfcRootBlockOffsetChangeInFragmentainer`, `BlockResultCache.checkFragmentationCache`, `BlockResultCache.checkFragmentationCache_overflow` |
+| layout_result_caching_test.cc:2005 | LayoutResultCachingTest.HitBlockOffsetUnchangedInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.hitBlockOffsetUnchangedInFragmentainer`, `BlockResultCache.checkFragmentationCache` |
+| layout_result_caching_test.cc:2035 | LayoutResultCachingTest.HitNewFormattingContextInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.hitNewFormattingContextInFragmentainer`, `BlockResultCache.checkFragmentationCache` |
 | layout_result_caching_test.cc:2066 | LayoutResultCachingTest.MissMonolithicChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:2092 | LayoutResultCachingTest.MissGridIncorrectIntrinsicSize | behaviour | blocked | model lacks incremental layout result caching |
+| layout_result_caching_test.cc:2092 | LayoutResultCachingTest.MissGridIncorrectIntrinsicSize | behaviour | formalized | `TestsBlock_ResultCaching.missGridIncorrectIntrinsicSize`, `BlockResultCache.checkSizeAndQuirksCache` |
 | ink_overflow_test.cc:30 | InkOverflowTest.Empty | internal | internal | Blink InkOverflow union struct compaction check |
 | ink_overflow_test.cc:118 | RectDataTest.Self | internal | internal | Blink InkOverflow union struct compaction check |
 | ink_overflow_test.cc:129 | RectDataTest.Contents | internal | internal | Blink InkOverflow union struct compaction check |
