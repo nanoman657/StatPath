@@ -111,5 +111,82 @@ theorem legend_above_anon (f : Fieldset) (l : Legend) (h : f.legend = some l) :
 def minMax (chrome : Nat) (legend content : Nat × Nat) : Nat × Nat :=
   (chrome + max legend.1 content.1, chrome + max legend.2 content.2)
 
+/-- One fragment of a fragmented fieldset (CSS Fragmentation 3 §3.1, HTML §15.3.13). -/
+structure Frag where
+  size : Nat × Nat
+  legend : Option Rect := none
+  anon : Option Rect := none
+  child : Option Rect := none
+  deriving DecidableEq, Repr
+
+/-- Remaining fragments of the anonymous content box, its in-flow child, and the block-end border.
+    CSS Fragmentation 3 §3.1, §3.3. -/
+def bodyFrags (isz anonW bStart pInl childW fragH : Nat) (hasChild : Bool) :
+    Nat → Nat → Nat → Nat → Nat → Nat → List Frag
+  | 0, _, _, _, _, _ => []
+  | fuel + 1, anonY, remAnon, remPadTop, remChild, remBorderEnd =>
+    let avail := fragH - anonY
+    let aSlice := min remAnon avail
+    let cSlice := min remChild (avail - remPadTop)
+    let remAnon' := remAnon - aSlice
+    let remChild' := remChild - cSlice
+    let remPadTop' := remPadTop - min remPadTop avail
+    let placeBorder := remAnon' == 0 && anonY + aSlice + remBorderEnd ≤ fragH
+    let bEndHere := if placeBorder then remBorderEnd else 0
+    let remBorderEnd' := if placeBorder then 0 else remBorderEnd
+    let frag : Frag := {
+      size := (isz, anonY + aSlice + bEndHere)
+      anon := some (bStart, anonY, anonW, aSlice)
+      child := if hasChild && (remChild > 0 || cSlice > 0) then
+                 some (pInl, remPadTop, childW, cSlice)
+               else none
+    }
+    if remAnon' == 0 && remChild' == 0 then
+      if remBorderEnd' == 0 then [frag]
+      else [frag, { size := (isz, remBorderEnd') }]
+    else
+      frag :: bodyFrags isz anonW bStart pInl childW fragH hasChild
+        fuel 0 remAnon' remPadTop' remChild' remBorderEnd'
+
+/-- Fragment a horizontal-tb fieldset across fragmentainers of block size `fragH`.
+    Borders and the rendered legend are monolithic; if `anonTop f` reaches `fragH` (unless there is
+    no legend and the anonymous box is empty), the anonymous content box starts in the next
+    fragmentainer. CSS Fragmentation 3 §3.1, HTML §15.3.13. -/
+def fragment (fragH : Nat) (f : Fieldset) : List Frag :=
+  let b := toLogical f.wm f.border
+  let p := toLogical f.wm f.padding
+  let padI := p.inlineStart + p.inlineEnd
+  let padB := p.blockStart + p.blockEnd
+  let top := anonTop f
+  let isz := f.inlineSize + b.inlineStart + b.inlineEnd + padI
+  let anonW := f.inlineSize + padI
+  let (hasChild, childH, childW) := match f.child with
+    | .fixed n w => (true, n, w.getD f.inlineSize)
+    | _ => (false, 0, f.inlineSize)
+  let ownAnonB := padB + match f.height with
+    | some h => h - (top - b.blockStart)
+    | none => childH
+  let legRect := f.legend.map fun l =>
+    (b.inlineStart + p.inlineStart + (flowMargins f.wm l.margins).inlineStart,
+     legendY f l, l.width, l.height)
+  let fuel := ownAnonB + childH + 4
+  if top < fragH || (f.legend.isNone && top == fragH && ownAnonB == 0) then
+    match bodyFrags isz anonW b.inlineStart p.inlineStart childW fragH hasChild
+            fuel top ownAnonB p.blockStart childH b.blockEnd with
+    | [] => []
+    | first :: rest => { first with legend := legRect } :: rest
+  else
+    { size := (isz, top), legend := legRect } ::
+      bodyFrags isz anonW b.inlineStart p.inlineStart childW fragH hasChild
+        fuel 0 ownAnonB p.blockStart childH b.blockEnd
+
+/-- Law: when a legend is present and `anonTop f` reaches or exceeds `fragH`, the first fragment
+    contains only the header of block size `anonTop f` with no anonymous content box. -/
+theorem fragment_tall_header (fragH : Nat) (f : Fieldset) (l : Legend)
+    (hl : f.legend = some l) (ht : fragH ≤ anonTop f) :
+    ∃ r rest, fragment fragH f = r :: rest ∧ r.size.2 = anonTop f ∧ r.anon = none := by
+  have hlt : ¬ (anonTop f < fragH) := Nat.not_lt.mpr ht
+  simp [fragment, hl, hlt]
+
 end BlockFieldset
 end ChromiumLayout

@@ -92,8 +92,98 @@ theorem FieldsetMinMax_vectors :
     minMax 26 (126, 126) (50, 150) = (152, 176) ∧
     minMax 26 (0, 0) (50, 100) = (76, 126) := by decide
 
--- :540 NoFragmentation (size only; fragmentainer 200 > 126 so the fieldset is one fragment)
+-- :540 NoFragmentation (fragmentainer 200 > 126 so the fieldset is one fragment with no break token)
 theorem FieldsetNoFragmentation_size :
-    (layout { base with inlineSize := 150, height := some 100 }).size = (176, 126) := by decide
+    (fragment 200 { base with inlineSize := 150, height := some 100 }).map (·.size) = [(176, 126)] := by
+  decide +kernel
+
+-- :228 LegendAutoSize (two 25x200 left floats in legend -> legend shrink-to-fit 50x200)
+theorem FieldsetLegendAutoSize_vectors :
+    let r := layout { base with legend := leg (25 + 25) 200, child := .fixed 100 }
+    r.size = (126, 323) ∧ r.legend = some (13, 0, 50, 200) ∧ r.anon = (3, 200, 120, 120) ∧
+      r.child = some (10, 10, 100, 100) := by decide
+
+-- :372 PercentHeightQuirks and :404 LegendPercentHeightQuirks (container height 200: 50% -> 100, 20% -> 40)
+theorem FieldsetPercentHeightQuirks_vectors :
+    let r := layout { base with legend := leg 100 (200 * 50 / 100), child := .fixed (200 * 20 / 100) (some 40) }
+    r.size = (126, 163) ∧ r.legend = some (13, 0, 100, 100) ∧ r.anon = (3, 100, 120, 60) ∧
+      r.child = some (10, 10, 40, 40) := by decide
+
+private def p0 : Phys := ⟨0, 0, 0, 0⟩
+private def fs150 : Fieldset := { base with inlineSize := 150 }
+
+-- :567 SimpleFragmentation (width 150, height 500, fragH 200 -> 3 fragments)
+theorem FieldsetSimpleFragmentation_vectors :
+    (fragment 200 { fs150 with height := some 500 }).map (·.size) =
+      [(176, 200), (176, 200), (176, 126)] := by decide +kernel
+
+-- :604 FragmentationNoPadding (border 10, padding 0, width 100, fragH 10 -> 2 fragments)
+theorem FieldsetFragmentationNoPadding_vectors :
+    fragment 10 { border := ⟨10, 10, 10, 10⟩, padding := p0, inlineSize := 100 } =
+      [{ size := (120, 10), anon := some (10, 10, 100, 0) }, { size := (120, 10) }] := by decide +kernel
+
+-- :645 FieldsetContentFragmentationAutoHeight (auto height, child 50x500, fragH 200)
+theorem FieldsetContentFragmentationAutoHeight_vectors :
+    fragment 200 { fs150 with child := .fixed 500 (some 50) } =
+      [{ size := (176, 200), anon := some (3, 3, 170, 197), child := some (10, 10, 50, 187) },
+       { size := (176, 200), anon := some (3, 0, 170, 200), child := some (10, 0, 50, 200) },
+       { size := (176, 126), anon := some (3, 0, 170, 123), child := some (10, 0, 50, 113) }] := by decide +kernel
+
+-- :708 FieldsetContentFragmentation (height 100, child 50x500, fragH 200)
+theorem FieldsetContentFragmentation_vectors :
+    fragment 200 { fs150 with height := some 100, child := .fixed 500 (some 50) } =
+      [{ size := (176, 126), anon := some (3, 3, 170, 120), child := some (10, 10, 50, 187) },
+       { size := (176, 0), anon := some (3, 0, 170, 0), child := some (10, 0, 50, 200) },
+       { size := (176, 0), anon := some (3, 0, 170, 0), child := some (10, 0, 50, 113) }] := by decide +kernel
+
+-- :771 LegendFragmentationAutoHeight and :821 LegendFragmentation (legend 50x500, fragH 200)
+theorem FieldsetLegendFragmentation_vectors :
+    fragment 200 { fs150 with legend := leg 50 500 } =
+      [{ size := (176, 500), legend := some (13, 0, 50, 500) },
+       { size := (176, 23), anon := some (3, 0, 170, 20) }] ∧
+    fragment 200 { fs150 with height := some 100, legend := leg 50 500 } =
+      [{ size := (176, 500), legend := some (13, 0, 50, 500) },
+       { size := (176, 23), anon := some (3, 0, 170, 20) }] := by decide +kernel
+
+-- :871 LegendAndContentFragmentationAutoHeight and :937 LegendAndContentFragmentation
+theorem FieldsetLegendAndContentFragmentation_vectors :
+    fragment 200 { fs150 with legend := leg 50 500, child := .fixed 200 (some 100) } =
+      [{ size := (176, 500), legend := some (13, 0, 50, 500) },
+       { size := (176, 200), anon := some (3, 0, 170, 200), child := some (10, 10, 100, 190) },
+       { size := (176, 23), anon := some (3, 0, 170, 20), child := some (10, 0, 100, 10) }] ∧
+    fragment 200 { fs150 with height := some 100, legend := leg 50 500, child := .fixed 200 (some 100) } =
+      [{ size := (176, 500), legend := some (13, 0, 50, 500) },
+       { size := (176, 23), anon := some (3, 0, 170, 20), child := some (10, 10, 100, 190) },
+       { size := (176, 0), anon := some (3, 0, 170, 0), child := some (10, 0, 100, 10) }] := by decide +kernel
+
+-- :1001 LegendFragmentationWithOverflow (legend 55x30 with overflowing child, child 44x150, fragH 100)
+theorem FieldsetLegendFragmentationWithOverflow_vectors :
+    fragment 100 { border := p0, padding := p0, inlineSize := 1000, legend := leg 55 30,
+                   child := .fixed 150 (some 44) } =
+      [{ size := (1000, 100), legend := some (0, 0, 55, 30), anon := some (0, 30, 1000, 70),
+         child := some (0, 0, 44, 70) },
+       { size := (1000, 80), anon := some (0, 0, 1000, 80), child := some (0, 0, 44, 80) }] := by decide +kernel
+
+-- :1107 OverflowedLegend (width 100, height 100, legend 75x60, child 85x10, fragH 100)
+theorem FieldsetOverflowedLegend_vectors :
+    fragment 100 { border := p0, padding := p0, inlineSize := 100, height := some 100,
+                   legend := leg 75 60, child := .fixed 10 (some 85) } =
+      [{ size := (100, 100), legend := some (0, 0, 75, 60), anon := some (0, 60, 100, 40),
+         child := some (0, 0, 85, 10) }] := by decide +kernel
+
+-- :1594 MarginBottomPastEndOfFragmentainer (legend 0x90 with margin-bottom 20, child 20x20, fragH 100)
+theorem FieldsetMarginBottomPastEnd_vectors :
+    fragment 100 { border := p0, padding := p0, inlineSize := 100, height := some 100,
+                   legend := leg 0 90 ⟨0, 0, 20, 0⟩, child := .fixed 20 (some 20) } =
+      [{ size := (100, 110), legend := some (0, 0, 0, 90) },
+       { size := (100, 0), anon := some (0, 0, 100, 0), child := some (0, 0, 20, 20) }] := by decide +kernel
+
+-- :1650 SmallLegendLargeBorderFragmentation (border 60, width 100, height 10, legend 10x50, fragH 40)
+theorem FieldsetSmallLegendLargeBorderFragmentation_vectors :
+    fragment 40 { border := ⟨60, 60, 60, 60⟩, padding := p0, inlineSize := 100, height := some 10,
+                  legend := leg 10 50 } =
+      [{ size := (220, 60), legend := some (60, 5, 10, 50) },
+       { size := (220, 10), anon := some (60, 0, 100, 10) },
+       { size := (220, 60) }] := by decide +kernel
 
 end TestsBlock
