@@ -32,3 +32,4 @@ done: TestsInline_ExclusionSpace +0
 done: TestsInline_Shapes +0
 done: TestsInline_Fieldset +0
 done: TestsInline_SVG +0
+done: TestsInline_TextControl +0
