@@ -16,9 +16,15 @@ open ChromiumLayout
 
 /-! ### Test 4: BreakToken (inline_layout_algorithm_test.cc:192) -/
 theorem test_BreakToken_chain :
-    let t1 := advanceBreakToken 3 none 1
-    let t2 := advanceBreakToken 3 t1 1
-    let t3 := advanceBreakToken 3 t2 1
+    let fh : FontHeight := { ascent := 8, descent := 2 }
+    let mkWord (id : Nat) (w : Nat) : InlineItem := .TextSeg id w fh true false
+    let mkSpace (id : Nat) : InlineItem := .TextSeg id 10 fh true true
+    let items : List InlineItem := [mkWord 1 30, mkSpace 2, mkWord 3 30, mkSpace 4, mkWord 5 30]
+    let lines := breakLines 50 items
+    let t1 := advanceBreakToken lines.length none 1
+    let t2 := advanceBreakToken lines.length t1 1
+    let t3 := advanceBreakToken lines.length t2 1
+    lines.length = 3 ∧
     t1 = some { itemIndex := 1, textOffset := 4 } ∧
     t2 = some { itemIndex := 2, textOffset := 8 } ∧
     t3 = none := by
@@ -44,15 +50,19 @@ theorem test_InlineBoxBorderPadding_partition :
 theorem test_TextFloatsAroundFloatsBefore :
     let fLeft1 : FloatExclusion := { isLeft := true, width := 30, height := 30 }
     let fLeft2 : FloatExclusion := { isLeft := true, width := 10, height := 10 }
-    let offsetLine0 := lineLeftOffset [fLeft1, fLeft2] 0
-    let offsetLine1 := lineLeftOffset [fLeft1] 0
-    let offsetLine2 := lineLeftOffset [] 0
+    let fRight : FloatExclusion := { isLeft := false, width := 40, height := 40 }
+    let offsetLine0 := lineLeftOffset [fLeft1, fLeft2, fRight] 0
+    let offsetLine1 := lineLeftOffset [fLeft1, fRight] 0
+    let offsetLine2 := lineLeftOffset [fRight] 0
     offsetLine0 = 40 ∧ offsetLine1 = 30 ∧ offsetLine2 = 0 := by
   decide
 
 /-! ### Test 15: PositionFloatsWithMargins (inline_layout_algorithm_test.cc:670) -/
 theorem test_PositionFloatsWithMargins :
-    let floatLeft : FloatExclusion := { isLeft := true, width := 5, height := 30, marginInlineStart := 20, marginInlineEnd := 20 }
+    let containerWidth := 200
+    let marginPct := 10
+    let margin := containerWidth * marginPct / 100
+    let floatLeft : FloatExclusion := { isLeft := true, width := 5, height := 30, marginInlineStart := margin, marginInlineEnd := margin }
     let bodyMargin := 8
     let spanOffsetLeft := bodyMargin + floatLeft.totalWidth
     floatLeft.totalWidth = 45 ∧ spanOffsetLeft = 53 := by
@@ -60,15 +70,24 @@ theorem test_PositionFloatsWithMargins :
 
 /-! ### Test 16: InkOverflow (inline_layout_algorithm_test.cc:694) -/
 theorem test_InkOverflow :
-    inkOverflowVertical 10 20 = (-5, 20) := by
-  rfl
+    let fontSize : Nat := 20
+    let lineHeight : Nat := fontSize / 2
+    let (top, h) := inkOverflowVertical lineHeight fontSize
+    lineHeight = 10 ∧ top = -5 ∧ h = 20 := by
+  decide
 
 /-! ### Test 21: LineBoxWithHangingWidthRTLRightAligned (inline_layout_algorithm_test.cc:806) -/
 theorem test_LineBoxWithHangingWidthRTLRightAligned :
-    let a := computeHangingLineRect 100 30 20 10 .conditional .right
-    let b := computeHangingLineRect 100 30 20 10 .unconditional .right
-    let c := computeHangingLineRect 100 30 80 10 .conditional .right
-    let d := computeHangingLineRect 100 30 80 10 .unconditional .right
+    let charWidth := 10
+    let containerWidth := 100
+    let lineHeight := 10
+    let textWidth := 3 * charWidth
+    let spaces2 := 2 * charWidth
+    let spaces8 := 8 * charWidth
+    let a := computeHangingLineRect containerWidth textWidth spaces2 lineHeight .conditional .right
+    let b := computeHangingLineRect containerWidth textWidth spaces2 lineHeight .unconditional .right
+    let c := computeHangingLineRect containerWidth textWidth spaces8 lineHeight .conditional .right
+    let d := computeHangingLineRect containerWidth textWidth spaces8 lineHeight .unconditional .right
     a = { x := 50, y := 0, width := 50, height := 10 } ∧
     b = { x := 70, y := 0, width := 30, height := 10 } ∧
     c = { x := 0, y := 0, width := 100, height := 10 } ∧
@@ -77,12 +96,19 @@ theorem test_LineBoxWithHangingWidthRTLRightAligned :
 
 /-! ### Test 22: LineBoxWithHangingWidthRTLCenterAligned (inline_layout_algorithm_test.cc:839) -/
 theorem test_LineBoxWithHangingWidthRTLCenterAligned :
-    let a := computeHangingLineRect 100 30 20 10 .conditional .center
-    let b := computeHangingLineRect 100 30 20 10 .unconditional .center
-    let c := computeHangingLineRect 100 30 60 10 .conditional .center
-    let d := computeHangingLineRect 100 30 60 10 .unconditional .center
-    let e := computeHangingLineRect 100 30 80 10 .conditional .center
-    let f := computeHangingLineRect 100 30 80 10 .unconditional .center
+    let charWidth := 10
+    let containerWidth := 100
+    let lineHeight := 10
+    let textWidth := 3 * charWidth
+    let spaces2 := 2 * charWidth
+    let spaces6 := 6 * charWidth
+    let spaces8 := 8 * charWidth
+    let a := computeHangingLineRect containerWidth textWidth spaces2 lineHeight .conditional .center
+    let b := computeHangingLineRect containerWidth textWidth spaces2 lineHeight .unconditional .center
+    let c := computeHangingLineRect containerWidth textWidth spaces6 lineHeight .conditional .center
+    let d := computeHangingLineRect containerWidth textWidth spaces6 lineHeight .unconditional .center
+    let e := computeHangingLineRect containerWidth textWidth spaces8 lineHeight .conditional .center
+    let f := computeHangingLineRect containerWidth textWidth spaces8 lineHeight .unconditional .center
     a = { x := 25, y := 0, width := 50, height := 10 } ∧
     b = { x := 35, y := 0, width := 30, height := 10 } ∧
     c = { x := 5, y := 0, width := 90, height := 10 } ∧
@@ -230,18 +256,32 @@ theorem inlineLayoutAlgorithm_emptyLineWithOutOfFlowInInlineContainingBlock :
     CSS 2.1 §9.4.2:
     Fragmented inline box with border on end fragment generates box fragments across all fragmented lines. -/
 theorem inlineLayoutAlgorithm_boxForEndMargin :
-    let lineCount := 2
+    let fh : FontHeight := { ascent := 8, descent := 2 }
+    let mkWord (id : Nat) (w : Nat) : InlineItem := .TextSeg id w fh true false
+    let mkSpace (id : Nat) : InlineItem := .TextSeg id 10 fh true true
+    let items : List InlineItem := [
+      mkWord 1 20, mkSpace 2, mkWord 3 10, mkSpace 4,
+      mkWord 5 20, mkSpace 6, mkWord 7 10
+    ]
+    let lines := breakLines 50 items
     let hasEndBorder := true
-    let fragmentsGenerated := shouldGenerateBoxFragmentsAcrossLines hasEndBorder lineCount
-    (fragmentsGenerated.length = 2) ∧
-    (fragmentsGenerated[0]! = true) ∧
-    (fragmentsGenerated[1]! = true) := by
+    let fragmentsGenerated := shouldGenerateBoxFragmentsAcrossLines hasEndBorder lines.length
+    lines.length = 2 ∧
+    fragmentsGenerated.length = 2 ∧
+    fragmentsGenerated.all (· == true) = true := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.TextFloatsAroundInlineFloatThatFitsOnLine` (`inline/inline_layout_algorithm_test.cc:519`).
     CSS 2.1 §9.5: Inline float that fits on line indents the line by float width and offsets span. -/
 theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatFitsOnLine :
-    computeInlineFloatOffsets 30 200 8 = some (8, 30, 38) := by
+    let floatWidth := 30
+    let containerWidth := 200
+    let bodyMargin := 8
+    let placement := placeInlineFloat floatWidth 0 containerWidth bodyMargin
+    placement.fitsOnLine = true ∧
+    placement.floatOffsetLeft = 8 ∧
+    placement.lineIndentation = 30 ∧
+    placement.spanOffsetLeft = 38 := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.EllipsisFallbackToDotsFirstLine` (`inline/inline_layout_algorithm_test.cc:1129`).
@@ -261,8 +301,9 @@ theorem inlineLayoutAlgorithm_textEmphasisAsRuby :
 /-- Test `InlineLayoutAlgorithmTest.TextBoxTrimOnInlineBox` (`inline/inline_layout_algorithm_test.cc:1406`).
     CSS Inline 3 §5: Untrimmed block size is 100px; text-box-trim trims block size to cap-height (80px). -/
 theorem inlineLayoutAlgorithm_textBoxTrimOnInlineBox :
-    let untrimmed := computeInlineBoxTrimmedSize {} false
-    let trimmed := computeInlineBoxTrimmedSize {} true
+    let m : TextBoxTrimMetrics := { lineHeight := 100, capHeight := 80, alphabeticBaseline := 0 }
+    let untrimmed := computeInlineBoxTrimmedSize m false
+    let trimmed := computeInlineBoxTrimmedSize m true
     (untrimmed = 100) ∧ (trimmed = 80) := by
   decide
 
@@ -289,10 +330,12 @@ theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatDoesNotFitOnLine :
     In vertical-rl line (line-height 110), cross-axis offset is (110 - 100) / 2 = 5px,
     positioning item 'a' at (5, 0), combine box at (5, 100), and item 'b' at (5, 200). -/
 theorem inlineLayoutAlgorithm_textCombineBasic :
-    let boxSize := computeTextCombineBoxSize 100
-    let offsetA := computeVerticalLineItemOffset 110 100 0
-    let offsetCombine := computeVerticalLineItemOffset 110 100 100
-    let offsetB := computeVerticalLineItemOffset 110 100 200
+    let fontSize := 100
+    let lineHeight := 110
+    let boxSize := computeTextCombineBoxSize fontSize
+    let offsetA := computeVerticalLineItemOffset lineHeight fontSize 0
+    let offsetCombine := computeVerticalLineItemOffset lineHeight fontSize 100
+    let offsetB := computeVerticalLineItemOffset lineHeight fontSize 200
     (boxSize = (100, 100)) ∧
     (offsetA = (5, 0)) ∧
     (offsetCombine = (5, 100)) ∧
