@@ -133,6 +133,11 @@ done: TestsInline_List +0
   - `listMarker_modifyShadowDOMWithOwnCounterStyles`: runs shadow DOM scope chains through `formatScopedCounterValue` (CSS Counter Styles 3 §2 & DOM §4.2.1).
   - `layoutListItem_insideWithFirstLine`: runs inside marker placement through `buildListMarkerBox` (CSS Lists 3 §3.1 & CSS Pseudo 4 §7.1).
 
+done: TestsInline_LayoutQuote +0
+- Verified `layoutQuote_locale` is not thin:
+  - Evaluates quote node language inheritance and pseudo-element quote delimiters (::before / ::after) across nested quotes directly through general `quoteContentLocale`, `quoteBeforeLocale`, and `quoteAfterLocale` per CSS 2.1 §12.3 and HTML 5 §4.5.8.
+
+
 
 
 
