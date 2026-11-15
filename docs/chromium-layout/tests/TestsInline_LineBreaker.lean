@@ -159,11 +159,16 @@ theorem lineBreaker_breakAt :
   decide
 
 /-! ### Test 45: BidiControlEnterFlag (line_breaker_test.cc:1331) -/
+/-- Test `LineBreakerTest, BidiControlEnterFlag` (`inline/line_breaker_test.cc:1331`).
+    CSS 2.1 §10.8 & CSS Writing Modes 3 §3.2:
+    `<div id="container" style="font: 10px/1 Ahem; width: 40px">xxx-<bdi>xx</bdi></div>`
+    Single line of height 10px produced through breakLines and line box creation. -/
 theorem lineBreaker_bidiControlEnter :
     let strut : FontHeight := { ascent := 8, descent := 2 }
-    let li : LineInfo := { items := [mkWord 1 30], inlineSize := 30, nonBreakItemCount := 1 }
-    let lb := createLineBox strut li
-    lb.metrics.lineHeight = 10 := by
+    let lines := breakLines 40 [mkWord 1 40]
+    let (stacked, totalH) := stackLineBoxes strut 0 lines
+    (lines.length = 1) ∧ (totalH = 10) ∧
+    ((stacked.headD {}).bfcOffset.blockOffset = 0) := by
   decide
 
 /-! ### Test 28: SplitTextIntoSegments (line_breaker_test.cc:887) -/
