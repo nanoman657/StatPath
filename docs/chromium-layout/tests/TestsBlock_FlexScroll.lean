@@ -38,4 +38,14 @@ theorem FlexScroll_rtlRow : layout (cfg .horizontalTb true .row) = L1 ∧ layout
 theorem FlexScroll_rtlRowReverse : layout (cfg .horizontalTb true .rowReverse) = L2 ∧
     layout (cfg .verticalLr true .rowReverse) = A ∧ layout (cfg .verticalRl true .rowReverse) = B := by decide +kernel
 
+-- layout_box_test.cc:1405 GeometriesWithScrollbarsNonScrollable (.child 50+20+80=150 x 80+20+80=180)
+theorem FlexScroll_nonScrollable :
+    let s (wm : WritingMode) (rtl : Bool) : Out :=
+      { layout { cfg wm rtl .row with childW := 150, childH := 180 } with child := (0, 0) }
+    let e0 : Out := ⟨bb, (50, 20, 445, 324), (90, 30, 385, 284), (0, 0), (50, 20, 445, 324), (0, 0), (0, 0), (0, 0), (0, 0)⟩
+    let eL : Out := ⟨bb, (65, 20, 445, 324), (105, 30, 385, 284), (15, 0), (65, 20, 445, 324), (0, 0), (0, 0), (0, 0), (0, 0)⟩
+    s .horizontalTb false = e0 ∧ s .verticalLr false = e0 ∧ s .verticalRl false = e0 ∧
+    s .horizontalTb true = eL ∧ s .verticalLr true = e0 ∧ s .verticalRl true = e0 := by
+  dsimp; decide +kernel
+
 end TestsBlock

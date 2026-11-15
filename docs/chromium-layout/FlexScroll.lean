@@ -95,5 +95,21 @@ theorem origin_eq_neg_min (c : Cfg) : (layout c).scrollOrigin = (-(layout c).min
   simp only [layout]
   ext <;> simp <;> omega
 
+/-- Law: when a non-negative child fits within the content box and padding is non-negative,
+    scrollable overflow equals the padding box and the scroll range is zero (CSS Overflow 3 §2.2). -/
+theorem no_overflow_zero_scroll (c : Cfg)
+    (_hW0 : 0 ≤ c.childW) (_hH0 : 0 ≤ c.childH)
+    (_hPL : 0 ≤ c.padding.left) (_hPR : 0 ≤ c.padding.right)
+    (_hPT : 0 ≤ c.padding.top) (_hPB : 0 ≤ c.padding.bottom)
+    (_hW : c.childW ≤ c.contentW - c.scrollbarW)
+    (_hH : c.childH ≤ c.contentH - c.scrollbarH) :
+    (layout c).overflow = (layout c).paddingBox ∧
+    (layout c).maxScroll = (0, 0) ∧
+    (layout c).minScroll = (0, 0) ∧
+    (layout c).scrollOrigin = (0, 0) := by
+  simp only [layout]
+  rcases flips c with ⟨fx, fy⟩
+  cases fx <;> cases fy <;> simp <;> omega
+
 end FlexScroll
 end ChromiumLayout

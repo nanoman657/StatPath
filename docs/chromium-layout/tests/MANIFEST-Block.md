@@ -610,8 +610,8 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1234 | LayoutBoxTest.LocationOfRelativeChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfRelativeChildWithContainerScrollbars_vectors`, `BlockScroll.rel_loc_eq_inflow_add` |
 | layout_box_test.cc:1289 | LayoutBoxTest.LocationOfFloatLeftChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfFloatLeftChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
 | layout_box_test.cc:1345 | LayoutBoxTest.LocationOfFloatRightChildWithContainerScrollbars | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
-| layout_box_test.cc:1405 | LayoutBoxTest.GeometriesWithScrollbarsNonScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
-| layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | behaviour | blocked | needs LayoutBox scrollable area and scrollbar geometry model |
+| layout_box_test.cc:1405 | LayoutBoxTest.GeometriesWithScrollbarsNonScrollable | geometry | formalized | `TestsBlock.FlexScroll_nonScrollable`, `FlexScroll.no_overflow_zero_scroll`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
+| layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | geometry | formalized | `TestsBlock.FlexScroll_row`, `TestsBlock.FlexScroll_rtlRow`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1624 | LayoutBoxTest.ThickScrollbarSubpixelSizeMarginNoDirtyLayoutAfterLayout | internal | internal | checks LayoutBox internal flag/crash regression |
 | layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | geometry | blocked | needs LayoutBox geometry model |
 | layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | needs LayoutBox geometry model |
@@ -1306,7 +1306,7 @@ checks every row against the pinned sources and the Lean modules.
 - `GridTrackSizing.fixedLen_pct_le`: a percentage track resolves to at most the container size for percentages up to 100 (CSS Grid 1 §11.4).
 - `GridLanes.minPos_le`: an auto-placed grid-lanes item lands in a lane whose running position is minimal (CSS Grid 3 lane placement).
 - `GridLanesGap.gridAxisGaps_no_rule`, `GridLanesGap.gridAxisGaps_single`: gap decorations need a gap rule and at least two tracks (CSS Gap Decorations 1 §3.1).
-- `FlexScroll.scroll_range`, `FlexScroll.origin_eq_neg_min`: scrollable overflow contains the padding box so max scroll >= 0 >= min scroll, and the scroll origin is minus the minimum (CSS Overflow 3 §2.2, §2.3).
+- `FlexScroll.scroll_range`, `FlexScroll.origin_eq_neg_min`, `FlexScroll.no_overflow_zero_scroll`: scrollable overflow contains the padding box so max scroll >= 0 >= min scroll, the scroll origin is minus the minimum, and a non-overflowing child has zero scroll range (CSS Overflow 3 §2.2, §2.3).
 
 ## Merge notes
 
