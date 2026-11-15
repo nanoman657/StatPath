@@ -49,3 +49,7 @@ done: TestsInline_InlineCaretPosition +0
   - `inlineCaretPosition_multiColumnSingleText`: maps multicolumn fragment slices to fragment IDs and offsets.
   - `inlineCaretPosition_generatedZeroWidthSpace`, `inlineBlockBeforeContent`: fragment position resolution for generated content.
 
+done: TestsInline_PhysicalLineBoxFragment +0
+- Verified neither theorem is thin:
+  - `physicalLineBoxFragment_hasPropagatedDescendantsFloat` and `physicalLineBoxFragment_hasPropagatedDescendantsOOF` directly test `hasPropagatedDescendants` (the general model predicate in `InlineLineBox.lean` for `PhysicalLineBoxFragment::HasPropagatedDescendants()` per CSS 2.1 §9.5 and §9.3) on line item streams partitioned into normal flow items vs lines containing float / out-of-flow items, verifying propagation flags to the containing block. No bare numbers or indices are used.
+
