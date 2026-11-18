@@ -143,4 +143,30 @@ theorem layoutInline_blockInInlineRemove :
     wrapBlockInInlineChildren remaining = [.inline "before", .inline "after"] := by
   decide
 
+/-! ### Test 11: VisualOverflowRecalcLegacyLayout (`layout_inline_test.cc:643`) -/
+/-- Test `LayoutInlineTest, VisualOverflowRecalcLegacyLayout` (`layout_inline_test.cc:643`).
+    CSS 2.1 §18.4 & CSS UI 3 §3.1: Inline box visual overflow with and without 50px outline. -/
+theorem layoutInline_visualOverflowRecalcLegacyLayout :
+    let spanBox : SignedPhysicalRect := { x := 0, y := 0, width := 100, height := 20 }
+    (inlineOutlineVisualOverflow spanBox 50 = { x := -50, y := -50, width := 200, height := 120 }) ∧
+    (inlineOutlineVisualOverflow spanBox 0 = { x := 0, y := 0, width := 100, height := 20 }) := by
+  decide
+
+/-! ### Test 12: VisualOverflowRecalcLayoutNG (`layout_inline_test.cc:689`) -/
+/-- Test `LayoutInlineTest, VisualOverflowRecalcLayoutNG` (`layout_inline_test.cc:689`).
+    CSS 2.1 §18.4 & CSS UI 3 §3.1: LayoutNG inline box visual overflow with and without 50px outline. -/
+theorem layoutInline_visualOverflowRecalcLayoutNG :
+    let spanBox : SignedPhysicalRect := { x := 0, y := 0, width := 100, height := 20 }
+    (inlineOutlineVisualOverflow spanBox 50 = { x := -50, y := -50, width := 200, height := 120 }) ∧
+    (inlineOutlineVisualOverflow spanBox 0 = { x := 0, y := 0, width := 100, height := 20 }) := by
+  decide
+
+/-! ### Test 13: VisualOverflowRecalcLegacyLayoutPositionRelative (`layout_inline_test.cc:733`) -/
+/-- Test `LayoutInlineTest, VisualOverflowRecalcLegacyLayoutPositionRelative` (`layout_inline_test.cc:733`).
+    CSS 2.1 §18.4 & CSS UI 3 §3.1: Relative-positioned inline box visual overflow with 50px outline. -/
+theorem layoutInline_visualOverflowRecalcLegacyLayoutPositionRelative :
+    let spanBox : SignedPhysicalRect := { x := 0, y := 0, width := 80, height := 20 }
+    inlineOutlineVisualOverflow spanBox 50 = { x := -50, y := -50, width := 180, height := 120 } := by
+  decide
+
 end ChromiumLayout.TestsInline

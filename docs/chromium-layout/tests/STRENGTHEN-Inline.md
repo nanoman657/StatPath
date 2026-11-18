@@ -314,6 +314,20 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight`: Container with 100x100 bbox does not trigger use counter per SVG 2 §13.2.
   - `hitTesting_occlusionHitTestSVGTextWithFilterCrash`: Filtered SVG text visual overflow intersects target, returning occluder text node per CSS Filters 1 §3.1 & SVG 2 §15.2.
 
+done: TestsInline_LayoutInline, TestsInline_ScoreLineBreaker, TestsInline_FragmentItem, TestsInline_InlineCursor +10
+- Formalized 10 tests across layout inline outline overflow, text-wrap telemetry, multicol line fragment IDs, and fragmentainer cursor traversal:
+  - `layoutInline_visualOverflowRecalcLegacyLayout`: Inline box visual overflow expands by 50px outline and restores on removal per CSS 2.1 §18.4 & CSS UI 3 §3.1.
+  - `layoutInline_visualOverflowRecalcLayoutNG`: LayoutNG inline box visual overflow with 50px outline per CSS 2.1 §18.4 & CSS UI 3 §3.1.
+  - `layoutInline_visualOverflowRecalcLegacyLayoutPositionRelative`: Relative-positioned inline box visual overflow with 50px outline per CSS 2.1 §18.4 & CSS UI 3 §3.1.
+  - `scoreLineBreaker_useCountNotCountedForWrap`: Default text-wrap: wrap does not trigger balance or pretty use counters per CSS Text 4 §7.1.
+  - `scoreLineBreaker_useCountNotCountedForBalance`: text-wrap: balance triggers kTextWrapBalance use counter per CSS Text 4 §7.1.
+  - `fragmentItem_lineFragmentId`: Line box fragments in fragmented flow receive sequential fragment IDs starting from initialLineFragmentId (0x80000000) per CSS Fragmentation 3 §3.
+  - `fragmentItem_selfPaintingInlineBox`: Fractional opacity (< 1.0) establishes self-painting layer and stacking context per CSS Color 3 §3.2 & CSS 2.1 Appendix E.
+  - `inlineCursor_cursorForMovingAcrossFragmentainer`: Multi-column IFC is block-fragmented across fragmentainers per CSS Fragmentation 3 §3.
+  - `inlineCursor_nextIncludingFragmentainer`: Forward cursor traversal across column fragmentainers visits items in visual reading order per CSS Fragmentation 3 §3.
+  - `inlineCursor_previousIncludingFragmentainer`: Backward cursor traversal across column fragmentainers visits items in exact reverse order per CSS Fragmentation 3 §3.
+
+
 
 
 

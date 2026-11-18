@@ -719,4 +719,50 @@ def traverseCulledInlineFragments (fragmentCount : Nat) (itemsPerFrag : Nat) : N
 theorem traverseCulledInlineFragments_eq (fc ipf : Nat) :
     traverseCulledInlineFragments fc ipf = fc * ipf := rfl
 
+/-! ## 8. CSS Fragmentation 3 §3 & CSS Multi-column 1 §3 Cursor Traversal Across Fragmentainers -/
+
+/-- CSS Fragmentation 3 §3: Whether an inline formatting context is block-fragmented across multiple fragmentainers (e.g. columns). -/
+def isBlockFragmented (colCount : Nat) : Bool :=
+  colCount > 1
+
+/-- CSS Fragmentation 3 Law: Multi-column flow (column count ≥ 2) is block fragmented. -/
+theorem isBlockFragmented_multicol (n : Nat) (h : n ≥ 2) :
+    isBlockFragmented n = true := by
+  dsimp [isBlockFragmented]
+  have : n > 1 := by omega
+  exact decide_eq_true this
+
+/-- CSS Fragmentation 3 Law: Single-column flow is not block fragmented. -/
+theorem isBlockFragmented_single (n : Nat) (h : n ≤ 1) :
+    isBlockFragmented n = false := by
+  dsimp [isBlockFragmented]
+  have : ¬(n > 1) := by omega
+  exact decide_eq_false this
+
+/-- CSS Fragmentation 3 §3 & CSS Multi-column 1 §3:
+    Flattened sequence of inline cursor items across all fragmentainers in visual reading order. -/
+def traverseFragmentainers (cols : List (List α)) : List α :=
+  cols.flatten
+
+/-- CSS Fragmentation 3 §3 & CSS Multi-column 1 §3:
+    Backward sequence of inline cursor items across fragmentainers, visiting each item in reverse order. -/
+def traverseFragmentainersReverse (cols : List (List α)) : List α :=
+  (cols.flatten).reverse
+
+/-- CSS Fragmentation 3 Law: Backward traversal across fragmentainers equals the reverse of forward traversal. -/
+theorem traverseFragmentainers_reverse_eq (cols : List (List α)) :
+    traverseFragmentainersReverse cols = (traverseFragmentainers cols).reverse := rfl
+
+/-- CSS Fragmentation 3 Law: Reversing backward traversal recovers the original forward traversal. -/
+theorem traverseFragmentainers_double_reverse (cols : List (List α)) :
+    (traverseFragmentainersReverse cols).reverse = traverseFragmentainers cols := by
+  dsimp [traverseFragmentainersReverse, traverseFragmentainers]
+  simp
+
+/-- CSS Fragmentation 3 Law: Backward traversal visits the exact same number of items as forward traversal. -/
+theorem traverseFragmentainersReverse_length (cols : List (List α)) :
+    (traverseFragmentainersReverse cols).length = (traverseFragmentainers cols).length := by
+  dsimp [traverseFragmentainersReverse, traverseFragmentainers]
+  simp
+
 end ChromiumLayout

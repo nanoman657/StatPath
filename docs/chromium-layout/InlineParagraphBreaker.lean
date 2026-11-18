@@ -255,4 +255,49 @@ theorem resolveOptimalLineCountMismatch_fallback (breaks : Nat) :
 theorem resolveOptimalLineCountMismatch_match (breaks : Nat) :
     (resolveOptimalLineCountMismatch false breaks).1 = (resolveOptimalLineCountMismatch false breaks).2 := rfl
 
+/-! ## 6. CSS Text 4 §7.1 Text Wrap Modes and Telemetry Use-Counters -/
+
+/-- CSS Text 4 §7.1: The `text-wrap` property values (`wrap | nowrap | balance | pretty`). -/
+inductive TextWrapType where
+  | wrap
+  | nowrap
+  | balance
+  | pretty
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Text 4 §7.1 & Blink ScoreLineBreaker:
+    Telemetry UseCounter for `text-wrap: balance` (`WebFeature::kTextWrapBalance`).
+    Counted iff `text-wrap` is set to `balance`. -/
+def isUseCountedTextWrapBalance (mode : TextWrapType) : Bool :=
+  mode == TextWrapType.balance
+
+/-- CSS Text 4 §7.1 & Blink ScoreLineBreaker:
+    Telemetry UseCounter for `text-wrap: pretty` (`WebFeature::kTextWrapPretty`).
+    Counted iff `text-wrap` is set to `pretty`. -/
+def isUseCountedTextWrapPretty (mode : TextWrapType) : Bool :=
+  mode == TextWrapType.pretty
+
+/-- CSS Text 4 §7.1 Law: Default `text-wrap: wrap` never triggers balance or pretty use counters. -/
+theorem textWrap_wrap_not_counted :
+    isUseCountedTextWrapBalance TextWrapType.wrap = false ∧
+    isUseCountedTextWrapPretty TextWrapType.wrap = false := by
+  decide
+
+/-- CSS Text 4 §7.1 Law: `text-wrap: balance` triggers balance counter and not pretty counter. -/
+theorem textWrap_balance_counted :
+    isUseCountedTextWrapBalance TextWrapType.balance = true ∧
+    isUseCountedTextWrapPretty TextWrapType.balance = false := by
+  decide
+
+/-- CSS Text 4 §7.1 Law: `text-wrap: pretty` triggers pretty counter and not balance counter. -/
+theorem textWrap_pretty_counted :
+    isUseCountedTextWrapBalance TextWrapType.pretty = false ∧
+    isUseCountedTextWrapPretty TextWrapType.pretty = true := by
+  decide
+
+/-- CSS Text 4 §7.1 Law: Balance and pretty use counters are mutually exclusive across all wrap modes. -/
+theorem textWrap_counters_exclusive (mode : TextWrapType) :
+    ¬ (isUseCountedTextWrapBalance mode = true ∧ isUseCountedTextWrapPretty mode = true) := by
+  cases mode <;> decide
+
 end ChromiumLayout

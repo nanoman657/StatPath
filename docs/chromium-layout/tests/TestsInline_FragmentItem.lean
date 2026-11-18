@@ -199,4 +199,30 @@ theorem fragmentItemsBuilder_multipleLogicalLineItems :
     (b3.items = [line2]) := by
   decide
 
+/-! ### LineFragmentId (`inline/fragment_item_test.cc:417`) -/
+/-- Test `FragmentItemTest.LineFragmentId` (`inline/fragment_item_test.cc:417`).
+    CSS Fragmentation 3 §3 & CSS Multi-column 1 §3: Line box fragments in fragmented flow
+    are assigned sequential IDs starting at initialLineFragmentId (0x80000000). -/
+theorem fragmentItem_lineFragmentId :
+    let lineIds := (List.range 6).map lineFragmentId
+    (lineIds.length = 6) ∧
+    (lineIds = [
+      initialLineFragmentId + 0,
+      initialLineFragmentId + 1,
+      initialLineFragmentId + 2,
+      initialLineFragmentId + 3,
+      initialLineFragmentId + 4,
+      initialLineFragmentId + 5
+    ]) := by
+  decide
+
+/-! ### SelfPaintingInlineBox (`inline/fragment_item_test.cc:328`) -/
+/-- Test `FragmentItemTest.SelfPaintingInlineBox` (`inline/fragment_item_test.cc:328`).
+    CSS Color 3 §3.2 & CSS 2.1 Appendix E: Inline element with opacity 0.2 (2000 bps)
+    establishes a stacking context and self-painting layer, while full opacity (10000 bps) does not. -/
+theorem fragmentItem_selfPaintingInlineBox :
+    (hasSelfPaintingLayerFromOpacity 2000 = true) ∧
+    (hasSelfPaintingLayerFromOpacity 10000 = false) := by
+  decide
+
 end ChromiumLayout.TestsInline

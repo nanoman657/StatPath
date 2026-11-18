@@ -576,4 +576,39 @@ theorem remove_block_child_leaves_all_inline (bId : String) (inlines : List Stri
       contradiction
     | tail _ hTail => contradiction
 
+/-! ## 12. CSS 2.1 §18.4 & CSS UI 3 §3.1 Inline Box Outline Visual Overflow -/
+
+/-- Signed physical rectangle (`platform/geometry/physical_rect.h`), used for visual overflow and ink overflow which can extend to negative offsets. -/
+structure SignedPhysicalRect where
+  x : Int := 0
+  y : Int := 0
+  width : Nat := 0
+  height : Nat := 0
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS 2.1 §18.4 & CSS UI 3 §3.1: Visual overflow rectangle of an inline box with outline.
+    When outline is applied with width `w`, the visual overflow rectangle is expanded by `w`
+    on all sides. If `w = 0`, it is identical to the border box. -/
+def inlineOutlineVisualOverflow (box : SignedPhysicalRect) (outlineWidth : Nat) : SignedPhysicalRect :=
+  { x := box.x - (outlineWidth : Int),
+    y := box.y - (outlineWidth : Int),
+    width := box.width + 2 * outlineWidth,
+    height := box.height + 2 * outlineWidth }
+
+/-- CSS 2.1 §18.4 Law: Zero outline width leaves the visual overflow identical to the border box. -/
+theorem inlineOutlineVisualOverflow_zero (box : SignedPhysicalRect) :
+    inlineOutlineVisualOverflow box 0 = box := by
+  cases box
+  dsimp [inlineOutlineVisualOverflow]
+  simp
+
+/-- CSS 2.1 §18.4 & CSS UI 3 §3.1 Law: Outline expansion monotonically encloses the original box coordinates and dimensions. -/
+theorem inlineOutlineVisualOverflow_encloses (box : SignedPhysicalRect) (outlineWidth : Nat) :
+    (inlineOutlineVisualOverflow box outlineWidth).x ≤ box.x ∧
+    (inlineOutlineVisualOverflow box outlineWidth).y ≤ box.y ∧
+    box.width ≤ (inlineOutlineVisualOverflow box outlineWidth).width ∧
+    box.height ≤ (inlineOutlineVisualOverflow box outlineWidth).height := by
+  dsimp [inlineOutlineVisualOverflow]
+  refine ⟨by omega, by omega, by omega, by omega⟩
+
 end ChromiumLayout

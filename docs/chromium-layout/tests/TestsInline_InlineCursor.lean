@@ -871,4 +871,34 @@ theorem inlineCursor_culledInlineBlockInInlineOverflow :
     traverseCulledInlineFragments 2 3 = 6 := by
   rfl
 
+/-! ### CursorForMovingAcrossFragmentainer (`inline/inline_cursor_test.cc:339`) -/
+/-- Test `InlineCursorTest.CursorForMovingAcrossFragmentainer` (`inline/inline_cursor_test.cc:339`).
+    CSS Fragmentation 3 §3: In 2-column layout, inline formatting context is block-fragmented. -/
+theorem inlineCursor_cursorForMovingAcrossFragmentainer :
+    isBlockFragmented 2 = true ∧
+    isBlockFragmented 1 = false := by
+  decide
+
+/-! ### NextIncludingFragmentainer (`inline/inline_cursor_test.cc:614`) -/
+/-- Test `InlineCursorTest.NextIncludingFragmentainer` (`inline/inline_cursor_test.cc:614`).
+    CSS Fragmentation 3 §3 & CSS Multi-column 1 §3: Next traversal starting at firstChild
+    traverses column fragmentainers in reading order across columns. -/
+theorem inlineCursor_nextIncludingFragmentainer :
+    let col1 : List String := ["#linebox", "abc", "", "#linebox", "def", ""]
+    let col2 : List String := ["#linebox", "LayoutInline B", "ghi", "", "#linebox", "jkl"]
+    (traverseFragmentainers [col1, col2]).drop 1 =
+      ["abc", "", "#linebox", "def", "", "#linebox", "LayoutInline B", "ghi", "", "#linebox", "jkl"] := by
+  rfl
+
+/-! ### PreviousIncludingFragmentainer (`inline/inline_cursor_test.cc:1124`) -/
+/-- Test `InlineCursorTest.PreviousIncludingFragmentainer` (`inline/inline_cursor_test.cc:1124`).
+    CSS Fragmentation 3 §3 & CSS Multi-column 1 §3: Previous traversal across column fragmentainers
+    visits all items in exact reverse order across columns. -/
+theorem inlineCursor_previousIncludingFragmentainer :
+    let col1 : List String := ["#linebox", "abc", "", "#linebox", "def", ""]
+    let col2 : List String := ["#linebox", "LayoutInline B", "ghi", "", "#linebox", "jkl"]
+    traverseFragmentainersReverse [col1, col2] =
+      ["jkl", "#linebox", "", "ghi", "LayoutInline B", "#linebox", "", "def", "#linebox", "", "abc", "#linebox"] := by
+  rfl
+
 end ChromiumLayout.TestsInline

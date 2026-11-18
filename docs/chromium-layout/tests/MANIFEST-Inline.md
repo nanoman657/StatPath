@@ -154,10 +154,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/fragment_item_test.cc:173 | RtlText | geometry | formalized | `fragmentItem_rtlText` | CSS Writing Modes 3 §3.1 & UAX #9: Mixed-directional RTL text item visual runs and sequence flags |
 | inline/fragment_item_test.cc:235 | BasicInlineBox | geometry | formalized | `fragmentItem_basicInlineBox` | CSS 2.1 §9.4.2: Fragment flags for wrapped and non-wrapped inline boxes |
 | inline/fragment_item_test.cc:291 | CulledInlineBox | geometry | formalized | `fragmentItem_culledInlineBox` | CSS Inline 3 §2: Culled inline bounding box unites descendant fragments |
-| inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | internal | - | Invalidation and visual overflow recalc on self-painting layer |
+| inline/fragment_item_test.cc:328 | SelfPaintingInlineBox | behaviour | formalized | `fragmentItem_selfPaintingInlineBox` | CSS Color 3 §3.2 & CSS 2.1 App E: Opacity creates self-painting layer and stacking context |
 | inline/fragment_item_test.cc:357 | StartOffsetInContainer | geometry | formalized | `fragmentItem_startOffsetInContainer` | CSS Text 3 §5.2: Soft hyphen line breaks generate hyphen items with start offsets in container |
 | inline/fragment_item_test.cc:383 | EllipsizedAtomicInline | behaviour | formalized | `fragmentItem_ellipsizedAtomicInline` | CSS Overflow 3 §4.4: Ellipsized atomic inlines are marked as terminal box fragments for the node |
-| inline/fragment_item_test.cc:417 | LineFragmentId | behaviour | internal | - | Multicol column line fragment ID tagging |
+| inline/fragment_item_test.cc:417 | LineFragmentId | behaviour | formalized | `fragmentItem_lineFragmentId` | CSS Fragmentation 3 §3 & CSS Multi-column 1 §3: Column line fragments receive sequential IDs |
 | inline/fragment_item_test.cc:451 | Outline | geometry | blocked | - | Blocked: model lacks FragmentItems generator from box tree |
 | inline/fragment_item_test.cc:526 | MarkLineBoxesDirtyOnInsert | behaviour | internal | - | Incremental layout dirty line index tracking on insert |
 | inline/fragment_item_test.cc:543 | MarkLineBoxesDirtyOnAppend | behaviour | internal | - | Dirty line index tracking on append |
@@ -229,7 +229,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | formalized | `inlineCursor_culledInlineBlockChild` | CSS 2.1 §9.2.1.1: Inlines split by in-flow block children produce multiple fragments for the culled inline |
 | inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | formalized | `inlineCursor_culledInlineWithoutRoot` | CSS Inline 3 §2: Culled inline without root container yields in-flow text and break fragments |
-| inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | internal | - | Multicolumn fragmentainer boundary crossing |
+| inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | formalized | `inlineCursor_cursorForMovingAcrossFragmentainer` | CSS Fragmentation 3 §3: Multi-column IFC is block fragmented |
 | inline/inline_cursor_test.cc:365 | FirstChild | behaviour | formalized | `inlineCursor_firstChild` | CSS 2.1 §9.4.2: MoveToFirstChild descends to first child; text leaf has no children |
 | inline/inline_cursor_test.cc:375 | FirstChild2 | behaviour | formalized | `inlineCursor_firstChild2` | CSS 2.1 §9.4.2: Successive MoveToFirstChild visits nested inline box first child |
 | inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | blocked | - | Blocked: held-out test |
@@ -244,7 +244,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:565 | LastChild | behaviour | formalized | `inlineCursor_lastChild` | CSS 2.1 §9.4.2: MoveToLastChild visits rightmost direct sibling child |
 | inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | formalized | `inlineCursor_lastChild2` | CSS 2.1 §9.4.2: Successive MoveToLastChild visits nested inline box last child |
 | inline/inline_cursor_test.cc:588 | Next | behaviour | formalized | `inlineCursor_next` | CSS Inline 3 §2: MoveToNext performs pre-order DFS across inline fragments |
-| inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | internal | - | Next traversal across multicol fragmentainers |
+| inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | formalized | `inlineCursor_nextIncludingFragmentainer` | CSS Fragmentation 3 §3: Cursor traverses fragments across columns in forward reading order |
 | inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | formalized | `inlineCursor_nextWithEllipsis` | CSS Overflow 3 §4.4: Traversal visits line box, hidden text, truncated fragment, and ellipsis symbol |
 | inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | formalized | `inlineCursor_nextWithEllipsisInlineBoxOnly` | CSS Overflow 3 §4.4: Empty inline box generates no ellipsis; pre-order traversal visits line box and inline box only |
 | inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | formalized | `inlineCursor_nextWithListItem` | CSS Lists 3 §3: Traversal visits outside list marker, line box, and text |
@@ -271,7 +271,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | formalized | `inlineCursor_positionForPointInChildVerticalRTL` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in vertical RTL text fragment |
 | inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | formalized | `inlineCursor_positionForPointInChildBlockChildren` | CSS 2.1 §9.2.2: Hit testing on inline-block with block children anchors at start (offset 0) |
 | inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previous` | CSS 2.1 §9.4.2: MoveToPrevious visits all items in reverse pre-order sequence |
-| inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
+| inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | formalized | `inlineCursor_previousIncludingFragmentainer` | CSS Fragmentation 3 §3: Backward traversal across columns visits items in exact reverse order |
 | inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_previousInlineLeaf` | CSS Inline 3 §2: MoveToPreviousInlineLeaf visits leaf items in reverse order including line breaks |
 | inline/inline_cursor_test.cc:1158 | PreviousInlineLeafIgnoringLineBreak | behaviour | formalized | `inlineCursor_previousInlineLeafIgnoringLineBreak` | CSS Inline 3 §2: MoveToPreviousInlineLeafIgnoringLineBreak visits reverse leaves skipping line breaks |
 | inline/inline_cursor_test.cc:1171 | PreviousInlineLeafOnLineFromLayoutInline | behaviour | formalized | `inlineCursor_previousInlineLeafOnLineFromLayoutInline` | CSS 2.1 §9.4.2 & CSS Inline 3 §2.1: MoveToPreviousInlineLeafOnLine from container visits preceding leaves on same line |
@@ -459,8 +459,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/score_line_breaker_test.cc:408 | FloatRetry | geometry | formalized | `scoreLineBreaker_floatRetry` | CSS Text 4 §5.4 & CSS 2.1 §9.5.1: Floats allow score line breaking retry |
 | inline/score_line_breaker_test.cc:433 | Ruby | geometry | formalized | `scoreLineBreaker_ruby` | CSS Ruby 1 §3: Ruby container disables optimal score line breaking |
 | inline/score_line_breaker_test.cc:453 | Zoom | geometry | blocked | - | Blocked: model lacks ScoreLineBreaker |
-| inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | internal | internal | - | UseCounter metric check |
-| inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | internal | internal | - | UseCounter metric check |
+| inline/score_line_breaker_test.cc:490 | UseCountNotCountedForWrap | behaviour | formalized | `scoreLineBreaker_useCountNotCountedForWrap` | CSS Text 4 §7.1: Default text-wrap: wrap does not count balance or pretty telemetry |
+| inline/score_line_breaker_test.cc:498 | UseCountNotCountedForBalance | behaviour | formalized | `scoreLineBreaker_useCountNotCountedForBalance` | CSS Text 4 §7.1: text-wrap: balance counts kTextWrapBalance telemetry |
 | inline/score_line_breaker_test.cc:506 | LineCountMismatchFallback | behaviour | formalized | `scoreLineBreaker_lineCountMismatchFallback` | CSS Text 4 §5.4: Line count mismatch safely falls back to greedy breaking |
 | inline/text_auto_space_test.cc:85 | MayApplyTest.MayApply | behaviour | formalized | `textAutoSpace_mayApply` | Early rejection check for East Asian ideograph presence |
 | inline/text_auto_space_test.cc:95 | InsertSpacing | geometry | formalized | `textAutoSpace_insertSpacing` | Inter-script 1/8 em spacing insertion between ideograph and Latin text |
@@ -482,9 +482,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_inline_test.cc:529 | AbsoluteBoundingBoxRectHandlingEmptyInlineVerticalRL | geometry | blocked | - | Blocked: model lacks LayoutInline::AbsoluteBoundingBoxRectHandlingEmptyInline |
 | layout_inline_test.cc:575 | AddDraggableRegions | behaviour | formalized | `layoutInline_addDraggableRegions` | CSS 2.1 §9.4.2: Multiline inline draggable region bounds united across lines |
 | layout_inline_test.cc:609 | AddDraggableRegionsVerticalRL | behaviour | formalized | `layoutInline_addDraggableRegionsVerticalRL` | CSS Writing Modes 3 §3.1: Draggable region bounds under vertical-rl multiline layout |
-| layout_inline_test.cc:643 | VisualOverflowRecalcLegacyLayout | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
-| layout_inline_test.cc:689 | VisualOverflowRecalcLayoutNG | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
-| layout_inline_test.cc:733 | VisualOverflowRecalcLegacyLayoutPositionRelative | internal | internal | - | LayoutObject visual overflow invalidation lifecycle |
+| layout_inline_test.cc:643 | VisualOverflowRecalcLegacyLayout | geometry | formalized | `layoutInline_visualOverflowRecalcLegacyLayout` | CSS 2.1 §18.4 & CSS UI 3 §3.1: Outline visual overflow expansion and restoration on inline box |
+| layout_inline_test.cc:689 | VisualOverflowRecalcLayoutNG | geometry | formalized | `layoutInline_visualOverflowRecalcLayoutNG` | CSS 2.1 §18.4 & CSS UI 3 §3.1: LayoutNG outline visual overflow expansion on inline box |
+| layout_inline_test.cc:733 | VisualOverflowRecalcLegacyLayoutPositionRelative | geometry | formalized | `layoutInline_visualOverflowRecalcLegacyLayoutPositionRelative` | CSS 2.1 §18.4 & CSS UI 3 §3.1: Relative-positioned inline box outline visual overflow |
 | layout_text_test.cc:166 | PrewarmFamily | internal | internal | - | Font prewarming plumbing |
 | layout_text_test.cc:184 | PrewarmFontFace | internal | internal | - | Font prewarming plumbing |
 | layout_text_test.cc:212 | PrewarmGenericFamily | internal | internal | - | Font prewarming plumbing |

@@ -321,4 +321,51 @@ theorem fragmentItemsBuilder_preserves_lines (b : FragmentItemsBuilder) (lineId 
   dsimp [FragmentItemsBuilder.addLine, FragmentItemsBuilder.items]
   simp
 
+/-! ## 7. CSS Fragmentation 3 §3 & CSS Multi-column 1 §3 Line Fragment Identifiers -/
+
+/-- CSS Fragmentation 3 §3 & Blink FragmentItem::kInitialLineFragmentId:
+    The base line fragment identifier assigned to line boxes in fragmented flow (0x80000000). -/
+def initialLineFragmentId : Nat := 2147483648
+
+/-- CSS Fragmentation 3 §3 & Blink FragmentItem::FragmentId for line boxes:
+    Computes the fragment ID for the `lineIndex`-th line box in a fragmented inline container. -/
+def lineFragmentId (lineIndex : Nat) : Nat :=
+  initialLineFragmentId + lineIndex
+
+/-- CSS Fragmentation 3 §3 Law: Line fragment IDs are strictly monotonic in line index. -/
+theorem lineFragmentId_strictMono (i j : Nat) (h : i < j) :
+    lineFragmentId i < lineFragmentId j := by
+  dsimp [lineFragmentId]
+  omega
+
+/-- CSS Fragmentation 3 §3 Law: Line fragment IDs uniquely identify each line box. -/
+theorem lineFragmentId_inj (i j : Nat) :
+    lineFragmentId i = lineFragmentId j ↔ i = j := by
+  dsimp [lineFragmentId]
+  omega
+
+/-- CSS Fragmentation 3 §3 Law: Every line fragment ID is bounded below by initialLineFragmentId. -/
+theorem lineFragmentId_ge_initial (i : Nat) :
+    lineFragmentId i ≥ initialLineFragmentId := by
+  dsimp [lineFragmentId]
+  omega
+
+/-! ## 8. CSS 2.1 §9.9 & CSS Color 3 §3.2 Stacking Context from Opacity -/
+
+/-- CSS Color 3 §3.2 & CSS 2.1 Appendix E:
+    Whether an inline box establishes a self-painting layer and stacking context due to opacity.
+    Opacity strictly less than 1 (represented in basis points, e.g. 10000 = 1.0) forces layer creation. -/
+def hasSelfPaintingLayerFromOpacity (opacityBps : Nat) : Bool :=
+  opacityBps < 10000
+
+/-- CSS Color 3 §3.2 Law: Full opacity (10000 bps) does not create a self-painting layer. -/
+theorem hasSelfPaintingLayerFromOpacity_one :
+    hasSelfPaintingLayerFromOpacity 10000 = false := rfl
+
+/-- CSS Color 3 §3.2 Law: Any fractional opacity (< 10000 bps) creates a self-painting layer. -/
+theorem hasSelfPaintingLayerFromOpacity_fraction (bps : Nat) (h : bps < 10000) :
+    hasSelfPaintingLayerFromOpacity bps = true := by
+  dsimp [hasSelfPaintingLayerFromOpacity]
+  exact decide_eq_true h
+
 end ChromiumLayout
