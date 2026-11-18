@@ -446,4 +446,111 @@ theorem inlineNode_needsCollectInlinesOnRemove :
     (parent = true) ∧ (container = true) ∧ (siblings = false) := by
   decide
 
+/-- Test: PreservedNewlineWithBidiAndRelayout (inline_node_test.cc:1353)
+    CSS Writing Modes 3 §2.4 & CSS Text 3 §4.1:
+    Preserved newline within bidi isolate emits closing and reopening bidi control characters. -/
+theorem inlineNode_preservedNewlineWithBidiAndRelayout :
+    let initialTokens := [
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.openIsolate .ltr,
+      InlineCollectionToken.newline,
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.text "bar",
+      InlineCollectionToken.br
+    ]
+    let initialRes := collectInlines initialTokens
+    let afterAddTokens := initialTokens ++ [InlineCollectionToken.text "baz"]
+    let afterAddRes := collectInlines afterAddTokens
+    (initialRes.text = "foo\u2066\u2069\n\u2066\u2069bar\n") ∧
+    (afterAddRes.text = "foo\u2066\u2069\n\u2066\u2069bar\nbaz") := by
+  decide
+
+/-- Test: PreservedNewlineWithRemovedBidiAndRelayout (inline_node_test.cc:1367)
+    CSS Writing Modes 3 §2.4:
+    RTL isolate emits \u2067 and \u2069 around newline; removing bidi attribute removes bidi characters. -/
+theorem inlineNode_preservedNewlineWithRemovedBidiAndRelayout :
+    let withBidiTokens := [
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.openIsolate .rtl,
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "bar",
+      InlineCollectionToken.closeTag
+    ]
+    let withoutBidiTokens := [
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "bar",
+      InlineCollectionToken.closeTag
+    ]
+    (collectInlines withBidiTokens).text = "foo\u2067\u2069\n\u2067bar\u2069" ∧
+    (collectInlines withoutBidiTokens).text = "foo\nbar" := by
+  decide
+
+/-- Test: PreservedNewlineWithRemovedLtrDirAndRelayout (inline_node_test.cc:1379)
+    CSS Writing Modes 3 §2.4:
+    LTR isolate emits \u2066 and \u2069 around newline; removing dir attribute removes bidi characters. -/
+theorem inlineNode_preservedNewlineWithRemovedLtrDirAndRelayout :
+    let withBidiTokens := [
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.openIsolate .ltr,
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "bar",
+      InlineCollectionToken.closeTag
+    ]
+    let withoutBidiTokens := [
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "bar",
+      InlineCollectionToken.closeTag
+    ]
+    (collectInlines withBidiTokens).text = "foo\u2066\u2069\n\u2066bar\u2069" ∧
+    (collectInlines withoutBidiTokens).text = "foo\nbar" := by
+  decide
+
+/-- Test: InsertedWBRWithLineBreakInRelayout (inline_node_test.cc:1392)
+    CSS Text 3 §4.1:
+    Inserting <wbr> before a line break collapses the newline into a zero-width space. -/
+theorem inlineNode_insertedWBRWithLineBreakInRelayout :
+    let withWbrTokens := [
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "foo",
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.wbr,
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "bar"
+    ]
+    (collectInlines withWbrTokens).text = "foo\u200Bbar" := by
+  decide
+
+/-- Test: CollapsibleSpaceFollowingBRWithNoWrapStyle (inline_node_test.cc:1405)
+    CSS Text 3 §4.1.1:
+    Collapsible space following a forced break <br> is removed. -/
+theorem inlineNode_collapsibleSpaceFollowingBRWithNoWrapStyle :
+    let tokens := [
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.br,
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.text " "
+    ]
+    (collectInlines tokens).text = "\n" := by
+  decide
+
+/-- Test: CollapsibleSpaceFollowingNewlineWithPreStyle (inline_node_test.cc:1414)
+    CSS Text 3 §4.1.1:
+    With white-space: pre, newline is preserved as \n and following space collapses;
+    removing pre style collapses all whitespace to empty. -/
+theorem inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle :
+    let preTokens := [
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.newline,
+      InlineCollectionToken.closeTag,
+      InlineCollectionToken.text " "
+    ]
+    let normalTokens : List InlineCollectionToken := []
+    (collectInlines preTokens).text = "\n" ∧
+    (collectInlines normalTokens).text = "" := by
+  decide
+
 end ChromiumLayout.TestsInline

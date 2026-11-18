@@ -69,7 +69,7 @@ def isLineBoxEmpty (tokens : List InlineCollectionToken) : Bool :=
   tokens.all fun t =>
     match t with
     | .text s => s.isEmpty
-    | .openTag _ | .closeTag | .floating | .wbr => true
+    | .openTag _ | .closeTag | .floating | .wbr | .openIsolate _ => true
     | .atomicInline _ | .br | .newline | .symbolMarker _ => false
 
 /-! ## 2. Physical Line Bounding Box (CSS 2.1 §9.4.2 & CSS Writing Modes 3 §4) -/

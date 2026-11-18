@@ -95,6 +95,8 @@ inductive InlineCollectionToken where
   | wbr
   /-- CSS Lists 3 §3: List item symbol marker (e.g. bullet "• "). -/
   | symbolMarker (content : String := "• ")
+  /-- CSS Writing Modes 3 §2.4: Bidi directional isolate element start (<span dir=rtl>, etc.). -/
+  | openIsolate (dir : TextDirection := .ltr)
   deriving DecidableEq, Repr, Inhabited
 
 structure CollectionResult where
@@ -128,13 +130,13 @@ def collectInlinesStep (offset : Nat) (isTextCombine : Bool := false) : InlineCo
     let (t, c) := if isTextCombine then (InlineItemType.text, ' ') else (.control, '\n')
     (offset + 1, { itemType := t, startOffset := offset, endOffset := offset + 1 }, [c])
   | .wbr =>
-    if isTextCombine then
-      (offset + 1, { itemType := .text, startOffset := offset, endOffset := offset + 1 }, ['\u200B'])
-    else
-      (offset, { itemType := .control, startOffset := offset, endOffset := offset }, [])
+    let t := if isTextCombine then InlineItemType.text else InlineItemType.control
+    (offset + 1, { itemType := t, startOffset := offset, endOffset := offset + 1 }, ['\u200B'])
   | .symbolMarker s =>
     (offset + s.length, { itemType := .text, startOffset := offset, endOffset := offset + s.length, isSymbolMarker := true }, s.toList)
   | .floating => (offset, { itemType := .floating, startOffset := offset, endOffset := offset }, [])
+  | .openIsolate dir =>
+    (offset + 1, { itemType := .control, startOffset := offset, endOffset := offset + 1 }, [if dir == .rtl then '\u2067' else '\u2066'])
 
 /-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context do not advance the inline offset. -/
 theorem collectInlinesStep_floating_zero_advance (offset : Nat) :
@@ -175,19 +177,79 @@ theorem collectInlinesStep_textCombine_newline_space (offset : Nat) :
 theorem collectInlinesStep_textCombine_wbr_zws (offset : Nat) :
     (collectInlinesStep offset true .wbr).2.2 = ['\u200B'] := rfl
 
-/-- Flatten input inline node tokens into character text and classified inline items. -/
+/-- CSS 2.1 §9.4.2, CSS Writing Modes 3 §2.4 & CSS Text 3 §4.1:
+    Flatten input inline node tokens into character text and classified inline items.
+    Handles bidi isolate scoping around preserved newlines and whitespace collapsing after breaks. -/
 def collectInlines (tokens : List InlineCollectionToken) (dir : TextDirection := .ltr) (isTextCombine : Bool := false) : CollectionResult :=
   let baseLevel := match dir with | .ltr => 0 | .rtl => 1
-  let rec loop (offset : Nat) (accItems : List InlineCollectedItem) (accChars : List Char) :
+  let rec loop (offset : Nat) (isolateStack : List TextDirection) (prevChar : Option Char)
+      (accItems : List InlineCollectedItem) (accChars : List Char) :
       List InlineCollectionToken → Nat × List InlineCollectedItem × List Char
     | [] => (offset, accItems, accChars)
+    | .openIsolate isoDir :: rest =>
+      let c := if isoDir == .rtl then '\u2067' else '\u2066'
+      let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
+      loop (offset + 1) (isoDir :: isolateStack) (some c) (item :: accItems) (accChars ++ [c]) rest
+    | .closeTag :: rest =>
+      match isolateStack with
+      | _ :: isoRest =>
+        let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
+        loop (offset + 1) isoRest (some '\u2069') (item :: accItems) (accChars ++ ['\u2069']) rest
+      | [] =>
+        let item : InlineCollectedItem := { itemType := .closeTag, startOffset := offset, endOffset := offset, bidiLevel := baseLevel }
+        loop offset [] prevChar (item :: accItems) accChars rest
+    | .newline :: rest =>
+      if prevChar == some '\u200B' then
+        loop offset isolateStack prevChar accItems accChars rest
+      else if isTextCombine then
+        let item : InlineCollectedItem := { itemType := .text, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
+        loop (offset + 1) isolateStack (some ' ') (item :: accItems) (accChars ++ [' ']) rest
+      else
+        match isolateStack.head? with
+        | some isoDir =>
+          let reopen := if isoDir == .rtl then '\u2067' else '\u2066'
+          let cs := ['\u2069', '\n', reopen]
+          let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 3, bidiLevel := baseLevel }
+          loop (offset + 3) isolateStack (some reopen) (item :: accItems) (accChars ++ cs) rest
+        | none =>
+          let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
+          loop (offset + 1) [] (some '\n') (item :: accItems) (accChars ++ ['\n']) rest
+    | .text s :: rest =>
+      let sTrim := if (prevChar == some '\n' || prevChar == some '\u200B') && s == " " then "" else s
+      if sTrim.isEmpty then
+        let item : InlineCollectedItem := { itemType := .text, startOffset := offset, endOffset := offset, bidiLevel := baseLevel }
+        loop offset isolateStack prevChar (item :: accItems) accChars rest
+      else
+        let item : InlineCollectedItem := { itemType := .text, startOffset := offset, endOffset := offset + sTrim.length, bidiLevel := baseLevel }
+        let lastC := sTrim.toList.reverse.head?
+        loop (offset + sTrim.length) isolateStack lastC (item :: accItems) (accChars ++ sTrim.toList) rest
     | tok :: rest =>
       let (nxtOffset, item, chars) := collectInlinesStep offset isTextCombine tok
       let itemWithLevel := { item with bidiLevel := baseLevel }
-      loop nxtOffset (itemWithLevel :: accItems) (accChars ++ chars) rest
-  let (_, revItems, chars) := loop 0 [] [] tokens
+      let lastC := chars.reverse.head? <|> prevChar
+      loop nxtOffset isolateStack lastC (itemWithLevel :: accItems) (accChars ++ chars) rest
+  let (_, revItems, chars) := loop 0 [] none [] [] tokens
   let textStr := String.ofList chars
-  { text := textStr, items := revItems.reverse, isBidiEnabled := detectBidiInCollectInlines textStr }
+  { text := textStr, items := revItems.reverse, isBidiEnabled := (dir == .rtl || detectBidiInCollectInlines textStr) }
+
+/-- CSS Writing Modes 3 §2.4 Law: Preserved newline inside an isolated element emits closing and reopening bidi controls. -/
+theorem collectInlines_isolate_newline_bidi_controls (dir : TextDirection) :
+    let res := collectInlines [.openIsolate dir, .newline, .closeTag]
+    let openC := if dir == .rtl then '\u2067' else '\u2066'
+    res.text = String.ofList [openC, '\u2069', '\n', openC, '\u2069'] := by
+  cases dir <;> rfl
+
+/-- CSS Text 3 §4.1.1 Law: Collapsible space following a newline is collapsed away. -/
+theorem collectInlines_collapsible_space_after_newline :
+    (collectInlines [.newline, .text " "]).text = "\n" := rfl
+
+/-- CSS Text 3 §4.1.1 Law: Collapsible space following <br> is collapsed away. -/
+theorem collectInlines_collapsible_space_after_br :
+    (collectInlines [.br, .text " "]).text = "\n" := rfl
+
+/-- CSS Text 3 §4.1 Law: Newline immediately following <wbr> is collapsed. -/
+theorem collectInlines_newline_after_wbr :
+    (collectInlines [.wbr, .newline, .text "a"]).text = "\u200Ba" := rfl
 
 /-! ## 3. Grapheme Cluster & Combining Mark Segmentation -/
 
@@ -252,7 +314,7 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
           processChars (wLen + 1) accW (tot + 1) cs
       let (endW, midWords, nextTot) := processChars curWordLen words totalChars chars
       toSegments endW midWords nextTot rest
-    | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .wbr :: rest =>
+    | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .wbr :: rest | .openIsolate _ :: rest =>
       toSegments curWordLen words totalChars rest
     | .atomicInline wPx :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words

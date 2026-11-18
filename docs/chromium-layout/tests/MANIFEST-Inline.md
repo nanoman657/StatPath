@@ -125,12 +125,12 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | internal | internal | - | Clearing InlineNodeData when block child added |
 | inline/inline_node_test.cc:1285 | ClearFirstInlineFragmentOnSplitFlow | internal | internal | - | SplitFlow layout tree mutation |
 | inline/inline_node_test.cc:1336 | AddChildToSVGRoot | internal | internal | - | SVG text root element traversal |
-| inline/inline_node_test.cc:1353 | PreservedNewlineWithBidiAndRelayout | behaviour | internal | - | Bidi isolate characters around \n |
-| inline/inline_node_test.cc:1367 | PreservedNewlineWithRemovedBidiAndRelayout | behaviour | internal | - | Removing dir attribute removes bidi characters |
-| inline/inline_node_test.cc:1379 | PreservedNewlineWithRemovedLtrDirAndRelayout | behaviour | internal | - | Removing dir=ltr attribute removes bidi characters |
-| inline/inline_node_test.cc:1392 | InsertedWBRWithLineBreakInRelayout | geometry | internal | - | wbr causes \n to collapse to zero-width space |
-| inline/inline_node_test.cc:1405 | CollapsibleSpaceFollowingBRWithNoWrapStyle | geometry | internal | - | Collapsible space after br collapses to empty |
-| inline/inline_node_test.cc:1414 | CollapsibleSpaceFollowingNewlineWithPreStyle | geometry | internal | - | Collapsible space after newline in pre collapses |
+| inline/inline_node_test.cc:1353 | PreservedNewlineWithBidiAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithBidiAndRelayout` | CSS Writing Modes 3 §2.4: Bidi isolate pops before preserved newline and re-enters after |
+| inline/inline_node_test.cc:1367 | PreservedNewlineWithRemovedBidiAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithRemovedBidiAndRelayout` | CSS Writing Modes 3 §2.4: Removing RTL dir attribute removes bidi control characters around newline |
+| inline/inline_node_test.cc:1379 | PreservedNewlineWithRemovedLtrDirAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithRemovedLtrDirAndRelayout` | CSS Writing Modes 3 §2.4: Removing LTR dir attribute removes bidi control characters around newline |
+| inline/inline_node_test.cc:1392 | InsertedWBRWithLineBreakInRelayout | geometry | formalized | `inlineNode_insertedWBRWithLineBreakInRelayout` | CSS Text 3 §4.1: Inserting wbr collapses adjacent newline into zero-width space |
+| inline/inline_node_test.cc:1405 | CollapsibleSpaceFollowingBRWithNoWrapStyle | geometry | formalized | `inlineNode_collapsibleSpaceFollowingBRWithNoWrapStyle` | CSS Text 3 §4.1.1: Collapsible space following br collapses to empty |
+| inline/inline_node_test.cc:1414 | CollapsibleSpaceFollowingNewlineWithPreStyle | geometry | formalized | `inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle` | CSS Text 3 §4.1.1: Collapsible space following preserved newline in pre collapses |
 | inline/inline_node_test.cc:1425 | RemoveSegmentBreakFromJapaneseInRelayout | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/inline_node_test.cc:1442 | RemoveSegmentBreakFromJapaneseInRelayout2 | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/inline_node_test.cc:1459 | SegmentRanges | behaviour | internal | - | Segment offset range slicing |
