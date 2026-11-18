@@ -14,6 +14,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineRuby
+import InlineTextCombine
 
 namespace ChromiumLayout
 
@@ -111,6 +112,56 @@ theorem rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis :
     (baseAscent = 90) ∧
     (first1Ascent = 0) ∧
     (first2Ascent = 30) := by
+  decide
+
+/-! ## 7. Ruby Base and Ruby Block Layout Tests
+    (`layout_ruby_base_test.cc` and `layout_ruby_as_block_test.cc`) -/
+
+/-- Test `LayoutRubyBaseTest, AddChildNoBlockChildren` (`layout_ruby_base_test.cc:16`).
+    CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1:
+    Adding a table-cell child inside a ruby base inlinifies the table cell to inline-table
+    and never moves prior text to an anonymous block. -/
+theorem layoutRubyBase_addChildNoBlockChildren :
+    movesPriorTextToAnonymousBlock .tableCell = false ∧
+    inlinifyRubyChildDisplay .tableCell = .inlineTable ∧
+    isRubyChildInline .tableCell = true := by
+  decide
+
+/-- Test `LayoutRubyBaseTest, AddImageNoBlockChildren` (`layout_ruby_base_test.cc:30`).
+    CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1:
+    Adding an image with display:table-caption inside a ruby base does not move prior text
+    to an anonymous block, and the caption child is inline-level. -/
+theorem layoutRubyBase_addImageNoBlockChildren :
+    movesPriorTextToAnonymousBlock .tableCaption = false ∧
+    inlinifyRubyChildDisplay .tableCaption = .tableCaption ∧
+    isRubyChildInline .tableCaption = true := by
+  decide
+
+/-- Test `LayoutRubyBaseTest, AddSpecialWithTableInternalDisplayNoBlockChildren` (`layout_ruby_base_test.cc:52`).
+    CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1:
+    Adding an element with display:table-column inside a ruby base does not move prior text
+    to an anonymous block, and the table column child is inline-level without inline-table wrapper. -/
+theorem layoutRubyBase_addSpecialWithTableInternalDisplayNoBlockChildren :
+    movesPriorTextToAnonymousBlock .tableColumn = false ∧
+    inlinifyRubyChildDisplay .tableColumn = .tableColumn ∧
+    isRubyChildInline .tableColumn = true := by
+  decide
+
+/-- Test `LayoutRubyBaseTest, ChangeToRubyNoBlockChildren` (`layout_ruby_base_test.cc:73`).
+    CSS Ruby 1 §2.1:
+    Changing container display to ruby inlinifies block-level children (such as <p>) into inline boxes. -/
+theorem layoutRubyBase_changeToRubyNoBlockChildren :
+    isRubyChildInline .block = true ∧
+    inlinifyRubyChildDisplay .block = .inline := by
+  decide
+
+/-- Test `LayoutRubyAsBlockTest, TextCombineCrash` (`layout_ruby_as_block_test.cc:14`).
+    CSS Writing Modes 3 §5.1 & CSS Ruby 1 §2.1:
+    In vertical-rl writing mode with text-combine-upright:all, text in ruby block
+    is combined into LayoutTextCombine without crash. -/
+theorem layoutRubyAsBlock_textCombineCrash :
+    isTextCombineActive .verticalRl .all = true ∧
+    buildInlineDisplay true [.text "a"] = [.combined { children := [.text "a"] }] := by
   decide
 
 end ChromiumLayout

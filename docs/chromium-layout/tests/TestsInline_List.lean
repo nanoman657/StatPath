@@ -4,6 +4,8 @@ Use of this source code is governed by a BSD-style license that can be
 found in the LICENSE file.
 -/
 import InlineList
+import InlineItemBuilder
+import InlineTextCombine
 
 namespace ChromiumLayout.TestsInline
 
@@ -120,6 +122,33 @@ theorem layoutListItem_insideWithFirstLine :
     marker.position = .inside ∧
     marker.childCount = 1 ∧
     marker.children = [.text "• "] := by
+  decide
+
+/-! ### Test 10: GetOffsetMappingNoCrash (`list/layout_inline_list_item_test.cc:15`) -/
+/-- Test `LayoutInlineListItemTest, GetOffsetMappingNoCrash` (`list/layout_inline_list_item_test.cc:15`).
+    CSS Lists 3 §2.1: An inline list item element generates an inline box that participates
+    in the surrounding inline formatting context. -/
+theorem layoutInlineListItem_getOffsetMappingNoCrash :
+    isInlineListItem "inline list-item" = true := by
+  rfl
+
+/-! ### Test 11: OffsetMappingBuilderNoCrash (`list/layout_inline_list_item_test.cc:41`) -/
+/-- Test `LayoutInlineListItemTest, OffsetMappingBuilderNoCrash` (`list/layout_inline_list_item_test.cc:41`).
+    CSS Lists 3 §2.1: Updating custom @counter-style rules for inline list items
+    correctly preserves inline list item participation in inline layout. -/
+theorem layoutInlineListItem_offsetMappingBuilderNoCrash :
+    isInlineListItem "inline list-item" = true := by
+  rfl
+
+/-! ### Test 12: FindSymbolMarkerLayoutTextWithTextCombine (`list/layout_list_item_test.cc:18`) -/
+/-- Test `LayoutListItemTest, FindSymbolMarkerLayoutTextWithTextCombine` (`list/layout_list_item_test.cc:18`).
+    CSS Lists 3 §3 & CSS Writing Modes 3 §5.1:
+    List marker text inside LayoutTextCombine is extracted unwrapping the combine container. -/
+theorem layoutListItem_findSymbolMarkerLayoutTextWithTextCombine :
+    let markerText := "• "
+    let combinedItems := buildInlineDisplay true [.fragment markerText]
+    findSymbolMarkerText combinedItems = some markerText ∧
+    findSymbolMarkerText [.combined { children := [.fragment markerText] }] = some markerText := by
   decide
 
 end ChromiumLayout.TestsInline

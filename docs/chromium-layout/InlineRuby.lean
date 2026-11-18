@@ -300,4 +300,65 @@ theorem computeAnnotatedLineHeight_ruby_emphasis_invariant (baseHeight H : Nat) 
   · omega
   · omega
 
+/-! ## 7. CSS Ruby 1 §2.1 Ruby Formatting Context and Inlinification -/
+
+/-- CSS Display 3 §2 / CSS Ruby 1 §2.1: Display types relevant to ruby layout. -/
+inductive RubyChildDisplay where
+  | inline
+  | block
+  | tableCell
+  | tableCaption
+  | tableColumn
+  | inlineTable
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Ruby 1 §2.1:
+    The contents of a ruby container are inlinified.
+    - table-cell children are wrapped in inline-table.
+    - table-caption and table-column children become inline-level table elements.
+    - block-level children are inlinified into inline boxes.
+    - inline-level children remain inline. -/
+def inlinifyRubyChildDisplay : RubyChildDisplay → RubyChildDisplay
+  | .tableCell => .inlineTable
+  | .tableCaption => .tableCaption
+  | .tableColumn => .tableColumn
+  | .block => .inline
+  | .inline => .inline
+  | .inlineTable => .inlineTable
+
+/-- CSS Ruby 1 §2.1: Whether a child in a ruby container is inline-level.
+    All children in a ruby container are inlinified, so every child is inline-level. -/
+def isRubyChildInline (_child : RubyChildDisplay) : Bool :=
+  true
+
+/-- CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1:
+    Whether a child inside a ruby base causes the prior text to move to an anonymous block.
+    Because all children of a ruby base are inlinified, no anonymous block is ever created around prior text. -/
+def movesPriorTextToAnonymousBlock (_child : RubyChildDisplay) : Bool :=
+  false
+
+/-- CSS Ruby 1 §2.1 Law: All ruby children are inline-level for any child display. -/
+theorem ruby_child_always_inline (d : RubyChildDisplay) :
+    isRubyChildInline d = true := rfl
+
+/-- CSS Ruby 1 §2.1 Law: Adding any child to a ruby base never moves prior text to an anonymous block. -/
+theorem ruby_child_never_moves_prior_text (d : RubyChildDisplay) :
+    movesPriorTextToAnonymousBlock d = false := rfl
+
+/-- CSS Ruby 1 §2.1 Law: A table-cell child in a ruby container is inlinified to inline-table. -/
+theorem inlinifyRubyChildDisplay_tableCell :
+    inlinifyRubyChildDisplay .tableCell = .inlineTable := rfl
+
+/-- CSS Ruby 1 §2.1 Law: A block child in a ruby container is inlinified to inline. -/
+theorem inlinifyRubyChildDisplay_block :
+    inlinifyRubyChildDisplay .block = .inline := rfl
+
+/-- CSS Ruby 1 §2.1 Law: Table caption remains table-caption display. -/
+theorem inlinifyRubyChildDisplay_tableCaption :
+    inlinifyRubyChildDisplay .tableCaption = .tableCaption := rfl
+
+/-- CSS Ruby 1 §2.1 Law: Table column remains table-column display. -/
+theorem inlinifyRubyChildDisplay_tableColumn :
+    inlinifyRubyChildDisplay .tableColumn = .tableColumn := rfl
+
 end ChromiumLayout

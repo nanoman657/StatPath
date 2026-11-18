@@ -479,4 +479,19 @@ theorem textCombineUsesScaleX_single (em : Nat) (h : em ≥ 1) :
 theorem textCombineOutlineRects_focus_length (lh fs tot : Nat) :
     (computeTextCombineOutlineRects lh fs tot true).length = 5 := rfl
 
+/-- CSS Lists 3 §3 & CSS Writing Modes 3 §5.1:
+    Extract the symbol marker text from list marker items, unwrapping LayoutTextCombine if present. -/
+def findSymbolMarkerText : List InlineDisplayItem → Option String
+  | .bare (.fragment s) :: _ => some s
+  | .combined { children := .fragment s :: _ } :: _ => some s
+  | _ => none
+
+/-- CSS Lists 3 §3 Law: Finding symbol marker text inside LayoutTextCombine extracts the fragment string. -/
+theorem findSymbolMarkerText_combined (s : String) :
+    findSymbolMarkerText [.combined { children := [.fragment s] }] = some s := rfl
+
+/-- CSS Lists 3 §3 Law: Finding symbol marker text bare extracts the fragment string. -/
+theorem findSymbolMarkerText_bare (s : String) :
+    findSymbolMarkerText [.bare (.fragment s)] = some s := rfl
+
 end ChromiumLayout

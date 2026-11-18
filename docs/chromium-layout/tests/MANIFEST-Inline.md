@@ -622,14 +622,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | behaviour | formalized | `layoutTextCombine_shouldBeParentOfSvg` | SVG 2 §11.1 & CSS Writing Modes 3 §5.1: SVG text objects never generate LayoutTextCombine wrappers |
 | layout_text_combine_test.cc:1531 | InHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright in horizontal mode |
 | layout_text_combine_test.cc:1545 | InVertical | behaviour | formalized | `layoutTextCombine_inVertical` | Text combine in vertical writing mode |
-| layout_ruby_base_test.cc:16 | AddChildNoBlockChildren | internal | internal | - | Ruby base anonymous block child insertion |
-| layout_ruby_base_test.cc:30 | AddImageNoBlockChildren | internal | internal | - | Ruby base inline child insertion |
-| layout_ruby_base_test.cc:52 | AddSpecialWithTableInternalDisplayNoBlockChildren | internal | internal | - | Ruby base table child insertion |
-| layout_ruby_base_test.cc:73 | ChangeToRubyNoBlockChildren | internal | internal | - | Ruby base display style mutation |
-| layout_ruby_as_block_test.cc:14 | TextCombineCrash | internal | internal | - | Crash regression test for ruby block with text combine |
-| list/layout_inline_list_item_test.cc:15 | GetOffsetMappingNoCrash | internal | internal | - | Crash regression test for layout inline list item offset mapping |
-| list/layout_inline_list_item_test.cc:41 | OffsetMappingBuilderNoCrash | internal | internal | - | Crash regression test for offset mapping builder |
-| list/layout_list_item_test.cc:18 | FindSymbolMarkerLayoutTextWithTextCombine | internal | internal | - | Traversal check for symbol marker text inside text combine |
+| layout_ruby_base_test.cc:16 | AddChildNoBlockChildren | behaviour | formalized | `layoutRubyBase_addChildNoBlockChildren` | CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1: Table-cell child is inlinified to inline-table and does not move prior text to anonymous block |
+| layout_ruby_base_test.cc:30 | AddImageNoBlockChildren | behaviour | formalized | `layoutRubyBase_addImageNoBlockChildren` | CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1: Image caption child is inline-level and does not move prior text to anonymous block |
+| layout_ruby_base_test.cc:52 | AddSpecialWithTableInternalDisplayNoBlockChildren | behaviour | formalized | `layoutRubyBase_addSpecialWithTableInternalDisplayNoBlockChildren` | CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1: Table-column child is inline-level and does not move prior text to anonymous block |
+| layout_ruby_base_test.cc:73 | ChangeToRubyNoBlockChildren | behaviour | formalized | `layoutRubyBase_changeToRubyNoBlockChildren` | CSS Ruby 1 §2.1: Changing container display to ruby inlinifies block child to inline box |
+| layout_ruby_as_block_test.cc:14 | TextCombineCrash | behaviour | formalized | `layoutRubyAsBlock_textCombineCrash` | CSS Writing Modes 3 §5.1 & CSS Ruby 1 §2.1: Text combine inside block ruby wraps text without crash |
+| list/layout_inline_list_item_test.cc:15 | GetOffsetMappingNoCrash | behaviour | formalized | `layoutInlineListItem_getOffsetMappingNoCrash` | CSS Lists 3 §2.1: Inline list item participates in inline formatting context |
+| list/layout_inline_list_item_test.cc:41 | OffsetMappingBuilderNoCrash | behaviour | formalized | `layoutInlineListItem_offsetMappingBuilderNoCrash` | CSS Lists 3 §2.1: Counter style update for inline list item maintains inline formatting context |
+| list/layout_list_item_test.cc:18 | FindSymbolMarkerLayoutTextWithTextCombine | behaviour | formalized | `layoutListItem_findSymbolMarkerLayoutTextWithTextCombine` | CSS Lists 3 §3 & CSS Writing Modes 3 §5.1: Finding symbol marker text unwraps LayoutTextCombine container |
 | list/layout_list_item_test.cc:37 | InsideWithFirstLine | behaviour | formalized | `layoutListItem_insideWithFirstLine` | CSS Lists 3 §3.1 & CSS Pseudo 4 §7.1: Inside list marker retains single child under ::first-line |
 | list/list_marker_test.cc:51 | FallbackToTextWhenImagesDisable | behaviour | formalized | `listMarker_fallbackToTextWhenImagesDisable` | CSS Lists 3 §3.2: Image marker falls back to text when images are disabled |
 | list/list_marker_test.cc:71 | AddCounterStyle | behaviour | formalized | `listMarker_addCounterStyle` | CSS Counter Styles 3 §2 & §3.1.2: Adding scoped @counter-style rules |

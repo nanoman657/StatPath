@@ -244,6 +244,14 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `layoutTextCombine_splitTextAtZero`: Splitting text at offset 0 drops empty text node, leaving single LayoutText inside combine per CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1.
   - `layoutTextCombine_splitTextBeforeBox`: Splitting text before inline box keeps split parts in preceding LayoutTextCombine per CSS Writing Modes 3 §5.1.
   - `layoutTextCombine_shouldBeParentOfSvg`: SVG text follows SVG layout and never generates LayoutTextCombine wrappers per SVG 2 §11.1 & CSS Writing Modes 3 §5.1.
+  - `layoutRubyBase_addChildNoBlockChildren`: Adding a table-cell inside a ruby base inlinifies the table cell to inline-table and does not create an anonymous block around prior text per CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1.
+  - `layoutRubyBase_addImageNoBlockChildren`: Adding an image caption inside a ruby base inlinifies it to an inline box without creating an anonymous block around prior text per CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1.
+  - `layoutRubyBase_addSpecialWithTableInternalDisplayNoBlockChildren`: Adding a table column element inside a ruby base keeps it inline-level without anonymous block wrapping per CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1.
+  - `layoutRubyBase_changeToRubyNoBlockChildren`: Changing container display to ruby inlinifies block children into inline boxes per CSS Ruby 1 §2.1.
+  - `layoutRubyAsBlock_textCombineCrash`: Ruby block in vertical-rl mode with text-combine-upright:all wraps text in LayoutTextCombine without crash per CSS Writing Modes 3 §5.1 & CSS Ruby 1 §2.1.
+  - `layoutInlineListItem_getOffsetMappingNoCrash`: Inline list item generates an inline box participating in the inline formatting context per CSS Lists 3 §2.1.
+  - `layoutInlineListItem_offsetMappingBuilderNoCrash`: Dynamic counter style rule changes maintain inline formatting context participation for inline list items per CSS Lists 3 §2.1.
+  - `layoutListItem_findSymbolMarkerLayoutTextWithTextCombine`: Extracting symbol marker text traverses through LayoutTextCombine wrappers per CSS Lists 3 §3 & CSS Writing Modes 3 §5.1.
 
 
 

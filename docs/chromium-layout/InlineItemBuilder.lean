@@ -514,4 +514,19 @@ def isGeneratedPseudoText (hasDomNode : Bool) (transformedLen : Nat) : Bool :=
 theorem isGeneratedPseudoText_pseudo (len : Nat) :
     isGeneratedPseudoText false (len + 1) = true := rfl
 
+-- CSS Lists 3 §2.1: Inline List Item Display
+/-- CSS Lists 3 §2.1: Whether a display property specifies an inline list item.
+    An element with display: inline list-item generates an inline box that participates
+    in the surrounding inline formatting context. -/
+def isInlineListItem (display : String) : Bool :=
+  display == "inline list-item"
+
+/-- CSS Lists 3 §2.1 Law: "inline list-item" evaluates to true for all inputs matching the literal. -/
+theorem isInlineListItem_literal :
+    isInlineListItem "inline list-item" = true := rfl
+
+/-- CSS Lists 3 §2.1 Law: Empty display string is not inline list item. -/
+theorem isInlineListItem_empty :
+    isInlineListItem "" = false := rfl
+
 end ChromiumLayout
