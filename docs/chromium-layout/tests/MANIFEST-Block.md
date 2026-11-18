@@ -26,10 +26,10 @@ checks every row against the pinned sources and the Lean modules.
 | file:line | test | class | status | evidence / reason |
 |---|---|---|---|---|
 | block_layout_algorithm_test.cc:90 | BlockLayoutAlgorithmTest.FixedSize | geometry | formalized | `TestsBlock.FixedSize_size` |
-| block_layout_algorithm_test.cc:106 | BlockLayoutAlgorithmTest.Caching | behaviour | formalized | `TestsBlock_ResultCaching.blockCaching`, `BlockResultCache.checkSizeAndQuirksCache`, `BlockResultCache.checkSizeAndQuirksCache_dirty` (opened layout_utils.cc to resolve CalculateSizeBasedLayoutCacheStatus) |
-| block_layout_algorithm_test.cc:166 | BlockLayoutAlgorithmTest.MinInlineSizeCaching | behaviour | formalized | `TestsBlock_ResultCaching.minInlineSizeCaching`, `BlockResultCache.checkSizeAndQuirksCache` |
-| block_layout_algorithm_test.cc:216 | BlockLayoutAlgorithmTest.PercentageBlockSizeQuirkDescendantsCaching | behaviour | formalized | `TestsBlock_ResultCaching.percentageBlockSizeQuirkDescendantsCaching`, `BlockResultCache.checkSizeAndQuirksCache` |
-| block_layout_algorithm_test.cc:310 | BlockLayoutAlgorithmTest.LineOffsetCaching | behaviour | formalized | `TestsBlock_ResultCaching.lineOffsetCaching`, `BlockResultCache.checkBfcCache` |
+| block_layout_algorithm_test.cc:106 | BlockLayoutAlgorithmTest.Caching | behaviour | blocked | engine service, parked |
+| block_layout_algorithm_test.cc:166 | BlockLayoutAlgorithmTest.MinInlineSizeCaching | behaviour | blocked | engine service, parked |
+| block_layout_algorithm_test.cc:216 | BlockLayoutAlgorithmTest.PercentageBlockSizeQuirkDescendantsCaching | behaviour | blocked | engine service, parked |
+| block_layout_algorithm_test.cc:310 | BlockLayoutAlgorithmTest.LineOffsetCaching | behaviour | blocked | engine service, parked |
 | block_layout_algorithm_test.cc:341 | BlockLayoutAlgorithmTest.LayoutBlockChildren | geometry | formalized | `TestsBlock.LayoutBlockChildren_container`, `TestsBlock.LayoutBlockChildren_children` |
 | block_layout_algorithm_test.cc:380 | BlockLayoutAlgorithmTest.LayoutBlockChildrenWithWritingMode | geometry | formalized | `TestsBlock.LayoutBlockChildrenWithWritingMode_vectors` |
 | block_layout_algorithm_test.cc:418 | BlockLayoutAlgorithmTest.CollapsingMarginsCase1WithFloats | geometry | formalized | `TestsBlock.CollapsingMarginsCase1WithFloats_vectors` |
@@ -573,12 +573,12 @@ checks every row against the pinned sources and the Lean modules.
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4191 | GridLanesLayoutAlgorithmTest.PopulateColumnFillAndTrackReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateColumnFillAndTrackReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.placeFillReverse_end_pos` (opened grid_lanes_layout_algorithm.cc to resolve fill-reverse alignment adjustment) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4236 | GridLanesLayoutAlgorithmTest.PopulateRowFillAndTrackReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateRowFillAndTrackReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.orderForFillReverse` (opened grid_lanes_layout_algorithm.cc to resolve fill-reverse alignment adjustment) |
 | grid_lanes/grid_lanes_layout_algorithm_test.cc:4281 | GridLanesLayoutAlgorithmTest.PopulateIndefiniteFillReverseBreakTokenData | geometry | formalized | `TestsBlock_GridLanesItems.populateIndefiniteFillReverseBreakTokenData`, `GridLanesItems.placeFillReverse`, `GridLanesItems.orderForFillReverse` (opened grid_lanes_layout_algorithm.cc to resolve deferred fill-reverse in pre-fragmentation collection) |
-| layout_box_test.cc:45 | LayoutBoxTest.BackgroundIsKnownToBeObscured | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:59 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedChild | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:88 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedGrandChild | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
-| layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | needs LayoutBox background/foreground obscuration paint model |
+| layout_box_test.cc:45 | LayoutBoxTest.BackgroundIsKnownToBeObscured | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:59 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedChild | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:88 | LayoutBoxTest.BackgroundNotObscuredWithCssClippedGrandChild | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
 | layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | formalized | `TestsBlock.TopLeftLocationFlipped_vectors` |
 | layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | formalized | `TestsBlock.TableRowCellTopLeftLocationFlipped_vectors` |
@@ -594,13 +594,13 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowClip_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | formalized | `TestsBlock.VisualOverflowRectWithOverflowClipMargin_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
-| layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | blocked | needs LayoutBox hit-testing model |
-| layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | needs LayoutBox hit-testing model |
+| layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | formalized | `TestsBlock.OverflowRectsContainPaint_vectors`, `BlockOverflow.contain_paint_clips_both` |
 | layout_box_test.cc:769 | LayoutBoxTest.OverflowRectsOverflowHidden | geometry | formalized | `TestsBlock.OverflowRectsOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | formalized | `TestsBlock.SetTextFieldIntrinsicInlineSize_vectors`, `BlockLength.textFieldIntrinsicInlineSize_fixed` |
-| layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
+| layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
 | layout_box_test.cc:934 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbars_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
 | layout_box_test.cc:990 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
@@ -614,14 +614,14 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | geometry | formalized | `TestsBlock.FlexScroll_row`, `TestsBlock.FlexScroll_rtlRow`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1624 | LayoutBoxTest.ThickScrollbarSubpixelSizeMarginNoDirtyLayoutAfterLayout | internal | internal | checks LayoutBox internal flag/crash regression |
 | layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | geometry | blocked | needs LayoutBox geometry model |
-| layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | engine service, parked |
 | layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | formalized | `TestsBlock.VisualOverflowRectIncludingFilters_vectors`, `BlockOverflow.filter_blur_outset_nonneg` |
-| layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
-| layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | blocked | needs LayoutBox layout/overflow invalidation tracking |
+| layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:1732 | LayoutBoxTest.SetNeedsOverflowRecalcFlexBox | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:1755 | LayoutBoxTest.ScrollsWithViewportRelativePosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportRelativePosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
 | layout_box_test.cc:1760 | LayoutBoxTest.ScrollsWithViewportFixedPosition | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPosition_vectors`, `BlockOverflow.fixed_to_view_no_transform` |
 | layout_box_test.cc:1765 | LayoutBoxTest.ScrollsWithViewportFixedPositionInsideTransform | behaviour | formalized | `TestsBlock.ScrollsWithViewportFixedPositionInsideTransform_vectors`, `BlockOverflow.transform_cb_not_fixed_to_view` |
-| layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
+| layout_box_test.cc:1775 | LayoutBoxTest.HitTestResizerWithTextAreaChild | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:1790 | LayoutBoxTest.HitTestResizerStackedWithTextAreaChild | behaviour | blocked | needs LayoutBox hit-testing model |
 | layout_box_test.cc:1805 | LayoutBoxTest.AnchorInFragmentedContainingBlock | geometry | formalized | `TestsBlock.AnchorInFragmentedContainingBlock_vectors`, `OutOfFlowAnchor.find_anchor_matches` |
 | layout_box_test.cc:1849 | LayoutBoxTest.AnchorInInlineContainingBlock | geometry | formalized | `TestsBlock.AnchorInInlineContainingBlock_vectors`, `OutOfFlowAnchor.implicit_anchor_none` |
@@ -640,26 +640,26 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:2143 | LayoutBoxTest.StitchedSizeAfterRelayout | geometry | formalized | `TestsBlock.StitchedSizeAfterRelayout_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2166 | LayoutBoxTest.StitchedSizeRepeatedWhenPrinting | geometry | formalized | `TestsBlock.StitchedSizeRepeatedWhenPrinting_vectors`, `BlockFlow.sliceCount_pos` |
 | layout_box_test.cc:2232 | LayoutBoxBackgroundPaintLocationTest.ContentBoxClipZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2259 | LayoutBoxBackgroundPaintLocationTest.NonLocalImage | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2274 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndColor | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2288 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipPaddingColor | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2306 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipContentColorNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2323 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorNoBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2335 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2349 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorderWithBorderShape | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2365 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorTranslucentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2381 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorDashedBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2395 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2407 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorNonZeroPadding | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2420 | LayoutBoxBackgroundPaintLocationTest.CustomScrollbar | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2438 | LayoutBoxBackgroundPaintLocationTest.TranslucentColorAndTranslucentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
+| layout_box_test.cc:2245 | LayoutBoxBackgroundPaintLocationTest.AttachmentLocalContentBoxClipNonZeroPadding | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2259 | LayoutBoxBackgroundPaintLocationTest.NonLocalImage | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2274 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndColor | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2288 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipPaddingColor | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2306 | LayoutBoxBackgroundPaintLocationTest.LocalImageAndNonLocalClipContentColorNonZeroPadding | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2323 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorNoBorder | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2335 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorder | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2349 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorSolidBorderWithBorderShape | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2365 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorTranslucentBorder | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2381 | LayoutBoxBackgroundPaintLocationTest.BorderBoxClipColorDashedBorder | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2395 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorZeroPadding | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2407 | LayoutBoxBackgroundPaintLocationTest.ContentClipColorNonZeroPadding | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2420 | LayoutBoxBackgroundPaintLocationTest.CustomScrollbar | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2438 | LayoutBoxBackgroundPaintLocationTest.TranslucentColorAndTranslucentBorder | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:2454 | LayoutBoxBackgroundPaintLocationTest.LocalImageTranslucentColorAndTransparentBorder | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2471 | LayoutBoxBackgroundPaintLocationTest.InsetBoxShadow | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2485 | LayoutBoxBackgroundPaintLocationTest.OutsetBoxShadow | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2496 | LayoutBoxBackgroundPaintLocationTest.BorderImage | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2509 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollEnabledForSubscroll | behaviour | blocked | needs LayoutBox background paint location resolution |
-| layout_box_test.cc:2560 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollSupportedForLayoutView | behaviour | blocked | needs LayoutBox background paint location resolution |
+| layout_box_test.cc:2471 | LayoutBoxBackgroundPaintLocationTest.InsetBoxShadow | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2485 | LayoutBoxBackgroundPaintLocationTest.OutsetBoxShadow | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2496 | LayoutBoxBackgroundPaintLocationTest.BorderImage | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2509 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollEnabledForSubscroll | behaviour | blocked | engine service, parked |
+| layout_box_test.cc:2560 | LayoutBoxBackgroundPaintLocationTest.ElasticOverscrollSupportedForLayoutView | behaviour | blocked | engine service, parked |
 | layout_box_model_object_test.cc:48 | LayoutBoxModelObjectTest.LocalCaretRectForEmptyElementVertical | behaviour | formalized | `TestsBlock.LocalCaretRectForEmptyElementVertical_vectors`, `BlockWritingMode.vertical_lr_bar_x` |
 | layout_box_model_object_test.cc:143 | LayoutBoxModelObjectTest.StickyPositionConstraints | behaviour | formalized | `TestsBlock.StickyPositionConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
 | layout_box_model_object_test.cc:184 | LayoutBoxModelObjectTest.StickyPositionVerticalRLConstraints | behaviour | formalized | `TestsBlock.StickyPositionVerticalRLConstraints_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
@@ -813,64 +813,64 @@ checks every row against the pinned sources and the Lean modules.
 | layout_view_test.cc:1263 | LayoutViewHitTestTest.TextAndInputsWithRtlDirection | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:1353 | LayoutViewHitTestTest.TextCombineOneTextNode | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:1399 | LayoutViewHitTestTest.TextCombineTwoTextNodes | behaviour | blocked | model lacks hit testing engine |
-| layout_result_caching_test.cc:51 | LayoutResultCachingTest.HitDifferentExclusionSpace | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentExclusionSpace`, `BlockResultCache.checkBfcCache` (opened layout_utils.cc to resolve MaySkipLayoutWithinBlockFormattingContext) |
-| layout_result_caching_test.cc:84 | LayoutResultCachingTest.HitDifferentBFCOffset | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentBFCOffset`, `BlockResultCache.checkBfcCache`, `BlockResultCache.shiftedExclusionOpportunities` |
-| layout_result_caching_test.cc:144 | LayoutResultCachingTest.HitDifferentBFCOffsetSameMarginStrut | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentBFCOffsetSameMarginStrut`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:170 | LayoutResultCachingTest.MissDescendantAboveBlockStart1 | behaviour | formalized | `TestsBlock_ResultCaching.missDescendantAboveBlockStart1`, `BlockResultCache.checkBfcCache`, `BlockResultCache.checkBfcCache_aboveStart_floats` |
-| layout_result_caching_test.cc:204 | LayoutResultCachingTest.MissDescendantAboveBlockStart2 | behaviour | formalized | `TestsBlock_ResultCaching.missDescendantAboveBlockStart2`, `BlockResultCache.checkBfcCache`, `BlockResultCache.checkBfcCache_aboveStart_floats` |
-| layout_result_caching_test.cc:238 | LayoutResultCachingTest.HitOOFDescendantAboveBlockStart | behaviour | formalized | `TestsBlock_ResultCaching.hitOOFDescendantAboveBlockStart`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:51 | LayoutResultCachingTest.HitDifferentExclusionSpace | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:84 | LayoutResultCachingTest.HitDifferentBFCOffset | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:144 | LayoutResultCachingTest.HitDifferentBFCOffsetSameMarginStrut | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:170 | LayoutResultCachingTest.MissDescendantAboveBlockStart1 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:204 | LayoutResultCachingTest.MissDescendantAboveBlockStart2 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:238 | LayoutResultCachingTest.HitOOFDescendantAboveBlockStart | behaviour | blocked | engine service, parked |
 | layout_result_caching_test.cc:272 | LayoutResultCachingTest.HitLineBoxDescendantAboveBlockStart | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:311 | LayoutResultCachingTest.MissFloatInitiallyIntruding1 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatInitiallyIntruding1`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:343 | LayoutResultCachingTest.MissFloatInitiallyIntruding2 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatInitiallyIntruding2`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:375 | LayoutResultCachingTest.MissFloatWillIntrude1 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatWillIntrude1`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:406 | LayoutResultCachingTest.MissFloatWillIntrude2 | behaviour | formalized | `TestsBlock_ResultCaching.missFloatWillIntrude2`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:437 | LayoutResultCachingTest.HitPushedByFloats1 | behaviour | formalized | `TestsBlock_ResultCaching.hitPushedByFloats1`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:468 | LayoutResultCachingTest.HitPushedByFloats2 | behaviour | formalized | `TestsBlock_ResultCaching.hitPushedByFloats2`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:499 | LayoutResultCachingTest.MissPushedByFloats1 | behaviour | formalized | `TestsBlock_ResultCaching.missPushedByFloats1`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:531 | LayoutResultCachingTest.MissPushedByFloats2 | behaviour | formalized | `TestsBlock_ResultCaching.missPushedByFloats2`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:563 | LayoutResultCachingTest.HitDifferentRareData | behaviour | formalized | `TestsBlock_ResultCaching.hitDifferentRareData`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:311 | LayoutResultCachingTest.MissFloatInitiallyIntruding1 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:343 | LayoutResultCachingTest.MissFloatInitiallyIntruding2 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:375 | LayoutResultCachingTest.MissFloatWillIntrude1 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:406 | LayoutResultCachingTest.MissFloatWillIntrude2 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:437 | LayoutResultCachingTest.HitPushedByFloats1 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:468 | LayoutResultCachingTest.HitPushedByFloats2 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:499 | LayoutResultCachingTest.MissPushedByFloats1 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:531 | LayoutResultCachingTest.MissPushedByFloats2 | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:563 | LayoutResultCachingTest.HitDifferentRareData | behaviour | blocked | engine service, parked |
 | layout_result_caching_test.cc:588 | LayoutResultCachingTest.HitPercentageMinWidth | behaviour | blocked | model lacks incremental layout result caching |
 | layout_result_caching_test.cc:613 | LayoutResultCachingTest.HitFixedMinWidth | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:638 | LayoutResultCachingTest.HitShrinkToFit | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFit`, `BlockResultCache.checkShrinkToFitCache` |
-| layout_result_caching_test.cc:685 | LayoutResultCachingTest.MissShrinkToFit | behaviour | formalized | `TestsBlock_ResultCaching.missShrinkToFit`, `BlockResultCache.checkShrinkToFitCache` |
-| layout_result_caching_test.cc:765 | LayoutResultCachingTest.HitShrinkToFitSameIntrinsicSizes | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFitSameIntrinsicSizes`, `BlockResultCache.checkShrinkToFitCache` |
-| layout_result_caching_test.cc:796 | LayoutResultCachingTest.HitShrinkToFitDifferentParent | behaviour | formalized | `TestsBlock_ResultCaching.hitShrinkToFitDifferentParent`, `BlockResultCache.checkShrinkToFitCache`, `BlockResultCache.checkShrinkToFitCache_same_avail` |
-| layout_result_caching_test.cc:826 | LayoutResultCachingTest.MissQuirksModePercentageBasedChild | behaviour | formalized | `TestsBlock_ResultCaching.missQuirksModePercentageBasedChild`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:856 | LayoutResultCachingTest.HitQuirksModePercentageBasedParentAndChild | behaviour | formalized | `TestsBlock_ResultCaching.hitQuirksModePercentageBasedParentAndChild`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:891 | LayoutResultCachingTest.HitStandardsModePercentageBasedChild | behaviour | formalized | `TestsBlock_ResultCaching.hitStandardsModePercentageBasedChild`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:920 | LayoutResultCachingTest.ChangeTableCellBlockSizeConstrainedness | behaviour | formalized | `TestsBlock_ResultCaching.changeTableCellBlockSizeConstrainedness`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:979 | LayoutResultCachingTest.OptimisticFloatPlacementNoRelayout | behaviour | formalized | `TestsBlock_ResultCaching.optimisticFloatPlacementNoRelayout`, `BlockResultCache.forcedBfcForSelfCollapsing` |
+| layout_result_caching_test.cc:638 | LayoutResultCachingTest.HitShrinkToFit | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:685 | LayoutResultCachingTest.MissShrinkToFit | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:765 | LayoutResultCachingTest.HitShrinkToFitSameIntrinsicSizes | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:796 | LayoutResultCachingTest.HitShrinkToFitDifferentParent | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:826 | LayoutResultCachingTest.MissQuirksModePercentageBasedChild | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:856 | LayoutResultCachingTest.HitQuirksModePercentageBasedParentAndChild | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:891 | LayoutResultCachingTest.HitStandardsModePercentageBasedChild | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:920 | LayoutResultCachingTest.ChangeTableCellBlockSizeConstrainedness | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:979 | LayoutResultCachingTest.OptimisticFloatPlacementNoRelayout | behaviour | blocked | engine service, parked |
 | layout_result_caching_test.cc:1003 | LayoutResultCachingTest.SelfCollapsingShifting | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1078 | LayoutResultCachingTest.ClearancePastAdjoiningFloatsMovement | behaviour | formalized | `TestsBlock_ResultCaching.clearancePastAdjoiningFloatsMovement`, `BlockResultCache.checkBfcCache` |
+| layout_result_caching_test.cc:1078 | LayoutResultCachingTest.ClearancePastAdjoiningFloatsMovement | behaviour | blocked | engine service, parked |
 | layout_result_caching_test.cc:1136 | LayoutResultCachingTest.MarginStrutMovementSelfCollapsing | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:1199 | LayoutResultCachingTest.MarginStrutMovementInFlow | behaviour | formalized | `TestsBlock_ResultCaching.marginStrutMovementInFlow`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:1286 | LayoutResultCachingTest.MarginStrutMovementPercentage | behaviour | formalized | `TestsBlock_ResultCaching.marginStrutMovementPercentage`, `BlockResultCache.checkBfcCache` |
-| layout_result_caching_test.cc:1321 | LayoutResultCachingTest.HitIsFixedBlockSizeIndefinite | behaviour | formalized | `TestsBlock_ResultCaching.hitIsFixedBlockSizeIndefinite`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:1350 | LayoutResultCachingTest.MissIsFixedBlockSizeIndefinite | behaviour | formalized | `TestsBlock_ResultCaching.missIsFixedBlockSizeIndefinite`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:1380 | LayoutResultCachingTest.HitColumnFlexBoxMeasureAndLayout | behaviour | formalized | `TestsBlock_ResultCaching.hitColumnFlexBoxMeasureAndLayout`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1433 | LayoutResultCachingTest.HitRowFlexBoxMeasureAndLayout | behaviour | formalized | `TestsBlock_ResultCaching.hitRowFlexBoxMeasureAndLayout`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1488 | LayoutResultCachingTest.MissFlexReplaced | behaviour | formalized | `TestsBlock_ResultCaching.missFlexReplaced`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:1516 | LayoutResultCachingTest.HitFlexDefiniteChange | behaviour | formalized | `TestsBlock_ResultCaching.hitFlexDefiniteChange`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1539 | LayoutResultCachingTest.HitOrthogonalRoot | behaviour | formalized | `TestsBlock_ResultCaching.hitOrthogonalRoot`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:1562 | LayoutResultCachingTest.SimpleTable | behaviour | formalized | `TestsBlock_ResultCaching.simpleTable`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1592 | LayoutResultCachingTest.MissTableCellMiddleAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellMiddleAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1615 | LayoutResultCachingTest.MissTableCellBottomAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellBottomAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1638 | LayoutResultCachingTest.HitTableCellBaselineAlignment | behaviour | formalized | `TestsBlock_ResultCaching.hitTableCellBaselineAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1661 | LayoutResultCachingTest.MissTableCellBaselineAlignment | behaviour | formalized | `TestsBlock_ResultCaching.missTableCellBaselineAlignment`, `BlockResultCache.checkMeasureLayoutSlot` |
-| layout_result_caching_test.cc:1687 | LayoutResultCachingTest.MissTablePercent | behaviour | formalized | `TestsBlock_ResultCaching.missTablePercent`, `BlockResultCache.checkSizeAndQuirksCache` |
-| layout_result_caching_test.cc:1718 | LayoutResultCachingTest.HitTableRowAdd | behaviour | formalized | `TestsBlock_ResultCaching.hitTableRowAdd`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1739 | LayoutResultCachingTest.MissTableRowAdd | behaviour | formalized | `TestsBlock_ResultCaching.missTableRowAdd`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1760 | LayoutResultCachingTest.HitTableRowRemove | behaviour | formalized | `TestsBlock_ResultCaching.hitTableRowRemove`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1781 | LayoutResultCachingTest.MissTableRowRemove | behaviour | formalized | `TestsBlock_ResultCaching.missTableRowRemove`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1802 | LayoutResultCachingTest.HitTableSectionAdd | behaviour | formalized | `TestsBlock_ResultCaching.hitTableSectionAdd`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1823 | LayoutResultCachingTest.HitTableSectionRemove | behaviour | formalized | `TestsBlock_ResultCaching.hitTableSectionRemove`, `BlockResultCache.checkTableRowSectionCache` |
-| layout_result_caching_test.cc:1844 | LayoutResultCachingTest.FragmentainerSizeChange | behaviour | formalized | `TestsBlock_ResultCaching.fragmentainerSizeChange`, `BlockResultCache.checkFragmentationCache` |
-| layout_result_caching_test.cc:1921 | LayoutResultCachingTest.BlockOffsetChangeInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.blockOffsetChangeInFragmentainer`, `BlockResultCache.checkFragmentationCache`, `BlockResultCache.checkFragmentationCache_overflow` |
-| layout_result_caching_test.cc:1963 | LayoutResultCachingTest.BfcRootBlockOffsetChangeInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.bfcRootBlockOffsetChangeInFragmentainer`, `BlockResultCache.checkFragmentationCache`, `BlockResultCache.checkFragmentationCache_overflow` |
-| layout_result_caching_test.cc:2005 | LayoutResultCachingTest.HitBlockOffsetUnchangedInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.hitBlockOffsetUnchangedInFragmentainer`, `BlockResultCache.checkFragmentationCache` |
-| layout_result_caching_test.cc:2035 | LayoutResultCachingTest.HitNewFormattingContextInFragmentainer | behaviour | formalized | `TestsBlock_ResultCaching.hitNewFormattingContextInFragmentainer`, `BlockResultCache.checkFragmentationCache` |
+| layout_result_caching_test.cc:1199 | LayoutResultCachingTest.MarginStrutMovementInFlow | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1286 | LayoutResultCachingTest.MarginStrutMovementPercentage | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1321 | LayoutResultCachingTest.HitIsFixedBlockSizeIndefinite | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1350 | LayoutResultCachingTest.MissIsFixedBlockSizeIndefinite | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1380 | LayoutResultCachingTest.HitColumnFlexBoxMeasureAndLayout | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1433 | LayoutResultCachingTest.HitRowFlexBoxMeasureAndLayout | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1488 | LayoutResultCachingTest.MissFlexReplaced | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1516 | LayoutResultCachingTest.HitFlexDefiniteChange | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1539 | LayoutResultCachingTest.HitOrthogonalRoot | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1562 | LayoutResultCachingTest.SimpleTable | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1592 | LayoutResultCachingTest.MissTableCellMiddleAlignment | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1615 | LayoutResultCachingTest.MissTableCellBottomAlignment | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1638 | LayoutResultCachingTest.HitTableCellBaselineAlignment | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1661 | LayoutResultCachingTest.MissTableCellBaselineAlignment | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1687 | LayoutResultCachingTest.MissTablePercent | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1718 | LayoutResultCachingTest.HitTableRowAdd | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1739 | LayoutResultCachingTest.MissTableRowAdd | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1760 | LayoutResultCachingTest.HitTableRowRemove | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1781 | LayoutResultCachingTest.MissTableRowRemove | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1802 | LayoutResultCachingTest.HitTableSectionAdd | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1823 | LayoutResultCachingTest.HitTableSectionRemove | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1844 | LayoutResultCachingTest.FragmentainerSizeChange | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1921 | LayoutResultCachingTest.BlockOffsetChangeInFragmentainer | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:1963 | LayoutResultCachingTest.BfcRootBlockOffsetChangeInFragmentainer | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:2005 | LayoutResultCachingTest.HitBlockOffsetUnchangedInFragmentainer | behaviour | blocked | engine service, parked |
+| layout_result_caching_test.cc:2035 | LayoutResultCachingTest.HitNewFormattingContextInFragmentainer | behaviour | blocked | engine service, parked |
 | layout_result_caching_test.cc:2066 | LayoutResultCachingTest.MissMonolithicChangeInFragmentainer | behaviour | blocked | model lacks incremental layout result caching |
-| layout_result_caching_test.cc:2092 | LayoutResultCachingTest.MissGridIncorrectIntrinsicSize | behaviour | formalized | `TestsBlock_ResultCaching.missGridIncorrectIntrinsicSize`, `BlockResultCache.checkSizeAndQuirksCache` |
+| layout_result_caching_test.cc:2092 | LayoutResultCachingTest.MissGridIncorrectIntrinsicSize | behaviour | blocked | engine service, parked |
 | ink_overflow_test.cc:30 | InkOverflowTest.Empty | internal | internal | Blink InkOverflow union struct compaction check |
 | ink_overflow_test.cc:118 | RectDataTest.Self | internal | internal | Blink InkOverflow union struct compaction check |
 | ink_overflow_test.cc:129 | RectDataTest.Contents | internal | internal | Blink InkOverflow union struct compaction check |
