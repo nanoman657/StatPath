@@ -145,6 +145,84 @@ theorem rel_loc_eq_inflow_add (c : ContainerBox) (cw ch ow oh rl rt : Nat) :
     (ix + rl, iy + rt) := by
   rfl
 
+
+/-- Bounding-box union of two non-empty physical rectangles `(x, y, w, h)`
+    for visual overflow propagation (`layout_box_test.cc:670`).
+    CSS Overflow Module Level 3 §2.1 (Ink Overflow). -/
+def rectUnion (r1 r2 : Int × Int × Int × Int) : Int × Int × Int × Int :=
+  let (x1, y1, w1, h1) := r1
+  let (x2, y2, w2, h2) := r2
+  let minX := min x1 x2
+  let minY := min y1 y2
+  let maxX := max (x1 + w1) (x2 + w2)
+  let maxY := max (y1 + h1) (y2 + h2)
+  (minX, minY, maxX - minX, maxY - minY)
+
+/-- Shift a physical rectangle by `(dx, dy)` (`layout_box_test.cc:670`).
+    CSS Overflow Module Level 3 §2.1, CSS Writing Modes Level 3 §6.4. -/
+def offsetRect (dx dy : Int) (r : Int × Int × Int × Int) : Int × Int × Int × Int :=
+  let (x, y, w, h) := r
+  (x + dx, y + dy, w, h)
+
+/-- Law: Bounding-box union of two physical rectangles is commutative.
+    CSS Overflow Module Level 3 §2.1. -/
+theorem rectUnion_comm (r1 r2 : Int × Int × Int × Int) :
+    rectUnion r1 r2 = rectUnion r2 r1 := by
+  rcases r1 with ⟨x1, y1, w1, h1⟩
+  rcases r2 with ⟨x2, y2, w2, h2⟩
+  simp only [rectUnion, Prod.mk.injEq]
+  refine ⟨by omega, by omega, by omega, by omega⟩
+
+/-- Map a local rectangle `(rx, ry, rw, rh)` to an ancestor's coordinate space
+    across a chain of intermediate/target scrollers with scroll offsets
+    `scrollOffsets : List (Int × Int)` (`layout_object_test.cc:1593`, `:1619`, `:1642`, `:1676`).
+    When `ignoreScrollOffset = true`, scroll offsets along the chain are not subtracted.
+    CSS Overflow Module Level 3 §2.2, CSSOM View Module §5. -/
+def localToAncestorRect (rx ry rw rh inFlowX inFlowY : Int)
+    (scrollOffsets : List (Int × Int)) (ignoreScrollOffset : Bool) :
+    Int × Int × Int × Int :=
+  let (sx, sy) : Int × Int :=
+    if ignoreScrollOffset then (0, 0)
+    else scrollOffsets.foldl (fun (ax, ay) (dx, dy) => (ax + dx, ay + dy)) ((0 : Int), (0 : Int))
+  (rx + inFlowX - sx, ry + inFlowY - sy, rw, rh)
+
+/-- Law: Mapping a local rectangle to an ancestor preserves its width and height.
+    CSSOM View Module §5. -/
+theorem localToAncestor_size (rx ry rw rh ix iy : Int)
+    (scrolls : List (Int × Int)) (ign : Bool) :
+    (localToAncestorRect rx ry rw rh ix iy scrolls ign).2.2 = (rw, rh) := by
+  rfl
+
+/-- Compute the 4 fragment bounding quads `(x, y, w, h)` of a block of height
+    `targetH` inside an inner 2-column multicol (height `innerH`, leading sibling
+    `innerLeadH`) nested inside an outer 2-column multicol (at `(outerX, outerY)`,
+    width `outerW`, height `outerColH`, leading sibling `outerLeadH`), mapped to
+    an ancestor with offset `(ancOffX, ancOffY)` and scroll `scrolls`
+    (`layout_object_test.cc:1983`).
+    CSS Multi-column Layout Level 1 §2, §5; CSS Fragmentation Level 3 §3.1. -/
+def nestedMulticolQuads
+    (outerX outerY outerW outerColH outerLeadH innerH innerLeadH targetH : Int)
+    (ancOffX ancOffY : Int) (scrolls : List (Int × Int)) (ignoreScroll : Bool) :
+    List (Int × Int × Int × Int) :=
+  let outerColW := outerW / 2
+  let innerColW := outerColW / 2
+  let innerH0 := min innerH (outerColH - outerLeadH)
+  let innerH1 := innerH - innerH0
+  let s0 := min targetH (innerH0 - innerLeadH)
+  let rem1 := targetH - s0
+  let s1 := min rem1 innerH0
+  let rem2 := rem1 - s1
+  let s2 := min rem2 innerH1
+  let s3 := min (rem2 - s2) innerH1
+  let raw := [
+    (outerX, outerY + outerLeadH + innerLeadH, innerColW, s0),
+    (outerX + innerColW, outerY + outerLeadH, innerColW, s1),
+    (outerX + outerColW, outerY, innerColW, s2),
+    (outerX + outerColW + innerColW, outerY, innerColW, s3)
+  ]
+  raw.map (fun (qx, qy, qw, qh) =>
+    localToAncestorRect qx qy qw qh ancOffX ancOffY scrolls ignoreScroll)
+
 end BlockScroll
 
 namespace BlockFlow

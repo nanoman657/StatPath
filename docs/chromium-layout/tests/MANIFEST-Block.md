@@ -579,10 +579,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | engine service, parked |
-| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | hollow: ancestor chain supplied as input, no derivation from CSS; needs real containing-block tree |
 | layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | formalized | `TestsBlock.TopLeftLocationFlipped_vectors` |
 | layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | formalized | `TestsBlock.TableRowCellTopLeftLocationFlipped_vectors` |
-| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | needs LayoutBox physical location resolution under scrollbars/writing modes |
+| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | hollow: ancestor chain supplied as input, no derivation from CSS; needs real containing-block tree |
 | layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | formalized | `TestsBlock.ControlClip_vectors`, `BlockOverflow.control_clip_rect_bounds` |
 | layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
@@ -593,7 +593,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:572 | LayoutBoxTest.VisualOverflowRectOverflowHidden | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowHidden_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:587 | LayoutBoxTest.VisualOverflowRectOverflowClip | geometry | formalized | `TestsBlock.VisualOverflowRectOverflowClip_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
 | layout_box_test.cc:623 | LayoutBoxTest.VisualOverflowRectWithOverflowClipMargin | geometry | formalized | `TestsBlock.VisualOverflowRectWithOverflowClipMargin_vectors`, `BlockOverflow.visual_overflow_clipped_le_bound` |
-| layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:670 | LayoutBoxTest.ContentsVisualOverflowPropagation | geometry | formalized | `TestsBlock.ContentsVisualOverflowPropagation_vectors`, `BlockScroll.rectUnion`, `BlockScroll.rectUnion_comm` |
 | layout_box_test.cc:717 | LayoutBoxTest.HitTestOverflowClipMargin | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:737 | LayoutBoxTest.HitTestContainPaint | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:751 | LayoutBoxTest.OverflowRectsContainPaint | geometry | formalized | `TestsBlock.OverflowRectsContainPaint_vectors`, `BlockOverflow.contain_paint_clips_both` |
@@ -601,7 +601,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:787 | LayoutBoxTest.SetTextFieldIntrinsicInlineSize | geometry | formalized | `TestsBlock.SetTextFieldIntrinsicInlineSize_vectors`, `BlockLength.textFieldIntrinsicInlineSize_fixed` |
 | layout_box_test.cc:816 | LayoutBoxTest.DelayedInvalidation | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:849 | LayoutBoxTest.DelayedInvalidationLayoutViewScrolled | behaviour | blocked | engine service, parked |
-| layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |
+| layout_box_test.cc:891 | LayoutBoxTest.MarkerContainerScrollableOverflowRect | geometry | blocked | hollow: only a weak bound (>=50), not the test value; needs marker/line baseline model |
 | layout_box_test.cc:934 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbars_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
 | layout_box_test.cc:990 | LayoutBoxTest.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes | geometry | formalized | `TestsBlock.LocationOfAbsoluteChildWithContainerScrollbarsDifferentWritingModes_vectors`, `BlockScroll.abs_loc_eq_origin_add` |
 | layout_box_test.cc:1039 | LayoutBoxTest.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars | geometry | formalized | `TestsBlock.LocationOfAbsoluteAutoTopLeftChildWithContainerScrollbars_vectors`, `BlockScroll.scrollbar_left_zero` |
@@ -613,7 +613,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:1405 | LayoutBoxTest.GeometriesWithScrollbarsNonScrollable | geometry | formalized | `TestsBlock.FlexScroll_nonScrollable`, `FlexScroll.no_overflow_zero_scroll`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1500 | LayoutBoxTest.GeometriesWithScrollbarsScrollable | geometry | formalized | `TestsBlock.FlexScroll_row`, `TestsBlock.FlexScroll_rtlRow`, `FlexScroll.layout` (CSS Overflow 3 §2.2, §2.3) |
 | layout_box_test.cc:1624 | LayoutBoxTest.ThickScrollbarSubpixelSizeMarginNoDirtyLayoutAfterLayout | internal | internal | checks LayoutBox internal flag/crash regression |
-| layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | geometry | blocked | needs LayoutBox geometry model |
+| layout_box_test.cc:1652 | LayoutBoxTest.MenuListIntrinsicBlockSize | internal | internal | crash regression test for content-visibility: hidden select menu list (crbug.com/1108270) |
 | layout_box_test.cc:1664 | LayoutBoxTest.HasReflection | geometry | blocked | engine service, parked |
 | layout_box_test.cc:1693 | LayoutBoxTest.VisualOverflowRectIncludingFilters | geometry | formalized | `TestsBlock.VisualOverflowRectIncludingFilters_vectors`, `BlockOverflow.filter_blur_outset_nonneg` |
 | layout_box_test.cc:1709 | LayoutBoxTest.SetNeedsOverflowRecalcLayoutBox | behaviour | blocked | engine service, parked |
@@ -671,7 +671,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_model_object_test.cc:440 | LayoutBoxModelObjectTest.SingleAxisScrollerPositionStickyUseCount | internal | internal | Blink use counter check |
 | layout_box_model_object_test.cc:490 | LayoutBoxModelObjectTest.NoSingleAxisScrollerPositionStickyUseCountWhenDisabled | internal | internal | Blink use counter check |
 | layout_box_model_object_test.cc:506 | LayoutBoxModelObjectTest.StickyPositionAnonymousContainer | behaviour | formalized | `TestsBlock.StickyPositionAnonymousContainer_vectors`, `BlockSticky.sticky_box_ge_cb_top` |
-| layout_box_model_object_test.cc:540 | LayoutBoxModelObjectTest.StickyPositionTableContainers | behaviour | blocked | model lacks sticky position constraints and dynamic scrolling |
+| layout_box_model_object_test.cc:540 | LayoutBoxModelObjectTest.StickyPositionTableContainers | behaviour | blocked | hollow: per-axis rect just echoes interval inputs; needs sticky constraint derivation from table layout |
 | layout_box_model_object_test.cc:571 | LayoutBoxModelObjectTest.StickyPositionConstraintInvalidation | behaviour | formalized | `TestsBlock.StickyPositionConstraintInvalidation_vectors`, `BlockSticky.sticky_offset_unscrolled` |
 | layout_box_model_object_test.cc:610 | LayoutBoxModelObjectTest.StickyPositionStatusChange | behaviour | formalized | `TestsBlock.StickyPositionStatusChange_vectors`, `BlockSticky.sticky_offset_none` |
 | layout_box_model_object_test.cc:701 | LayoutBoxModelObjectTest.StickyPositionFindsCorrectStickyBoxShiftingAncestor | behaviour | formalized | `TestsBlock.StickyPositionFindsCorrectStickyBoxShiftingAncestor_vectors`, `BlockSticky.sticky_offset_none` |
@@ -767,10 +767,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_object_test.cc:1534 | LayoutObjectTest.ContainValueIsRelayoutBoundary | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1551 | LayoutObjectTest.PerspectiveIsNotParent | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1573 | LayoutObjectTest.PerspectiveWithAnonymousTable | internal | internal | Blink LayoutObject tree/property plumbing check |
-| layout_object_test.cc:1593 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScroll | behaviour | blocked | model lacks coordinate mapping across scroll containers |
-| layout_object_test.cc:1619 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScroll | behaviour | blocked | model lacks coordinate mapping across scroll containers |
-| layout_object_test.cc:1642 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller | behaviour | blocked | model lacks coordinate mapping across scroll containers |
-| layout_object_test.cc:1676 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller | behaviour | blocked | model lacks coordinate mapping across scroll containers |
+| layout_object_test.cc:1593 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScroll | behaviour | formalized | `TestsBlock.LocalToAncestoRectIgnoreAncestorScroll_vectors`, `BlockScroll.localToAncestorRect`, `BlockScroll.localToAncestor_size` |
+| layout_object_test.cc:1619 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScroll | behaviour | formalized | `TestsBlock.LocalToAncestoRectViewIgnoreAncestorScroll_vectors`, `BlockScroll.localToAncestorRect`, `BlockScroll.localToAncestor_size` |
+| layout_object_test.cc:1642 | LayoutObjectTest.LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller | behaviour | formalized | `TestsBlock.LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller_vectors`, `BlockScroll.localToAncestorRect`, `BlockScroll.localToAncestor_size` |
+| layout_object_test.cc:1676 | LayoutObjectTest.LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller | behaviour | formalized | `TestsBlock.LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller_vectors`, `BlockScroll.localToAncestorRect`, `BlockScroll.localToAncestor_size` |
 | layout_object_test.cc:1708 | LayoutObjectTest.SetNeedsCollectInlinesForSvgText | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1724 | LayoutObjectTest.SetNeedsCollectInlinesForSvgInline | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1737 | LayoutObjectTest.RemovePendingTransformUpdatesCorrectly | internal | internal | Blink LayoutObject tree/property plumbing check |
@@ -779,7 +779,7 @@ checks every row against the pinned sources and the Lean modules.
 | layout_object_test.cc:1887 | LayoutObjectTest.ContainingScrollContainer | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1927 | LayoutObjectTest.ContainingScrollContainerSingleAxis | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:1946 | LayoutObjectTest.ScrollOffsetMapping | behaviour | blocked | model lacks scroll offset coordinate mapping |
-| layout_object_test.cc:1983 | LayoutObjectTest.QuadsInAncestor_Block | behaviour | blocked | model lacks nested multicolumn coordinate mapping |
+| layout_object_test.cc:1983 | LayoutObjectTest.QuadsInAncestor_Block | behaviour | formalized | `TestsBlock.QuadsInAncestor_Block_vectors`, `BlockScroll.nestedMulticolQuads`, `BlockScroll.localToAncestor_size` |
 | layout_object_test.cc:2044 | LayoutObjectTest.QuadsInAncestor_Inline | behaviour | blocked | inline lane (model lacks inline text line quad mapping) |
 | layout_object_test.cc:2099 | LayoutObjectTest.GeneratingNode | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:2166 | LayoutObjectTest.NoEllipsisForAnonymousBlockWithNonBlockParent | behaviour | blocked | model lacks text-overflow ellipsis |

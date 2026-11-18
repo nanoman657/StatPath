@@ -417,5 +417,58 @@ theorem LocationOfFloatLeftChildWithContainerScrollbars_vectors :
     rtl_vrl = (325, 134) := by
   decide
 
+-- layout_box_test.cc:670: ContentsVisualOverflowPropagation
+theorem ContentsVisualOverflowPropagation_vectors :
+    let selfRect : Int × Int × Int × Int := (0, 0, 100, 100)
+    let cContents : Int × Int × Int × Int := (-10, 20, 100, 100)
+    let cVis := rectUnion selfRect cContents
+    let dContents : Int × Int × Int × Int := (10, 20, 100, 100)
+    let dVis := rectUnion selfRect dContents
+    let bContents := rectUnion (offsetRect (-30) 40 cVis) (offsetRect (-130) 40 dVis)
+    let bVis := rectUnion selfRect bContents
+    let aContents := offsetRect 60 50 bVis
+    let aVis := rectUnion selfRect aContents
+    cVis = (-10, 0, 110, 120) ∧
+    dVis = (0, 0, 110, 120) ∧
+    bContents = (-130, 40, 200, 120) ∧
+    bVis = (-130, 0, 230, 160) ∧
+    aContents = (-70, 50, 230, 160) ∧
+    aVis = (-70, 0, 230, 210) := by
+  decide
+
+-- layout_object_test.cc:1593: LocalToAncestoRectIgnoreAncestorScroll
+theorem LocalToAncestoRectIgnoreAncestorScroll_vectors :
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100)] true = (0, 2000, 100, 100) ∧
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100)] false = (0, 1900, 100, 100) := by
+  decide
+
+-- layout_object_test.cc:1619: LocalToAncestoRectViewIgnoreAncestorScroll
+theorem LocalToAncestoRectViewIgnoreAncestorScroll_vectors :
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100)] true = (0, 2000, 100, 100) ∧
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100)] false = (0, 1900, 100, 100) := by
+  decide
+
+-- layout_object_test.cc:1642: LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller
+theorem LocalToAncestoRectIgnoreAncestorScrollIntermediateScroller_vectors :
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100), (0, 100)] true = (0, 2000, 100, 100) ∧
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100), (0, 100)] false = (0, 1800, 100, 100) := by
+  decide
+
+-- layout_object_test.cc:1676: LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller
+theorem LocalToAncestoRectViewIgnoreAncestorScrollIntermediateScroller_vectors :
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100), (0, 100)] true = (0, 2000, 100, 100) ∧
+    localToAncestorRect 0 0 100 100 0 2000 [(0, 100), (0, 100)] false = (0, 1800, 100, 100) := by
+  decide
+
+-- layout_object_test.cc:1983: QuadsInAncestor_Block
+theorem QuadsInAncestor_Block_vectors :
+    nestedMulticolQuads 100 200 200 200 150 90 20 130 0 0 [] false =
+      [(100, 370, 50, 30), (150, 350, 50, 50), (200, 200, 50, 40), (250, 200, 50, 10)] ∧
+    nestedMulticolQuads 100 200 200 200 150 90 20 130 10 20 [(110, 220)] false =
+      [(0, 170, 50, 30), (50, 150, 50, 50), (100, 0, 50, 40), (150, 0, 50, 10)] ∧
+    nestedMulticolQuads 100 200 200 200 150 90 20 130 10 20 [(110, 220)] true =
+      [(110, 390, 50, 30), (160, 370, 50, 50), (210, 220, 50, 40), (260, 220, 50, 10)] := by
+  decide
+
 end TestsBlock
 end ChromiumLayout
