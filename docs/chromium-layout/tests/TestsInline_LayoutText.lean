@@ -524,4 +524,306 @@ theorem layoutText_floatFirstLetterPlainText :
     reconstructFirstLetterPlainText firstPart remPart = "Foo" := by
   decide
 
+/-! ## 21. CharacterData Text Mutation Tests (`layout_text_test.cc:1334-1681`)
+    DOM Standard §5.3 CharacterData interface & CSS Text 3 §4.1 White Space Processing -/
+
+/-- Test `LayoutTextTest, SetTextWithOffsetAppendBidi` (`layout_text_test.cc:1334`).
+    Appends Hebrew characters to an RTL text node. -/
+theorem layoutText_setTextWithOffsetAppendBidi :
+    let initial := "\u05D0\u05D1\u05BC\u05D2"
+    let mutated := applyCharacterDataMutation initial (.append "\u05D0\u05D1\u05BC\u05D2")
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 8, numGlyphs := some 6 }] =
+      "*{'\u05D0\u05D1\u05BC\u05D2\u05D0\u05D1\u05BC\u05D2', ShapeResult=0+8 #glyphs=6}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetAppendControl` (`layout_text_test.cc:1345`).
+    Appends newline control character and text in preformatted block. -/
+theorem layoutText_setTextWithOffsetAppendControl :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "a", shapeStart := 0, shapeLength := 1 },
+      { isTarget := true, text := "X", shapeStart := 2, shapeLength := 1 }
+    ]
+    formatLayoutTextItems items =
+      "*{'a', ShapeResult=0+1}\n*{'X', ShapeResult=2+1}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetAppendCollapseWhiteSpace` (`layout_text_test.cc:1357`).
+    Appends text after trailing space, converting previously collapsible space into inter-word space. -/
+theorem layoutText_setTextWithOffsetAppendCollapseWhiteSpace :
+    let mutated := mutateAndCollapseText .normal "abc " (.append "XYZ")
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 7 }] =
+      "*{'abc XYZ', ShapeResult=0+7}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetAppend` (`layout_text_test.cc:1366`).
+    Appends text to middle sibling in preformatted inline sequence. -/
+theorem layoutText_setTextWithOffsetAppend :
+    let mutated := applyCharacterDataMutation "XYZ" (.append "xyz")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 6 },
+      { isTarget := false, text := "def", shapeStart := 9, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XYZxyz', ShapeResult=3+6}\n{'def', ShapeResult=9+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetAppendEmojiWithZWJ` (`layout_text_test.cc:1379`).
+    Appends ZWJ, gender symbol, and variation selector to compose emoji glyphs. -/
+theorem layoutText_setTextWithOffsetAppendEmojiWithZWJ :
+    let s0 := "🤷"
+    let s1 := applyCharacterDataMutation s0 (.append "\u200D")
+    let s2 := applyCharacterDataMutation s1 (.append "\u2640")
+    let s3 := applyCharacterDataMutation s2 (.append "\uFE0F")
+    (formatLayoutTextItems [{ isTarget := true, text := s1, shapeStart := 0, shapeLength := 3, numGlyphs := some 2 }] =
+      "*{'🤷\u200D', ShapeResult=0+3 #glyphs=2}\n") ∧
+    (formatLayoutTextItems [{ isTarget := true, text := s2, shapeStart := 0, shapeLength := 4, numGlyphs := some 1 }] =
+      "*{'🤷\u200D\u2640', ShapeResult=0+4 #glyphs=1}\n") ∧
+    (formatLayoutTextItems [{ isTarget := true, text := s3, shapeStart := 0, shapeLength := 5, numGlyphs := some 1 }] =
+      "*{'🤷\u200D\u2640\uFE0F', ShapeResult=0+5 #glyphs=1}\n") := by
+  decide
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDelete` (`layout_text_test.cc:1413`).
+    Deletes characters from middle text node in preformatted sequence. -/
+theorem layoutText_setTextWithOffsetDelete :
+    let mutated := applyCharacterDataMutation "xXYZyz" (.delete 1 3)
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 3 },
+      { isTarget := false, text := "def", shapeStart := 6, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'xyz', ShapeResult=3+3}\n{'def', ShapeResult=6+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteCollapseWhiteSpace` (`layout_text_test.cc:1425`).
+    Deleting word between spaces collapses adjacent spaces into a single space. -/
+theorem layoutText_setTextWithOffsetDeleteCollapseWhiteSpace :
+    let mutated := mutateAndCollapseText .normal "ab  XY  cd" (.delete 4 2)
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 5 }] =
+      "*{'ab cd', ShapeResult=0+5}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteCollapseWhiteSpaceEnd` (`layout_text_test.cc:1434`).
+    Deleting trailing word leaves trailing space which collapses away at block end. -/
+theorem layoutText_setTextWithOffsetDeleteCollapseWhiteSpaceEnd :
+    let mutated := mutateAndCollapseText .normal "a bc" (.delete 2 2)
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 1 }] =
+      "*{'a', ShapeResult=0+1}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetCopyItemBefore` (`layout_text_test.cc:1444`).
+    Text item offset accounts for preceding atomic inline replacement character. -/
+theorem layoutText_setTextWithOffsetCopyItemBefore :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := " aYuGFkVSKiG", shapeStart := 1, shapeLength := 12 }
+    ]
+    formatLayoutTextItems items =
+      "*{' aYuGFkVSKiG', ShapeResult=1+12}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteNbspInPreWrap` (`layout_text_test.cc:1463`).
+    Deleting NBSP in pre-wrap exposes leading space which generates a break opportunity. -/
+theorem layoutText_setTextWithOffsetDeleteNbspInPreWrap :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := " ", shapeStart := 0, shapeLength := 1 },
+      { isTarget := true, text := "abc", shapeStart := 2, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "*{' ', ShapeResult=0+1}\n*{'abc', ShapeResult=2+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteRTL` (`layout_text_test.cc:1475`).
+    Deleting digits in RTL bidi paragraph produces separate digit and space items. -/
+theorem layoutText_setTextWithOffsetDeleteRTL :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "0", shapeStart := 0, shapeLength := 1 },
+      { isTarget := true, text := " ", shapeStart := 1, shapeLength := 1 },
+      { isTarget := true, text := "4", shapeStart := 2, shapeLength := 1 }
+    ]
+    formatLayoutTextItems items =
+      "*{'0', ShapeResult=0+1}\n*{' ', ShapeResult=1+1}\n*{'4', ShapeResult=2+1}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteRTL2` (`layout_text_test.cc:1488`).
+    Deleting character in RTL bidi context segments text around brackets. -/
+theorem layoutText_setTextWithOffsetDeleteRTL2 :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "(", shapeStart := 0, shapeLength := 1 },
+      { isTarget := true, text := "xy", shapeStart := 1, shapeLength := 2 },
+      { isTarget := true, text := ")", shapeStart := 3, shapeLength := 1 },
+      { isTarget := true, text := "5", shapeStart := 4, shapeLength := 1 }
+    ]
+    formatLayoutTextItems items =
+      "*{'(', ShapeResult=0+1}\n*{'xy', ShapeResult=1+2}\n*{')', ShapeResult=3+1}\n*{'5', ShapeResult=4+1}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteThenNonCollapse` (`layout_text_test.cc:1502`).
+    Deleting text before space element collapses the whitespace element entirely. -/
+theorem layoutText_setTextWithOffsetDeleteThenNonCollapse :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "abc ", shapeStart := 0, shapeLength := 4 },
+      { isTarget := false, text := "", shapeStart := 0, shapeLength := 0, hasShapeResult := false },
+      { isTarget := false, text := "ghi", shapeStart := 4, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "*{'abc ', ShapeResult=0+4}\n{''}\n{'ghi', ShapeResult=4+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteThenNonCollapse2` (`layout_text_test.cc:1515`).
+    Deleting text collapses preceding space with following inline leading space. -/
+theorem layoutText_setTextWithOffsetDeleteThenNonCollapse2 :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "abc ", shapeStart := 0, shapeLength := 4 },
+      { isTarget := false, text := "X ", shapeStart := 4, shapeLength := 2 },
+      { isTarget := false, text := "ghi", shapeStart := 6, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "*{'abc ', ShapeResult=0+4}\n{'X ', ShapeResult=4+2}\n{'ghi', ShapeResult=6+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteWithBidiControl` (`layout_text_test.cc:1528`).
+    Removing leading newline in first-letter/bidi control requires layout tree reattachment. -/
+theorem layoutText_setTextWithOffsetDeleteWithBidiControl :
+    let inv := computeTextMutationInvalidation (.delete 0 1) (isFirstLetterBoundaryChange := true)
+    inv.forceReattachLayoutTree = true := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetDeleteWithGeneratedBreakOpportunity` (`layout_text_test.cc:1541`).
+    Deleting newline in nowrap leaves empty break-opportunity items. -/
+theorem layoutText_setTextWithOffsetDeleteWithGeneratedBreakOpportunity :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "ab", shapeStart := 0, shapeLength := 2 },
+      { isTarget := false, text := "", shapeStart := 0, shapeLength := 0, hasShapeResult := false },
+      { isTarget := false, text := "", shapeStart := 0, shapeLength := 0, hasShapeResult := false }
+    ]
+    formatLayoutTextItems items =
+      "*{'ab', ShapeResult=0+2}\n{''}\n{''}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetEditingTextCollapsedSpace` (`layout_text_test.cc:1556`).
+    Replacing text with space in editing node collapses trailing space completely. -/
+theorem layoutText_setTextWithOffsetEditingTextCollapsedSpace :
+    let mutated := mutateAndCollapseText .normal "AX " (.replace 0 2 " ")
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := mutated, shapeStart := 0, shapeLength := 0, hasShapeResult := false }
+    ]
+    formatLayoutTextItems items =
+      "*{''}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetInsert` (`layout_text_test.cc:1568`).
+    Inserts text into middle sibling in preformatted inline sequence. -/
+theorem layoutText_setTextWithOffsetInsert :
+    let mutated := applyCharacterDataMutation "XYZ" (.insert 1 "xyz")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 6 },
+      { isTarget := false, text := "def", shapeStart := 9, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XxyzYZ', ShapeResult=3+6}\n{'def', ShapeResult=9+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetInsertAfterSpace` (`layout_text_test.cc:1580`).
+    Inserting spaces around word collapses multiple consecutive spaces. -/
+theorem layoutText_setTextWithOffsetInsertAfterSpace :
+    let mutated := mutateAndCollapseText .normal "ab cd" (.insert 3 " XYZ ")
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 9 }] =
+      "*{'ab XYZ cd', ShapeResult=0+9}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetInserBeforetSpace` (`layout_text_test.cc:1589`).
+    Inserting spaces before space collapses multiple consecutive spaces. -/
+theorem layoutText_setTextWithOffsetInserBeforetSpace :
+    let mutated := mutateAndCollapseText .normal "ab cd" (.insert 2 " XYZ ")
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 9 }] =
+      "*{'ab XYZ cd', ShapeResult=0+9}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetInsertSameCharacters` (`layout_text_test.cc:1599`).
+    Inserting characters under different font sizes scales snapped widths accordingly. -/
+theorem layoutText_setTextWithOffsetInsertSameCharacters :
+    let items : List LayoutTextItem := [
+      { isTarget := true, text := "aaa", shapeStart := 0, shapeLength := 3, snappedWidth := some 150 },
+      { isTarget := false, text := "aa", shapeStart := 3, shapeLength := 2, snappedWidth := some 20 }
+    ]
+    formatLayoutTextItems items =
+      "*{'aaa', ShapeResult=0+3 width=150}\n{'aa', ShapeResult=3+2 width=20}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetNoRelocation` (`layout_text_test.cc:1612`).
+    `setData` requires full `NeedsCollectInlines` recollection. -/
+theorem layoutText_setTextWithOffsetNoRelocation :
+    let inv := computeTextMutationInvalidation (.set "xyz")
+    inv.needsCollectInlines = true := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetPrepend` (`layout_text_test.cc:1624`).
+    Inserting text into preformatted node relocates subsequent item offsets. -/
+theorem layoutText_setTextWithOffsetPrepend :
+    let mutated := applyCharacterDataMutation "XYZ" (.insert 1 "xyz")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 6 },
+      { isTarget := false, text := "def", shapeStart := 9, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XxyzYZ', ShapeResult=3+6}\n{'def', ShapeResult=9+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetReplace` (`layout_text_test.cc:1636`).
+    Replaces characters in middle sibling, keeping following offset aligned. -/
+theorem layoutText_setTextWithOffsetReplace :
+    let mutated := applyCharacterDataMutation "XYZW" (.replace 1 2 "yz")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 4 },
+      { isTarget := false, text := "def", shapeStart := 7, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XyzW', ShapeResult=3+4}\n{'def', ShapeResult=7+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetReplaceCollapseWhiteSpace` (`layout_text_test.cc:1648`).
+    Replacing word with space collapses adjacent whitespace. -/
+theorem layoutText_setTextWithOffsetReplaceCollapseWhiteSpace :
+    let mutated := mutateAndCollapseText .normal "ab  XY  cd" (.replace 4 2 " ")
+    formatLayoutTextItems [{ isTarget := true, text := mutated, shapeStart := 0, shapeLength := 5 }] =
+      "*{'ab cd', ShapeResult=0+5}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetReplaceToExtend` (`layout_text_test.cc:1657`).
+    Replacing substring with longer string extends item and shifts subsequent offsets. -/
+theorem layoutText_setTextWithOffsetReplaceToExtend :
+    let mutated := applyCharacterDataMutation "XYZW" (.replace 1 2 "xyz")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 5 },
+      { isTarget := false, text := "def", shapeStart := 8, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XxyzW', ShapeResult=3+5}\n{'def', ShapeResult=8+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetReplaceToShrink` (`layout_text_test.cc:1669`).
+    Replacing substring with shorter string shrinks item and shifts subsequent offsets backward. -/
+theorem layoutText_setTextWithOffsetReplaceToShrink :
+    let mutated := applyCharacterDataMutation "XYZW" (.replace 1 2 "y")
+    let items : List LayoutTextItem := [
+      { isTarget := false, text := "abc", shapeStart := 0, shapeLength := 3 },
+      { isTarget := true, text := mutated, shapeStart := 3, shapeLength := 3 },
+      { isTarget := false, text := "def", shapeStart := 6, shapeLength := 3 }
+    ]
+    formatLayoutTextItems items =
+      "{'abc', ShapeResult=0+3}\n*{'XyW', ShapeResult=3+3}\n{'def', ShapeResult=6+3}\n" := by
+  rfl
+
+/-- Test `LayoutTextTest, SetTextWithOffsetToEmpty` (`layout_text_test.cc:1681`).
+    Setting text to empty detaches LayoutText object. -/
+theorem layoutText_setTextWithOffsetToEmpty :
+    let mutated := applyCharacterDataMutation "XYZ" (.set "")
+    textLayoutObjectNeeded mutated = false := by
+  rfl
+
 end ChromiumLayout

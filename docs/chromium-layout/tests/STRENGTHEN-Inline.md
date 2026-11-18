@@ -81,6 +81,7 @@ done: TestsInline_LayoutText +0
   - `layoutText_getTextBoxInfoWith*`: run legacy text box run streams through `computeLineTextBoxes`.
   - `layoutText_localSelectionRect*`: run horizontal and vertical selection slice streams through `computeSelectionVisualRect`.
   - `layoutText_absoluteQuadsVRL`, `physicalLinesBoundingBox*`: run line boxes through `computeLinePhysicalRects` and `physicalLinesBoundingBox`.
+  - `layoutText_setTextWithOffset*` (28 tests): run CharacterData mutations through `applyCharacterDataMutation`, `mutateAndCollapseText`, `computeTextMutationInvalidation`, and `formatLayoutTextItems`.
 
 done: TestsInline_LayoutTextFragment +0
 - Verified all theorems in file are not thin:

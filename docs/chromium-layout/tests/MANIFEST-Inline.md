@@ -525,34 +525,34 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:1253 | LocalSelectionRectLineHeightVertical | geometry | formalized | `layoutText_localSelectionRectLineHeightVertical` | CSS Writing Modes 3 §3.1 & CSS 2.1 §10.8: Custom line-height (50px) expands block axis of vertical selection rects |
 | layout_text_test.cc:1269 | PositionForPointAtLeading | behaviour | blocked | - | Blocked: model lacks LayoutText::PositionForPoint |
 | layout_text_test.cc:1321 | FloatFirstLetterPlainText | behaviour | formalized | `layoutText_floatFirstLetterPlainText` | CSS Pseudo-Elements 4 §2.2: PlainText reconstructs unified string from floating first-letter and remaining parts |
-| layout_text_test.cc:1334 | SetTextWithOffsetAppendBidi | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1345 | SetTextWithOffsetAppendControl | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1357 | SetTextWithOffsetAppendCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1366 | SetTextWithOffsetAppend | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1379 | SetTextWithOffsetAppendEmojiWithZWJ | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1413 | SetTextWithOffsetDelete | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1425 | SetTextWithOffsetDeleteCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1434 | SetTextWithOffsetDeleteCollapseWhiteSpaceEnd | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1444 | SetTextWithOffsetCopyItemBefore | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1463 | SetTextWithOffsetDeleteNbspInPreWrap | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1475 | SetTextWithOffsetDeleteRTL | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1488 | SetTextWithOffsetDeleteRTL2 | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1502 | SetTextWithOffsetDeleteThenNonCollapse | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1515 | SetTextWithOffsetDeleteThenNonCollapse2 | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1528 | SetTextWithOffsetDeleteWithBidiControl | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1541 | SetTextWithOffsetDeleteWithGeneratedBreakOpportunity | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1556 | SetTextWithOffsetEditingTextCollapsedSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1568 | SetTextWithOffsetInsert | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1580 | SetTextWithOffsetInsertAfterSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1589 | SetTextWithOffsetInserBeforetSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1599 | SetTextWithOffsetInsertSameCharacters | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1612 | SetTextWithOffsetNoRelocation | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1624 | SetTextWithOffsetPrepend | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1636 | SetTextWithOffsetReplace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1648 | SetTextWithOffsetReplaceCollapseWhiteSpace | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1657 | SetTextWithOffsetReplaceToExtend | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1669 | SetTextWithOffsetReplaceToShrink | internal | internal | - | Incremental layout mutation and invalidation |
-| layout_text_test.cc:1681 | SetTextWithOffsetToEmpty | internal | internal | - | Incremental layout mutation and invalidation |
+| layout_text_test.cc:1334 | SetTextWithOffsetAppendBidi | behaviour | formalized | `layoutText_setTextWithOffsetAppendBidi` | DOM Standard §5.3 & CSS Text 3 §4.1: Appends Hebrew characters to an RTL text node |
+| layout_text_test.cc:1345 | SetTextWithOffsetAppendControl | behaviour | formalized | `layoutText_setTextWithOffsetAppendControl` | DOM Standard §5.3 & CSS Text 3 §4.1: Appends newline control character and text in preformatted block |
+| layout_text_test.cc:1357 | SetTextWithOffsetAppendCollapseWhiteSpace | behaviour | formalized | `layoutText_setTextWithOffsetAppendCollapseWhiteSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Trailing collapsible space becomes inter-word space on append |
+| layout_text_test.cc:1366 | SetTextWithOffsetAppend | behaviour | formalized | `layoutText_setTextWithOffsetAppend` | DOM Standard §5.3 & CSS Text 3 §4.1: Appends text to middle sibling in preformatted sequence |
+| layout_text_test.cc:1379 | SetTextWithOffsetAppendEmojiWithZWJ | behaviour | formalized | `layoutText_setTextWithOffsetAppendEmojiWithZWJ` | DOM Standard §5.3 & CSS Text 3 §4.1: Appends ZWJ and modifiers to compose emoji glyphs |
+| layout_text_test.cc:1413 | SetTextWithOffsetDelete | behaviour | formalized | `layoutText_setTextWithOffsetDelete` | DOM Standard §5.3 & CSS Text 3 §4.1: Deletes characters from middle text node in preformatted sequence |
+| layout_text_test.cc:1425 | SetTextWithOffsetDeleteCollapseWhiteSpace | behaviour | formalized | `layoutText_setTextWithOffsetDeleteCollapseWhiteSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Deleting word between spaces collapses adjacent whitespace into single space |
+| layout_text_test.cc:1434 | SetTextWithOffsetDeleteCollapseWhiteSpaceEnd | behaviour | formalized | `layoutText_setTextWithOffsetDeleteCollapseWhiteSpaceEnd` | DOM Standard §5.3 & CSS Text 3 §4.1: Deleting trailing word leaves trailing space which collapses away at block end |
+| layout_text_test.cc:1444 | SetTextWithOffsetCopyItemBefore | behaviour | formalized | `layoutText_setTextWithOffsetCopyItemBefore` | DOM Standard §5.3 & CSS Text 3 §4.1: Text item offset accounts for preceding atomic inline character |
+| layout_text_test.cc:1463 | SetTextWithOffsetDeleteNbspInPreWrap | behaviour | formalized | `layoutText_setTextWithOffsetDeleteNbspInPreWrap` | DOM Standard §5.3 & CSS Text 3 §4.1 & §5.1: Deleting NBSP in pre-wrap exposes leading space break opportunity |
+| layout_text_test.cc:1475 | SetTextWithOffsetDeleteRTL | behaviour | formalized | `layoutText_setTextWithOffsetDeleteRTL` | DOM Standard §5.3 & CSS Text 3 §4.1 & UAX #9: Deleting digits in RTL bidi paragraph produces separate digit and space items |
+| layout_text_test.cc:1488 | SetTextWithOffsetDeleteRTL2 | behaviour | formalized | `layoutText_setTextWithOffsetDeleteRTL2` | DOM Standard §5.3 & CSS Text 3 §4.1 & UAX #9: Deleting character in RTL bidi context segments text around brackets |
+| layout_text_test.cc:1502 | SetTextWithOffsetDeleteThenNonCollapse | behaviour | formalized | `layoutText_setTextWithOffsetDeleteThenNonCollapse` | DOM Standard §5.3 & CSS Text 3 §4.1: Deleting text before space element collapses the whitespace element entirely |
+| layout_text_test.cc:1515 | SetTextWithOffsetDeleteThenNonCollapse2 | behaviour | formalized | `layoutText_setTextWithOffsetDeleteThenNonCollapse2` | DOM Standard §5.3 & CSS Text 3 §4.1: Deleting text collapses preceding space with following inline leading space |
+| layout_text_test.cc:1528 | SetTextWithOffsetDeleteWithBidiControl | behaviour | formalized | `layoutText_setTextWithOffsetDeleteWithBidiControl` | DOM Standard §5.3 & CSS Text 3 §4.1: Removing leading newline in first-letter/bidi control requires layout tree reattachment |
+| layout_text_test.cc:1541 | SetTextWithOffsetDeleteWithGeneratedBreakOpportunity | behaviour | formalized | `layoutText_setTextWithOffsetDeleteWithGeneratedBreakOpportunity` | DOM Standard §5.3 & CSS Text 3 §4.1: Deleting newline in nowrap leaves empty break-opportunity items |
+| layout_text_test.cc:1556 | SetTextWithOffsetEditingTextCollapsedSpace | behaviour | formalized | `layoutText_setTextWithOffsetEditingTextCollapsedSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Replacing text with space in editing node collapses trailing space completely |
+| layout_text_test.cc:1568 | SetTextWithOffsetInsert | behaviour | formalized | `layoutText_setTextWithOffsetInsert` | DOM Standard §5.3 & CSS Text 3 §4.1: Inserts text into middle sibling in preformatted inline sequence |
+| layout_text_test.cc:1580 | SetTextWithOffsetInsertAfterSpace | behaviour | formalized | `layoutText_setTextWithOffsetInsertAfterSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Inserting spaces around word collapses multiple consecutive spaces |
+| layout_text_test.cc:1589 | SetTextWithOffsetInserBeforetSpace | behaviour | formalized | `layoutText_setTextWithOffsetInserBeforetSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Inserting spaces before space collapses multiple consecutive spaces |
+| layout_text_test.cc:1599 | SetTextWithOffsetInsertSameCharacters | behaviour | formalized | `layoutText_setTextWithOffsetInsertSameCharacters` | DOM Standard §5.3 & CSS Text 3 §4.1: Inserting characters under different font sizes scales snapped widths accordingly |
+| layout_text_test.cc:1612 | SetTextWithOffsetNoRelocation | behaviour | formalized | `layoutText_setTextWithOffsetNoRelocation` | DOM Standard §5.3 & CSS Text 3 §4.1: setData requires full NeedsCollectInlines recollection |
+| layout_text_test.cc:1624 | SetTextWithOffsetPrepend | behaviour | formalized | `layoutText_setTextWithOffsetPrepend` | DOM Standard §5.3 & CSS Text 3 §4.1: Inserting text into preformatted node relocates subsequent item offsets |
+| layout_text_test.cc:1636 | SetTextWithOffsetReplace | behaviour | formalized | `layoutText_setTextWithOffsetReplace` | DOM Standard §5.3 & CSS Text 3 §4.1: Replaces characters in middle sibling, keeping following offset aligned |
+| layout_text_test.cc:1648 | SetTextWithOffsetReplaceCollapseWhiteSpace | behaviour | formalized | `layoutText_setTextWithOffsetReplaceCollapseWhiteSpace` | DOM Standard §5.3 & CSS Text 3 §4.1: Replacing word with space collapses adjacent whitespace |
+| layout_text_test.cc:1657 | SetTextWithOffsetReplaceToExtend | behaviour | formalized | `layoutText_setTextWithOffsetReplaceToExtend` | DOM Standard §5.3 & CSS Text 3 §4.1: Replacing substring with longer string extends item and shifts subsequent offsets |
+| layout_text_test.cc:1669 | SetTextWithOffsetReplaceToShrink | behaviour | formalized | `layoutText_setTextWithOffsetReplaceToShrink` | DOM Standard §5.3 & CSS Text 3 §4.1: Replacing substring with shorter string shrinks item and shifts subsequent offsets backward |
+| layout_text_test.cc:1681 | SetTextWithOffsetToEmpty | behaviour | formalized | `layoutText_setTextWithOffsetToEmpty` | DOM Standard §5.3 & CSS 2.1 §9.2.2: Setting text to empty detaches LayoutText object |
 | layout_text_test.cc:1694 | TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterInlineAbsolute` | CSS Text 3 §2.1: Preceding inline letter prevents following text from capitalizing |
 | layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterSupplementaryCharacter` | CSS Text 3 §2.1: Preceding supplementary character continues word; following word capitalizes |
 | layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | internal | internal | - | Pseudo element text node presence check |

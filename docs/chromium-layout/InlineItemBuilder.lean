@@ -317,4 +317,135 @@ theorem empty_text_preserves_builder_text (st : BuilderState) (m : WhiteSpaceMod
     (appendBuilderInput st (.text "" m)).text = st.text := by
   rfl
 
+/-! ## 5. DOM CharacterData Mutations and Incremental Invalidation
+    (DOM Standard §5.3, CSS Text 3 §4.1, CSS 2.1 §9.2.2) -/
+
+/-- DOM CharacterData mutation operations (DOM Standard §5.3, CSS Text 3 §4.1). -/
+inductive CharacterDataMutation where
+  | append (data : String)
+  | delete (offset : Nat) (count : Nat)
+  | insert (offset : Nat) (data : String)
+  | replace (offset : Nat) (count : Nat) (data : String)
+  | set (data : String)
+  deriving DecidableEq, Repr
+
+/-- Apply a DOM CharacterData mutation to an input string (DOM Standard §5.3). -/
+def applyCharacterDataMutation (s : String) : CharacterDataMutation → String
+  | .append data => s ++ data
+  | .delete offset count =>
+    let chars := s.toList
+    String.ofList (chars.take offset ++ chars.drop (offset + count))
+  | .insert offset data =>
+    let chars := s.toList
+    String.ofList (chars.take offset ++ data.toList ++ chars.drop offset)
+  | .replace offset count data =>
+    let chars := s.toList
+    String.ofList (chars.take offset ++ data.toList ++ chars.drop (offset + count))
+  | .set data => data
+
+/-- CSS 2.1 §9.2.2 & CSS Text 3 §4.1: Whether a DOM text node generates an inline LayoutObject.
+    An empty text node produces no layout object. -/
+def textLayoutObjectNeeded (text : String) : Bool :=
+  text != ""
+
+/-- CSS Text 3 §4.1 & Blink incremental layout invalidation:
+    `setData` invalidates the entire inline node collection, requiring full recollection.
+    Incremental mutations (`append`, `delete`, `insert`, `replace`) can relocate items. -/
+def mutationNeedsCollectInlines : CharacterDataMutation → Bool
+  | .set _ => true
+  | _ => false
+
+/-- Invalidation status for incremental text mutations (Blink layout_text_test.cc:1528). -/
+structure TextMutationInvalidation where
+  needsCollectInlines : Bool
+  forceReattachLayoutTree : Bool := false
+  deriving DecidableEq, Repr
+
+/-- Compute layout invalidation for DOM text changes
+    (CSS Text 3 §4.1 & Blink layout_text_test.cc:1528, 1612). -/
+def computeTextMutationInvalidation (op : CharacterDataMutation) (isFirstLetterBoundaryChange : Bool := false) :
+    TextMutationInvalidation :=
+  { needsCollectInlines := mutationNeedsCollectInlines op,
+    forceReattachLayoutTree := isFirstLetterBoundaryChange }
+
+/-- Layout text item representation for Blink `GetItemsAsString`
+    (CSS Text 3 §4.1 & Blink layout_text_test.cc:104). -/
+structure LayoutTextItem where
+  isTarget : Bool
+  text : String
+  shapeStart : Nat
+  shapeLength : Nat
+  numGlyphs : Option Nat := none
+  snappedWidth : Option Nat := none
+  hasShapeResult : Bool := true
+  deriving DecidableEq, Repr
+
+/-- Format an inline text item as a string matching Blink `GetItemsAsString`
+    (CSS Text 3 §4.1 & Blink layout_text_test.cc:104). -/
+def formatLayoutTextItem (item : LayoutTextItem) : String :=
+  let pfx := if item.isTarget then "*" else ""
+  let shapeStr :=
+    if !item.hasShapeResult then ""
+    else
+      let glyphStr := match item.numGlyphs with | some g => s!" #glyphs={g}" | none => ""
+      let widthStr := match item.snappedWidth with | some w => s!" width={w}" | none => ""
+      s!", ShapeResult={item.shapeStart}+{item.shapeLength}{glyphStr}{widthStr}"
+  s!"{pfx}{'{'}'{item.text}'{shapeStr}{'}'}\n"
+
+/-- Format a list of inline text items as a string matching Blink `GetItemsAsString`. -/
+def formatLayoutTextItems (items : List LayoutTextItem) : String :=
+  String.join (items.map formatLayoutTextItem)
+
+/-- CSS Text 3 §4.1.1 Phase I: Collapsing and Transformation & DOM Standard §5.3:
+    Mutate a single text node and collapse whitespace. -/
+def mutateAndCollapseText (mode : WhiteSpaceMode) (text : String) (op : CharacterDataMutation) : String :=
+  String.ofList (collapseText mode (applyCharacterDataMutation text op).toList)
+
+/-! ## 6. General Laws for DOM CharacterData Mutations and Invalidation -/
+
+/-- General Law (DOM Standard §5.3):
+    Appending data to string `s` yields `s ++ data`. -/
+theorem applyCharacterDataMutation_append (s data : String) :
+    applyCharacterDataMutation s (.append data) = s ++ data := rfl
+
+/-- General Law (DOM Standard §5.3):
+    Setting data overrides string `s` with `data`. -/
+theorem applyCharacterDataMutation_set (s data : String) :
+    applyCharacterDataMutation s (.set data) = data := rfl
+
+/-- General Law (CSS 2.1 §9.2.2 & CSS Text 3 §4.1):
+    Empty text node does not generate a LayoutObject. -/
+theorem textLayoutObjectNeeded_empty :
+    textLayoutObjectNeeded "" = false := rfl
+
+/-- General Law (CSS Text 3 §4.1):
+    `setData` always sets `needsCollectInlines` for full recollection. -/
+theorem mutationNeedsCollectInlines_set (data : String) :
+    mutationNeedsCollectInlines (.set data) = true := rfl
+
+/-- General Law (CSS Text 3 §4.1):
+    Incremental append does not trigger full recollection. -/
+theorem mutationNeedsCollectInlines_append (data : String) :
+    mutationNeedsCollectInlines (.append data) = false := rfl
+
+/-- General Law (CSS Text 3 §4.1):
+    Incremental delete does not trigger full recollection. -/
+theorem mutationNeedsCollectInlines_delete (off cnt : Nat) :
+    mutationNeedsCollectInlines (.delete off cnt) = false := rfl
+
+/-- General Law (CSS Text 3 §4.1):
+    Incremental insert does not trigger full recollection. -/
+theorem mutationNeedsCollectInlines_insert (off : Nat) (data : String) :
+    mutationNeedsCollectInlines (.insert off data) = false := rfl
+
+/-- General Law (CSS Text 3 §4.1):
+    Incremental replace does not trigger full recollection. -/
+theorem mutationNeedsCollectInlines_replace (off cnt : Nat) (data : String) :
+    mutationNeedsCollectInlines (.replace off cnt data) = false := rfl
+
+/-- General Law:
+    First letter boundary change forces reattachment of the layout tree. -/
+theorem computeTextMutationInvalidation_reattach (op : CharacterDataMutation) :
+    (computeTextMutationInvalidation op true).forceReattachLayoutTree = true := rfl
+
 end ChromiumLayout
