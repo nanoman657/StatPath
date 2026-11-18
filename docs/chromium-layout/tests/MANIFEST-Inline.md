@@ -100,11 +100,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSizesSaturated` | CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax: Extreme size saturates to finite implementation limit |
 | inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
 | inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
-| inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: model lacks layout invalidation tracking |
+| inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | internal | internal | - | Crash regression in OffsetMapping |
 | inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | formalized | `inlineNode_needsCollectInlinesOnStyle` | CSS 2.1 §9.4.2: Font, position, and bidi style changes invalidate ancestors while preserving siblings |
 | inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | formalized | `inlineNode_needsCollectInlinesOnInsert` | CSS 2.1 §9.4.2: Inserting text, span, abspos, or float marks parent and container for inline collection |
-| inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | internal | internal | - | Out of flow button insert |
+| inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | behaviour | formalized | `inlineNode_needsCollectInlinesOnInsertToOutOfFlowButton` | CSS 2.1 §9.4.2 & §9.3: Inserting into an independent out-of-flow button does not invalidate container inlines |
 | inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_needsCollectInlinesOnRemove` | CSS 2.1 §9.4.2: Removing child from parent marks parent and container for inline collection |
 | inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
 | inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
@@ -120,9 +120,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1207 | InvalidateAddFloat | behaviour | formalized | `inlineNode_invalidateAddFloat` | CSS 2.1 §9.5 & §9.4.2: Adding floating child adds single float item (+1 item) |
 | inline/inline_node_test.cc:1224 | InvalidateRemoveFloat | behaviour | formalized | `inlineNode_invalidateRemoveFloat` | CSS 2.1 §9.5 & §9.4.2: Removing floating child marks container for inline collection |
 | inline/inline_node_test.cc:1236 | SpaceRestoredByInsertingWord | behaviour | formalized | `inlineNode_spaceRestoredByInsertingWord` | CSS Text 3 §4.1 & CSS 2.1 §9.4.2: Spaces separated by empty tags collapse, but inserting text inside span restores both spaces |
-| inline/inline_node_test.cc:1251 | RemoveInlineNodeDataIfBlockBecomesEmpty1 | internal | internal | - | Clearing InlineNodeData when container becomes empty |
-| inline/inline_node_test.cc:1262 | RemoveInlineNodeDataIfBlockBecomesEmpty2 | internal | internal | - | Clearing InlineNodeData on innerHTML="" |
-| inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | internal | internal | - | Clearing InlineNodeData when block child added |
+| inline/inline_node_test.cc:1251 | RemoveInlineNodeDataIfBlockBecomesEmpty1 | behaviour | formalized | `inlineNode_removeInlineNodeDataIfBlockBecomesEmpty1` | CSS 2.1 §9.4.2: Removing children so block becomes empty clears its inline formatting context |
+| inline/inline_node_test.cc:1262 | RemoveInlineNodeDataIfBlockBecomesEmpty2 | behaviour | formalized | `inlineNode_removeInlineNodeDataIfBlockBecomesEmpty2` | CSS 2.1 §9.4.2: Setting innerHTML="" so block becomes empty clears its inline formatting context |
+| inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | behaviour | formalized | `inlineNode_removeInlineNodeDataIfBlockObtainsBlockChild` | CSS 2.1 §9.4.2: A block container that obtains an in-flow block child no longer establishes an IFC directly |
 | inline/inline_node_test.cc:1285 | ClearFirstInlineFragmentOnSplitFlow | internal | internal | - | SplitFlow layout tree mutation |
 | inline/inline_node_test.cc:1336 | AddChildToSVGRoot | internal | internal | - | SVG text root element traversal |
 | inline/inline_node_test.cc:1353 | PreservedNewlineWithBidiAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithBidiAndRelayout` | CSS Writing Modes 3 §2.4: Bidi isolate pops before preserved newline and re-enters after |
@@ -133,7 +133,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1414 | CollapsibleSpaceFollowingNewlineWithPreStyle | geometry | formalized | `inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle` | CSS Text 3 §4.1.1: Collapsible space following preserved newline in pre collapses |
 | inline/inline_node_test.cc:1425 | RemoveSegmentBreakFromJapaneseInRelayout | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/inline_node_test.cc:1442 | RemoveSegmentBreakFromJapaneseInRelayout2 | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
-| inline/inline_node_test.cc:1459 | SegmentRanges | behaviour | internal | - | Segment offset range slicing |
+| inline/inline_node_test.cc:1459 | SegmentRanges | behaviour | formalized | `inlineNode_segmentRanges` | CSS Text 3 §5 & UAX #24: Segment range queries return all subsegment boundaries clamped to requested range |
 | inline/inline_node_test.cc:1504 | ReusingWithPreservedCase1 | behaviour | formalized | `inlineNode_reusingWithPreservedCase1` | CSS Text 3 §5.1: Leading preserved space in pre-wrap generates break opportunity ZWS after forced break |
 | inline/inline_node_test.cc:1518 | ReusingWithPreservedCase2 | behaviour | formalized | `inlineNode_reusingWithPreservedCase2` | CSS Text 3 §5.1: Container pre-wrap preserves multiple spaces without ZWS once break is removed |
 | inline/inline_node_test.cc:1532 | ReusingWithPreservedCase3 | behaviour | formalized | `inlineNode_reusingWithPreservedCase3` | CSS Text 3 §5.1: Preserved spaces across forced breaks each receive break opportunities at line starts |
@@ -142,7 +142,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1590 | ReuseFirstNonSafe | internal | internal | - | Shape cache safe-to-reuse flag |
 | inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | internal | internal | - | Shape cache safe-to-reuse flag in RTL |
 | inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
-| inline/inline_node_test.cc:1671 | InitialLetter | geometry | internal | - | Initial letter box fragment and kInitialLetterBox item |
+| inline/inline_node_test.cc:1671 | InitialLetter | geometry | formalized | `inlineNode_initialLetter` | CSS Inline 3 §3: Initial letters generate initialLetterBox items and flag hasInitialLetterBox |
 | inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | formalized | `inlineNode_textCombineUsesScalingX` | CSS Writing Modes 3 §5.1.4: Combined text > 1em uses scaleX |
 | inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombineWordSpacing` | CSS Writing Modes 3 §5.1.4: Inside text combine, letter-spacing and word-spacing are treated as 0 |
 | inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |

@@ -758,4 +758,58 @@ theorem inlineNode_spaceRestoredByInsertingWord :
     beforeText = "before after" ∧ afterText = "before mid after" := by
   decide
 
+/-- inline/inline_node_test.cc:960 NeedsCollectInlinesOnInsertToOutOfFlowButton
+    CSS 2.1 §9.4.2 & §9.3: Inserting into an independent out-of-flow button does not invalidate container inlines. -/
+theorem inlineNode_needsCollectInlinesOnInsertToOutOfFlowButton :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines (.insertNode true)
+    containerNeeds = false := by
+  rfl
+
+/-- inline/inline_node_test.cc:1251 RemoveInlineNodeDataIfBlockBecomesEmpty1
+    CSS 2.1 §9.4.2: Removing children so block becomes empty clears its inline formatting context. -/
+theorem inlineNode_removeInlineNodeDataIfBlockBecomesEmpty1 :
+    establishesInlineFormattingContext [.inline] = true ∧
+    establishesInlineFormattingContext [] = false := by
+  decide
+
+/-- inline/inline_node_test.cc:1262 RemoveInlineNodeDataIfBlockBecomesEmpty2
+    CSS 2.1 §9.4.2: Setting innerHTML="" so block becomes empty clears its inline formatting context. -/
+theorem inlineNode_removeInlineNodeDataIfBlockBecomesEmpty2 :
+    establishesInlineFormattingContext [.inline] = true ∧
+    establishesInlineFormattingContext [] = false := by
+  decide
+
+/-- inline/inline_node_test.cc:1272 RemoveInlineNodeDataIfBlockObtainsBlockChild
+    CSS 2.1 §9.4.2: A block container that obtains an in-flow block child no longer establishes an IFC directly. -/
+theorem inlineNode_removeInlineNodeDataIfBlockObtainsBlockChild :
+    establishesInlineFormattingContext [.inline] = true ∧
+    establishesInlineFormattingContext [.block] = false := by
+  decide
+
+/-- inline/inline_node_test.cc:1459 SegmentRanges
+    CSS Text 3 §5 & UAX #24: Segment range queries return all subsegment boundaries clamped to requested range. -/
+theorem inlineNode_segmentRanges :
+    let segs := [1, 7, 8, 12]
+    segmentRanges segs 0 12 = [1, 7, 8, 12] ∧
+    segmentRanges segs 0 1 = [1] ∧
+    segmentRanges segs 2 3 = [3] ∧
+    segmentRanges segs 7 8 = [8] ∧
+    segmentRanges segs 0 8 = [1, 7, 8] ∧
+    segmentRanges segs 2 8 = [7, 8] ∧
+    segmentRanges segs 2 10 = [7, 8, 10] ∧
+    segmentRanges segs 7 10 = [8, 10] ∧
+    segmentRanges segs 8 9 = [9] ∧
+    segmentRanges segs 8 10 = [10] ∧
+    segmentRanges segs 9 12 = [12] := by
+  decide
+
+/-- inline/inline_node_test.cc:1671 InitialLetter
+    CSS Inline 3 §3: Initial letters generate initialLetterBox items and flag hasInitialLetterBox. -/
+theorem inlineNode_initialLetter :
+    let step := collectInlinesStep 0 false (.initialLetterBox 20)
+    let item := step.2.1
+    item.itemType = .initialLetterBox ∧
+    hasInitialLetterBox [item] = true := by
+  decide
+
 end ChromiumLayout.TestsInline

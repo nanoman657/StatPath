@@ -30,6 +30,7 @@ inductive InlineItemType where
   | floating
   | outOfFlowPositioned
   | bidiControl
+  | initialLetterBox
   deriving DecidableEq, Repr, Inhabited
 
 structure InlineCollectedItem where
@@ -93,6 +94,8 @@ inductive InlineCollectionToken where
   /-- CSS 2.1 §9.3 Positioning: Out-of-flow positioned box inside an inline formatting context.
       OOF elements produce a zero-length inline item in the text buffer. -/
   | outOfFlowPositioned
+  /-- CSS Inline 3 §3 Initial Letters: Initial letter box element inside an inline formatting context. -/
+  | initialLetterBox (widthPx : Nat := 20)
   /-- CSS Text 3 §4: Preserved newline character (e.g. within pre or pre-wrap). -/
   | newline
   /-- CSS Text 3 §4: Word break opportunity element (<wbr>). -/
@@ -130,6 +133,7 @@ def collectInlinesStep (offset : Nat) (isTextCombine : Bool := false) : InlineCo
   | .openTag _ => (offset, { itemType := .openTag, startOffset := offset, endOffset := offset }, [])
   | .closeTag => (offset, { itemType := .closeTag, startOffset := offset, endOffset := offset }, [])
   | .atomicInline _ => (offset + 1, { itemType := .atomicInline, startOffset := offset, endOffset := offset + 1 }, ['\uFFFC'])
+  | .initialLetterBox _ => (offset + 1, { itemType := .initialLetterBox, startOffset := offset, endOffset := offset + 1 }, ['\uFFFC'])
   | .br | .newline =>
     let (t, c) := if isTextCombine then (InlineItemType.text, ' ') else (.control, '\n')
     (offset + 1, { itemType := t, startOffset := offset, endOffset := offset + 1 }, [c])
@@ -170,6 +174,26 @@ theorem collectInlinesStep_outOfFlowPositioned_zero_length (offset : Nat) :
 /-- CSS 2.1 §9.3 Law: Out-of-flow positioned elements emit no characters into the text buffer. -/
 theorem collectInlinesStep_outOfFlowPositioned_empty_chars (offset : Nat) :
     (collectInlinesStep offset false .outOfFlowPositioned).2.2 = [] := rfl
+
+/-- CSS Inline 3 §3 Law: Initial letter boxes advance inline offset by 1. -/
+theorem collectInlinesStep_initialLetterBox_advance (offset : Nat) (w : Nat) :
+    (collectInlinesStep offset false (.initialLetterBox w)).1 = offset + 1 := rfl
+
+/-- CSS Inline 3 §3 Law: Initial letter boxes produce items of type initialLetterBox. -/
+theorem collectInlinesStep_initialLetterBox_itemType (offset : Nat) (w : Nat) :
+    (collectInlinesStep offset false (.initialLetterBox w)).2.1.itemType = .initialLetterBox := rfl
+
+/-- CSS Inline 3 §3: Whether an inline formatting context contains an initial letter box. -/
+def hasInitialLetterBox (items : List InlineCollectedItem) : Bool :=
+  items.any (·.itemType == .initialLetterBox)
+
+/-- CSS Inline 3 §3 Law: Presence of an initialLetterBox item implies hasInitialLetterBox is true. -/
+theorem hasInitialLetterBox_any (items : List InlineCollectedItem) (item : InlineCollectedItem)
+    (hmem : item ∈ items) (htyp : item.itemType = .initialLetterBox) :
+    hasInitialLetterBox items = true := by
+  dsimp [hasInitialLetterBox]
+  rw [List.any_eq_true]
+  exact ⟨item, hmem, by simp [htyp]⟩
 
 /-- CSS Writing Modes 3 §5.1.4 Law: Forced line breaks in text combine are classified as text items. -/
 theorem collectInlinesStep_textCombine_br_is_text (offset : Nat) :
@@ -335,7 +359,7 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
       toSegments endW midWords nextTot rest
     | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .outOfFlowPositioned :: rest | .wbr :: rest | .openIsolate _ :: rest =>
       toSegments curWordLen words totalChars rest
-    | .atomicInline wPx :: rest =>
+    | .atomicInline wPx :: rest | .initialLetterBox wPx :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words
       let wordsWithAtomic := (wPx / 10) :: wordsAfterPrev
       toSegments 0 wordsWithAtomic (totalChars + (wPx / 10)) rest
@@ -377,6 +401,7 @@ inductive InlineMutation where
   | insertNode (isOutOfFlowIndependent : Bool := false)
   | removeNode
   | changeStyle (affectsInlines : Bool := true)
+  | setText
   deriving DecidableEq, Repr, Inhabited
 
 /-- CSS 2.1 §9.4.2 & Blink InlineNode::SetNeedsCollectInlines:
@@ -392,6 +417,7 @@ def computeNeedsCollectInlines (op : InlineMutation) : Bool × Bool × Bool × B
   | .removeNode => (true, true, true, false)
   | .changeStyle true => (true, true, true, false)
   | .changeStyle false => (false, false, false, false)
+  | .setText => (true, true, true, false)
 
 /-- CSS 2.1 §9.4.2 Law: Siblings outside the modified ancestor chain never need inline recolletion. -/
 theorem siblings_never_need_collect_inlines (op : InlineMutation) :
@@ -400,6 +426,12 @@ theorem siblings_never_need_collect_inlines (op : InlineMutation) :
   | insertNode b => cases b <;> rfl
   | removeNode => rfl
   | changeStyle b => cases b <;> rfl
+  | setText => rfl
+
+/-- CSS 2.1 §9.4.2 Law: Text mutation invalidates the modified node and all its ancestors, leaving siblings clean. -/
+theorem text_mutation_invalidates_ancestors_only :
+    let (t, p, c, s) := computeNeedsCollectInlines .setText
+    t = true ∧ p = true ∧ c = true ∧ s = false := ⟨rfl, rfl, rfl, rfl⟩
 
 /-- CSS 2.1 §9.4.2 Law: In-flow insertion or removal always marks parent and container for inline collection. -/
 theorem inflow_mutation_invalidates_ancestors (isInsert : Bool) :
@@ -426,5 +458,93 @@ theorem remove_node_invalidates_container :
 theorem inflow_insert_invalidates_container :
     let (_, _, c, _) := computeNeedsCollectInlines (.insertNode false)
     c = true := rfl
+
+/-! ## 6. Formatting Context Establishment & Script Run Ranges -/
+
+/-- CSS 2.1 §9.4.2: Child display classification for formatting context establishment. -/
+inductive BlockChildDisplay where
+  | inline
+  | block
+  | none
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS 2.1 §9.4.2: Whether a block container establishes an inline formatting context (IFC).
+    "An inline formatting context is established by a block container box that contains no block-level boxes." -/
+def establishesInlineFormattingContext (children : List BlockChildDisplay) : Bool :=
+  children.any (· == .inline) && !children.any (· == .block)
+
+/-- CSS 2.1 §9.4.2 Law: An empty block container does not establish an inline formatting context. -/
+theorem establishesInlineFormattingContext_empty :
+    establishesInlineFormattingContext [] = false := rfl
+
+/-- CSS 2.1 §9.4.2 Law: A block container containing a block-level child does not establish an IFC. -/
+theorem establishesInlineFormattingContext_has_block (children : List BlockChildDisplay) (item : BlockChildDisplay)
+    (hmem : item ∈ children) (hblock : item = .block) :
+    establishesInlineFormattingContext children = false := by
+  dsimp [establishesInlineFormattingContext]
+  have hb : children.any (· == .block) = true := by
+    rw [List.any_eq_true]
+    exact ⟨item, hmem, by simp [hblock]⟩
+  simp [hb]
+
+/-- CSS 2.1 §9.4.2 Law: A block container with an inline child and no block children establishes an IFC. -/
+theorem establishesInlineFormattingContext_inlines_no_block (children : List BlockChildDisplay) (item : BlockChildDisplay)
+    (hmem : item ∈ children) (hinline : item = .inline) (hno : children.any (· == .block) = false) :
+    establishesInlineFormattingContext children = true := by
+  dsimp [establishesInlineFormattingContext]
+  have hi : children.any (· == .inline) = true := by
+    rw [List.any_eq_true]
+    exact ⟨item, hmem, by simp [hinline]⟩
+  simp [hi, hno]
+
+/-- Helper loop for segmentRanges. -/
+def segmentRangesLoop (end_ : Nat) : Nat → List Nat → List Nat
+  | _, [] => [end_]
+  | st, e :: rest =>
+    if e ≤ st then segmentRangesLoop end_ st rest
+    else if e < end_ then e :: segmentRangesLoop end_ e rest
+    else [end_]
+
+/-- CSS Text 3 §5 & UAX #24: Segment range query over pre-segmented script/bidi run boundaries.
+    Returns the list of subsegment end offsets clamped to [start, end_]. -/
+def segmentRanges (endpoints : List Nat) (start : Nat) (end_ : Nat) : List Nat :=
+  if start ≥ end_ then []
+  else segmentRangesLoop end_ start endpoints
+
+/-- CSS Text 3 §5 & UAX #24 Law: Empty endpoint list returns a single range ending at end_. -/
+theorem segmentRanges_empty (start end_ : Nat) (h : start < end_) :
+    segmentRanges [] start end_ = [end_] := by
+  have hnot : ¬ (start ≥ end_) := by omega
+  unfold segmentRanges segmentRangesLoop
+  simp [hnot]
+
+/-- CSS Text 3 §5 & UAX #24 Law: Inverted or empty range returns no segments. -/
+theorem segmentRanges_invalid (endpoints : List Nat) (start end_ : Nat) (h : start ≥ end_) :
+    segmentRanges endpoints start end_ = [] := by
+  unfold segmentRanges
+  simp [h]
+
+/-- CSS Text 3 §5 & UAX #24 Law: Single internal boundary strictly between start and end_ produces two subsegments. -/
+theorem segmentRanges_single_split (e start end_ : Nat) (h1 : start < e) (h2 : e < end_) :
+    segmentRanges [e] start end_ = [e, end_] := by
+  have hnot : ¬ (start ≥ end_) := by omega
+  have hnotle : ¬ (e ≤ start) := by omega
+  unfold segmentRanges
+  simp [hnot]
+  unfold segmentRangesLoop
+  simp [hnotle, h2]
+  unfold segmentRangesLoop
+  rfl
+
+/-- CSS Text 3 §5 & UAX #24 Law: Boundary at or beyond end_ clamps to end_. -/
+theorem segmentRanges_single_clamp (e start end_ : Nat) (h1 : start < end_) (h2 : end_ ≤ e) :
+    segmentRanges [e] start end_ = [end_] := by
+  have hnot : ¬ (start ≥ end_) := by omega
+  have hnotlt : ¬ (e < end_) := by omega
+  have hnotle : ¬ (e ≤ start) := by omega
+  unfold segmentRanges
+  simp [hnot]
+  unfold segmentRangesLoop
+  simp [hnotle, hnotlt]
 
 end ChromiumLayout

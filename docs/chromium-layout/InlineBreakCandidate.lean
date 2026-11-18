@@ -91,7 +91,7 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
       processTokens idx textOffset visibleWidth lastWordEnd remainingOpen updatedAcc rest
     | ⟨idx, .floating⟩ :: rest | ⟨idx, .outOfFlowPositioned⟩ :: rest | ⟨idx, .wbr⟩ :: rest | ⟨idx, .openIsolate _⟩ :: rest =>
       processTokens idx textOffset visibleWidth lastWordEnd openTags acc rest
-    | ⟨idx, .atomicInline w⟩ :: rest =>
+    | ⟨idx, .atomicInline w⟩ :: rest | ⟨idx, .initialLetterBox w⟩ :: rest =>
       let newOffset := textOffset + 1
       let newWidth := visibleWidth + w
       let wordEnd := { itemIndex := idx + 1, textOffset := newOffset }
