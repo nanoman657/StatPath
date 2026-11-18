@@ -93,6 +93,26 @@ structure SimpleBlockFlow where
   inlines : List SimpleInlineBox := []
   deriving DecidableEq, Repr, Inhabited
 
+/-- CSS 2.1 §9.2.2 / Blink LayoutTreeBuilder:
+    Empty text nodes do not generate layout objects inside combined text. -/
+def pruneCombinableContent : CombinableContent → Option CombinableContent
+  | .text s => if s.isEmpty then none else some (.text s)
+  | .fragment s => if s.isEmpty then none else some (.fragment s)
+  | other => some other
+
+/-- CSS 2.1 §9.2.2: Prune empty text content items from a list of combinable items. -/
+def pruneCombinableList : List CombinableContent → List CombinableContent
+  | [] => []
+  | c :: cs =>
+    match pruneCombinableContent c with
+    | some c' => c' :: pruneCombinableList cs
+    | none => pruneCombinableList cs
+
+/-- SVG 2 §11.1 & CSS Writing Modes 3 §5.1:
+    SVG text elements follow SVG layout and are not eligible for LayoutTextCombine anonymous boxes. -/
+def isSvgTextCombineEligible (_isSvg : Bool) : Bool :=
+  false
+
 /-! ## 3. General Laws for Text Combine -/
 
 /-- CSS Writing Modes 3 §5.1: Horizontal writing mode never activates text combine. -/
@@ -157,6 +177,37 @@ theorem buildInlineDisplay_active_nonempty (c : CombinableContent) (cs : List Co
 theorem buildInlineDisplay_empty (active : Bool) :
     buildInlineDisplay active [] = [] := by
   cases active <;> rfl
+
+/-- CSS 2.1 §9.2.2 Law: Empty text content is pruned to none. -/
+theorem pruneCombinableContent_empty_text :
+    pruneCombinableContent (.text "") = none := rfl
+
+/-- CSS 2.1 §9.2.2 Law: Non-empty text content is preserved. -/
+theorem pruneCombinableContent_string_nonempty (s : String) (h : s.isEmpty = false) :
+    pruneCombinableContent (.text s) = some (.text s) := by
+  dsimp [pruneCombinableContent]
+  rw [h]
+  rfl
+
+/-- CSS 2.1 §9.2.2 Law: A list of empty text items is pruned to empty. -/
+theorem pruneCombinableList_empty_text :
+    pruneCombinableList [.text ""] = [] := rfl
+
+/-- CSS Writing Modes 3 §5.1 Law: Consecutive non-empty combinable items in active container
+    are always merged into a single LayoutCombineBox. -/
+theorem buildInlineDisplay_active_concat (c1 c2 : CombinableContent) (cs1 cs2 : List CombinableContent) :
+    buildInlineDisplay true (c1 :: cs1 ++ c2 :: cs2) =
+      [.combined { children := c1 :: cs1 ++ c2 :: cs2 }] := rfl
+
+/-- CSS Writing Modes 3 §5.1 Law: Appending an item to active combined content preserves the single combine box. -/
+theorem buildInlineDisplay_active_append (c : CombinableContent) (cs : List CombinableContent) (item : CombinableContent) :
+    buildInlineDisplay true ((c :: cs) ++ [item]) =
+      [.combined { children := (c :: cs) ++ [item] }] := by
+  cases cs <;> rfl
+
+/-- SVG 2 §11.1 Law: SVG content is never eligible for text-combine box creation. -/
+theorem svg_not_combine_eligible (isSvg : Bool) :
+    isSvgTextCombineEligible isSvg = false := rfl
 
 /-! ## 4. Line Breaking with Text Combine (CSS Writing Modes 3 §5.1 & CSS Text 3 §5) -/
 

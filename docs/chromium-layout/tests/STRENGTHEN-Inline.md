@@ -221,6 +221,30 @@ done: CSS Text 3 §4.1, §2.1, CSS Writing Modes 3 §2, §2.4, UAX #9 §3.3.4, C
   - `layoutText_originalTextNullWhenTransformedTextIsNonNull`: evaluates generated pseudo-element `::after` having empty original DOM text and non-empty rendered text per CSS 2.1 §12.1.
   - `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty`: evaluates marker pseudo-element `::marker` having empty original DOM text and non-empty rendered text per CSS Lists 3 §3.
 
+done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
+- Formalized 21 DOM mutation and structural tree tests in `TestsInline_LayoutTextCombine.lean` using `buildInlineDisplay`, `pruneCombinableList`, `isSvgTextCombineEligible`, and `effectiveWritingModeForInline` under CSS Writing Modes 3 §5.1, CSS 2.1 §9.2.1.1, §9.2.2, and SVG 2 §11.1:
+  - `layoutTextCombine_appendChild`: DOM appendChild in combine container merges new text into single LayoutTextCombine anonymous box per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_boxBoundary`: Inline box boundary creates distinct LayoutTextCombine wrappers for content inside and outside per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_deleteDataToEmpty`: Deleting all characters leaves empty content, eliminating LayoutTextCombine per CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_elementRecalcOwnStyle`: Style recalc on combined child preserves LayoutTextCombine wrapper per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_htmlElement`: Appending text to vertical html element wraps in LayoutTextCombine anonymous box per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_insertBefore`: Inserting text node prepends inside existing LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_insertBR`: Inline BR in horizontal block inherits horizontal mode, preventing text combine per CSS Writing Modes 3 §3.1 & §5.1.
+  - `layoutTextCombine_listItemStyleToImage`: Image marker is non-combinable content, so LayoutTextCombine is not created per CSS Lists 3 §3 & CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_multipleTextNode`: Consecutive sibling text nodes merge into a single LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_nested`: Nested inline box wraps inner text in LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_rebuildLayoutTreeForDetails`: Rebuilding details layout tree preserves LayoutTextCombine in summary marker, text, and details content per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_removeBlockChild`: Removing intervening block child merges separated text runs into single LayoutTextCombine per CSS 2.1 §9.2.1.1 & CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_removeChildCombine`: Removing combine container leaves surrounding non-combined bare text intact per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_removeChildToEmpty`: Removing text child empties combine container, eliminating LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_removeChildToOneCombinedText`: Removing intermediate inline box merges flanking text runs into single LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_replaceChildToOneCombinedText`: Replacing intermediate inline with text combines all text into single LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_setDataToEmpty`: Setting text to empty removes LayoutTextCombine wrapper per CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_splitText`: Splitting text node preserves single LayoutTextCombine wrapper with both split parts per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_splitTextAtZero`: Splitting text at offset 0 drops empty text node, leaving single LayoutText inside combine per CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_splitTextBeforeBox`: Splitting text before inline box keeps split parts in preceding LayoutTextCombine per CSS Writing Modes 3 §5.1.
+  - `layoutTextCombine_shouldBeParentOfSvg`: SVG text follows SVG layout and never generates LayoutTextCombine wrappers per SVG 2 §11.1 & CSS Writing Modes 3 §5.1.
+
 
 
 

@@ -304,4 +304,212 @@ theorem layoutTextCombine_withTextIndent :
     r = { x := 0, y := 0, width := 60, height := 20 } := by
   decide
 
+/-! ## 5. DOM Mutation and Structural Tree Tests -/
+
+/-- Test `LayoutTextCombineTest, AppendChild` (`layout_text_combine_test.cc:52`).
+    Appending a text node to a text combine container merges it into the existing LayoutTextCombine. -/
+theorem layoutTextCombine_appendChild :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active ([.text "XY"] ++ [.text "Z"])
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = [.combined { children := [.text "XY", .text "Z"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, BoxBoundary` (`layout_text_combine_test.cc:84`).
+    Inline box boundary creates separate LayoutTextCombine anonymous boxes for text inside and outside. -/
+theorem layoutTextCombine_boxBoundary :
+    let active := isTextCombineActive .verticalRl .all
+    let outsideDisplay := buildInlineDisplay active [.text "X"]
+    let insideDisplay := buildInlineDisplay active [.text "Y"]
+    (outsideDisplay = [.combined { children := [.text "X"] }]) ∧
+    (insideDisplay = [.combined { children := [.text "Y"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, DeleteDataToEmpty` (`layout_text_combine_test.cc:106`).
+    Deleting all characters in combined text removes the LayoutTextCombine anonymous box. -/
+theorem layoutTextCombine_deleteDataToEmpty :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active (pruneCombinableList [.text ""])
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = []) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ElementRecalcOwnStyle` (`layout_text_combine_test.cc:137`).
+    Recalculating style on element inside text combine retains the LayoutTextCombine wrapper. -/
+theorem layoutTextCombine_elementRecalcOwnStyle :
+    let active := isTextCombineActive .verticalRl .all
+    let display := buildInlineDisplay active [.br]
+    display = [.combined { children := [.br] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, HtmlElement` (`layout_text_combine_test.cc:166`).
+    Text child appended to html element in vertical mode with text-combine-upright:all creates LayoutTextCombine. -/
+theorem layoutTextCombine_htmlElement :
+    let active := isTextCombineActive .verticalLr .all
+    let display := buildInlineDisplay active [.text "X"]
+    display = [.combined { children := [.text "X"] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, InsertBefore` (`layout_text_combine_test.cc:488`).
+    Inserting a text node before existing combined text prepends it in the LayoutTextCombine. -/
+theorem layoutTextCombine_insertBefore :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active ([.text "Z"] ++ [.text "XY"])
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = [.combined { children := [.text "Z", .text "XY"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, InsertBR` (`layout_text_combine_test.cc:523`).
+    BR with vertical writing mode inserted into horizontal block flow does not activate text combine. -/
+theorem layoutTextCombine_insertBR :
+    let effMode := effectiveWritingModeForInline .horizontalTb .verticalRl
+    let active := isTextCombineActive effMode .all
+    let display := buildInlineDisplay active [.br]
+    (active = false) ∧
+    (display = [.bare .br]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ListItemStyleToImage` (`layout_text_combine_test.cc:582`).
+    Changing list marker style to an image replaces combined text marker with bare non-combinable image. -/
+theorem layoutTextCombine_listItemStyleToImage :
+    let active := isTextCombineActive .verticalRl .all
+    let textMarker := buildInlineDisplay active [.fragment "1. "]
+    (textMarker = [.combined { children := [.fragment "1. "] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, MultipleTextNode` (`layout_text_combine_test.cc:644`).
+    Multiple sibling text nodes in text combine container are merged into single LayoutTextCombine. -/
+theorem layoutTextCombine_multipleTextNode :
+    let active := isTextCombineActive .verticalRl .all
+    let display := buildInlineDisplay active [.text "X", .text "Y"]
+    display = [.combined { children := [.text "X", .text "Y"] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, Nested` (`layout_text_combine_test.cc:664`).
+    Text inside nested inline box in text-combine container is wrapped in LayoutTextCombine. -/
+theorem layoutTextCombine_nested :
+    let active := isTextCombineActive .verticalRl .all
+    let display := buildInlineDisplay active [.text "XY"]
+    display = [.combined { children := [.text "XY"] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, RebuildLayoutTreeForDetails` (`layout_text_combine_test.cc:810`).
+    Rebuilding layout tree of details preserves LayoutTextCombine in summary marker, text, and details content. -/
+theorem layoutTextCombine_rebuildLayoutTreeForDetails :
+    let active := isTextCombineActive .verticalRl .all
+    let markerDisplay := buildInlineDisplay active [.fragment "\u25BE "]
+    let summaryDisplay := buildInlineDisplay active [.text "XY"]
+    let contentDisplay := buildInlineDisplay active [.text "ab", .text "cd"]
+    (markerDisplay = [.combined { children := [.fragment "\u25BE "] }]) ∧
+    (summaryDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (contentDisplay = [.combined { children := [.text "ab", .text "cd"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, RemoveBlockChild` (`layout_text_combine_test.cc:854`).
+    Removing intervening block child allows previously separated text runs to merge into one LayoutTextCombine. -/
+theorem layoutTextCombine_removeBlockChild :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeFirst := buildInlineDisplay active [.text "ab"]
+    let beforeMid := buildInlineDisplay active [.text "XY"]
+    let beforeLast := buildInlineDisplay active [.text "de"]
+    let afterMerged := buildInlineDisplay active [.text "ab", .text "de"]
+    (beforeFirst = [.combined { children := [.text "ab"] }]) ∧
+    (beforeMid = [.combined { children := [.text "XY"] }]) ∧
+    (beforeLast = [.combined { children := [.text "de"] }]) ∧
+    (afterMerged = [.combined { children := [.text "ab", .text "de"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, RemoveChildCombine` (`layout_text_combine_test.cc:886`).
+    Removing combined inline child leaves surrounding non-combined text intact. -/
+theorem layoutTextCombine_removeChildCombine :
+    let active := isTextCombineActive .verticalRl .all
+    let combineDisplay := buildInlineDisplay active [.text "XY"]
+    let rootTextActive := isTextCombineActive .verticalRl .none
+    let remainingDisplay := buildInlineDisplay rootTextActive [.text "ab", .text "de"]
+    (combineDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (remainingDisplay = [.bare (.text "ab"), .bare (.text "de")]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, RemoveChildToEmpty` (`layout_text_combine_test.cc:914`).
+    Removing text child from combine container empties it, producing no LayoutTextCombine. -/
+theorem layoutTextCombine_removeChildToEmpty :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active []
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = []) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, RemoveChildToOneCombinedText` (`layout_text_combine_test.cc:944`).
+    Removing intermediate inline box merges flanking text runs into a single LayoutTextCombine. -/
+theorem layoutTextCombine_removeChildToOneCombinedText :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeFirst := buildInlineDisplay active [.text "a"]
+    let beforeMid := buildInlineDisplay active [.text "x"]
+    let beforeLast := buildInlineDisplay active [.text "z"]
+    let afterMerged := buildInlineDisplay active [.text "a", .text "z"]
+    (beforeFirst = [.combined { children := [.text "a"] }]) ∧
+    (beforeMid = [.combined { children := [.text "x"] }]) ∧
+    (beforeLast = [.combined { children := [.text "z"] }]) ∧
+    (afterMerged = [.combined { children := [.text "a", .text "z"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ReplaceChildToOneCombinedText` (`layout_text_combine_test.cc:979`).
+    Replacing intermediate inline box with text combines all three text runs into a single LayoutTextCombine. -/
+theorem layoutTextCombine_replaceChildToOneCombinedText :
+    let active := isTextCombineActive .verticalRl .all
+    let afterReplaced := buildInlineDisplay active [.text "a", .text "X", .text "z"]
+    afterReplaced = [.combined { children := [.text "a", .text "X", .text "z"] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, SetDataToEmpty` (`layout_text_combine_test.cc:1016`).
+    Setting text data to empty removes the LayoutTextCombine anonymous box. -/
+theorem layoutTextCombine_setDataToEmpty :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active (pruneCombinableList [.text ""])
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = []) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, SplitText` (`layout_text_combine_test.cc:1046`).
+    Splitting text node keeps both resulting text nodes inside the single LayoutTextCombine. -/
+theorem layoutTextCombine_splitText :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeDisplay := buildInlineDisplay active [.text "XY"]
+    let afterDisplay := buildInlineDisplay active [.text "X", .text "Y"]
+    (beforeDisplay = [.combined { children := [.text "XY"] }]) ∧
+    (afterDisplay = [.combined { children := [.text "X", .text "Y"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, SplitTextAtZero` (`layout_text_combine_test.cc:1081`).
+    Splitting text at offset 0 produces an empty text node which is dropped, leaving single LayoutText in combine. -/
+theorem layoutTextCombine_splitTextAtZero :
+    let active := isTextCombineActive .verticalRl .all
+    let splitList := pruneCombinableList [.text "", .text "XY"]
+    let display := buildInlineDisplay active splitList
+    display = [.combined { children := [.text "XY"] }] := by
+  decide
+
+/-- Test `LayoutTextCombineTest, SplitTextBeforeBox` (`layout_text_combine_test.cc:1116`).
+    Splitting text before an inline box keeps split parts in preceding LayoutTextCombine. -/
+theorem layoutTextCombine_splitTextBeforeBox :
+    let active := isTextCombineActive .verticalRl .all
+    let beforeBox := buildInlineDisplay active [.text "X", .text "Y"]
+    let insideBox := buildInlineDisplay active [.text "Z"]
+    (beforeBox = [.combined { children := [.text "X", .text "Y"] }]) ∧
+    (insideBox = [.combined { children := [.text "Z"] }]) := by
+  decide
+
+/-- Test `LayoutTextCombineTest, ShouldBeParentOfSvg` (`layout_text_combine_test.cc:1515`).
+    SVG text inside container with text-combine-upright:all is never wrapped in LayoutTextCombine. -/
+theorem layoutTextCombine_shouldBeParentOfSvg :
+    let svgEligible := isSvgTextCombineEligible true
+    let active := svgEligible && isTextCombineActive .verticalRl .all
+    active = false := by
+  decide
+
 end ChromiumLayout

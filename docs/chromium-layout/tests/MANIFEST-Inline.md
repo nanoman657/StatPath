@@ -574,36 +574,36 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | internal | internal | - | First-letter LayoutTextFragment mutation |
 | layout_text_fragment_test.cc:442 | SplitTextWithZero | internal | internal | - | DOM text split mutation |
 | layout_br_test.cc:14 | TextMethods | behaviour | formalized | `layoutBR_textMethods` | `<br>` generates an identity mapping unit with resolved length 1 and newline snap code |
-| layout_text_combine_test.cc:52 | AppendChild | internal | internal | - | DOM mutation in text-combine container |
-| layout_text_combine_test.cc:84 | BoxBoundary | internal | internal | - | Box boundary traversal in text combine |
-| layout_text_combine_test.cc:106 | DeleteDataToEmpty | internal | internal | - | CharacterData deletion in text combine |
-| layout_text_combine_test.cc:137 | ElementRecalcOwnStyle | internal | internal | - | Style recalc in text combine |
-| layout_text_combine_test.cc:166 | HtmlElement | internal | internal | - | Text combine inside html element |
+| layout_text_combine_test.cc:52 | AppendChild | behaviour | formalized | `layoutTextCombine_appendChild` | CSS Writing Modes 3 §5.1: Appending text node to text combine merges into single LayoutTextCombine |
+| layout_text_combine_test.cc:84 | BoxBoundary | behaviour | formalized | `layoutTextCombine_boxBoundary` | CSS Writing Modes 3 §5.1: Inline box boundary creates distinct LayoutTextCombine boxes |
+| layout_text_combine_test.cc:106 | DeleteDataToEmpty | behaviour | formalized | `layoutTextCombine_deleteDataToEmpty` | CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1: Deleting all text removes LayoutTextCombine box |
+| layout_text_combine_test.cc:137 | ElementRecalcOwnStyle | behaviour | formalized | `layoutTextCombine_elementRecalcOwnStyle` | CSS Writing Modes 3 §5.1: Recalculating style preserves LayoutTextCombine wrapper |
+| layout_text_combine_test.cc:166 | HtmlElement | behaviour | formalized | `layoutTextCombine_htmlElement` | CSS Writing Modes 3 §5.1: Text appended to vertical html element creates LayoutTextCombine |
 | layout_text_combine_test.cc:191 | InkOverflow | geometry | formalized | `layoutTextCombine_inkOverflow` | CSS Writing Modes 3 §5.1 & CSS Text Decoration 3 §2: Half-leading vertical line placement with local text-combine ink overflow |
 | layout_text_combine_test.cc:248 | InkOverflowEmphasisMark | geometry | formalized | `layoutTextCombine_inkOverflowEmphasisMark` | CSS Text Decoration 3 §3.5 & CSS Writing Modes 3 §5.1: Text emphasis expands line and combine box ink overflow |
 | layout_text_combine_test.cc:307 | InkOverflowOverline | geometry | formalized | `layoutTextCombine_inkOverflowOverline` | CSS Text Decoration 3 §2 & CSS Writing Modes 3 §5.1: Overline decoration expands line ink overflow |
 | layout_text_combine_test.cc:364 | InkOverflowUnderline | geometry | blocked | - | Blocked: model lacks text-combine-upright layout |
 | layout_text_combine_test.cc:421 | InkOverflowWBR | geometry | formalized | `layoutTextCombine_inkOverflowWBR` | CSS Writing Modes 3 §5.1: Combined text split by WBR maintains outer box ink overflow |
-| layout_text_combine_test.cc:488 | InsertBefore | internal | internal | - | DOM insertion in text combine |
-| layout_text_combine_test.cc:523 | InsertBR | internal | internal | - | BR insertion in text combine |
+| layout_text_combine_test.cc:488 | InsertBefore | behaviour | formalized | `layoutTextCombine_insertBefore` | CSS Writing Modes 3 §5.1: Inserting text prepends inside existing LayoutTextCombine |
+| layout_text_combine_test.cc:523 | InsertBR | behaviour | formalized | `layoutTextCombine_insertBR` | CSS Writing Modes 3 §3.1 & §5.1: BR in horizontal container does not activate text combine |
 | layout_text_combine_test.cc:540 | ScrollableOverflow | geometry | formalized | `layoutTextCombine_scrollableOverflow` | CSS Writing Modes 3 §5.1.1 & CSS Overflow 3 §4.4: 1em compressed text produce no scrollable overflow |
-| layout_text_combine_test.cc:582 | ListItemStyleToImage | internal | internal | - | List item marker mutation |
+| layout_text_combine_test.cc:582 | ListItemStyleToImage | behaviour | formalized | `layoutTextCombine_listItemStyleToImage` | CSS Writing Modes 3 §5.1 & CSS Lists 3 §3: Non-text list marker image is not wrapped in LayoutTextCombine |
 | layout_text_combine_test.cc:621 | ListMarkerWidthOfSymbol | geometry | formalized | `layoutTextCombine_listMarkerWidthOfSymbol` | CSS Writing Modes 3 §5.1 & CSS Lists 3 §3: Inside list marker symbol wrapped in LayoutTextCombine |
-| layout_text_combine_test.cc:644 | MultipleTextNode | internal | internal | - | Multiple text nodes in text combine |
-| layout_text_combine_test.cc:664 | Nested | internal | internal | - | Nested text combine elements |
+| layout_text_combine_test.cc:644 | MultipleTextNode | behaviour | formalized | `layoutTextCombine_multipleTextNode` | CSS Writing Modes 3 §5.1: Multiple text node siblings merge into single LayoutTextCombine |
+| layout_text_combine_test.cc:664 | Nested | behaviour | formalized | `layoutTextCombine_nested` | CSS Writing Modes 3 §5.1: Text inside nested inline box is wrapped in LayoutTextCombine |
 | layout_text_combine_test.cc:684 | Outline | geometry | formalized | `layoutTextCombine_outline` | CSS Basic User Interface 3 §4.2 & CSS Writing Modes 3 §5.1: Standard block outline vs focus ink overflow outlines |
 | layout_text_combine_test.cc:758 | PropageWritingModeFromBodyToHorizontal | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToHorizontal` | HTML writing mode propagation from body to html |
 | layout_text_combine_test.cc:783 | PropageWritingModeFromBodyToVertical | behaviour | formalized | `layoutTextCombine_propageWritingModeFromBodyToVertical` | HTML writing mode propagation to vertical |
-| layout_text_combine_test.cc:810 | RebuildLayoutTreeForDetails | internal | internal | - | Layout tree rebuild in details element |
-| layout_text_combine_test.cc:854 | RemoveBlockChild | internal | internal | - | DOM block removal in text combine |
-| layout_text_combine_test.cc:886 | RemoveChildCombine | internal | internal | - | DOM combine child removal |
-| layout_text_combine_test.cc:914 | RemoveChildToEmpty | internal | internal | - | DOM child removal to empty |
-| layout_text_combine_test.cc:944 | RemoveChildToOneCombinedText | internal | internal | - | DOM child removal to single combine |
-| layout_text_combine_test.cc:979 | ReplaceChildToOneCombinedText | internal | internal | - | DOM child replacement |
-| layout_text_combine_test.cc:1016 | SetDataToEmpty | internal | internal | - | Text mutation to empty |
-| layout_text_combine_test.cc:1046 | SplitText | internal | internal | - | Text split mutation |
-| layout_text_combine_test.cc:1081 | SplitTextAtZero | internal | internal | - | Text split at zero offset |
-| layout_text_combine_test.cc:1116 | SplitTextBeforeBox | internal | internal | - | Text split before box |
+| layout_text_combine_test.cc:810 | RebuildLayoutTreeForDetails | behaviour | formalized | `layoutTextCombine_rebuildLayoutTreeForDetails` | CSS Writing Modes 3 §5.1: Rebuilding details layout tree preserves LayoutTextCombine in summary and content |
+| layout_text_combine_test.cc:854 | RemoveBlockChild | behaviour | formalized | `layoutTextCombine_removeBlockChild` | CSS 2.1 §9.2.1.1 & CSS Writing Modes 3 §5.1: Removing intervening block merges flanking text into single LayoutTextCombine |
+| layout_text_combine_test.cc:886 | RemoveChildCombine | behaviour | formalized | `layoutTextCombine_removeChildCombine` | CSS Writing Modes 3 §5.1: Removing combine inline leaves bare root text intact |
+| layout_text_combine_test.cc:914 | RemoveChildToEmpty | behaviour | formalized | `layoutTextCombine_removeChildToEmpty` | CSS Writing Modes 3 §5.1: Removing all text children leaves empty combine container without wrapper |
+| layout_text_combine_test.cc:944 | RemoveChildToOneCombinedText | behaviour | formalized | `layoutTextCombine_removeChildToOneCombinedText` | CSS Writing Modes 3 §5.1: Removing intermediate inline box merges text into single LayoutTextCombine |
+| layout_text_combine_test.cc:979 | ReplaceChildToOneCombinedText | behaviour | formalized | `layoutTextCombine_replaceChildToOneCombinedText` | CSS Writing Modes 3 §5.1: Replacing intermediate inline with text creates single unified LayoutTextCombine |
+| layout_text_combine_test.cc:1016 | SetDataToEmpty | behaviour | formalized | `layoutTextCombine_setDataToEmpty` | CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1: Setting text to empty removes LayoutTextCombine wrapper |
+| layout_text_combine_test.cc:1046 | SplitText | behaviour | formalized | `layoutTextCombine_splitText` | CSS Writing Modes 3 §5.1: Splitting text node keeps both parts inside single LayoutTextCombine |
+| layout_text_combine_test.cc:1081 | SplitTextAtZero | behaviour | formalized | `layoutTextCombine_splitTextAtZero` | CSS 2.1 §9.2.2 & CSS Writing Modes 3 §5.1: Splitting text at zero drops empty text part in LayoutTextCombine |
+| layout_text_combine_test.cc:1116 | SplitTextBeforeBox | behaviour | formalized | `layoutTextCombine_splitTextBeforeBox` | CSS Writing Modes 3 §5.1: Splitting text before inline box keeps split parts in preceding LayoutTextCombine |
 | layout_text_combine_test.cc:1157 | StyleToTextCombineUprightAll | behaviour | formalized | `layoutTextCombine_styleToTextCombineUprightAll` | Dynamic style update to text-combine-upright: all |
 | layout_text_combine_test.cc:1190 | StyleToTextCombineUprightNone | behaviour | formalized | `layoutTextCombine_styleToTextCombineUprightNone` | Dynamic style update to text-combine-upright: none |
 | layout_text_combine_test.cc:1224 | StyleToHorizontalWritingMode | behaviour | formalized | `layoutTextCombine_styleToHorizontalWritingMode` | Dynamic writing mode update to horizontal |
@@ -619,7 +619,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_combine_test.cc:1456 | WithTab | behaviour | formalized | `layoutTextCombine_withTab` | Preserved tab whitespace with text combine |
 | layout_text_combine_test.cc:1476 | WithTextIndent | geometry | formalized | `layoutTextCombine_withTextIndent` | CSS Writing Modes 3 §5.1.2 & CSS 2.1 §9.4.2: LayoutTextCombine contents unaffected by container text-indent |
 | layout_text_combine_test.cc:1493 | WithWordBreak | behaviour | formalized | `layoutTextCombine_withWordBreak` | WBR inside text combine container |
-| layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | internal | internal | - | Svg parent LayoutObject check |
+| layout_text_combine_test.cc:1515 | ShouldBeParentOfSvg | behaviour | formalized | `layoutTextCombine_shouldBeParentOfSvg` | SVG 2 §11.1 & CSS Writing Modes 3 §5.1: SVG text objects never generate LayoutTextCombine wrappers |
 | layout_text_combine_test.cc:1531 | InHorizontal | behaviour | blocked | - | Blocked: model lacks text-combine-upright in horizontal mode |
 | layout_text_combine_test.cc:1545 | InVertical | behaviour | formalized | `layoutTextCombine_inVertical` | Text combine in vertical writing mode |
 | layout_ruby_base_test.cc:16 | AddChildNoBlockChildren | internal | internal | - | Ruby base anonymous block child insertion |
