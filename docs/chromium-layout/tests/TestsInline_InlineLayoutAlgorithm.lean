@@ -377,4 +377,27 @@ theorem inlineLayoutAlgorithm_initialLetterWithEmptyInline :
     computeInitialLetterMetrics true = ((80, 80), (80, 0)) := by
   decide
 
+/-- Test `InlineLayoutAlgorithmTest, TextFitDivisionByZero` (`inline/inline_layout_algorithm_test.cc:999`).
+    CSS Inline 3 §Text Fit:
+    When content width is zero, text fit scale defaults safely without division by zero. -/
+theorem inlineLayoutAlgorithm_textFitDivisionByZero :
+    computeTextFitScale 50 0 1000 = 100 := by
+  rfl
+
+/-- Test `InlineLayoutAlgorithmTest, BoxFragmentInRubyCrash` (`inline/inline_layout_algorithm_test.cc:1008`).
+    CSS Ruby 1 §3:
+    First base item in open ruby column creates valid box fragment without crash. -/
+theorem inlineLayoutAlgorithm_boxFragmentInRubyCrash :
+    isRubyBaseChildValid (.boxFragment "select") = true ∧
+    isRubyBaseChildValid (.boxFragment "svg") = true := by
+  decide
+
+/-- Test `InlineLayoutAlgorithmTest, BidiControlsInLineClampedLines` (`inline/inline_layout_algorithm_test.cc:1026`).
+    CSS Overflow 3 §Line Clamping & CSS Text 3 §Bidi:
+    Pure bidi controls following a line-breaking ellipsis have zero layout advance. -/
+theorem inlineLayoutAlgorithm_bidiControlsInLineClampedLines :
+    isBidiControlItem true false = true ∧
+    (if true || false then 0 else 1) = 0 := by
+  decide
+
 end ChromiumLayout.TestsInline

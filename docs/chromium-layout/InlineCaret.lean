@@ -283,4 +283,21 @@ theorem multicol_fragment_caret_offset (fragId startOff endOff off : Nat) (hRang
   dsimp [computeCaretPosition, computeCaretPosition.fallback]
   simp [hRange.1, hRange.2]
 
+/-! ## 6. HTML 5.2 §4.8.12 Unrendered Elements Caret Resolution -/
+
+/-- HTML 5.2 §4.8.12: The `area` element does not generate CSS layout boxes.
+    Attempting to compute an inline caret position before or after an unrendered element
+    (such as an area element without a layout object) safely returns none. -/
+def computeInlineCaretPositionForElement (hasLayoutObject : Bool) (pos : InlineCaretPositionType) : Option InlineCaretPosition :=
+  if !hasLayoutObject then none
+  else some { fragmentId := 0, positionType := pos, textOffset := none }
+
+/-- HTML 5.2 §4.8.12 Law: Caret position for element without layout object is none. -/
+theorem caretPosition_unrendered_element_is_none (pos : InlineCaretPositionType) :
+    computeInlineCaretPositionForElement false pos = none := rfl
+
+/-- HTML 5.2 §4.8.12 Law: Caret position for element with layout object is some. -/
+theorem caretPosition_rendered_element_is_some (pos : InlineCaretPositionType) :
+    (computeInlineCaretPositionForElement true pos).isSome = true := rfl
+
 end ChromiumLayout

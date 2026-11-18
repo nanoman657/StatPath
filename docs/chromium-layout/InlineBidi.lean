@@ -341,4 +341,22 @@ def segmentInlineText (items : List InlineCollectedItem) (text : String) (baseDi
       | some r => { item with bidiLevel := r.level }
       | none => item
 
+/-! ## 7. CSS Text 3 §4.1 Carriage Returns & Mandatory Line Breaks -/
+
+/-- CSS Text 3 §4.1: Check if a character is a carriage return (U+000D). -/
+def isCarriageReturn (c : Char) : Bool :=
+  c == '\r'
+
+/-- CSS Text 3 §4.1: Preserved CR with white-space: pre acts as a mandatory line break. -/
+def isMandatoryLineBreak (c : Char) (isPre : Bool) : Bool :=
+  if isPre then c == '\n' || c == '\r' else false
+
+/-- CSS Text 3 §4.1 Law: In white-space: pre, CR is a mandatory line break. -/
+theorem cr_is_mandatory_break_in_pre :
+    isMandatoryLineBreak '\r' true = true := rfl
+
+/-- CSS Text 3 §4.1 Law: In normal white-space, CR is not a mandatory line break. -/
+theorem cr_not_mandatory_break_in_normal :
+    isMandatoryLineBreak '\r' false = false := rfl
+
 end ChromiumLayout

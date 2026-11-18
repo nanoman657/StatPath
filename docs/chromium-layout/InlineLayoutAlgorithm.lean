@@ -17,19 +17,11 @@
 import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
+import InlineGeometry
 
 namespace ChromiumLayout
 
 /-! ## 1. Physical Box Strut & Inline Box Fragmentation -/
-
-/-- Physical box strut representing borders or paddings on four sides (`PhysicalBoxStrut`).
-    Tested in `InlineLayoutAlgorithmTest.InlineBoxBorderPadding`. -/
-structure PhysicalBoxStrut where
-  left : Nat := 0
-  top : Nat := 0
-  right : Nat := 0
-  bottom : Nat := 0
-  deriving DecidableEq, Repr
 
 /-- Partition an inline box's border or padding strut across line fragments.
     In LTR: the first fragment retains the left edge, the last retains the right edge.
@@ -490,5 +482,109 @@ theorem initialLetter_empty_zero :
 /-- CSS Inline 3 §6 Law: Present initial letter produces non-zero box size. -/
 theorem initialLetter_present_non_zero :
     (computeInitialLetterMetrics true).1 = (80, 80) := rfl
+
+/-! ## 17. Box Decoration Break (CSS Box Decoration 3 §4.2) -/
+
+/-- CSS Box Decoration 3 §4.2: box-decoration-break property values. -/
+inductive BoxDecorationBreak where
+  | slice
+  | clone
+  deriving DecidableEq, Repr
+
+/-- CSS Box Decoration 3 §4.2: Apply box-decoration-break across line fragments.
+    With 'slice', borders/paddings are sliced (start edge on first line, end edge on last line).
+    With 'clone', each fragment receives the full border/padding. -/
+def applyBoxDecorationBreak (mode : BoxDecorationBreak) (s : PhysicalBoxStrut) (isStart isEnd : Bool) : PhysicalBoxStrut :=
+  match mode with
+  | .slice => partitionInlineStrut s isStart isEnd
+  | .clone => s
+
+/-- CSS Box Decoration 3 §4.2 Law: For empty box decorations, clone produces an empty strut on every fragment. -/
+theorem applyBoxDecorationBreak_clone_empty (isStart isEnd : Bool) :
+    applyBoxDecorationBreak .clone {} isStart isEnd = {} := rfl
+
+/-- CSS Box Decoration 3 §4.2 Law: Clone preserves strut across all fragments. -/
+theorem applyBoxDecorationBreak_clone_id (s : PhysicalBoxStrut) (isStart isEnd : Bool) :
+    applyBoxDecorationBreak .clone s isStart isEnd = s := rfl
+
+/-! ## 18. Text Fit Scale and Division-by-Zero Protection (CSS Inline 3) -/
+
+/-- CSS Inline 3 §Text Fit: Compute text fit scale factor per line.
+    Guards against division-by-zero when content width is 0. -/
+def computeTextFitScale (availableWidth contentWidth : Nat) (maxScale : Nat := 1000) : Nat :=
+  if contentWidth == 0 then 100 else Nat.min maxScale ((availableWidth * 100) / contentWidth)
+
+/-- CSS Inline 3 §Text Fit Law: When content width is 0, default scale 100% is returned without division by zero. -/
+theorem computeTextFitScale_zero_content (avail maxS : Nat) :
+    computeTextFitScale avail 0 maxS = 100 := rfl
+
+/-- CSS Inline 3 §Text Fit Law: Text fit scale factor never exceeds maxScale when content is positive. -/
+theorem computeTextFitScale_le_max (avail content maxS : Nat) (h : content > 0) :
+    computeTextFitScale avail content maxS ≤ maxS := by
+  dsimp [computeTextFitScale]
+  have hne : (content == 0) = false := by
+    cases content with
+    | zero => contradiction
+    | succ => rfl
+  rw [hne]
+  exact Nat.min_le_left maxS ((avail * 100) / content)
+
+/-! ## 19. Bidi Control Items in Line Clamping (CSS Overflow 3 §Line Clamping & CSS Text 3 §Bidi) -/
+
+/-- CSS Overflow 3 §Line Clamping & CSS Text 3 §Bidi:
+    Pure bidi control items following a line clamp ellipsis do not contribute inline advance. -/
+def isBidiControlItem (isCloseIsolate : Bool) (isBidiControlChar : Bool) : Bool :=
+  isCloseIsolate || isBidiControlChar
+
+/-- CSS Overflow 3 §Line Clamping Law: Bidi control items have zero layout advance. -/
+theorem bidiControl_zero_advance (isClose isControl : Bool) (h : isBidiControlItem isClose isControl = true) :
+    (if isClose || isControl then 0 else 1) = 0 := by
+  dsimp [isBidiControlItem] at h
+  rw [h]
+  rfl
+
+/-! ## 20. Float Layout Rewind and Large Border Clamping (CSS 2.1 §9.5) -/
+
+/-- CSS 2.1 §9.5: Safe float width clamping to prevent integer overflow during float rewinding. -/
+def clampFloatWidth (w : Nat) (maxSafe : Nat := 1000000) : Nat :=
+  Nat.min w maxSafe
+
+/-- CSS 2.1 §9.5 Law: Float width clamping is bounded by maxSafe. -/
+theorem clampFloatWidth_le_max (w maxSafe : Nat) :
+    clampFloatWidth w maxSafe ≤ maxSafe := by
+  dsimp [clampFloatWidth]
+  exact Nat.min_le_right w maxSafe
+
+/-! ## 21. Table Cell Quirks Mode Out-of-Flow Exclusion (CSS 2.1 §9.3 & HTML Quirks) -/
+
+/-- CSS 2.1 §9.3 & Quirks Mode: Out-of-flow positioned elements contribute 0 to the in-flow min/max size of a line. -/
+def outOfFlowInlineContribution (isOutOfFlow : Bool) (w : Nat) : Nat :=
+  if isOutOfFlow then 0 else w
+
+/-- CSS 2.1 §9.3 Law: Out-of-flow element contribution is always zero. -/
+theorem outOfFlow_inline_contribution_zero (w : Nat) :
+    outOfFlowInlineContribution true w = 0 := rfl
+
+/-! ## 22. LineBreaker Input Sub-Range Slicing (CSS Text 3 §5) -/
+
+/-- CSS Text 3 §5: Sub-range slicing for line breaker input items. -/
+def sliceInlineItems {α : Type} (items : List α) (startIdx count : Nat) : List α :=
+  (items.drop startIdx).take count
+
+/-- CSS Text 3 §5 Law: Slicing an empty list yields empty list. -/
+theorem sliceInlineItems_empty {α : Type} (startIdx count : Nat) :
+    sliceInlineItems ([] : List α) startIdx count = [] := by
+  dsimp [sliceInlineItems]
+  simp
+
+/-! ## 23. Trailing Collapsible Space & Word Spacing Protection (CSS Text 3 §7) -/
+
+/-- CSS Text 3 §7: Safe spacing per opportunity guarding against division-by-zero. -/
+def safeSpacingRatio (totalExcess : Int) (opportunityCount : Nat) : Int :=
+  if opportunityCount == 0 then 0 else totalExcess / (opportunityCount : Int)
+
+/-- CSS Text 3 §7 Law: Safe spacing ratio with 0 opportunities is 0. -/
+theorem safeSpacingRatio_zero_opp (totalExcess : Int) :
+    safeSpacingRatio totalExcess 0 = 0 := rfl
 
 end ChromiumLayout

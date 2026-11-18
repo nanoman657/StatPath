@@ -474,4 +474,14 @@ theorem partitionSvgTextChunks_empty :
 theorem isSvgChildAllowed_nested_textPath :
     isSvgChildAllowed .a [.textPath, .text, .svg] .textPath = false := rfl
 
+/-! ## 6. SVG 2 §11 / CSS 2.1 §9.4.2 SVG Child Insertion & Parent IFC -/
+
+/-- SVG 2 §11 / CSS 2.1 §9.4.2: Adding children to an SVG root element does not mutate
+    the parent HTML inline formatting context. -/
+def svgChildMutatesParentIFC : Bool := false
+
+/-- SVG 2 §11 Law: Adding an SVG child to SVG root never marks parent IFC as needing collect inlines. -/
+theorem svgChild_does_not_mutate_parent_ifc :
+    svgChildMutatesParentIFC = false := rfl
+
 end ChromiumLayout

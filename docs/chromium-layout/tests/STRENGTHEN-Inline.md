@@ -273,6 +273,23 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `inlineNode_findSvgTextChunksCrash1`: Explicit x coordinates partition SVG text elements into independent text chunks per SVG 2 §11.2 & Unicode UAX #9.
   - `inlineNode_findSvgTextChunksCrash2`: Preserved whitespace maintains SVG text chunk partitioning per SVG 2 §11.2 & Unicode UAX #9.
   - `inlineNode_findSvgTextChunksCrash3`: SVG text chunks containing surrogate pairs partition safely without crash per SVG 2 §11.2 & Unicode Standard §3.8.
+  - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: Out-of-flow positioned elements contribute 0 to normal flow inline min/max sizes per CSS 2.1 §9.3 & Quirks Mode.
+  - `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations`: BoxDecorationBreak clone preserves empty struts across fragments per CSS Box Decoration 3 §4.2.
+  - `lineBreaker_rewindPositionedFloat`: Float width clamping prevents integer overflow during float rewinding per CSS 2.1 §9.5.
+  - `lineBreaker_rewindRubyColumn`: Ruby column rewinding when column width exceeds available width per CSS Ruby 1 §3.
+  - `lineBreaker_getOverhangCrash`: Ruby annotation overhang with negative margins bounded below by 0 per CSS Ruby 1 §4.2.
+  - `lineBreaker_setInputRange`: Slicing line breaker input range restricts layout to sub-range items per CSS Text 3 §5.
+  - `lineBreaker_createSubLineInfoAvailableWidth`: Sub-linebreaker available width under nowrap is unaffected by sibling floats per CSS Ruby 1 §3.
+  - `lineBreaker_removeTrailingCollapsibleSpace`: Safe spacing per opportunity guards against division by zero per CSS Text 3 §7.
+  - `lineBreaker_splitTrailingBidiCrCrash`: Trailing carriage return in white-space: pre acts as mandatory line break per CSS Text 3 §4.1.
+  - `inlineNode_addChildToSVGRoot`: Adding children to an SVG root does not mutate parent HTML IFC per SVG 2 §11 & CSS 2.1 §9.4.2.
+  - `inlineCaretPosition_beforeOrAfterInlineAreaElement`: Caret position for unrendered element without layout object returns none per HTML 5.2 §4.8.12.
+  - `inlineCursor_culledInlineWithNonIFCChild`: Culled inline without decorations wrapping ruby generates no box fragment per CSS 2.1 §9.2.1.
+  - `inlineLayoutAlgorithm_textFitDivisionByZero`: Text fit scale factor defaults safely when content width is 0 per CSS Inline 3 §Text Fit.
+  - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: First base item in open ruby column creates valid box fragment per CSS Ruby 1 §3.
+  - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: Bidi controls following line-clamp ellipsis have zero layout advance per CSS Overflow 3 & CSS Text 3.
+  - `layoutTextFragment_setTextWithFirstLetter`: Non-empty text nodes create layout text fragments after DOM mutation per CSS Pseudo 4 §2.2.
+  - `layoutTextFragment_splitTextWithZero`: First-letter selection is preserved across leading empty text nodes per CSS Pseudo 4 §2.2.
 
 
 

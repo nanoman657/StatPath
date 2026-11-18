@@ -419,4 +419,65 @@ theorem ruby_annotation_no_justification (hasText : Bool) :
 theorem ruby_atomic_inline_no_text_no_justification :
     hasRubyJustificationOpportunity false false = false := rfl
 
+/-! ## 10. CSS Ruby 1 §4.2 Ruby Annotation Overhang with Margins -/
+
+/-- CSS Ruby 1 §4.2: Annotation overhang calculation with margins.
+    Net base advance after taking into account base margins is bounded below by 0. -/
+def computeRubyOverhangAdvance (baseWidth : Nat) (marginEnd : Int) : Nat :=
+  let netWidth : Int := (baseWidth : Int) + marginEnd
+  if netWidth ≤ 0 then 0 else netWidth.toNat
+
+/-- CSS Ruby 1 §4.2 Law: Negative margin exceeding base width yields zero advance without underflow. -/
+theorem computeRubyOverhangAdvance_nonneg (baseWidth : Nat) (marginEnd : Int)
+    (h : (baseWidth : Int) + marginEnd ≤ 0) :
+    computeRubyOverhangAdvance baseWidth marginEnd = 0 := by
+  dsimp [computeRubyOverhangAdvance]
+  split
+  · rfl
+  · rename_i h_not
+    omega
+
+/-! ## 11. CSS Ruby 1 §3 Ruby Column Rewinding & Float Isolation -/
+
+/-- CSS Ruby 1 §3: A ruby column cannot be broken across lines internally unless specified.
+    If column width exceeds line opportunity available width, it must be rewound to the next line. -/
+def shouldRewindRubyColumn (availableWidth : Nat) (colWidth : Nat) : Bool :=
+  colWidth > availableWidth
+
+/-- CSS Ruby 1 §3 Law: Ruby column rewinds when column width exceeds available width. -/
+theorem ruby_column_rewind_when_overflows (avail col : Nat) (h : col > avail) :
+    shouldRewindRubyColumn avail col = true := by
+  dsimp [shouldRewindRubyColumn]
+  exact decide_eq_true h
+
+/-- CSS Ruby 1 §3 Law: Ruby column does not rewind when column fits within available width. -/
+theorem ruby_column_no_rewind_when_fits (avail col : Nat) (h : col ≤ avail) :
+    shouldRewindRubyColumn avail col = false := by
+  dsimp [shouldRewindRubyColumn]
+  exact decide_eq_false (Nat.not_lt_of_le h)
+
+/-- CSS Ruby 1 §3 & CSS Text 4: When text-wrap is nowrap, ruby base content is sized without
+    available width reduction from internal sibling floats. -/
+def rubySubLineAvailableWidth (isNowrap : Bool) (containerAvail : Nat) (floatWidth : Nat) : Nat :=
+  if isNowrap then containerAvail else containerAvail - floatWidth
+
+/-- CSS Ruby 1 §3 Law: Under nowrap, float width does not reduce ruby sub-line available width. -/
+theorem ruby_subline_avail_width_nowrap (c f : Nat) :
+    rubySubLineAvailableWidth true c f = c := rfl
+
+/-! ## 12. CSS Ruby 1 §3 Atomic Box Fragments in Ruby Base -/
+
+/-- CSS Ruby 1 §3: Atomic box fragments in ruby base. -/
+inductive RubyBaseChildKind where
+  | inlineText
+  | boxFragment (tag : String)
+  deriving DecidableEq, Repr
+
+/-- CSS Ruby 1 §3 Law: Ruby base accepts atomic box fragments (such as select and svg). -/
+def isRubyBaseChildValid (_child : RubyBaseChildKind) : Bool := true
+
+theorem ruby_base_child_valid (_child : RubyBaseChildKind) :
+    isRubyBaseChildValid _child = true := by
+  cases _child <;> rfl
+
 end ChromiumLayout

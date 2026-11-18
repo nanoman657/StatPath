@@ -186,4 +186,12 @@ theorem inlineCaretPosition_multiColumnSingleText :
     p12 = { fragmentId := 3, positionType := .atTextOffset, textOffset := some 12 } := by
   decide
 
+/-- Test `InlineCaretPositionTest, BeforeOrAfterInlineAreaElement` (`inline/inline_caret_position_test.cc:591`).
+    HTML 5.2 §4.8.12:
+    The area element does not generate CSS layout boxes; caret position before or after returns none. -/
+theorem inlineCaretPosition_beforeOrAfterInlineAreaElement :
+    computeInlineCaretPositionForElement false .beforeBox = none ∧
+    computeInlineCaretPositionForElement false .afterBox = none := by
+  decide
+
 end ChromiumLayout.TestsInline

@@ -690,4 +690,20 @@ theorem empty_inline_box_no_ellipsis (nodes : List CursorNode)
       cases hcase : (hd.name == "#'…'") <;> simp_all
     simp [hne, ih htl]
 
+/-! ## 6. CSS 2.1 §9.2.1 Culled Inline Box Fragment Generation -/
+
+/-- CSS 2.1 §9.2.1: Whether an inline element generates its own BoxFragment.
+    An inline element without box decorations and without a self-painting layer is culled
+    (does not create a box fragment), even if its child is a non-IFC ruby container. -/
+def shouldInlineCreateBoxFragment (hasDecorations : Bool) (hasLayer : Bool) : Bool :=
+  hasDecorations || hasLayer
+
+/-- CSS 2.1 §9.2.1 Law: Culled inline without decorations or layer creates no box fragment. -/
+theorem culled_inline_no_decorations_no_layer :
+    shouldInlineCreateBoxFragment false false = false := rfl
+
+/-- CSS 2.1 §9.2.1 Law: Inline with decorations creates a box fragment. -/
+theorem non_culled_inline_with_decorations :
+    shouldInlineCreateBoxFragment true false = true := rfl
+
 end ChromiumLayout

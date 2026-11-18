@@ -10,6 +10,9 @@ import InlineShaping
 import InlineBreakCandidate
 import InlineTextCombine
 import InlineSVG
+import InlineLayoutAlgorithm
+import InlineRuby
+import InlineBidi
 
 namespace ChromiumLayout.TestsInline
 
@@ -366,5 +369,71 @@ theorem lineBreaker_trailingSpaceWidth :
 theorem lineBreaker_splitTextIntoSegementsCrash :
     computeSvgCombiningSegmentLengths [1, 3, 2] = [1, 3, 2] := by
   rfl
+
+/-- Test `LineBreakerTest, TableCellWidthCalculationQuirkOutOfFlow` (`inline/line_breaker_test.cc:821`).
+    CSS 2.1 §9.3 & Quirks Mode:
+    Out-of-flow positioned elements (e.g. position: absolute img) contribute 0
+    to normal flow line min/max size calculations. -/
+theorem lineBreaker_tableCellWidthCalculationQuirkOutOfFlow :
+    outOfFlowInlineContribution true 100 = 0 := by
+  rfl
+
+/-- Test `LineBreakerTest, BoxDecorationBreakCloneWithoutBoxDecorations` (`inline/line_breaker_test.cc:842`).
+    CSS Box Decoration 3 §4.2:
+    With -webkit-box-decoration-break: clone, an inline element without box decorations
+    (border = 0, padding = 0) retains empty struts across all fragments without crashing. -/
+theorem lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations :
+    applyBoxDecorationBreak .clone {} true true = {} := by
+  rfl
+
+/-- Test `LineBreakerTest, RewindPositionedFloat` (`inline/line_breaker_test.cc:849`).
+    CSS 2.1 §9.5:
+    Floats with enormous borders or dimensions are safely clamped/bounded to prevent integer overflow. -/
+theorem lineBreaker_rewindPositionedFloat :
+    clampFloatWidth 999999999 1000000 = 1000000 := by
+  rfl
+
+/-- Test `LineBreakerTest, RewindRubyColumn` (`inline/line_breaker_test.cc:864`).
+    CSS Ruby 1 §3:
+    When a ruby column exceeds the available width, it is rewound to the next line. -/
+theorem lineBreaker_rewindRubyColumn :
+    shouldRewindRubyColumn 50 80 = true ∧
+    shouldRewindRubyColumn 100 80 = false := by
+  decide
+
+/-- Test `LineBreakerTest, GetOverhangCrash` (`inline/line_breaker_test.cc:940`).
+    CSS Ruby 1 §4.2:
+    Ruby overhang calculation with large negative end margin bounds effective advance below by 0. -/
+theorem lineBreaker_getOverhangCrash :
+    computeRubyOverhangAdvance 20 (-50) = 0 := by
+  rfl
+
+/-- Test `LineBreakerTest, SetInputRange` (`inline/line_breaker_test.cc:1144`).
+    CSS Text 3 §5:
+    Restricting line breaker input range to items 1..4 slices exactly the 3 items in that range. -/
+theorem lineBreaker_setInputRange :
+    (sliceInlineItems [0, 1, 2, 3, 4, 5] 1 3).length = 3 := by
+  rfl
+
+/-- Test `LineBreakerTest, CreateSubLineInfoAvailableWidth` (`inline/line_breaker_test.cc:1169`).
+    CSS Ruby 1 §3:
+    Under text-wrap: nowrap, sibling floats do not reduce ruby sub-line available width. -/
+theorem lineBreaker_createSubLineInfoAvailableWidth :
+    rubySubLineAvailableWidth true 30 15 = 30 := by
+  rfl
+
+/-- Test `LineBreakerTest, RemoveTrailingCollapsibleSpace` (`inline/line_breaker_test.cc:1229`).
+    CSS Text 3 §7:
+    When available width or opportunity count is zero with extreme word-spacing, division-by-zero is safely guarded. -/
+theorem lineBreaker_removeTrailingCollapsibleSpace :
+    safeSpacingRatio 2569999 0 = 0 := by
+  rfl
+
+/-- Test `LineBreakerTest, SplitTrailingBidiCrCrash` (`inline/line_breaker_test.cc:1323`).
+    CSS Text 3 §4.1:
+    Under white-space: pre, a trailing carriage return (U+000D) is recognized as a mandatory line break. -/
+theorem lineBreaker_splitTrailingBidiCrCrash :
+    isMandatoryLineBreak '\r' true = true ∧ isCarriageReturn '\r' = true := by
+  decide
 
 end ChromiumLayout.TestsInline

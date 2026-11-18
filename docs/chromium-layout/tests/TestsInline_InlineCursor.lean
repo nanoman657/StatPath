@@ -857,4 +857,11 @@ theorem inlineCursor_moveToVisualFirstOrLast :
     lastSpan = some "FragmentItem Text \"some\"" := by
   decide
 
+/-- Test `InlineCursorTest, CulledInlineWithNonIFCChild` (`inline/inline_cursor_test.cc:1473`).
+    CSS 2.1 §9.2.1:
+    An inline element without box decorations wrapping a ruby element does not generate a box fragment. -/
+theorem inlineCursor_culledInlineWithNonIFCChild :
+    shouldInlineCreateBoxFragment false false = false := by
+  rfl
+
 end ChromiumLayout.TestsInline

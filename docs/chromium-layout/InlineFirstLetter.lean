@@ -150,4 +150,34 @@ theorem reconstructFirstLetterPlainText_length (f r : String) :
   dsimp [reconstructFirstLetterPlainText]
   exact String.length_append f r
 
+/-! ## 6. CSS Pseudo-Elements 4 §2.2 Text Mutation and Node Splitting -/
+
+/-- CSS Pseudo-Elements 4 §2.2: An empty text node produces no layout text fragment. -/
+def hasLayoutTextFragment (s : String) : Bool :=
+  s.length > 0
+
+/-- CSS Pseudo-Elements 4 §2.2 Law: Empty text node produces no layout text fragment. -/
+theorem empty_text_no_fragment :
+    hasLayoutTextFragment "" = false := rfl
+
+/-- CSS Pseudo-Elements 4 §2.2 Law: Non-empty text node produces a layout text fragment. -/
+theorem nonempty_text_has_fragment (s : String) (h : s.length > 0) :
+    hasLayoutTextFragment s = true := by
+  dsimp [hasLayoutTextFragment]
+  exact decide_eq_true h
+
+/-- CSS Pseudo-Elements 4 §2.2: Extract first letter character from a sequence of text nodes. -/
+def findFirstLetterInNodes (nodes : List String) : Option Char :=
+  match nodes with
+  | [] => none
+  | s :: rest =>
+    let trimmed := s.toList.dropWhile (fun c => c == ' ' || c == '\t' || c == '\n')
+    match trimmed with
+    | [] => findFirstLetterInNodes rest
+    | c :: _ => if isFirstLetterTarget c then some c else none
+
+/-- CSS Pseudo-Elements 4 §2.2 Law: Preceding empty text nodes do not affect first-letter identification. -/
+theorem findFirstLetterInNodes_empty_preceding (s : String) :
+    findFirstLetterInNodes ["" , s] = findFirstLetterInNodes [s] := rfl
+
 end ChromiumLayout

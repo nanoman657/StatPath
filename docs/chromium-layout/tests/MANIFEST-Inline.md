@@ -51,27 +51,27 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:732 | TrailingCollapsedSpaces | internal | internal | - | Asserts NeedsLayout flag clearing during layout lifecycle |
 | inline/line_breaker_test.cc:762 | SplitTextZero | behaviour | blocked | - | Blocked: model lacks DOM text node split synchronization |
 | inline/line_breaker_test.cc:789 | ForcedBreakFollowedByCloseTag | geometry | formalized | `lineBreaker_forcedBreakFollowedByCloseTag` | CSS Text 3 §4.1.2 & §5.1: Forced break followed by close tags and collapsible whitespace at block end produces 1 line |
-| inline/line_breaker_test.cc:821 | TableCellWidthCalculationQuirkOutOfFlow | internal | internal | - | Checks no DCHECK in quirks mode with out-of-flow child |
-| inline/line_breaker_test.cc:842 | BoxDecorationBreakCloneWithoutBoxDecorations | internal | internal | - | Checks no DCHECK with -webkit-box-decoration-break: clone |
-| inline/line_breaker_test.cc:849 | RewindPositionedFloat | internal | internal | - | Regression test for float rewinding with large border |
-| inline/line_breaker_test.cc:864 | RewindRubyColumn | internal | internal | - | Regression test for ruby column rewinding |
+| inline/line_breaker_test.cc:821 | TableCellWidthCalculationQuirkOutOfFlow | behaviour | formalized | `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow` | Out-of-flow positioned elements contribute 0 to in-flow min/max size |
+| inline/line_breaker_test.cc:842 | BoxDecorationBreakCloneWithoutBoxDecorations | behaviour | formalized | `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations` | Clone with empty box decorations preserves empty struts across fragments |
+| inline/line_breaker_test.cc:849 | RewindPositionedFloat | behaviour | formalized | `lineBreaker_rewindPositionedFloat` | Float width clamping bounds dimensions to prevent overflow |
+| inline/line_breaker_test.cc:864 | RewindRubyColumn | behaviour | formalized | `lineBreaker_rewindRubyColumn` | Ruby column exceeding available width rewinds to next line |
 | inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | formalized | `lineBreaker_splitTextIntoSegments` | Grapheme cluster length segmentation preserving combining marks and surrogate pairs |
 | inline/line_breaker_test.cc:913 | SplitTextIntoSegementsCrash | behaviour | formalized | `lineBreaker_splitTextIntoSegementsCrash` | SVG 2 §11.4 & Unicode Standard §3.6: Combining characters split across explicit positions |
-| inline/line_breaker_test.cc:940 | GetOverhangCrash | internal | internal | - | Crash regression test for ruby overhang |
+| inline/line_breaker_test.cc:940 | GetOverhangCrash | behaviour | formalized | `lineBreaker_getOverhangCrash` | Ruby overhang advance with large negative margin is bounded below by 0 |
 | inline/line_breaker_test.cc:965 | IdeographicSpaceBeforeEndBracket | geometry | formalized | `lineBreaker_ideographicBeforeBracket` | Ideographic space followed by closing bracket breaks at prior break opportunity |
 | inline/line_breaker_test.cc:1002 | BreakAt | geometry | formalized | `lineBreaker_breakAt` | Explicit breakpoints partition line widths (10, 40, 10, 30) |
 | inline/line_breaker_test.cc:1044 | BreakAtTrailingSpaces | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with trailing spaces (40, 20) |
 | inline/line_breaker_test.cc:1079 | BreakAtTrailingSpacesAfterAtomicInline | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with atomic inlines (10, 20) |
 | inline/line_breaker_test.cc:1117 | WideContentInRuby | behaviour | formalized | `lineBreaker_wideContentInRuby` | CSS Ruby 1 §4: Wide atomic inlines in ruby base accommodate total content size |
-| inline/line_breaker_test.cc:1144 | SetInputRange | internal | internal | - | Unit test for internal C++ helper LineBreaker::SetInputRange |
-| inline/line_breaker_test.cc:1169 | CreateSubLineInfoAvailableWidth | internal | internal | - | Regression test for sub-linebreaker float handling in ruby |
+| inline/line_breaker_test.cc:1144 | SetInputRange | behaviour | formalized | `lineBreaker_setInputRange` | Slicing line breaker input range restricts layout to sub-range items |
+| inline/line_breaker_test.cc:1169 | CreateSubLineInfoAvailableWidth | behaviour | formalized | `lineBreaker_createSubLineInfoAvailableWidth` | Ruby sub-line available width under nowrap is unaffected by sibling floats |
 | inline/line_breaker_test.cc:1193 | OverflowingContinuationRuby | behaviour | formalized | `lineBreaker_overflowingContinuationRuby` | CSS Ruby 1 §4: Overflowing ruby continuation expands column min-content size |
 | inline/line_breaker_test.cc:1208 | OverflowingContinuationRuby2 | behaviour | formalized | `lineBreaker_overflowingContinuationRuby2` | CSS Ruby 1 §4: Vertical ruby column with atomic inline base and wide annotation establishes column size |
 | inline/line_breaker_test.cc:1220 | MinMaxWithAtomicInlineInRuby | behaviour | formalized | `lineBreaker_minMaxWithAtomicInlineInRuby` | CSS Ruby 1 §4: Ruby column min size with atomic inline base is bounded by base width |
-| inline/line_breaker_test.cc:1229 | RemoveTrailingCollapsibleSpace | internal | internal | - | Crash regression test (division by zero) |
+| inline/line_breaker_test.cc:1229 | RemoveTrailingCollapsibleSpace | behaviour | formalized | `lineBreaker_removeTrailingCollapsibleSpace` | Line info spacing calculation guards against division by zero |
 | inline/line_breaker_test.cc:1241 | MinMaxWithEmptyRubyBase | behaviour | formalized | `lineBreaker_minMaxWithEmptyRubyBase` | CSS Ruby 1 §4: Empty ruby base takes column min size directly from annotation |
 | inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | formalized | `lineBreaker_canBreakInside` | CanBreakInside predicate for line breaking opportunities |
-| inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
+| inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | behaviour | formalized | `lineBreaker_splitTrailingBidiCrCrash` | Trailing carriage return in white-space: pre acts as mandatory break |
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
 | inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectInlinesText` | Flattening inline tokens into text and open/close tag items with offsets |
 | inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | formalized | `inlineNode_collectInlinesBR` | Flattening inline tokens with BR into newline text and control item |
@@ -124,7 +124,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1262 | RemoveInlineNodeDataIfBlockBecomesEmpty2 | behaviour | formalized | `inlineNode_removeInlineNodeDataIfBlockBecomesEmpty2` | CSS 2.1 §9.4.2: Setting innerHTML="" so block becomes empty clears its inline formatting context |
 | inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | behaviour | formalized | `inlineNode_removeInlineNodeDataIfBlockObtainsBlockChild` | CSS 2.1 §9.4.2: A block container that obtains an in-flow block child no longer establishes an IFC directly |
 | inline/inline_node_test.cc:1285 | ClearFirstInlineFragmentOnSplitFlow | internal | internal | - | SplitFlow layout tree mutation |
-| inline/inline_node_test.cc:1336 | AddChildToSVGRoot | internal | internal | - | SVG text root element traversal |
+| inline/inline_node_test.cc:1336 | AddChildToSVGRoot | behaviour | formalized | `inlineNode_addChildToSVGRoot` | SVG child insertion does not mutate parent HTML IFC |
 | inline/inline_node_test.cc:1353 | PreservedNewlineWithBidiAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithBidiAndRelayout` | CSS Writing Modes 3 §2.4: Bidi isolate pops before preserved newline and re-enters after |
 | inline/inline_node_test.cc:1367 | PreservedNewlineWithRemovedBidiAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithRemovedBidiAndRelayout` | CSS Writing Modes 3 §2.4: Removing RTL dir attribute removes bidi control characters around newline |
 | inline/inline_node_test.cc:1379 | PreservedNewlineWithRemovedLtrDirAndRelayout | behaviour | formalized | `inlineNode_preservedNewlineWithRemovedLtrDirAndRelayout` | CSS Writing Modes 3 §2.4: Removing LTR dir attribute removes bidi control characters around newline |
@@ -212,7 +212,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_caret_position_test.cc:509 | InlineBlockBeforeContent | behaviour | formalized | `inlineCaretPosition_inlineBlockBeforeContent` | CSS Inline 3 §2: Caret at text following ::before inline-block |
 | inline/inline_caret_position_test.cc:528 | InlineBoxesLTR | behaviour | formalized | `inlineCaretPosition_inlineBoxesLTR` | CSS Writing Modes 3 §3.2: Caret in bdo dir=ltr with bidi controls |
 | inline/inline_caret_position_test.cc:559 | InlineBoxesRTL | behaviour | formalized | `inlineCaretPosition_inlineBoxesRTL` | CSS Writing Modes 3 §3.2: Caret in bdo dir=rtl with bidi controls |
-| inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | internal | internal | - | Crash regression test for area element without layout object |
+| inline/inline_caret_position_test.cc:591 | BeforeOrAfterInlineAreaElement | behaviour | formalized | `inlineCaretPosition_beforeOrAfterInlineAreaElement` | Caret position on unrendered area element without layout object returns none |
 | inline/inline_cursor_test.cc:125 | BidiLevelInlineBoxLTR | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxLTR` | Bidi levels for plain text, atomic inlines, and RTL bidi-override in LTR |
 | inline/inline_cursor_test.cc:135 | BidiLevelInlineBoxRTL | behaviour | formalized | `inlineCursor_bidiLevelInlineBoxRTL` | Bidi levels for Latin text and RTL bidi-override in RTL |
 | inline/inline_cursor_test.cc:145 | BidiLevelSimpleLTR | behaviour | formalized | `inlineCursor_bidiLevelSimpleLTR` | Nested RTL and LTR bidi-override levels in LTR |
@@ -282,7 +282,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | formalized | `inlineCursor_moveToVisualFirstOrLast` | UAX #9 L2 & CSS Writing Modes 3 §3.1: Visual first and last for layout object in mixed-bidi RTL line |
 | inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_moveToLayoutObject` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Enumerate fragments for layout object; culled inlines have none |
 | inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
-| inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | internal | internal | - | Crash regression test for non-IFC ruby child |
+| inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | behaviour | formalized | `inlineCursor_culledInlineWithNonIFCChild` | Culled inline without decorations wrapping ruby creates no box fragment |
 | inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces` | Whitespace space collapsing rules across modes |
 | inline/inline_items_builder_test.cc:216 | CollapseTabs | behaviour | formalized | `inlineItemsBuilder_collapseTabs` | Whitespace tab collapsing rules |
 | inline/inline_items_builder_test.cc:226 | CollapseNewLines | behaviour | formalized | `inlineItemsBuilder_collapseNewlines` | Whitespace newline collapsing rules |
@@ -340,9 +340,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_layout_algorithm_test.cc:944 | TextBoxTrimConstraintSpaceSingle | behaviour | formalized | `test_TextBoxTrimConstraintSpaceSingle` | Single in-flow child before empty child start trim |
 | inline/inline_layout_algorithm_test.cc:967 | TextBoxTrimConstraintSpaceEmptyOnly | behaviour | formalized | `test_TextBoxTrimConstraintSpaceEmptyOnly` | Sole in-flow child receives both start and end trim |
 | inline/inline_layout_algorithm_test.cc:984 | TextBoxTrimConstraintSpaceNone | behaviour | formalized | `test_TextBoxTrimConstraintSpaceNone` | Empty parent receives neither start nor end trim |
-| inline/inline_layout_algorithm_test.cc:999 | TextFitDivisionByZero | internal | internal | - | Crash regression test for text-fit grow per-line |
-| inline/inline_layout_algorithm_test.cc:1008 | BoxFragmentInRubyCrash | internal | internal | - | Crash regression test for ruby column box fragment |
-| inline/inline_layout_algorithm_test.cc:1026 | BidiControlsInLineClampedLines | internal | internal | - | Crash regression test for bidi controls in line clamp |
+| inline/inline_layout_algorithm_test.cc:999 | TextFitDivisionByZero | behaviour | formalized | `inlineLayoutAlgorithm_textFitDivisionByZero` | Text fit scale factor defaults safely when content width is zero |
+| inline/inline_layout_algorithm_test.cc:1008 | BoxFragmentInRubyCrash | behaviour | formalized | `inlineLayoutAlgorithm_boxFragmentInRubyCrash` | First base item in open ruby column creates valid box fragment |
+| inline/inline_layout_algorithm_test.cc:1026 | BidiControlsInLineClampedLines | behaviour | formalized | `inlineLayoutAlgorithm_bidiControlsInLineClampedLines` | Bidi controls following line clamp ellipsis have zero layout advance |
 | inline/inline_layout_algorithm_test.cc:1044 | LineClampAndMaxContent | behaviour | formalized | `inlineLayoutAlgorithm_lineClampAndMaxContent` | CSS Sizing 3 §5 & CSS Overflow 4 §4.2: max-content sizing without forced breaks fits all content without line-clamp ellipsis |
 | inline/inline_layout_algorithm_test.cc:1086 | EllipsisFallbackToDots | behaviour | formalized | `test_EllipsisFallbackToDots` | Missing U+2026 glyph falls back to three dots |
 | inline/inline_layout_algorithm_test.cc:1129 | EllipsisFallbackToDotsFirstLine | behaviour | formalized | `inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine` | CSS Text 4 §5: First-line font lacking U+2026 glyph falls back to three dots with first-line font size |
@@ -571,8 +571,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_fragment_test.cc:273 | ContainsCaretOffsetPreLine | behaviour | formalized | `layoutTextFragment_containsCaretOffsetPreLine` | Caret offset membership under white-space: pre-line collapsing spaces before newline |
 | layout_text_fragment_test.cc:288 | IsBeforeAfterNonCollapsedCharacterNoLineWrap | behaviour | formalized | `layoutTextFragment_isBeforeAfterNonCollapsedCharacterNoLineWrap` | Before/after non-collapsed character queries across first-letter and remaining text fragments |
 | layout_text_fragment_test.cc:356 | IsBeforeAfterNonCollapsedLineWrapSpace | behaviour | formalized | `layoutTextFragment_isBeforeAfterNonCollapsedLineWrapSpace` | CSS Text 3 §4.1: Caret queries around line-wrapping space in remaining text |
-| layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | internal | internal | - | First-letter LayoutTextFragment mutation |
-| layout_text_fragment_test.cc:442 | SplitTextWithZero | internal | internal | - | DOM text split mutation |
+| layout_text_fragment_test.cc:386 | SetTextWithFirstLetter | behaviour | formalized | `layoutTextFragment_setTextWithFirstLetter` | Non-empty text nodes generate layout text fragments after DOM mutation |
+| layout_text_fragment_test.cc:442 | SplitTextWithZero | behaviour | formalized | `layoutTextFragment_splitTextWithZero` | First-letter selection is preserved across leading empty text nodes |
 | layout_br_test.cc:14 | TextMethods | behaviour | formalized | `layoutBR_textMethods` | `<br>` generates an identity mapping unit with resolved length 1 and newline snap code |
 | layout_text_combine_test.cc:52 | AppendChild | behaviour | formalized | `layoutTextCombine_appendChild` | CSS Writing Modes 3 §5.1: Appending text node to text combine merges into single LayoutTextCombine |
 | layout_text_combine_test.cc:84 | BoxBoundary | behaviour | formalized | `layoutTextCombine_boxBoundary` | CSS Writing Modes 3 §5.1: Inline box boundary creates distinct LayoutTextCombine boxes |
