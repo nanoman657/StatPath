@@ -84,18 +84,18 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:331 | CollectInlinesMaybeRtl | behaviour | formalized | `inlineNode_collectInlinesMaybeRtl` | CSS Writing Modes 3 §2.1: Surrogate pairs enable bidi in collect inlines, but reset to false in segment text when characters are LTR |
 | inline/inline_node_test.cc:344 | CollectInlinesRtl | behaviour | formalized | `inlineNode_collectInlinesRtl` | CSS Writing Modes 3 §2.1: Hebrew RTL text enables bidi in both collect inlines and segment text |
 | inline/inline_node_test.cc:353 | CollectInlinesRtlWithSpan | behaviour | formalized | `inlineNode_collectInlinesRtlWithSpan` | CSS Writing Modes 3 §2.1, §2.4: RTL container propagates bidi level 1 across inline elements and text items |
-| inline/inline_node_test.cc:369 | CollectInlinesMixedText | behaviour | internal | - | Mixed LTR/RTL text |
-| inline/inline_node_test.cc:385 | CollectInlinesMixedTextEndWithON | behaviour | internal | - | Bidi neutral character resolution |
+| inline/inline_node_test.cc:369 | CollectInlinesMixedText | behaviour | formalized | `inlineNode_collectInlinesMixedText` | CSS Writing Modes 3 §2.1 & UAX #9: Mixed LTR and Hebrew RTL text segmentation across span elements |
+| inline/inline_node_test.cc:385 | CollectInlinesMixedTextEndWithON | behaviour | formalized | `inlineNode_collectInlinesMixedTextEndWithON` | CSS Writing Modes 3 §2.1 & UAX #9 §3.3.4: Trailing neutral at end of LTR embedding resolves to level 0 |
 | inline/inline_node_test.cc:402 | CollectInlinesTextCombineBR | geometry | formalized | `inlineNode_collectInlinesTextCombineBR` | CSS Writing Modes 3 §5.1.4: In text combine, <br> is treated as space and emits text item |
 | inline/inline_node_test.cc:418 | CollectInlinesTextCombineListItemMarker | geometry | formalized | `inlineNode_collectInlinesTextCombineListItemMarker` | CSS Writing Modes 3 §5.1.4 & CSS Lists 3 §3: Text combine inside list marker emits text item with isSymbolMarker flag |
 | inline/inline_node_test.cc:438 | CollectInlinesTextCombineNewline | geometry | formalized | `inlineNode_collectInlinesTextCombineNewline` | CSS Writing Modes 3 §5.1.4: In text combine, newline is treated as space and emits text item |
 | inline/inline_node_test.cc:453 | CollectInlinesTextCombineWBR | geometry | formalized | `inlineNode_collectInlinesTextCombineWBR` | CSS Writing Modes 3 §5.1.4: In text combine, <wbr> is treated as zero-width space and emits text item |
-| inline/inline_node_test.cc:468 | SegmentASCII | behaviour | internal | - | ASCII run segmentation |
-| inline/inline_node_test.cc:477 | SegmentHebrew | behaviour | internal | - | Hebrew run segmentation |
-| inline/inline_node_test.cc:487 | SegmentSplit1To2 | behaviour | internal | - | Mixed script segmentation |
-| inline/inline_node_test.cc:497 | SegmentSplit3To4 | behaviour | internal | - | Script run splitting |
-| inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | internal | - | Bidi-override segmentation |
-| inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | internal | - | Bidi-isolate segmentation |
+| inline/inline_node_test.cc:468 | SegmentASCII | behaviour | formalized | `inlineNode_segmentASCII` | CSS Writing Modes 3 §2.1: ASCII text produces a single LTR segment |
+| inline/inline_node_test.cc:477 | SegmentHebrew | behaviour | formalized | `inlineNode_segmentHebrew` | CSS Writing Modes 3 §2.1: Hebrew text produces a single RTL segment |
+| inline/inline_node_test.cc:487 | SegmentSplit1To2 | behaviour | formalized | `inlineNode_segmentSplit1To2` | CSS Writing Modes 3 §2.1 & UAX #9: Mixed ASCII and Hebrew text splits into 2 segments |
+| inline/inline_node_test.cc:497 | SegmentSplit3To4 | behaviour | formalized | `inlineNode_segmentSplit3To4` | CSS Writing Modes 3 §2.1 & UAX #9: Three input items split at script boundary into 4 segments |
+| inline/inline_node_test.cc:511 | SegmentBidiOverride | behaviour | formalized | `inlineNode_segmentBidiOverride` | CSS Writing Modes 3 §2.1 & §2.4: RLO forces RTL direction on Latin text until PDF |
+| inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | formalized | `inlineNode_segmentBidiIsolate` | CSS Writing Modes 3 §2.1 & §2.4: Nested bidi isolate sequences (RLI, LRI, PDI) isolate directional runs |
 | inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMaxData` | Intrinsic min/max sizes calculation under 10px fixed-width font across word boundaries |
 | inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSizesSaturated` | CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax: Extreme size saturates to finite implementation limit |
 | inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |

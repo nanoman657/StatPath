@@ -39,6 +39,47 @@ structure InlineCollectedItem where
   isSymbolMarker : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
+/-- CSS Writing Modes 3 §2.1: Direction derived from bidi embedding level.
+    Even bidi levels are LTR; odd bidi levels are RTL. -/
+def InlineCollectedItem.direction (item : InlineCollectedItem) : TextDirection :=
+  if item.bidiLevel % 2 == 0 then .ltr else .rtl
+
+/-- CSS Writing Modes 3 §2.1 Law: Even bidi embedding levels produce LTR direction. -/
+theorem inlineCollectedItem_direction_even (item : InlineCollectedItem) (h : item.bidiLevel % 2 = 0) :
+    item.direction = .ltr := by
+  unfold InlineCollectedItem.direction
+  simp [h]
+
+/-- CSS Writing Modes 3 §2.1 Law: Odd bidi embedding levels produce RTL direction. -/
+theorem inlineCollectedItem_direction_odd (item : InlineCollectedItem) (h : item.bidiLevel % 2 = 1) :
+    item.direction = .rtl := by
+  unfold InlineCollectedItem.direction
+  have h2 : ¬ (item.bidiLevel % 2 = 0) := by omega
+  simp [h2]
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9: Split an InlineCollectedItem at a character offset
+    if the offset falls strictly inside the item's span. -/
+def splitInlineItem (item : InlineCollectedItem) (splitOffset : Nat) : List InlineCollectedItem :=
+  if item.startOffset < splitOffset && splitOffset < item.endOffset then
+    [{ item with endOffset := splitOffset },
+     { item with startOffset := splitOffset }]
+  else
+    [item]
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9 Law: Splitting an item preserves total character span. -/
+theorem splitInlineItem_span (item : InlineCollectedItem) (off : Nat)
+    (h1 : item.startOffset < off) (h2 : off < item.endOffset) :
+    let pieces := splitInlineItem item off
+    pieces.length = 2 ∧
+    (pieces[0]!.endOffset - pieces[0]!.startOffset) +
+    (pieces[1]!.endOffset - pieces[1]!.startOffset) =
+    item.endOffset - item.startOffset := by
+  have hcond : (item.startOffset < off && off < item.endOffset) = true := by
+    simp [h1, h2]
+  unfold splitInlineItem
+  simp [hcond]
+  omega
+
 inductive InlineCollectionToken where
   | text (content : String)
   | openTag (tag : String)

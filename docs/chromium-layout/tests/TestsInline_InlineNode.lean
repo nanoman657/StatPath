@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineShaping
 import InlineTextCombine
+import InlineBidi
 
 namespace ChromiumLayout.TestsInline
 
@@ -128,6 +129,51 @@ theorem inlineNode_collectInlinesRtlWithSpan :
     (res.items[4]! = { itemType := .text, startOffset := 3, endOffset := 5, bidiLevel := 1 }) := by
   decide
 
+/-- Test: CollectInlinesMixedText (inline_node_test.cc:369)
+    CSS Writing Modes 3 §2.1 & UAX #9: Mixed LTR and Hebrew RTL text with span.
+    Items segment into LTR run (0..7), RTL run (7..9), span open (9..9), RTL run (9..10), span close (10..10). -/
+theorem inlineNode_collectInlinesMixedText :
+    let tokens := [
+      InlineCollectionToken.text "Hello, ",
+      InlineCollectionToken.text "ע ",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "ע",
+      InlineCollectionToken.closeTag
+    ]
+    let col := collectInlines tokens .ltr
+    let items := segmentInlineText col.items col.text .ltr
+    (col.text = "Hello, ע ע") ∧
+    (items.length = 5) ∧
+    (items[0]! = { itemType := .text, startOffset := 0, endOffset := 7, bidiLevel := 0 }) ∧
+    (items[1]! = { itemType := .text, startOffset := 7, endOffset := 9, bidiLevel := 1 }) ∧
+    (items[2]! = { itemType := .openTag, startOffset := 9, endOffset := 9, bidiLevel := 1 }) ∧
+    (items[3]! = { itemType := .text, startOffset := 9, endOffset := 10, bidiLevel := 1 }) ∧
+    (items[4]! = { itemType := .closeTag, startOffset := 10, endOffset := 10, bidiLevel := 1 }) := by
+  decide
+
+/-- Test: CollectInlinesMixedTextEndWithON (inline_node_test.cc:385)
+    CSS Writing Modes 3 §2.1 & UAX #9 §3.3.4: Trailing neutral character '!' after RTL text
+    at the end of an LTR embedding resolves to base embedding level 0. -/
+theorem inlineNode_collectInlinesMixedTextEndWithON :
+    let tokens := [
+      InlineCollectionToken.text "Hello, ",
+      InlineCollectionToken.text "ע ",
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "ע!",
+      InlineCollectionToken.closeTag
+    ]
+    let col := collectInlines tokens .ltr
+    let items := segmentInlineText col.items col.text .ltr
+    (col.text = "Hello, ע ע!") ∧
+    (items.length = 6) ∧
+    (items[0]! = { itemType := .text, startOffset := 0, endOffset := 7, bidiLevel := 0 }) ∧
+    (items[1]! = { itemType := .text, startOffset := 7, endOffset := 9, bidiLevel := 1 }) ∧
+    (items[2]! = { itemType := .openTag, startOffset := 9, endOffset := 9, bidiLevel := 1 }) ∧
+    (items[3]! = { itemType := .text, startOffset := 9, endOffset := 10, bidiLevel := 1 }) ∧
+    (items[4]! = { itemType := .text, startOffset := 10, endOffset := 11, bidiLevel := 0 }) ∧
+    (items[5]! = { itemType := .closeTag, startOffset := 11, endOffset := 11, bidiLevel := 0 }) := by
+  decide
+
 /-- Test: CollectInlinesTextCombineBR (inline_node_test.cc:402)
     CSS Writing Modes 3 §5.1.4: In text combine, <br> is treated as space and emits a text item. -/
 theorem inlineNode_collectInlinesTextCombineBR :
@@ -185,6 +231,123 @@ theorem inlineNode_collectInlinesTextCombineWBR :
     (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 1 }) ∧
     (res.items[1]! = { itemType := .text, startOffset := 1, endOffset := 2 }) ∧
     (res.items[2]! = { itemType := .text, startOffset := 2, endOffset := 3 }) := by
+  decide
+
+/-- Test: SegmentASCII (inline_node_test.cc:468)
+    CSS Writing Modes 3 §2.1: ASCII text produces a single LTR segment. -/
+theorem inlineNode_segmentASCII :
+    let items := [{ itemType := .text, startOffset := 0, endOffset := 5 : InlineCollectedItem }]
+    let res := segmentInlineText items "Hello" .ltr
+    (res.length = 1) ∧
+    (res[0]!.startOffset = 0) ∧
+    (res[0]!.endOffset = 5) ∧
+    (res[0]!.direction = .ltr) := by
+  decide
+
+/-- Test: SegmentHebrew (inline_node_test.cc:477)
+    CSS Writing Modes 3 §2.1: Hebrew text produces a single RTL segment. -/
+theorem inlineNode_segmentHebrew :
+    let items := [{ itemType := .text, startOffset := 0, endOffset := 5 : InlineCollectedItem }]
+    let res := segmentInlineText items "עברית" .ltr
+    (res.length = 1) ∧
+    (res[0]!.startOffset = 0) ∧
+    (res[0]!.endOffset = 5) ∧
+    (res[0]!.direction = .rtl) := by
+  decide
+
+/-- Test: SegmentSplit1To2 (inline_node_test.cc:487)
+    CSS Writing Modes 3 §2.1 & UAX #9: Mixed ASCII and Hebrew text in a single node
+    splits into 2 segments: 0..6 LTR and 6..11 RTL. -/
+theorem inlineNode_segmentSplit1To2 :
+    let items := [{ itemType := .text, startOffset := 0, endOffset := 11 : InlineCollectedItem }]
+    let res := segmentInlineText items "Hello עברית" .ltr
+    (res.length = 2) ∧
+    (res[0]!.startOffset = 0) ∧
+    (res[0]!.endOffset = 6) ∧
+    (res[0]!.direction = .ltr) ∧
+    (res[1]!.startOffset = 6) ∧
+    (res[1]!.endOffset = 11) ∧
+    (res[1]!.direction = .rtl) := by
+  decide
+
+/-- Test: SegmentSplit3To4 (inline_node_test.cc:497)
+    CSS Writing Modes 3 §2.1 & UAX #9: Three input items ("Hel", "lo ע", "ברית")
+    split the middle item at the script boundary (offset 6) into 4 segments. -/
+theorem inlineNode_segmentSplit3To4 :
+    let items : List InlineCollectedItem := [
+      { itemType := .text, startOffset := 0, endOffset := 3 },
+      { itemType := .text, startOffset := 3, endOffset := 7 },
+      { itemType := .text, startOffset := 7, endOffset := 11 }
+    ]
+    let res := segmentInlineText items "Hello עברית" .ltr
+    (res.length = 4) ∧
+    (res[0]!.startOffset = 0) ∧
+    (res[0]!.endOffset = 3) ∧
+    (res[0]!.direction = .ltr) ∧
+    (res[1]!.startOffset = 3) ∧
+    (res[1]!.endOffset = 6) ∧
+    (res[1]!.direction = .ltr) ∧
+    (res[2]!.startOffset = 6) ∧
+    (res[2]!.endOffset = 7) ∧
+    (res[2]!.direction = .rtl) ∧
+    (res[3]!.startOffset = 7) ∧
+    (res[3]!.endOffset = 11) ∧
+    (res[3]!.direction = .rtl) := by
+  decide
+
+/-- Test: SegmentBidiOverride (inline_node_test.cc:511)
+    CSS Writing Modes 3 §2.1 & §2.4: Right-to-Left Override (RLO) forces RTL direction
+    on Latin characters until Pop Directional Formatting (PDF) restores LTR. -/
+theorem inlineNode_segmentBidiOverride :
+    let items : List InlineCollectedItem := [
+      { itemType := .text, startOffset := 0, endOffset := 6 },
+      { itemType := .control, startOffset := 6, endOffset := 7 },
+      { itemType := .text, startOffset := 7, endOffset := 10 },
+      { itemType := .control, startOffset := 10, endOffset := 11 }
+    ]
+    let res := segmentInlineText items "Hello \u202EABC\u202C" .ltr
+    (res.length = 4) ∧
+    (res[0]!.startOffset = 0) ∧
+    (res[0]!.endOffset = 6) ∧
+    (res[0]!.direction = .ltr) ∧
+    (res[1]!.startOffset = 6) ∧
+    (res[1]!.endOffset = 7) ∧
+    (res[1]!.direction = .rtl) ∧
+    (res[2]!.startOffset = 7) ∧
+    (res[2]!.endOffset = 10) ∧
+    (res[2]!.direction = .rtl) ∧
+    (res[3]!.startOffset = 10) ∧
+    (res[3]!.endOffset = 11) ∧
+    (res[3]!.direction = .ltr) := by
+  decide
+
+/-- Test: SegmentBidiIsolate (inline_node_test.cc:541)
+    CSS Writing Modes 3 §2.1 & §2.4: Nested bidi isolate sequences (RLI, LRI, PDI)
+    isolate directional runs without affecting surrounding text. -/
+theorem inlineNode_segmentBidiIsolate :
+    let items : List InlineCollectedItem := [
+      { itemType := .text, startOffset := 0, endOffset := 6 },
+      { itemType := .control, startOffset := 6, endOffset := 7 },
+      { itemType := .text, startOffset := 7, endOffset := 13 },
+      { itemType := .control, startOffset := 13, endOffset := 14 },
+      { itemType := .text, startOffset := 14, endOffset := 15 },
+      { itemType := .control, startOffset := 15, endOffset := 16 },
+      { itemType := .text, startOffset := 16, endOffset := 21 },
+      { itemType := .control, startOffset := 21, endOffset := 22 },
+      { itemType := .text, startOffset := 22, endOffset := 28 }
+    ]
+    let text := "Hello \u2067עברית \u2066A\u2069עברית\u2069 World"
+    let res := segmentInlineText items text .ltr
+    (res.length = 9) ∧
+    (res[0]!.startOffset = 0) ∧ (res[0]!.endOffset = 6) ∧ (res[0]!.direction = .ltr) ∧
+    (res[1]!.startOffset = 6) ∧ (res[1]!.endOffset = 7) ∧ (res[1]!.direction = .ltr) ∧
+    (res[2]!.startOffset = 7) ∧ (res[2]!.endOffset = 13) ∧ (res[2]!.direction = .rtl) ∧
+    (res[3]!.startOffset = 13) ∧ (res[3]!.endOffset = 14) ∧ (res[3]!.direction = .rtl) ∧
+    (res[4]!.startOffset = 14) ∧ (res[4]!.endOffset = 15) ∧ (res[4]!.direction = .ltr) ∧
+    (res[5]!.startOffset = 15) ∧ (res[5]!.endOffset = 16) ∧ (res[5]!.direction = .rtl) ∧
+    (res[6]!.startOffset = 16) ∧ (res[6]!.endOffset = 21) ∧ (res[6]!.direction = .rtl) ∧
+    (res[7]!.startOffset = 21) ∧ (res[7]!.endOffset = 22) ∧ (res[7]!.direction = .ltr) ∧
+    (res[8]!.startOffset = 22) ∧ (res[8]!.endOffset = 28) ∧ (res[8]!.direction = .ltr) := by
   decide
 
 /-- Test: MinMaxTest.Data (inline_node_test.cc:649)

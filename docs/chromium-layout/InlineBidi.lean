@@ -15,6 +15,7 @@
 import LayoutTypes
 import LayoutInline
 import InlineGeometry
+import InlineShaping
 
 namespace ChromiumLayout
 
@@ -213,5 +214,70 @@ theorem firstAndLastCharAfterCollapsing_space_preceded (f : Bool) :
     firstAndLastCharAfterCollapsing true f " " = none := by
   dsimp [firstAndLastCharAfterCollapsing, collapseRunChars]
   rfl
+
+/-! ## 7. Bidi Paragraph Resolution and Item Segmentation (CSS Writing Modes 3 §2.1 & UAX #9) -/
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9 §3.3.4: A logical bidi run with resolved embedding level. -/
+structure BidiLogicalRun where
+  startOffset : Nat
+  endOffset : Nat
+  level : Nat
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9: Resolve logical bidi runs for text content under base direction. -/
+def resolveBidiParagraphRuns (text : String) (baseDir : TextDirection := .ltr) : List BidiLogicalRun :=
+  let baseLevel := match baseDir with | .ltr => 0 | .rtl => 1
+  let rec scan (cs : List Char) (stack : List (Nat × Bool)) (accL : List Nat) (accT : List Char) : List Nat × List Char :=
+    match cs with
+    | [] => (accL.reverse, accT.reverse)
+    | c :: rest =>
+      let (topLvl, isOv) := stack.head?.getD (baseLevel, false)
+      let (st', lvl, t) := match c with
+        | '\u2067' => ((1, false) :: stack, topLvl, 'C')
+        | '\u2066' => ((2, false) :: stack, topLvl, 'C')
+        | '\u202E' => ((1, true) :: stack, 1, 'C')
+        | '\u2069' | '\u202C' =>
+          let st := stack.tail?.getD [(baseLevel, false)]
+          (st, st.head?.getD (baseLevel, false) |>.1, 'C')
+        | _ =>
+          if isOv then (stack, topLvl, 'O')
+          else if c.val ≥ 0x0590 && c.val ≤ 0x05FF then (stack, 1, 'R')
+          else if c.isAlpha || (c ≥ '0' && c ≤ '9') then (stack, topLvl, 'L')
+          else (stack, topLvl, 'N')
+      scan rest st' (lvl :: accL) (t :: accT)
+  let (rawL, rawT) := scan text.toList [(baseLevel, false)] [] []
+  let rec resN (ls : List Nat) (ts : List Char) (prevR : Bool) (acc : List Nat) : List Nat :=
+    match ls, ts with
+    | [], _ => acc.reverse
+    | l :: restL, t :: restT =>
+      let lvl := if t == 'N' && prevR && restT.find? (· != 'N') == some 'R' then 1 else l
+      resN restL restT (if t == 'N' then prevR else (t == 'R')) (lvl :: acc)
+    | _, _ => acc.reverse
+  let resolved := resN rawL rawT false []
+  let rec grp (off : Nat) (curS : Nat) (curL : Nat) (acc : List BidiLogicalRun) : List Nat → List BidiLogicalRun
+    | [] => if off > curS then { startOffset := curS, endOffset := off, level := curL } :: acc else acc
+    | lvl :: rest =>
+      if lvl == curL then grp (off + 1) curS curL acc rest
+      else grp (off + 1) off lvl ({ startOffset := curS, endOffset := off, level := curL } :: acc) rest
+  match resolved with
+  | [] => []
+  | f :: _ => (grp 0 0 f [] resolved).reverse
+
+/-- CSS Writing Modes 3 §2.1 Law: Empty text produces no bidi runs. -/
+theorem resolveBidiParagraphRuns_empty (dir : TextDirection) :
+    resolveBidiParagraphRuns "" dir = [] := by
+  cases dir <;> rfl
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9: Apply resolved bidi levels to inline collected items,
+    splitting items at run boundaries. -/
+def segmentInlineText (items : List InlineCollectedItem) (text : String) (baseDir : TextDirection := .ltr) : List InlineCollectedItem :=
+  let runs := resolveBidiParagraphRuns text baseDir
+  let splits := runs.foldl (fun cur run => (cur.flatMap (splitInlineItem · run.startOffset)).flatMap (splitInlineItem · run.endOffset)) items
+  splits.map fun item =>
+    match runs.find? (fun r => r.startOffset ≤ item.startOffset && item.endOffset ≤ r.endOffset && (item.startOffset < item.endOffset || item.startOffset < r.endOffset)) with
+    | some r => { item with bidiLevel := r.level }
+    | none => match runs.find? (fun r => r.endOffset == item.startOffset) with
+      | some r => { item with bidiLevel := r.level }
+      | none => item
 
 end ChromiumLayout
