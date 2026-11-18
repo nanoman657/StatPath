@@ -826,4 +826,16 @@ theorem layoutText_setTextWithOffsetToEmpty :
     textLayoutObjectNeeded mutated = false := by
   rfl
 
+/-- Test `LayoutTextTest, OriginalTextNullWhenTransformedTextIsNonNull` (`layout_text_test.cc:1727`).
+    CSS 2.1 §12.1: ::after generated pseudo-element creates LayoutText without a DOM Text node. -/
+theorem layoutText_originalTextNullWhenTransformedTextIsNonNull :
+    isGeneratedPseudoText false 5 = true := by
+  decide
+
+/-- Test `LayoutTextTest, OriginalTextEmptyWhenTransformedTextIsNonEmpty` (`layout_text_test.cc:1755`).
+    CSS Lists 3 §3: ::marker pseudo-element creates LayoutText without a DOM Text node. -/
+theorem layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty :
+    isGeneratedPseudoText false 2 = true := by
+  decide
+
 end ChromiumLayout

@@ -162,6 +162,10 @@ theorem applyCapitalize_empty (prev : Bool) :
 theorem capitalizeChars_space (w : Bool) (rest : List Char) :
     capitalizeChars w (' ' :: rest) = ' ' :: capitalizeChars false rest := rfl
 
+/-- CSS Text 3 §2.1 Law: German sharp s 'ß' expands to "SS" under uppercase transform for all tails. -/
+theorem applyTextTransform_eszett_tail (rest : List Char) :
+    applyTextTransform true ('ß' :: rest) = 'S' :: 'S' :: applyTextTransform true rest := rfl
+
 /-! ## 5. Visual Run Reordering (UAX #9 L2, CSS Writing Modes 3 §3.1) -/
 
 /-- CSS Writing Modes 3 §3.1 & UAX #9 L2:
@@ -245,17 +249,29 @@ def resolveBidiParagraphRuns (text : String) (baseDir : TextDirection := .ltr) :
           else if c.isAlpha || (c ≥ '0' && c ≤ '9') then
             let lvl := if topLvl % 2 == 1 then topLvl + 1 else topLvl
             (stack, lvl, 'L')
+          else if c == '[' || c == ']' || c == '(' || c == ')' then
+            (stack, topLvl, 'B')
           else (stack, topLvl, 'N')
       scan rest st' (lvl :: accL) (t :: accT)
   let (rawL, rawT) := scan text.toList [(baseLevel, false)] [] []
-  let rec resN (ls : List Nat) (ts : List Char) (prevR : Bool) (acc : List Nat) : List Nat :=
+  let defaultDirChar := match baseDir with | .ltr => 'L' | .rtl => 'R'
+  let rec resN (ls : List Nat) (ts : List Char) (prevS : Char) (acc : List Nat) : List Nat :=
     match ls, ts with
     | [], _ => acc.reverse
     | l :: restL, t :: restT =>
-      let lvl := if t == 'N' && prevR && restT.find? (· != 'N') == some 'R' then 1 else l
-      resN restL restT (if t == 'N' then prevR else (t == 'R')) (lvl :: acc)
+      let (lvl, nextPrev) :=
+        if t == 'N' then
+          let nextS := restT.find? (fun c => c == 'L' || c == 'R')
+          let resolvedLvl :=
+            if prevS == 'L' && nextS == some 'L' then (if l % 2 == 1 then l + 1 else l)
+            else if prevS == 'R' && nextS == some 'R' then (if l % 2 == 0 then l + 1 else l)
+            else l
+          (resolvedLvl, prevS)
+        else
+          (l, if t == 'L' || t == 'R' then t else prevS)
+      resN restL restT nextPrev (lvl :: acc)
     | _, _ => acc.reverse
-  let resolved := resN rawL rawT false []
+  let resolved := resN rawL rawT defaultDirChar []
   let rec grp (off : Nat) (curS : Nat) (curL : Nat) (acc : List BidiLogicalRun) : List Nat → List BidiLogicalRun
     | [] => if off > curS then { startOffset := curS, endOffset := off, level := curL } :: acc else acc
     | lvl :: rest =>
@@ -289,6 +305,29 @@ theorem resolveBidiParagraphRuns_brackets_in_rtl_isolate :
       { startOffset := 6, endOffset := 7, level := 1 },
       { startOffset := 7, endOffset := 8, level := 0 }
     ] := rfl
+
+/-- CSS Writing Modes 3 §2 & UAX #9 §3.3.4 Rule N1 Law:
+    In an RTL paragraph, a neutral character flanked by LTR strong text on both sides
+    resolves to LTR level 2. -/
+theorem resolveBidiParagraphRuns_neutral_surrounded_by_ltr :
+    resolveBidiParagraphRuns "a-b" .rtl = [{ startOffset := 0, endOffset := 3, level := 2 }] := rfl
+
+/-- CSS Writing Modes 3 §2 & UAX #9 §3.3.4 Rule N2 Law:
+    In an RTL paragraph, a neutral character flanked by opposite strong directions
+    (LTR before, RTL after) resolves to paragraph embedding level 1. -/
+theorem resolveBidiParagraphRuns_neutral_between_opposite_dirs :
+    resolveBidiParagraphRuns "a-\u05D1" .rtl = [
+      { startOffset := 0, endOffset := 1, level := 2 },
+      { startOffset := 1, endOffset := 3, level := 1 }
+    ] := rfl
+
+/-- CSS Writing Modes 3 §2 & UAX #9: Query bidi level at a given offset. -/
+def bidiLevelAtOffset (runs : List BidiLogicalRun) (offset : Nat) : Option Nat :=
+  runs.find? (fun r => r.startOffset ≤ offset && offset < r.endOffset) |>.map (·.level)
+
+/-- CSS Writing Modes 3 §2: Changing bidi level of any character requires relayout. -/
+def needsRelayoutOnBidiChange (runsOld runsNew : List BidiLogicalRun) (offset : Nat) : Bool :=
+  bidiLevelAtOffset runsOld offset != bidiLevelAtOffset runsNew offset
 
 /-- CSS Writing Modes 3 §2.1 & UAX #9: Apply resolved bidi levels to inline collected items,
     splitting items at run boundaries. -/

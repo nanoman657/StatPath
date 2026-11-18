@@ -222,4 +222,13 @@ theorem inlineItemsBuilder_openCloseRubyColumns :
     st.items.length = 29 := by
   decide
 
+/-- Test 31: OffsetMappingStaysConsistentUnderFullWidthTransform (inline_items_builder_test.cc:638).
+    CSS Text 3 §2.1 & CSS Text 3 §4.1: Under text-transform: full-width, space transforms to ideographic
+    space U+3000, and adjacent boundary spaces collapse consistently between layout and offset mapping. -/
+theorem inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform :
+    transformFullWidthSpace ' ' = '\u3000' ∧
+    collapsedInlineBoundaryLength 2 4 true true = 5 ∧
+    collapsedInlineBoundaryLength 1 4 false true = 5 := by
+  decide
+
 end ChromiumLayout.TestsInline

@@ -208,6 +208,20 @@ done: TestsInline_TextControl +0
   - `layoutTextControl_hitTestSearchInput`: maps search input click point through `mapPointToInnerEditor` considering 20px border per HTML 5.2 §4.10.5.
   - `layoutTextControl_visualOverflowCleared`: evaluates self visual overflow with and without box-shadow per CSS Backgrounds and Borders 3 §7.1.
 
+done: CSS Text 3 §4.1, §2.1, CSS Writing Modes 3 §2, §2.4, UAX #9 §3.3.4, CSS 2.1 §12.1 +10
+- Verified 10 newly formalized theorems across `TestsInline_InlineNode`, `TestsInline_InlineItemsBuilder`, and `TestsInline_LayoutText`:
+  - `inlineNode_shareInlineTextContentSingleSource`: evaluates `canShareInlineTextContent .pre` under CSS Text 3 §4.1, confirming DOM buffer sharing when text is unmodified.
+  - `inlineNode_shareInlineTextContentLargeNotSharedWhenCollapsed`: evaluates `canShareInlineTextContent .normal` when consecutive spaces collapse and shorten text length.
+  - `inlineNode_shareInlineTextContentLargeNotSharedSameLength`: evaluates `canShareInlineTextContent .normal` when newline-to-space transformation modifies bytes despite equal length.
+  - `inlineNode_minMaxSizesNeedsLayout`: evaluates `computeTextMutationInvalidation (.replace 0 1 "X")` under CSS Text 3 §4.1 & DOM §5.3, confirming needsLayout remains set after min-max computation.
+  - `inlineNode_associatedItemsWithControlItem`: decomposes visual bidi preformatted text with forced breaks into 5 associated items per CSS Writing Modes 3 §2.4.
+  - `inlineNode_setTextWithOffsetWithTextTransform`: verifies German eszett uppercase expansion ("SS") with incremental CharacterData deletion per CSS Text 3 §2.1 & DOM §5.3.
+  - `inlineNode_segmentBidiChangeSetsNeedsLayout`: verifies neutral bidi level transition between Rule N1 and N2 under UAX #9 §3.3.4 & CSS Writing Modes 3 §2, triggering relayout.
+  - `inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform`: evaluates space transformation to U+3000 and boundary space collapsing under CSS Text 3 §2.1 & §4.1.
+  - `layoutText_originalTextNullWhenTransformedTextIsNonNull`: evaluates generated pseudo-element `::after` having empty original DOM text and non-empty rendered text per CSS 2.1 §12.1.
+  - `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty`: evaluates marker pseudo-element `::marker` having empty original DOM text and non-empty rendered text per CSS Lists 3 §3.
+
+
 
 
 

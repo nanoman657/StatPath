@@ -75,9 +75,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
 | inline/inline_node_test.cc:192 | CollectInlinesText | geometry | formalized | `inlineNode_collectInlinesText` | Flattening inline tokens into text and open/close tag items with offsets |
 | inline/inline_node_test.cc:206 | CollectInlinesBR | geometry | formalized | `inlineNode_collectInlinesBR` | Flattening inline tokens with BR into newline text and control item |
-| inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | internal | internal | - | String sharing optimization for single Text node |
-| inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | internal | internal | - | String sharing optimization with whitespace collapse |
-| inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | internal | internal | - | String sharing optimization |
+| inline/inline_node_test.cc:245 | ShareInlineTextContentSingleSource | behaviour | formalized | `inlineNode_shareInlineTextContentSingleSource` | CSS Text 3 §4.1: Preserved whitespace allows single-source buffer sharing |
+| inline/inline_node_test.cc:256 | ShareInlineTextContentLargeNotSharedWhenCollapsed | behaviour | formalized | `inlineNode_shareInlineTextContentLargeNotSharedWhenCollapsed` | CSS Text 3 §4.1: Collapsed spaces change text length, preventing buffer sharing |
+| inline/inline_node_test.cc:274 | ShareInlineTextContentLargeNotSharedSameLength | behaviour | formalized | `inlineNode_shareInlineTextContentLargeNotSharedSameLength` | CSS Text 3 §4.1: Newline to space conversion alters characters, preventing buffer sharing |
 | inline/inline_node_test.cc:284 | CollectInlinesFloat | behaviour | formalized | `inlineNode_collectInlinesFloat` | CSS 2.1 §9.5, §9.4.2: Float items in inline formatting context produce zero-length items without emitting text |
 | inline/inline_node_test.cc:306 | CollectInlinesInlineBlock | geometry | formalized | `inlineNode_collectInlinesInlineBlock` | Inline block flattening to object replacement character and atomic inline item |
 | inline/inline_node_test.cc:322 | CollectInlinesUTF16 | geometry | formalized | `inlineNode_collectInlinesUTF16` | CSS Writing Modes 3 §2.1: Non-ASCII LTR text (Hiragana) does not enable bidi |
@@ -98,16 +98,16 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:541 | SegmentBidiIsolate | behaviour | formalized | `inlineNode_segmentBidiIsolate` | CSS Writing Modes 3 §2.1 & §2.4: Nested bidi isolate sequences (RLI, LRI, PDI) isolate directional runs |
 | inline/inline_node_test.cc:649 | MinMaxTest.Data | geometry | formalized | `inlineNode_minMaxData` | Intrinsic min/max sizes calculation under 10px fixed-width font across word boundaries |
 | inline/inline_node_test.cc:675 | MinMaxSizesSaturated | geometry | formalized | `inlineNode_minMaxSizesSaturated` | CSS Values and Units 3 §6 & Blink LayoutUnit::kIntMax: Extreme size saturates to finite implementation limit |
-| inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | internal | internal | - | NeedsLayout flag on DOM text change |
-| inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | internal | internal | - | Visual bidi ordering item association |
+| inline/inline_node_test.cc:698 | MinMaxSizesNeedsLayout | behaviour | formalized | `inlineNode_minMaxSizesNeedsLayout` | CSS Text 3 §4.1 & DOM §5.3: Text replacement marks layout object dirty; min-max does not clear it |
+| inline/inline_node_test.cc:716 | AssociatedItemsWithControlItem | behaviour | formalized | `inlineNode_associatedItemsWithControlItem` | CSS Writing Modes 3 §2.4: Visual bidi ordering pops and restores controls across forced break |
 | inline/inline_node_test.cc:734 | NeedsCollectInlinesOnSetText | behaviour | blocked | - | Blocked: held-out test |
-| inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | internal | internal | - | Crash regression in OffsetMapping |
+| inline/inline_node_test.cc:767 | SetTextWithOffsetWithTextTransform | behaviour | formalized | `inlineNode_setTextWithOffsetWithTextTransform` | CSS Text 3 §2.1 & DOM §5.3: German eszett uppercase expansion under CharacterData deletion |
 | inline/inline_node_test.cc:838 | StyleChangeTest.NeedsCollectInlinesOnStyle | behaviour | formalized | `inlineNode_needsCollectInlinesOnStyle` | CSS 2.1 §9.4.2: Font, position, and bidi style changes invalidate ancestors while preserving siblings |
 | inline/inline_node_test.cc:927 | NodeInsertTest.NeedsCollectInlinesOnInsert | behaviour | formalized | `inlineNode_needsCollectInlinesOnInsert` | CSS 2.1 §9.4.2: Inserting text, span, abspos, or float marks parent and container for inline collection |
 | inline/inline_node_test.cc:960 | NeedsCollectInlinesOnInsertToOutOfFlowButton | behaviour | formalized | `inlineNode_needsCollectInlinesOnInsertToOutOfFlowButton` | CSS 2.1 §9.4.2 & §9.3: Inserting into an independent out-of-flow button does not invalidate container inlines |
 | inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_needsCollectInlinesOnRemove` | CSS 2.1 §9.4.2: Removing child from parent marks parent and container for inline collection |
 | inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
-| inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
+| inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | behaviour | formalized | `inlineNode_segmentBidiChangeSetsNeedsLayout` | CSS Writing Modes 3 §2 & UAX #9 §3.3.4: Neutral bidi level transition (Rule N1 vs N2) triggers relayout |
 | inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | formalized | `inlineNode_invalidateAddSpan` | CSS 2.1 §9.4.2: Adding empty span element adds open and close tag items (+2 items) |
 | inline/inline_node_test.cc:1097 | InvalidateRemoveSpan | behaviour | formalized | `inlineNode_invalidateRemoveSpan` | CSS 2.1 §9.4.2: Removing inline child marks container for inline collection |
 | inline/inline_node_test.cc:1107 | InvalidateAddInnerSpan | behaviour | formalized | `inlineNode_invalidateAddInnerSpan` | CSS 2.1 §9.4.2: Adding inner span adds open and close tag items (+2 items) |
@@ -313,7 +313,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_items_builder_test.cc:526 | BidiIsolateOverride | behaviour | formalized | `inlineItemsBuilder_bidiIsolateOverride` | Injection of FSI, RLO, PDF, and PDI for isolate-override inline |
 | inline/inline_items_builder_test.cc:551 | BlockInInline | behaviour | formalized | `inlineItemsBuilder_blockInInline` | CSS 2.1 §9.2.1.1: Collapsible spaces before and after a block-in-inline are collapsed |
 | inline/inline_items_builder_test.cc:561 | OpenCloseRubyColumns | behaviour | formalized | `inlineItemsBuilder_openCloseRubyColumns` | CSS Ruby 1 §2.3: Nested ruby and annotation tags emit structured ruby items |
-| inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | internal | - | Full-width text transform offset mapping consistency check |
+| inline/inline_items_builder_test.cc:638 | OffsetMappingStaysConsistentUnderFullWidthTransform | behaviour | formalized | `inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform` | CSS Text 3 §2.1 & §4.1: Full-width space mapping and inter-element whitespace collapsing consistency |
 | inline/inline_layout_algorithm_test.cc:97 | Types | behaviour | formalized | `inlineLayout_emptyLineBoxTypes` | Empty inline tags generate empty line box, text does not |
 | inline/inline_layout_algorithm_test.cc:113 | TypesForFirstLine | behaviour | blocked | - | Blocked: model lacks TypesForFirstLine layout algorithm support |
 | inline/inline_layout_algorithm_test.cc:137 | TypesForBlockInInline | behaviour | formalized | `inlineLayoutAlgorithm_typesForBlockInInline` | CSS 2.1 §9.2.1.1: Anonymous block-in-inline line box fragment classification across regular, self-collapsing, and fixed-height blocks |
@@ -555,8 +555,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | layout_text_test.cc:1681 | SetTextWithOffsetToEmpty | behaviour | formalized | `layoutText_setTextWithOffsetToEmpty` | DOM Standard §5.3 & CSS 2.1 §9.2.2: Setting text to empty detaches LayoutText object |
 | layout_text_test.cc:1694 | TransformedTextWithCapitalizationAfterInlineAbsolute | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterInlineAbsolute` | CSS Text 3 §2.1: Preceding inline letter prevents following text from capitalizing |
 | layout_text_test.cc:1707 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | formalized | `layoutText_transformedTextWithCapitalizationAfterSupplementaryCharacter` | CSS Text 3 §2.1: Preceding supplementary character continues word; following word capitalizes |
-| layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | internal | internal | - | Pseudo element text node presence check |
-| layout_text_test.cc:1755 | OriginalTextEmptyWhenTransformedTextIsNonEmpty | internal | internal | - | Marker pseudo element text presence check |
+| layout_text_test.cc:1727 | OriginalTextNullWhenTransformedTextIsNonNull | behaviour | formalized | `layoutText_originalTextNullWhenTransformedTextIsNonNull` | CSS 2.1 §12.1: Generated content pseudo-element has no DOM Text node |
+| layout_text_test.cc:1755 | OriginalTextEmptyWhenTransformedTextIsNonEmpty | behaviour | formalized | `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty` | CSS Lists 3 §3: Marker pseudo-element text has no DOM Text node |
 | layout_text_fragment_test.cc:47 | Basics | behaviour | formalized | `layoutTextFragment_basics` | Basic caret offset and resolved text length for first-letter and remaining text |
 | layout_text_fragment_test.cc:61 | TransformedTextWithCapitalizationAfterSupplementaryCharacter | behaviour | formalized | `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter` | CSS Text 3 §2.1: Capitalization after supplementary character in remaining text |
 | layout_text_fragment_test.cc:81 | CaretMinMaxOffset | behaviour | formalized | `layoutTextFragment_caretMinMaxOffset` | Caret min/max offset queries with punctuation and surrounding whitespace |

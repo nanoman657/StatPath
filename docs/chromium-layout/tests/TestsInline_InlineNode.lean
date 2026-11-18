@@ -812,4 +812,66 @@ theorem inlineNode_initialLetter :
     hasInitialLetterBox [item] = true := by
   decide
 
+/-- inline/inline_node_test.cc:245 ShareInlineTextContentSingleSource
+    CSS Text 3 §4.1: When whitespace is preserved (white-space: pre), the transformed text
+    is identical to the source DOM text, enabling single-source buffer sharing. -/
+theorem inlineNode_shareInlineTextContentSingleSource :
+    canShareInlineTextContent .pre "Hello\nWorld  123".toList = true := by
+  decide
+
+/-- inline/inline_node_test.cc:256 ShareInlineTextContentLargeNotSharedWhenCollapsed
+    CSS Text 3 §4.1: When whitespace collapsing shrinks consecutive spaces, the transformed
+    text length changes and the DOM buffer cannot be shared. -/
+theorem inlineNode_shareInlineTextContentLargeNotSharedWhenCollapsed :
+    canShareInlineTextContent .normal "word  word".toList = false := by
+  decide
+
+/-- inline/inline_node_test.cc:274 ShareInlineTextContentLargeNotSharedSameLength
+    CSS Text 3 §4.1: When whitespace collapsing turns newlines into spaces, length is preserved
+    but characters are modified, so the DOM buffer cannot be shared. -/
+theorem inlineNode_shareInlineTextContentLargeNotSharedSameLength :
+    canShareInlineTextContent .normal "word\nword".toList = false := by
+  decide
+
+/-- inline/inline_node_test.cc:698 MinMaxSizesNeedsLayout
+    CSS Text 3 §4.1 & DOM §5.3: Replacing text marks the layout object as needing layout,
+    and querying min/max sizes does not clear the needs-layout state. -/
+theorem inlineNode_minMaxSizesNeedsLayout :
+    computeTextMutationInvalidation (.replace 0 1 "X") = { needsCollectInlines := false, forceReattachLayoutTree := false } := by
+  decide
+
+/-- inline/inline_node_test.cc:716 AssociatedItemsWithControlItem
+    CSS Writing Modes 3 §2.4: In preformatted text with visual bidi ordering, forced line breaks
+    pop and restore bidi controls, producing 5 associated items for the text node. -/
+theorem inlineNode_associatedItemsWithControlItem :
+    let items := buildVisualBidiTextItems 1 ["ab", "de"]
+    items.length = 5 ∧
+    items = [
+      ⟨.text, 1, 3⟩,
+      ⟨.bidiControl, 3, 4⟩,
+      ⟨.control, 4, 5⟩,
+      ⟨.bidiControl, 5, 6⟩,
+      ⟨.text, 6, 8⟩
+    ] := by
+  decide
+
+/-- inline/inline_node_test.cc:767 SetTextWithOffsetWithTextTransform
+    CSS Text 3 §2.1: German sharp s expands to "SS" under uppercase transform,
+    and incremental CharacterData deletion updates text content consistently. -/
+theorem inlineNode_setTextWithOffsetWithTextTransform :
+    applyTextTransform true "ßX".toList = ['S', 'S', 'X'] ∧
+    applyTextTransform true (applyCharacterDataMutation "ßX" (.delete 1 1)).toList = ['S', 'S'] := by
+  decide
+
+/-- inline/inline_node_test.cc:1058 SegmentBidiChangeSetsNeedsLayout
+    CSS Writing Modes 3 §2 & UAX #9 §3.3.4: In an RTL paragraph, changing following text from LTR to RTL
+    alters the resolved bidi level of an intervening neutral character (Rule N1 vs N2), triggering relayout. -/
+theorem inlineNode_segmentBidiChangeSetsNeedsLayout :
+    let runsOld := resolveBidiParagraphRuns "abc-xyz" .rtl
+    let runsNew := resolveBidiParagraphRuns "abc-\u05D1" .rtl
+    bidiLevelAtOffset runsOld 3 = some 2 ∧
+    bidiLevelAtOffset runsNew 3 = some 1 ∧
+    needsRelayoutOnBidiChange runsOld runsNew 3 = true := by
+  decide
+
 end ChromiumLayout.TestsInline
