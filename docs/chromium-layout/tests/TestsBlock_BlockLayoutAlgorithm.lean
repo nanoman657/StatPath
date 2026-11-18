@@ -433,14 +433,23 @@ theorem CollapsingMarginsEmptyBlockWithClearance_vectors :
     (BlockFloat.emptyBlockWithClearanceLayout 50 30 20 (-10) 0 25).2.2 = 55 := by
   decide
 
-/-- `layout_object_test.cc:549`: FloatUnderBlock. -/
+/-- `layout_object_test.cc:549`: FloatUnderBlock.
+    Ancestors from innermost to outermost:
+    container (id=2, isBlock=true, hasLayer=false),
+    layered-div (id=1, isBlock=true, hasLayer=true). -/
 theorem FloatUnderBlock_vectors :
-    BlockFloat.floatContainerAndLayer 2 2 1 = (1, 2, 2, false) := by
+    BlockFloat.resolveFloatAncestors [(2, true, false), (1, true, true)] =
+      (some 1, some 2, some 2) := by
   decide
 
-/-- `layout_object_test.cc:584`: FloatUnderInline. -/
+/-- `layout_object_test.cc:584`: FloatUnderInline.
+    Ancestors from innermost to outermost:
+    layered-span (id=3, isBlock=false, hasLayer=true),
+    container (id=2, isBlock=true, hasLayer=false),
+    layered-div (id=1, isBlock=true, hasLayer=true). -/
 theorem FloatUnderInline_vectors :
-    BlockFloat.floatContainerAndLayer 3 2 3 = (3, 3, 2, false) := by
+    BlockFloat.resolveFloatAncestors [(3, false, true), (2, true, false), (1, true, true)] =
+      (some 3, some 3, some 2) := by
   decide
 
 end TestsBlock

@@ -1,4 +1,5 @@
 import BlockFlow
+import BlockFragmentation
 import BlockSticky
 import BlockAbsolute
 import ColumnLayout
@@ -172,6 +173,49 @@ theorem DumpFragmentTreeWithTargetInsideColumn_vectors :
          col2.slices = [⟨2, 0, 0, 100, 50⟩]
      | _ => false) := by
   exact ⟨rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl, rfl⟩
+
+-- physical_fragment_test.cc:243: DumpFragmentTreeWithRepeatedContent
+theorem DumpFragmentTreeWithRepeatedContent_vectors :
+    repeatedTableHeaderMulticolSlices 100 20 100 = ((100, 20, 80), (40, 20, 20)) := by
+  decide
+
+-- layout_view_test.cc:25: UpdateCountersLayout
+theorem UpdateCountersLayout_vectors :
+    counterChangeNeedsLayout ["x"] ["y"] = false ∧
+    counterChangeNeedsLayout ["y"] ["y"] = true := by
+  decide
+
+-- layout_view_test.cc:72: NamedPages
+theorem NamedPages_vectors :
+    let items : List (String × Bool) := [
+      ("", false), ("", true), ("yksi", false), ("yksi", true), ("yksi", true),
+      ("kaksi", false), ("maksitaksi", false), ("", false), ("yksi", false)
+    ]
+    namedPageAtIndex items 0 = "" ∧
+    namedPageAtIndex items 1 = "" ∧
+    namedPageAtIndex items 2 = "yksi" ∧
+    namedPageAtIndex items 3 = "yksi" ∧
+    namedPageAtIndex items 4 = "yksi" ∧
+    namedPageAtIndex items 5 = "kaksi" ∧
+    namedPageAtIndex items 6 = "maksitaksi" ∧
+    namedPageAtIndex items 7 = "" ∧
+    namedPageAtIndex items 8 = "yksi" ∧
+    namedPageAtIndex items 9 = "" ∧
+    namedPageAtIndex items 100 = "" := by
+  decide
+
+-- layout_view_test.cc:122: NamedPagesAbsPos
+theorem NamedPagesAbsPos_vectors :
+    let items : List (String × Bool) := [
+      ("woohoo", false), ("woohoo", true), ("woohoo", true),
+      ("woohoo", true), ("woohoo", true)
+    ]
+    namedPageAtIndex items 0 = "woohoo" ∧
+    namedPageAtIndex items 1 = "woohoo" ∧
+    namedPageAtIndex items 2 = "woohoo" ∧
+    namedPageAtIndex items 3 = "woohoo" ∧
+    namedPageAtIndex items 4 = "woohoo" := by
+  decide
 
 end TestsBlock
 end ChromiumLayout

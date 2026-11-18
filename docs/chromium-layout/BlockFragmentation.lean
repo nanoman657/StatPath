@@ -95,5 +95,46 @@ theorem sliceCount_pos (F h : Nat) (hF : 0 < F) :
       rw [Nat.div_self hF] at hdiv
       exact hdiv
 
+/-- Table fragment sizes `((tableH0, headerH, body0), (tableH1, headerH, body1))`
+    across two columns of height `colH` when a table has a repeated
+    `table-header-group` of height `headerH` (`physical_fragment_test.cc:243`).
+    CSS Tables Module Level 3 / CSS Fragmentation Level 3 §3.1. -/
+def repeatedTableHeaderMulticolSlices (colH headerH bodyH : Nat) :
+    (Nat × Nat × Nat) × (Nat × Nat × Nat) :=
+  let body0 := min bodyH (colH - headerH)
+  let body1 := bodyH - body0
+  ((headerH + body0, headerH, body0), (headerH + body1, headerH, body1))
+
+/-- Law: The table body slices across two columns sum to the unfragmented table body height.
+    CSS Fragmentation Level 3 §3.1. -/
+theorem repHeader_body_sum (colH headerH bodyH : Nat) :
+    let res := repeatedTableHeaderMulticolSlices colH headerH bodyH
+    res.1.2.2 + res.2.2.2 = bodyH := by
+  dsimp [repeatedTableHeaderMulticolSlices]
+  omega
+
+/-- Resolve the sequence of page names from a list of `(pageName, breakBefore)` block items
+    (`layout_view_test.cc:72`, `:122`).
+    CSS Paged Media Module Level 3 §4.2 (Named pages: the `page` property). -/
+def collectNamedPages : List (String × Bool) → List String
+  | [] => []
+  | (p, _) :: rest =>
+    let rec go (cur : String) : List (String × Bool) → List String
+      | [] => [cur]
+      | (nextP, brk) :: xs =>
+        if brk || nextP != cur then cur :: go nextP xs
+        else go cur xs
+    go p rest
+
+/-- Page name at a 0-based page index, or `""` if out of range (`layout_view_test.cc:72`, `:122`).
+    CSS Paged Media Module Level 3 §4.2. -/
+def namedPageAtIndex (items : List (String × Bool)) (idx : Nat) : String :=
+  (collectNamedPages items)[idx]?.getD ""
+
+/-- Whether mutating a CSS counter requires layout invalidation (`layout_view_test.cc:25`).
+    CSS Lists and Counters Module Level 3 §6. -/
+def counterChangeNeedsLayout (changedCounters usedCounters : List String) : Bool :=
+  changedCounters.any (fun c => usedCounters.contains c)
+
 end BlockFlow
 end ChromiumLayout

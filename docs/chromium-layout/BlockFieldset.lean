@@ -264,5 +264,38 @@ def fragmentChildren (fragH y0 fw : Nat) (fh : Option Nat) (kids : List FChild) 
       (fw, h, g) :: assign fragH remH' gs
   assign (fragH - y0) fh groups
 
+/-- Fragmentation slices `(fieldsetH, anonY, anonH, childY, childH, subSliceH)`
+    when a fieldset child either pulls up by a negative block-start margin
+    (`pullUp`) into a zero-space anonymous content box or contains an overflowing
+    descendant of block size `grandchildH` (`forms/fieldset_layout_algorithm_test.cc:1052`, `:1151`).
+    HTML §15.3.13, CSS Fragmentation 3 §3.1, §3.3. -/
+def fragmentFieldsetOverflowSlices (fragH fieldsetH legendH childY childH pullUp grandchildH : Nat) :
+    List (Nat × Nat × Nat × Int × Nat × Nat) :=
+  let anonY0 := legendH
+  let anonH0 := fieldsetH - legendH
+  let avail0 := fragH - legendH - childY + pullUp
+  let totalSub := if grandchildH > 0 then grandchildH else childH
+  let s0 := min totalSub avail0
+  let rem1 := totalSub - s0
+  let f0 := (fieldsetH, anonY0, anonH0, (childY : Int) - (pullUp : Int),
+             if grandchildH > 0 then childH else s0, s0)
+  if rem1 == 0 then [f0]
+  else
+    let s1 := min rem1 fragH
+    let rem2 := rem1 - s1
+    let f1 := (0, 0, 0, 0, if grandchildH > 0 then 0 else s1, s1)
+    if rem2 == 0 then [f0, f1]
+    else [f0, f1, (0, 0, 0, 0, if grandchildH > 0 then 0 else rem2, rem2)]
+
+/-- Law: When `rem1 == 0`, `fragmentFieldsetOverflowSlices` produces a single fragment.
+    CSS Fragmentation 3 §3.1. -/
+theorem overflow_single
+    (fragH fieldsetH legendH childY childH pullUp : Nat)
+    (hfits : childH ≤ fragH - legendH - childY + pullUp) :
+    (fragmentFieldsetOverflowSlices fragH fieldsetH legendH childY childH pullUp 0).length = 1 := by
+  dsimp [fragmentFieldsetOverflowSlices]
+  have h0 : childH - min childH (fragH - legendH - childY + pullUp) = 0 := by omega
+  simp [h0]
+
 end BlockFieldset
 end ChromiumLayout

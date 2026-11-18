@@ -125,7 +125,7 @@ checks every row against the pinned sources and the Lean modules.
 | physical_fragment_test.cc:165 | PhysicalFragmentTest.DumpFragmentTreeWithAbsposInRelpos | geometry | formalized | `TestsBlock.DumpFragmentTreeWithAbsposInRelpos_vectors`, `BlockAbsolute.resolve_oof_container_relative` |
 | physical_fragment_test.cc:184 | PhysicalFragmentTest.DumpFragmentTreeWithGrid | geometry | formalized | `TestsBlock.DumpFragmentTreeWithGrid_vectors`, `GridLayout.grid_container_is_fc_root` |
 | physical_fragment_test.cc:213 | PhysicalFragmentTest.DumpFragmentTreeWithTargetInsideColumn | geometry | formalized | `TestsBlock.DumpFragmentTreeWithTargetInsideColumn_vectors`, `ColumnLayout.multicol_bp_size` |
-| physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | blocked | needs table layout with repeated header group across multicol columns; not modelled |
+| physical_fragment_test.cc:243 | PhysicalFragmentTest.DumpFragmentTreeWithRepeatedContent | geometry | formalized | `TestsBlock.DumpFragmentTreeWithRepeatedContent_vectors`, `BlockFlow.repeatedTableHeaderMulticolSlices`, `BlockFlow.repHeader_body_sum` |
 | physical_fragment_test.cc:295 | PhysicalFragmentTest.CrashInScrollableOverflowCalculator | internal | internal | crash regression in ScrollableOverflowCalculator under fullscreen menulist keyframes |
 | physical_box_fragment_test.cc:29 | PhysicalBoxFragmentTest.FloatingDescendantsInlineChlidren | behaviour | formalized | `TestsBlock.FloatingDescendantsInlineChlidren_vectors`, `BlockFloat.direct_float_has` |
 | physical_box_fragment_test.cc:46 | PhysicalBoxFragmentTest.FloatingDescendantsBlockChlidren | behaviour | blocked | model lacks floating descendants propagation on physical fragments |
@@ -727,9 +727,9 @@ checks every row against the pinned sources and the Lean modules.
 | layout_object_test.cc:487 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectInBody | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:501 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectShouldNotBeNonStaticallyPositionedInlineAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:533 | LayoutObjectTest.PaintingLayerOfOverflowClipLayerUnderColumnSpanAll | behaviour | blocked | model lacks paint layer hierarchy under column span |
-| layout_object_test.cc:549 | LayoutObjectTest.FloatUnderBlock | behaviour | formalized | `TestsBlock.FloatUnderBlock_vectors`, `BlockFloat.floatContainerAndLayer` |
+| layout_object_test.cc:549 | LayoutObjectTest.FloatUnderBlock | behaviour | formalized | `TestsBlock.FloatUnderBlock_vectors`, `BlockFloat.resolveFloatAncestors` |
 | layout_object_test.cc:570 | LayoutObjectTest.InlineFloatMismatch | behaviour | blocked | model lacks floats |
-| layout_object_test.cc:584 | LayoutObjectTest.FloatUnderInline | behaviour | formalized | `TestsBlock.FloatUnderInline_vectors`, `BlockFloat.floatContainerAndLayer` |
+| layout_object_test.cc:584 | LayoutObjectTest.FloatUnderInline | behaviour | formalized | `TestsBlock.FloatUnderInline_vectors`, `BlockFloat.resolveFloatAncestors`, `BlockFloat.float_inline_cb` |
 | layout_object_test.cc:616 | LayoutObjectTest.MutableForPaintingClearPaintFlags | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:650 | LayoutObjectTest.DelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:673 | LayoutObjectTest.SubtreeAndDelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
@@ -785,10 +785,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_object_test.cc:2166 | LayoutObjectTest.NoEllipsisForAnonymousBlockWithNonBlockParent | behaviour | blocked | model lacks text-overflow ellipsis |
 | layout_object_test.cc:2205 | LayoutObjectTest.InCanvasSubtree | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:2280 | LayoutObjectTest.MAYBE_Depth | internal | internal | Blink LayoutObject tree/property plumbing check |
-| layout_view_test.cc:25 | LayoutViewTest.UpdateCountersLayout | behaviour | blocked | model lacks CSS counters layout |
+| layout_view_test.cc:25 | LayoutViewTest.UpdateCountersLayout | behaviour | formalized | `TestsBlock.UpdateCountersLayout_vectors`, `BlockFlow.counterChangeNeedsLayout` |
 | layout_view_test.cc:48 | LayoutViewTest.DisplayNoneFrame | internal | internal | Blink display:none iframe LayoutView creation check |
-| layout_view_test.cc:72 | LayoutViewTest.NamedPages | geometry | blocked | model lacks @page named page pagination |
-| layout_view_test.cc:122 | LayoutViewTest.NamedPagesAbsPos | geometry | blocked | model lacks @page named page pagination |
+| layout_view_test.cc:72 | LayoutViewTest.NamedPages | geometry | formalized | `TestsBlock.NamedPages_vectors`, `BlockFlow.namedPageAtIndex` |
+| layout_view_test.cc:122 | LayoutViewTest.NamedPagesAbsPos | geometry | formalized | `TestsBlock.NamedPagesAbsPos_vectors`, `BlockFlow.namedPageAtIndex` |
 | layout_view_test.cc:197 | LayoutViewHitTestTest.BlockInInlineBelowBottom | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:242 | LayoutViewHitTestTest.BlockInInlineWithListItem | behaviour | blocked | model lacks hit testing engine |
 | layout_view_test.cc:287 | LayoutViewHitTestTest.EmptySpan | behaviour | blocked | model lacks hit testing engine |
@@ -1157,9 +1157,9 @@ checks every row against the pinned sources and the Lean modules.
 | forms/fieldset_layout_algorithm_test.cc:871 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationAutoHeight | geometry | formalized | `TestsBlock.FieldsetLegendAndContentFragmentation_vectors`, `BlockFieldset.fragment`, `BlockFieldset.fragment_tall_header` (CSS Fragmentation 3 §3.1, HTML §15.3.13) |
 | forms/fieldset_layout_algorithm_test.cc:937 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentation | geometry | formalized | `TestsBlock.FieldsetLegendAndContentFragmentation_vectors`, `BlockFieldset.fragment`, `BlockFieldset.fragment_tall_header` (CSS Fragmentation 3 §3.1, HTML §15.3.13) |
 | forms/fieldset_layout_algorithm_test.cc:1001 | FieldsetLayoutAlgorithmTest.LegendFragmentationWithOverflow | geometry | formalized | `TestsBlock.FieldsetLegendFragmentationWithOverflow_vectors`, `BlockFieldset.fragment` (CSS Fragmentation 3 §3.1) |
-| forms/fieldset_layout_algorithm_test.cc:1052 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationNegativeMargin | geometry | blocked | fieldset fragmentation with negative child margin not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1052 | FieldsetLayoutAlgorithmTest.LegendAndContentFragmentationNegativeMargin | geometry | formalized | `TestsBlock.FieldsetNegativeMarginFragmentation_vectors`, `BlockFieldset.fragmentFieldsetOverflowSlices`, `BlockFieldset.overflow_single` |
 | forms/fieldset_layout_algorithm_test.cc:1107 | FieldsetLayoutAlgorithmTest.OverflowedLegend | geometry | formalized | `TestsBlock.FieldsetOverflowedLegend_vectors`, `BlockFieldset.fragment` (CSS Fragmentation 3 §3.1) |
-| forms/fieldset_layout_algorithm_test.cc:1151 | FieldsetLayoutAlgorithmTest.OverflowedFieldsetContent | geometry | blocked | fieldset fragmentation with multiple children and nested overflow not modelled |
+| forms/fieldset_layout_algorithm_test.cc:1151 | FieldsetLayoutAlgorithmTest.OverflowedFieldsetContent | geometry | formalized | `TestsBlock.FieldsetOverflowedContentFragmentation_vectors`, `BlockFieldset.fragmentFieldsetOverflowSlices` |
 | forms/fieldset_layout_algorithm_test.cc:1224 | FieldsetLayoutAlgorithmTest.BreakInsideAvoid | geometry | formalized | `TestsBlock.FieldsetChildrenBreakAvoid_vectors`, `BlockFieldset.fragmentChildren` (CSS Fragmentation 3 §3.1, §4.4) |
 | forms/fieldset_layout_algorithm_test.cc:1271 | FieldsetLayoutAlgorithmTest.BreakInsideAvoidTallBlock | geometry | formalized | `TestsBlock.FieldsetChildrenBreakAvoid_vectors`, `BlockFieldset.fragmentChildren` (CSS Fragmentation 3 §3.1, §4.4) |
 | forms/fieldset_layout_algorithm_test.cc:1334 | FieldsetLayoutAlgorithmTest.LegendBreakInsideAvoid | geometry | formalized | `TestsBlock.FieldsetAfterSiblingBreakAvoid_vectors`, `BlockFieldset.fragmentAfterSibling`, `BlockFieldset.no_class_c_when_border_covers_legend` (CSS Fragmentation 3 §3.1, §4.4) |

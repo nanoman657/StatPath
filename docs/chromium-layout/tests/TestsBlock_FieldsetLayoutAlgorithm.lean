@@ -244,4 +244,14 @@ theorem FieldsetChildrenBreakAvoid_vectors :
       [(100, 50, [(0, 0, 10, 25)]), (100, 0, [(0, 0, 30, 25), (0, 25, 15, 25)]),
        (100, 0, [(0, 0, 12, 25)])] := ⟨rfl, rfl, rfl, rfl⟩
 
+-- :1052 LegendAndContentFragmentationNegativeMargin
+theorem FieldsetNegativeMarginFragmentation_vectors :
+    fragmentFieldsetOverflowSlices 100 100 100 0 40 20 0 =
+      [(100, 100, 0, -20, 20, 20), (0, 0, 0, 0, 20, 20)] := rfl
+
+-- :1151 OverflowedFieldsetContent
+theorem FieldsetOverflowedContentFragmentation_vectors :
+    fragmentFieldsetOverflowSlices 100 100 10 10 10 0 220 =
+      [(100, 10, 90, 10, 10, 80), (0, 0, 0, 0, 0, 100), (0, 0, 0, 0, 0, 40)] := rfl
+
 end TestsBlock

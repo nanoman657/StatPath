@@ -398,13 +398,30 @@ def emptyBlockWithClearanceLayout
     let outNeg := min 0 (min mTopBottom (min mInnerTop (min mInnerBottom mZeroBottom)))
     (mBeforeClear, outPos + outNeg, max outPos mInflowTop + outNeg)
 
-/-- Painting layer, parent container, containing block box, and ancestor-skip flag
-    for a float under a block or inline parent (`layout_object_test.cc:549`, `:584`).
-    CSS 2.1 §9.5, §9.5.1, Appendix E.2. -/
-def floatContainerAndLayer (parentId enclosingBlockId nearestLayerId : Nat) :
-    Nat × Nat × Nat × Bool :=
-  (nearestLayerId, parentId, enclosingBlockId,
-   parentId != nearestLayerId && parentId != enclosingBlockId)
+/-- Derive `(paintingLayerId, containerId, containingBoxId)` for a float from its
+    innermost-to-outermost ancestor chain `List (id × isBlock × hasLayer)`.
+    - `paintingLayerId`: nearest ancestor with `hasLayer = true` (CSS 2.1 Appendix E.2).
+    - `containerId`: direct parent in the layout tree (head of `ancestors`).
+    - `containingBoxId`: nearest block container ancestor (`isBlock = true`),
+      skipping inline ancestors (CSS 2.1 §9.5, §10.1)
+    (`layout_object_test.cc:549`, `:584`). -/
+def resolveFloatAncestors (ancestors : List (Nat × Bool × Bool)) :
+    Option Nat × Option Nat × Option Nat :=
+  let paintingLayer := (ancestors.find? (fun a => a.2.2)).map (·.1)
+  let container := ancestors.head?.map (·.1)
+  let containingBox := (ancestors.find? (fun a => a.2.1)).map (·.1)
+  (paintingLayer, container, containingBox)
+
+/-- Law: When a float's parent is an inline box inside a block container, its
+    direct `Container()` is the inline parent while its `ContainingBox()` skips
+    the inline parent and resolves to the enclosing block container.
+    CSS 2.1 §9.5, §10.1. -/
+theorem float_inline_cb
+    (inlineId blockId : Nat) (inlineLayer blockLayer : Bool)
+    (rest : List (Nat × Bool × Bool)) :
+    (resolveFloatAncestors ((inlineId, false, inlineLayer) :: (blockId, true, blockLayer) :: rest)).2 =
+      (some inlineId, some blockId) := by
+  rfl
 
 /-- Law: Collapsing two margins is commutative.
     CSS 2.1 §8.3.1. -/
