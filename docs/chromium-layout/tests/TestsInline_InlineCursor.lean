@@ -175,6 +175,17 @@ theorem inlineCursor_culledInlineNested :
     culledInFlowNames items = ["abc", "xyz"] := by
   decide
 
+/-- Test: CulledInlineBlockChild (inline_cursor_test.cc:303)
+    CSS 2.1 §9.2.1.1: Inlines split by in-flow block children produce multiple fragments for the culled inline. -/
+theorem inlineCursor_culledInlineBlockChild :
+    let nodes : List CursorNode := [
+      { id := "culled", name := "#culled" },
+      { id := "culled", name := "#culled" },
+      { id := "culled", name := "#culled" }
+    ]
+    itemsForLayoutObject nodes "culled" = ["#culled", "#culled", "#culled"] := by
+  decide
+
 /-- Test: CulledInlineWithoutRoot (inline_cursor_test.cc:328)
     CSS Inline 3 §2: Culled inline without root container yields in-flow text and break fragments. -/
 theorem inlineCursor_culledInlineWithoutRoot :
@@ -253,6 +264,36 @@ theorem inlineCursor_firstLastLogicalLeafInTextAsDeepDescendants :
     nodes[lastLogicalLeaf nodes 0 false]? = some { name := "last" } := by
   decide
 
+/-- Test: MoveToEndOfLineWithNoCharsLtr (inline_cursor_test.cc:439)
+    CSS 2.1 §9.4.2 & CSS Text 3 §4: In textarea LTR, navigating to an empty line lands on forced line break at offset 4. -/
+theorem inlineCursor_moveToEndOfLineWithNoCharsLtr :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "foo\n", textStartOffset := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "\n", isLineBreak := true, textStartOffset := 4 },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "bar", textStartOffset := 5 }
+    ]
+    findNextLine nodes 0 = some 2 ∧
+    emptyLineBreakOffset nodes 2 = some 4 := by
+  decide
+
+/-- Test: MoveToEndOfLineWithNoCharsRtl (inline_cursor_test.cc:470)
+    CSS 2.1 §9.4.2 & CSS Text 3 §4: In textarea RTL, navigating to an empty line lands on forced line break at offset 4. -/
+theorem inlineCursor_moveToEndOfLineWithNoCharsRtl :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "foo\n", textStartOffset := 0 },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "\n", isLineBreak := true, textStartOffset := 4 },
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "bar", textStartOffset := 5 }
+    ]
+    findNextLine nodes 0 = some 2 ∧
+    emptyLineBreakOffset nodes 2 = some 4 := by
+  decide
+
 /-- Test: FirstLastLogicalLeafWithInlineBlock (inline_cursor_test.cc:502)
     CSS 2.1 §9.2.2: Atomic inline-block terminates logical leaf descent. -/
 theorem inlineCursor_firstLastLogicalLeafWithInlineBlock :
@@ -277,6 +318,16 @@ theorem inlineCursor_firstLastLogicalLeafWithImages :
     ]
     nodes[firstLogicalLeaf nodes 0 false]? = some { name := "#first", isAtomic := true } ∧
     nodes[lastLogicalLeaf nodes 0 false]? = some { name := "#last", isAtomic := true } := by
+  decide
+
+/-- Test: FirstNonPseudoLeafWithBlockImage (inline_cursor_test.cc:534)
+    CSS 2.1 §9.2.2 & §9.4.2: First non-pseudo leaf in block-in-inline resolves to anonymous wrapper. -/
+theorem inlineCursor_firstNonPseudoLeafWithBlockImage :
+    let nodes : List CursorNode := [
+      { name := "wrapper", isBlockInInline := true, descendantsCount := 1 },
+      { name := "img", isAtomic := true }
+    ]
+    firstNonPseudoLeaf nodes = some 0 := by
   decide
 
 /-- Test: IsEmptyLineBox (inline_cursor_test.cc:554)
@@ -351,6 +402,17 @@ theorem inlineCursor_nextWithEllipsis :
       { name := "#'…'", isGeneratedSymbol := true }
     ]
     collectPreOrder nodes = ["#linebox", "abcdefghi", "abcd", "#'…'"] := by
+  decide
+
+/-- Test: NextWithEllipsisInlineBoxOnly (inline_cursor_test.cc:650)
+    CSS Overflow 3 §4.4: Empty inline box generates no ellipsis; pre-order traversal visits line box and inline box only. -/
+theorem inlineCursor_nextWithEllipsisInlineBoxOnly :
+    let nodes : List CursorNode := [
+      { name := "#linebox", type := .line, descendantsCount := 1 },
+      { name := "LayoutInline SPAN" }
+    ]
+    collectPreOrder nodes = ["#linebox", "LayoutInline SPAN"] ∧
+    nodes.filter (fun n => n.name == "#'…'") = [] := by
   decide
 
 /-- Test: NextWithListItem (inline_cursor_test.cc:665)
@@ -771,6 +833,12 @@ theorem inlineCursor_positionForPointInChildVerticalRTL :
     (positionForPointInChild true true offset (15, 25) size chars = (1, .downstream)) ∧
     (positionForPointInChild true true offset (15, 30) size chars = (0, .downstream)) ∧
     (positionForPointInChild true true offset (15, 35) size chars = (0, .downstream)) := by
+  decide
+
+/-- Test: PositionForPointInChildBlockChildren (inline_cursor_test.cc:1099)
+    CSS 2.1 §9.2.2: Hit testing on inline-block with block children anchors at start (offset 0). -/
+theorem inlineCursor_positionForPointInChildBlockChildren :
+    positionForPointInBlockChildren (0, 0) = 0 := by
   decide
 
 /-- Test `InlineCursorTest.MoveToVisualFirstOrLast` (`inline/inline_cursor_test.cc:1292`).

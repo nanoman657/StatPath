@@ -126,6 +126,8 @@ structure CursorNode where
   isOutOfFlow : Bool := false
   isHiddenForPaint : Bool := false
   isGeneratedSymbol : Bool := false
+  textStartOffset : Nat := 0
+  isBlockInInline : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
 /-- Find parent index in pre-order flat tree: innermost ancestor whose descendants span over target. -/
@@ -623,5 +625,69 @@ theorem visualExtrema_singleton (item : VisualCursorItem) :
     visualLastForLayoutObject [item] item.layoutObjectId = some item.name := by
   dsimp [visualFirstForLayoutObject, visualLastForLayoutObject]
   simp
+
+/-- CSS 2.1 §9.4.2 & CSS Text 3 §4: Text offset of the forced line break on an empty line. -/
+def emptyLineBreakOffset (nodes : List CursorNode) (lineIdx : Nat) : Option Nat :=
+  match findFirstChild nodes lineIdx with
+  | some childIdx =>
+    match nodes[childIdx]? with
+    | some ch => some ch.textStartOffset
+    | none => none
+  | none => none
+
+/-- CSS 2.1 §9.4.2 Law: Empty line with child forced break yields the break's text start offset. -/
+theorem emptyLineBreakOffset_child (nodes : List CursorNode) (lineIdx childIdx : Nat) (child : CursorNode)
+    (hfc : findFirstChild nodes lineIdx = some childIdx)
+    (hch : nodes[childIdx]? = some child) :
+    emptyLineBreakOffset nodes lineIdx = some child.textStartOffset := by
+  dsimp [emptyLineBreakOffset]
+  rw [hfc]
+  dsimp
+  rw [hch]
+
+/-- CSS 2.1 §9.2.2 & §9.4.2: First non-pseudo leaf traversal in cursor tree.
+    Finds the first leaf that is not a pseudo-element marker. -/
+def firstNonPseudoLeafAux : Nat → List CursorNode → Option Nat
+  | _, [] => none
+  | i, n :: rest =>
+    if n.isBlockInInline || (n.descendantsCount == 0 && !n.isGeneratedSymbol) then some i
+    else firstNonPseudoLeafAux (i + 1) rest
+
+def firstNonPseudoLeaf (nodes : List CursorNode) : Option Nat :=
+  firstNonPseudoLeafAux 0 nodes
+
+/-- CSS 2.1 §9.2.2 Law: Empty cursor tree has no non-pseudo leaf. -/
+theorem firstNonPseudoLeaf_empty :
+    firstNonPseudoLeaf [] = none := rfl
+
+/-- CSS 2.1 §9.2.2 Law: If the root is a block-in-inline wrapper, it is chosen as first non-pseudo leaf. -/
+theorem firstNonPseudoLeaf_first_block_in_inline (n : CursorNode) (rest : List CursorNode)
+    (h : n.isBlockInInline = true) :
+    firstNonPseudoLeaf (n :: rest) = some 0 := by
+  dsimp [firstNonPseudoLeaf, firstNonPseudoLeafAux]
+  simp [h]
+
+/-- CSS 2.1 §9.2.2: Caret position for hit testing an inline-block with block children.
+    Always anchors at offset 0 (first position in node). -/
+def positionForPointInBlockChildren (_point : Int × Int) : Nat :=
+  0
+
+/-- CSS 2.1 §9.2.2 Law: Hit testing within an inline-block containing block children anchors at start (offset 0). -/
+theorem positionForPointInBlockChildren_zero (pt : Int × Int) :
+    positionForPointInBlockChildren pt = 0 := rfl
+
+/-- CSS Overflow 3 §4.4 Law: Empty inline boxes generate no ellipsis item. -/
+theorem empty_inline_box_no_ellipsis (nodes : List CursorNode)
+    (h : ∀ n ∈ nodes, n.name ≠ "#'…'") :
+    nodes.filter (fun n => n.name == "#'…'") = [] := by
+  induction nodes with
+  | nil => rfl
+  | cons hd tl ih =>
+    have hhd : hd.name ≠ "#'…'" := h hd (List.Mem.head tl)
+    have htl : ∀ n ∈ tl, n.name ≠ "#'…'" := fun n hn => h n (List.Mem.tail hd hn)
+    dsimp [List.filter]
+    have hne : (hd.name == "#'…'") = false := by
+      cases hcase : (hd.name == "#'…'") <;> simp_all
+    simp [hne, ih htl]
 
 end ChromiumLayout

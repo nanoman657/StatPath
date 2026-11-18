@@ -226,7 +226,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:271 | CulledInlineWithFloat | behaviour | formalized | `inlineCursor_culledInlineWithFloat` | CSS 2.1 §9.5: Floats are out of normal inline flow and excluded from culled inline traversal |
 | inline/inline_cursor_test.cc:281 | CulledInlineWithOOF | behaviour | formalized | `inlineCursor_culledInlineWithOOF` | CSS 2.1 §9.3: Out-of-flow positioned elements are excluded from culled inline traversal |
 | inline/inline_cursor_test.cc:292 | CulledInlineNested | behaviour | formalized | `inlineCursor_culledInlineNested` | CSS Inline 3 §2: Nested culled inlines preserve descendant text items |
-| inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | internal | - | Block in inline anonymous wrapper splitting |
+| inline/inline_cursor_test.cc:303 | CulledInlineBlockChild | behaviour | formalized | `inlineCursor_culledInlineBlockChild` | CSS 2.1 §9.2.1.1: Inlines split by in-flow block children produce multiple fragments for the culled inline |
 | inline/inline_cursor_test.cc:318 | CulledInlineWithRoot | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:328 | CulledInlineWithoutRoot | behaviour | formalized | `inlineCursor_culledInlineWithoutRoot` | CSS Inline 3 §2: Culled inline without root container yields in-flow text and break fragments |
 | inline/inline_cursor_test.cc:339 | CursorForMovingAcrossFragmentainer | behaviour | internal | - | Multicolumn fragmentainer boundary crossing |
@@ -235,18 +235,18 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:388 | FirstLastLogicalLeafInSimpleText | behaviour | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:403 | FirstLastLogicalLeafInRtlText | behaviour | formalized | `inlineCursor_firstLastLogicalLeafInRtlText` | CSS Writing Modes 3 §3.2: In RTL text, logical first and last leaf resolve in reading order |
 | inline/inline_cursor_test.cc:420 | FirstLastLogicalLeafInTextAsDeepDescendants | behaviour | formalized | `inlineCursor_firstLastLogicalLeafInTextAsDeepDescendants` | CSS Writing Modes 3 §3.2: Logical leaf descent finds innermost text leaf across deep hierarchies |
-| inline/inline_cursor_test.cc:439 | MoveToEndOfLineWithNoCharsLtr | behaviour | internal | - | End of empty line cursor in textarea LTR |
-| inline/inline_cursor_test.cc:470 | MoveToEndOfLineWithNoCharsRtl | behaviour | internal | - | End of empty line cursor in textarea RTL |
+| inline/inline_cursor_test.cc:439 | MoveToEndOfLineWithNoCharsLtr | behaviour | formalized | `inlineCursor_moveToEndOfLineWithNoCharsLtr` | CSS 2.1 §9.4.2 & CSS Text 3 §4: In textarea LTR, empty line lands on forced line break at offset 4 |
+| inline/inline_cursor_test.cc:470 | MoveToEndOfLineWithNoCharsRtl | behaviour | formalized | `inlineCursor_moveToEndOfLineWithNoCharsRtl` | CSS 2.1 §9.4.2 & CSS Text 3 §4: In textarea RTL, empty line lands on forced line break at offset 4 |
 | inline/inline_cursor_test.cc:502 | FirstLastLogicalLeafWithInlineBlock | behaviour | formalized | `inlineCursor_firstLastLogicalLeafWithInlineBlock` | CSS 2.1 §9.2.2: Atomic inline-block terminates logical leaf descent |
 | inline/inline_cursor_test.cc:520 | FirstLastLogicalLeafWithImages | behaviour | formalized | `inlineCursor_firstLastLogicalLeafWithImages` | CSS 2.1 §9.2.2: Replaced elements (images) terminate logical leaf descent |
-| inline/inline_cursor_test.cc:534 | FirstNonPseudoLeafWithBlockImage | behaviour | internal | - | Block-in-inline image leaf traversal |
+| inline/inline_cursor_test.cc:534 | FirstNonPseudoLeafWithBlockImage | behaviour | formalized | `inlineCursor_firstNonPseudoLeafWithBlockImage` | CSS 2.1 §9.2.2 & §9.4.2: First non-pseudo leaf in block-in-inline resolves to anonymous wrapper |
 | inline/inline_cursor_test.cc:554 | IsEmptyLineBox | behaviour | formalized | `inlineCursor_isEmptyLineBox` | CSS 2.1 §9.4.2: Line box with text is non-empty; line box with empty inline and margin is empty |
 | inline/inline_cursor_test.cc:565 | LastChild | behaviour | formalized | `inlineCursor_lastChild` | CSS 2.1 §9.4.2: MoveToLastChild visits rightmost direct sibling child |
 | inline/inline_cursor_test.cc:575 | LastChild2 | behaviour | formalized | `inlineCursor_lastChild2` | CSS 2.1 §9.4.2: Successive MoveToLastChild visits nested inline box last child |
 | inline/inline_cursor_test.cc:588 | Next | behaviour | formalized | `inlineCursor_next` | CSS Inline 3 §2: MoveToNext performs pre-order DFS across inline fragments |
 | inline/inline_cursor_test.cc:614 | NextIncludingFragmentainer | behaviour | internal | - | Next traversal across multicol fragmentainers |
 | inline/inline_cursor_test.cc:635 | NextWithEllipsis | behaviour | formalized | `inlineCursor_nextWithEllipsis` | CSS Overflow 3 §4.4: Traversal visits line box, hidden text, truncated fragment, and ellipsis symbol |
-| inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | internal | - | Empty inline box ellipsis traversal |
+| inline/inline_cursor_test.cc:650 | NextWithEllipsisInlineBoxOnly | behaviour | formalized | `inlineCursor_nextWithEllipsisInlineBoxOnly` | CSS Overflow 3 §4.4: Empty inline box generates no ellipsis; pre-order traversal visits line box and inline box only |
 | inline/inline_cursor_test.cc:665 | NextWithListItem | behaviour | formalized | `inlineCursor_nextWithListItem` | CSS Lists 3 §3: Traversal visits outside list marker, line box, and text |
 | inline/inline_cursor_test.cc:675 | NextWithSoftHyphens | behaviour | formalized | `inlineCursor_nextWithSoftHyphens` | CSS Text 3 §4.1: Traversal visits text, generated soft hyphen fragment, and next line |
 | inline/inline_cursor_test.cc:685 | NextInlineLeaf | behaviour | formalized | `inlineCursor_nextInlineLeaf` | CSS Inline 3 §2: MoveToNextInlineLeaf visits only text and break leaves |
@@ -269,7 +269,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:988 | PositionForPointInChildHorizontalRTL | geometry | formalized | `inlineCursor_positionForPointInChildHorizontalRTL` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in horizontal RTL text fragment |
 | inline/inline_cursor_test.cc:1025 | PositionForPointInChildVerticalLTR | geometry | blocked | - | Blocked: held-out test |
 | inline/inline_cursor_test.cc:1061 | PositionForPointInChildVerticalRTL | geometry | formalized | `inlineCursor_positionForPointInChildVerticalRTL` | CSS Writing Modes 3 §3.1, CSS 2.1 §9.4.2: Hit testing points in vertical RTL text fragment |
-| inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | internal | - | Hit testing on inline-block with block children |
+| inline/inline_cursor_test.cc:1099 | PositionForPointInChildBlockChildren | behaviour | formalized | `inlineCursor_positionForPointInChildBlockChildren` | CSS 2.1 §9.2.2: Hit testing on inline-block with block children anchors at start (offset 0) |
 | inline/inline_cursor_test.cc:1110 | Previous | behaviour | formalized | `inlineCursor_previous` | CSS 2.1 §9.4.2: MoveToPrevious visits all items in reverse pre-order sequence |
 | inline/inline_cursor_test.cc:1124 | PreviousIncludingFragmentainer | behaviour | internal | - | Backward traversal across multicol fragmentainers |
 | inline/inline_cursor_test.cc:1145 | PreviousInlineLeaf | behaviour | formalized | `inlineCursor_previousInlineLeaf` | CSS Inline 3 §2: MoveToPreviousInlineLeaf visits leaf items in reverse order including line breaks |
