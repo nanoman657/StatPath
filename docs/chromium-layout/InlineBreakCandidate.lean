@@ -89,20 +89,25 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
           else acc
         | [] => acc
       processTokens idx textOffset visibleWidth lastWordEnd remainingOpen updatedAcc rest
-    | ⟨idx, .floating⟩ :: rest =>
+    | ⟨idx, .floating⟩ :: rest | ⟨idx, .wbr⟩ :: rest =>
       processTokens idx textOffset visibleWidth lastWordEnd openTags acc rest
     | ⟨idx, .atomicInline w⟩ :: rest =>
       let newOffset := textOffset + 1
       let newWidth := visibleWidth + w
       let wordEnd := { itemIndex := idx + 1, textOffset := newOffset }
       processTokens idx newOffset newWidth wordEnd openTags acc rest
-    | ⟨idx, .br⟩ :: rest =>
+    | ⟨idx, .br⟩ :: rest | ⟨idx, .newline⟩ :: rest =>
       let newOffset := textOffset + 1
       let cand : LineBreakCandidate :=
         { offset := { itemIndex := idx, textOffset := newOffset },
           endOffset := lastWordEnd,
           posNoBreak := visibleWidth, posIfBreak := visibleWidth }
       processTokens (idx + 1) newOffset visibleWidth lastWordEnd openTags (cand :: acc) rest
+    | ⟨idx, .symbolMarker s⟩ :: rest =>
+      let newOffset := textOffset + s.length
+      let newWidth := visibleWidth + s.length * glyphWidth
+      let wordEnd := { itemIndex := idx + 1, textOffset := newOffset }
+      processTokens idx newOffset newWidth wordEnd openTags acc rest
     | ⟨idx, .text s⟩ :: rest =>
       let rec walkChars (chars : List Char) (off : Nat) (vWidth : Nat) (wEnd : InlineItemTextIndex)
           (cands : List LineBreakCandidate) : Nat × Nat × InlineItemTextIndex × List LineBreakCandidate :=

@@ -128,6 +128,65 @@ theorem inlineNode_collectInlinesRtlWithSpan :
     (res.items[4]! = { itemType := .text, startOffset := 3, endOffset := 5, bidiLevel := 1 }) := by
   decide
 
+/-- Test: CollectInlinesTextCombineBR (inline_node_test.cc:402)
+    CSS Writing Modes 3 §5.1.4: In text combine, <br> is treated as space and emits a text item. -/
+theorem inlineNode_collectInlinesTextCombineBR :
+    let tokens := [
+      InlineCollectionToken.text "a",
+      InlineCollectionToken.br,
+      InlineCollectionToken.text "z"
+    ]
+    let res := collectInlines tokens .ltr true
+    (res.text = "a z") ∧
+    (res.items.length = 3) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 1 }) ∧
+    (res.items[1]! = { itemType := .text, startOffset := 1, endOffset := 2 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 2, endOffset := 3 }) := by
+  decide
+
+/-- Test: CollectInlinesTextCombineListItemMarker (inline_node_test.cc:418)
+    CSS Writing Modes 3 §5.1.4 & CSS Lists 3 §3: Text combine inside list marker emits text item with isSymbolMarker flag. -/
+theorem inlineNode_collectInlinesTextCombineListItemMarker :
+    let tokens := [InlineCollectionToken.symbolMarker "• "]
+    let res := collectInlines tokens .ltr true
+    (res.text = "• ") ∧
+    (res.items.length = 1) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 2, isSymbolMarker := true }) ∧
+    (res.items[0]!.isSymbolMarker = true) := by
+  decide
+
+/-- Test: CollectInlinesTextCombineNewline (inline_node_test.cc:438)
+    CSS Writing Modes 3 §5.1.4: In text combine, preserved newline is treated as space and emits a text item. -/
+theorem inlineNode_collectInlinesTextCombineNewline :
+    let tokens := [
+      InlineCollectionToken.text "a",
+      InlineCollectionToken.newline,
+      InlineCollectionToken.text "z"
+    ]
+    let res := collectInlines tokens .ltr true
+    (res.text = "a z") ∧
+    (res.items.length = 3) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 1 }) ∧
+    (res.items[1]! = { itemType := .text, startOffset := 1, endOffset := 2 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 2, endOffset := 3 }) := by
+  decide
+
+/-- Test: CollectInlinesTextCombineWBR (inline_node_test.cc:453)
+    CSS Writing Modes 3 §5.1.4: In text combine, <wbr> is treated as zero-width space and emits a text item. -/
+theorem inlineNode_collectInlinesTextCombineWBR :
+    let tokens := [
+      InlineCollectionToken.text "a",
+      InlineCollectionToken.wbr,
+      InlineCollectionToken.text "z"
+    ]
+    let res := collectInlines tokens .ltr true
+    (res.text = "a\u200Bz") ∧
+    (res.items.length = 3) ∧
+    (res.items[0]! = { itemType := .text, startOffset := 0, endOffset := 1 }) ∧
+    (res.items[1]! = { itemType := .text, startOffset := 1, endOffset := 2 }) ∧
+    (res.items[2]! = { itemType := .text, startOffset := 2, endOffset := 3 }) := by
+  decide
+
 /-- Test: MinMaxTest.Data (inline_node_test.cc:649)
     Intrinsic min/max size computation under 10px fixed-width Ahem font. -/
 theorem inlineNode_minMaxData :
@@ -158,6 +217,18 @@ theorem inlineNode_minMaxData :
       InlineCollectionToken.atomicInline 60,
       InlineCollectionToken.text "."
     ] = { minSize := 60, maxSize := 130 }) := by
+  decide
+
+/-- Test: TextCombineUsesScalingX (`inline/inline_node_test.cc:1692`).
+    CSS Writing Modes 3 §5.1.4: Combined text with length > 1em uses scaleX;
+    single character fits within 1em without scaleX. -/
+theorem inlineNode_textCombineUsesScalingX :
+    let wm : WritingMode := .verticalRl
+    let tcu : TextCombineUpright := .all
+    let active := isTextCombineActive wm tcu
+    (active = true) ∧
+    (textCombineUsesScaleX "0123456789".length = true) ∧
+    (textCombineUsesScaleX "0".length = false) := by
   decide
 
 /-- Test: TextCombineWordSpacing (`inline/inline_node_test.cc:1713`).

@@ -86,10 +86,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:353 | CollectInlinesRtlWithSpan | behaviour | formalized | `inlineNode_collectInlinesRtlWithSpan` | CSS Writing Modes 3 §2.1, §2.4: RTL container propagates bidi level 1 across inline elements and text items |
 | inline/inline_node_test.cc:369 | CollectInlinesMixedText | behaviour | internal | - | Mixed LTR/RTL text |
 | inline/inline_node_test.cc:385 | CollectInlinesMixedTextEndWithON | behaviour | internal | - | Bidi neutral character resolution |
-| inline/inline_node_test.cc:402 | CollectInlinesTextCombineBR | geometry | internal | - | Text combine with BR |
-| inline/inline_node_test.cc:418 | CollectInlinesTextCombineListItemMarker | geometry | internal | - | Text combine list marker |
-| inline/inline_node_test.cc:438 | CollectInlinesTextCombineNewline | geometry | internal | - | Text combine newline |
-| inline/inline_node_test.cc:453 | CollectInlinesTextCombineWBR | geometry | internal | - | Text combine WBR |
+| inline/inline_node_test.cc:402 | CollectInlinesTextCombineBR | geometry | formalized | `inlineNode_collectInlinesTextCombineBR` | CSS Writing Modes 3 §5.1.4: In text combine, <br> is treated as space and emits text item |
+| inline/inline_node_test.cc:418 | CollectInlinesTextCombineListItemMarker | geometry | formalized | `inlineNode_collectInlinesTextCombineListItemMarker` | CSS Writing Modes 3 §5.1.4 & CSS Lists 3 §3: Text combine inside list marker emits text item with isSymbolMarker flag |
+| inline/inline_node_test.cc:438 | CollectInlinesTextCombineNewline | geometry | formalized | `inlineNode_collectInlinesTextCombineNewline` | CSS Writing Modes 3 §5.1.4: In text combine, newline is treated as space and emits text item |
+| inline/inline_node_test.cc:453 | CollectInlinesTextCombineWBR | geometry | formalized | `inlineNode_collectInlinesTextCombineWBR` | CSS Writing Modes 3 §5.1.4: In text combine, <wbr> is treated as zero-width space and emits text item |
 | inline/inline_node_test.cc:468 | SegmentASCII | behaviour | internal | - | ASCII run segmentation |
 | inline/inline_node_test.cc:477 | SegmentHebrew | behaviour | internal | - | Hebrew run segmentation |
 | inline/inline_node_test.cc:487 | SegmentSplit1To2 | behaviour | internal | - | Mixed script segmentation |
@@ -143,7 +143,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | internal | internal | - | Shape cache safe-to-reuse flag in RTL |
 | inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
 | inline/inline_node_test.cc:1671 | InitialLetter | geometry | internal | - | Initial letter box fragment and kInitialLetterBox item |
-| inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | internal | - | Text combine > 1 char uses scaleX |
+| inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | formalized | `inlineNode_textCombineUsesScalingX` | CSS Writing Modes 3 §5.1.4: Combined text > 1em uses scaleX |
 | inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombineWordSpacing` | CSS Writing Modes 3 §5.1.4: Inside text combine, letter-spacing and word-spacing are treated as 0 |
 | inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |

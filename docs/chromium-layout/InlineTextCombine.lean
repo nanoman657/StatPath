@@ -412,6 +412,18 @@ theorem insideListMarkerTree_active_marker (sym cnt : String) :
 theorem textCombineOutlineRects_standard_length (lh fs tot : Nat) :
     (computeTextCombineOutlineRects lh fs tot false).length = 1 := rfl
 
+/-- CSS Writing Modes 3 §5.1.4: Whether combined text requires horizontal scaling (scaleX) to fit within 1em.
+    In standard Ahem font, 1 character fits in 1em (10px), while > 1 character exceeds 1em and uses scaleX. -/
+def textCombineUsesScaleX (charCount : Nat) (emUnits : Nat := 1) : Bool :=
+  charCount > emUnits
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Text combine with at most 1em character count does not scale. -/
+theorem textCombineUsesScaleX_single (em : Nat) (h : em ≥ 1) :
+    textCombineUsesScaleX 1 em = false := by
+  dsimp [textCombineUsesScaleX]
+  apply decide_eq_false
+  omega
+
 /-- CSS Basic User Interface 3 §4.2 Law: Focus outline with block ink overflow has length 5. -/
 theorem textCombineOutlineRects_focus_length (lh fs tot : Nat) :
     (computeTextCombineOutlineRects lh fs tot true).length = 5 := rfl

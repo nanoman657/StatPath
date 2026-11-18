@@ -36,6 +36,7 @@ structure InlineCollectedItem where
   startOffset : Nat := 0
   endOffset : Nat := 0
   bidiLevel : Nat := 0
+  isSymbolMarker : Bool := false
   deriving DecidableEq, Repr, Inhabited
 
 inductive InlineCollectionToken where
@@ -47,6 +48,12 @@ inductive InlineCollectionToken where
   /-- CSS 2.1 §9.5 Floats: Floating box inside an inline formatting context.
       Floats are out-of-flow and produce a zero-length inline item in the text buffer. -/
   | floating
+  /-- CSS Text 3 §4: Preserved newline character (e.g. within pre or pre-wrap). -/
+  | newline
+  /-- CSS Text 3 §4: Word break opportunity element (<wbr>). -/
+  | wbr
+  /-- CSS Lists 3 §3: List item symbol marker (e.g. bullet "• "). -/
+  | symbolMarker (content : String := "• ")
   deriving DecidableEq, Repr, Inhabited
 
 structure CollectionResult where
@@ -67,39 +74,74 @@ def detectBidiInCollectInlines (text : String) : Bool :=
 def detectBidiInSegmentText (text : String) : Bool :=
   text.toList.any (fun c => c.val ≥ 0x0590 && c.val ≤ 0x08FF)
 
-/-- CSS 2.1 §9.5 Floats & §9.4.2 Inline formatting contexts: Single step of inline collection
-    attributing character offsets, item types, and text buffer emission. -/
-def collectInlinesStep (offset : Nat) : InlineCollectionToken → Nat × InlineCollectedItem × List Char
+/-- CSS 2.1 §9.5, §9.4.2 & CSS Writing Modes 3 §5.1.4: Single step of inline collection
+    attributing character offsets, item types, and text buffer emission.
+    Within text combine, forced line breaks and newlines are treated as text spaces,
+    and wbr is treated as a zero-width space. -/
+def collectInlinesStep (offset : Nat) (isTextCombine : Bool := false) : InlineCollectionToken → Nat × InlineCollectedItem × List Char
   | .text s => (offset + s.length, { itemType := .text, startOffset := offset, endOffset := offset + s.length }, s.toList)
   | .openTag _ => (offset, { itemType := .openTag, startOffset := offset, endOffset := offset }, [])
   | .closeTag => (offset, { itemType := .closeTag, startOffset := offset, endOffset := offset }, [])
   | .atomicInline _ => (offset + 1, { itemType := .atomicInline, startOffset := offset, endOffset := offset + 1 }, ['\uFFFC'])
-  | .br => (offset + 1, { itemType := .control, startOffset := offset, endOffset := offset + 1 }, ['\n'])
+  | .br | .newline =>
+    let (t, c) := if isTextCombine then (InlineItemType.text, ' ') else (.control, '\n')
+    (offset + 1, { itemType := t, startOffset := offset, endOffset := offset + 1 }, [c])
+  | .wbr =>
+    if isTextCombine then
+      (offset + 1, { itemType := .text, startOffset := offset, endOffset := offset + 1 }, ['\u200B'])
+    else
+      (offset, { itemType := .control, startOffset := offset, endOffset := offset }, [])
+  | .symbolMarker s =>
+    (offset + s.length, { itemType := .text, startOffset := offset, endOffset := offset + s.length, isSymbolMarker := true }, s.toList)
   | .floating => (offset, { itemType := .floating, startOffset := offset, endOffset := offset }, [])
 
 /-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context do not advance the inline offset. -/
 theorem collectInlinesStep_floating_zero_advance (offset : Nat) :
-    (collectInlinesStep offset .floating).1 = offset := by
+    (collectInlinesStep offset false .floating).1 = offset := by
   rfl
 
 /-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context produce zero character length. -/
 theorem collectInlinesStep_floating_zero_length (offset : Nat) :
-    (collectInlinesStep offset .floating).2.1.startOffset = (collectInlinesStep offset .floating).2.1.endOffset := by
+    (collectInlinesStep offset false .floating).2.1.startOffset = (collectInlinesStep offset false .floating).2.1.endOffset := by
   rfl
 
 /-- CSS 2.1 §9.5 Law: Floating items in an inline formatting context emit no characters into the text buffer. -/
 theorem collectInlinesStep_floating_empty_chars (offset : Nat) :
-    (collectInlinesStep offset .floating).2.2 = [] := by
+    (collectInlinesStep offset false .floating).2.2 = [] := by
   rfl
 
+/-- CSS Writing Modes 3 §5.1.4 Law: Forced line breaks in text combine are classified as text items. -/
+theorem collectInlinesStep_textCombine_br_is_text (offset : Nat) :
+    (collectInlinesStep offset true .br).2.1.itemType = .text := rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Preserved newlines in text combine are classified as text items. -/
+theorem collectInlinesStep_textCombine_newline_is_text (offset : Nat) :
+    (collectInlinesStep offset true .newline).2.1.itemType = .text := rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Word break opportunities in text combine are classified as text items. -/
+theorem collectInlinesStep_textCombine_wbr_is_text (offset : Nat) :
+    (collectInlinesStep offset true .wbr).2.1.itemType = .text := rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Forced line breaks in text combine emit a space character into the text buffer. -/
+theorem collectInlinesStep_textCombine_br_space (offset : Nat) :
+    (collectInlinesStep offset true .br).2.2 = [' '] := rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Preserved newlines in text combine emit a space character into the text buffer. -/
+theorem collectInlinesStep_textCombine_newline_space (offset : Nat) :
+    (collectInlinesStep offset true .newline).2.2 = [' '] := rfl
+
+/-- CSS Writing Modes 3 §5.1.4 Law: Word break opportunities in text combine emit a zero-width space into the text buffer. -/
+theorem collectInlinesStep_textCombine_wbr_zws (offset : Nat) :
+    (collectInlinesStep offset true .wbr).2.2 = ['\u200B'] := rfl
+
 /-- Flatten input inline node tokens into character text and classified inline items. -/
-def collectInlines (tokens : List InlineCollectionToken) (dir : TextDirection := .ltr) : CollectionResult :=
+def collectInlines (tokens : List InlineCollectionToken) (dir : TextDirection := .ltr) (isTextCombine : Bool := false) : CollectionResult :=
   let baseLevel := match dir with | .ltr => 0 | .rtl => 1
   let rec loop (offset : Nat) (accItems : List InlineCollectedItem) (accChars : List Char) :
       List InlineCollectionToken → Nat × List InlineCollectedItem × List Char
     | [] => (offset, accItems, accChars)
     | tok :: rest =>
-      let (nxtOffset, item, chars) := collectInlinesStep offset tok
+      let (nxtOffset, item, chars) := collectInlinesStep offset isTextCombine tok
       let itemWithLevel := { item with bidiLevel := baseLevel }
       loop nxtOffset (itemWithLevel :: accItems) (accChars ++ chars) rest
   let (_, revItems, chars) := loop 0 [] [] tokens
@@ -169,19 +211,17 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
           processChars (wLen + 1) accW (tot + 1) cs
       let (endW, midWords, nextTot) := processChars curWordLen words totalChars chars
       toSegments endW midWords nextTot rest
-    | .openTag _ :: rest =>
-      toSegments curWordLen words totalChars rest
-    | .closeTag :: rest =>
-      toSegments curWordLen words totalChars rest
-    | .floating :: rest =>
+    | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .wbr :: rest =>
       toSegments curWordLen words totalChars rest
     | .atomicInline wPx :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words
       let wordsWithAtomic := (wPx / 10) :: wordsAfterPrev
       toSegments 0 wordsWithAtomic (totalChars + (wPx / 10)) rest
-    | .br :: rest =>
+    | .br :: rest | .newline :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words
       toSegments 0 wordsAfterPrev totalChars rest
+    | .symbolMarker s :: rest =>
+      toSegments (curWordLen + s.length) words (totalChars + s.length) rest
   let (wordLengths, totalCharCount) := toSegments 0 [] 0 tokens
   let maxWord := wordLengths.foldl Nat.max 0
   { minSize := clampLayoutUnit (maxWord * 10), maxSize := clampLayoutUnit (totalCharCount * 10) }
