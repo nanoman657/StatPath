@@ -453,4 +453,26 @@ theorem fieldset_smallerLegendLargeBorderFragmentation2 :
     f3.size = { width := 220, height := 60 } ∧ f3.hasBreakToken = false :=
   ⟨rfl, rfl, rfl, rfl, rfl, rfl⟩
 
+/-! ## LayoutFieldset Tests (`forms/layout_fieldset_test.cc`) -/
+
+/-- Test `LayoutFieldsetTest, AddChildWhitespaceCrash` (`forms/layout_fieldset_test.cc:14`).
+    HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1:
+    Removing whitespace between content and legend preserves the fieldset child partition
+    (rendered legend and anonymous content box). -/
+theorem layoutFieldset_addChildWhitespaceCrash :
+    partitionFieldsetChildren [.content "small" "s", .whitespace, .legend ""] =
+    partitionFieldsetChildren [.content "small" "s", .legend ""] ∧
+    (partitionFieldsetChildren [.content "small" "s", .legend ""]).renderedLegend = some "" := by
+  decide
+
+/-- Test `LayoutFieldsetTest, AddChildAnonymousInlineCrash` (`forms/layout_fieldset_test.cc:31`).
+    HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1:
+    Removing anonymous inline whitespace preceding a legend preserves the rendered legend
+    and anonymous content box partition. -/
+theorem layoutFieldset_addChildAnonymousInlineCrash :
+    partitionFieldsetChildren [.content "span" "A", .whitespace, .legend "B"] =
+    partitionFieldsetChildren [.content "span" "A", .legend "B"] ∧
+    (partitionFieldsetChildren [.content "span" "A", .legend "B"]).renderedLegend = some "B" := by
+  decide
+
 end ChromiumLayout

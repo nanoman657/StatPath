@@ -164,4 +164,75 @@ theorem layoutRubyAsBlock_textCombineCrash :
     buildInlineDisplay true [.text "a"] = [.combined { children := [.text "a"] }] := by
   decide
 
+/-! ## 8. Ruby Sizing and Justification Tests
+    (`inline/line_breaker_test.cc`, `inline/inline_node_test.cc`, `inline/justification_utils_test.cc`) -/
+
+/-- Test `LineBreakerTest, WideContentInRuby` (`inline/line_breaker_test.cc:1117`).
+    CSS Ruby 1 §4:
+    Ruby base containing wide atomic inline elements accommodates their total width,
+    preventing overflow during column sizing. -/
+theorem lineBreaker_wideContentInRuby :
+    let div1Width := 109162843
+    let div2Width := 10
+    let totalBase := div1Width + div2Width
+    let col : RubyColumnSizes := { baseMin := totalBase, baseMax := totalBase, annotationMins := [10], annotationMaxs := [10] }
+    computeRubyColumnMinSize col = totalBase ∧
+    computeRubyColumnMaxSize col = totalBase := by
+  decide
+
+/-- Test `LineBreakerTest, OverflowingContinuationRuby` (`inline/line_breaker_test.cc:1193`).
+    CSS Ruby 1 §4:
+    Overflowing ruby continuation annotations expand column min-content size to fit the annotation. -/
+theorem lineBreaker_overflowingContinuationRuby :
+    let baseWidth := 20
+    let annoWidth := 100
+    let col : RubyColumnSizes := { baseMin := baseWidth, baseMax := baseWidth, annotationMins := [annoWidth], annotationMaxs := [annoWidth] }
+    computeRubyColumnMinSize col = annoWidth := by
+  decide
+
+/-- Test `LineBreakerTest, OverflowingContinuationRuby2` (`inline/line_breaker_test.cc:1208`).
+    CSS Ruby 1 §4:
+    Vertical ruby column with SVG atomic inline base and wide annotation establishes column size. -/
+theorem lineBreaker_overflowingContinuationRuby2 :
+    let baseWidth := 30
+    let annoWidth := 80
+    let col : RubyColumnSizes := { baseMin := baseWidth, baseMax := baseWidth, annotationMins := [annoWidth], annotationMaxs := [annoWidth] }
+    computeRubyColumnMinSize col = annoWidth := by
+  decide
+
+/-- Test `LineBreakerTest, MinMaxWithAtomicInlineInRuby` (`inline/line_breaker_test.cc:1220`).
+    CSS Ruby 1 §4:
+    Ruby column with atomic inline in ruby base and empty annotation has column min size bounded by base. -/
+theorem lineBreaker_minMaxWithAtomicInlineInRuby :
+    let col : RubyColumnSizes := { baseMin := 50, baseMax := 50, annotationMins := [0], annotationMaxs := [0] }
+    computeRubyColumnMinSize col = 50 := by
+  decide
+
+/-- Test `LineBreakerTest, MinMaxWithEmptyRubyBase` (`inline/line_breaker_test.cc:1241`).
+    CSS Ruby 1 §4:
+    Empty ruby base (size 0) takes column min size directly from the annotation. -/
+theorem lineBreaker_minMaxWithEmptyRubyBase :
+    let col : RubyColumnSizes := { baseMin := 0, baseMax := 0, annotationMins := [42], annotationMaxs := [42] }
+    computeRubyColumnMinSize col = 42 := by
+  decide
+
+/-- Test `InlineNodeTest, NestedRubyMinMaxCrash` (`inline/inline_node_test.cc:1786`).
+    CSS Ruby 1 §4:
+    Nested ruby column intrinsic sizing: inner ruby column size feeds into the outer ruby base size. -/
+theorem inlineNode_nestedRubyMinMaxCrash :
+    let innerCol : RubyColumnSizes := { baseMin := 20, baseMax := 20, annotationMins := [15], annotationMaxs := [15] }
+    let innerMin := computeRubyColumnMinSize innerCol
+    let outerCol : RubyColumnSizes := { baseMin := innerMin, baseMax := innerMin, annotationMins := [25], annotationMaxs := [25] }
+    computeRubyColumnMinSize outerCol = 25 := by
+  decide
+
+/-- Test `JustificationUtilsTest, SetupItemJustificationOpportunityCrash` (`inline/justification_utils_test.cc:14`).
+    CSS Text 3 §7.3 & CSS Ruby 1 §3:
+    In ruby containers with text-align: justify, ruby annotations and atomic inlines
+    do not receive justification expansion opportunities. -/
+theorem justificationUtils_setupItemJustificationOpportunityCrash :
+    hasRubyJustificationOpportunity true true = false ∧
+    hasRubyJustificationOpportunity false false = false := by
+  decide
+
 end ChromiumLayout

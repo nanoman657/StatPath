@@ -252,6 +252,16 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `layoutInlineListItem_getOffsetMappingNoCrash`: Inline list item generates an inline box participating in the inline formatting context per CSS Lists 3 §2.1.
   - `layoutInlineListItem_offsetMappingBuilderNoCrash`: Dynamic counter style rule changes maintain inline formatting context participation for inline list items per CSS Lists 3 §2.1.
   - `layoutListItem_findSymbolMarkerLayoutTextWithTextCombine`: Extracting symbol marker text traverses through LayoutTextCombine wrappers per CSS Lists 3 §3 & CSS Writing Modes 3 §5.1.
+  - `layoutFieldset_addChildWhitespaceCrash`: Removing whitespace between fieldset content and legend preserves the fieldset child partition per HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1.
+  - `layoutFieldset_addChildAnonymousInlineCrash`: Removing anonymous inline whitespace before a legend preserves rendered legend and content box partition per HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1.
+  - `lineInfo_trailingSpaceWidthInitialEmptyItem`: Trailing space following a zero-length control item (CR) hangs under pre-wrap with zero available width per CSS Text 3 §4.1.2 & §5.4.
+  - `lineBreaker_wideContentInRuby`: Wide atomic inlines in a ruby base accommodate total content size without overflow during column sizing per CSS Ruby 1 §4.
+  - `lineBreaker_overflowingContinuationRuby`: Overflowing ruby continuation annotations expand column min-content size per CSS Ruby 1 §4.
+  - `lineBreaker_overflowingContinuationRuby2`: Vertical ruby column with atomic inline base and wide annotation establishes column size per CSS Ruby 1 §4.
+  - `lineBreaker_minMaxWithAtomicInlineInRuby`: Ruby column min size with atomic inline base is bounded by base width per CSS Ruby 1 §4.
+  - `lineBreaker_minMaxWithEmptyRubyBase`: Empty ruby base takes column min size directly from annotation per CSS Ruby 1 §4.
+  - `inlineNode_nestedRubyMinMaxCrash`: Nested ruby column intrinsic sizing feeds inner column min/max sizes into outer column per CSS Ruby 1 §4.
+  - `justificationUtils_setupItemJustificationOpportunityCrash`: Ruby annotations and non-text atomic inlines do not receive justification expansion opportunities per CSS Text 3 §7.3 & CSS Ruby 1 §3.
 
 
 

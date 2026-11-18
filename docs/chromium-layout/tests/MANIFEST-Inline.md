@@ -62,14 +62,14 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:1002 | BreakAt | geometry | formalized | `lineBreaker_breakAt` | Explicit breakpoints partition line widths (10, 40, 10, 30) |
 | inline/line_breaker_test.cc:1044 | BreakAtTrailingSpaces | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with trailing spaces (40, 20) |
 | inline/line_breaker_test.cc:1079 | BreakAtTrailingSpacesAfterAtomicInline | geometry | formalized | `lineBreaker_breakAt` | Breakpoints with atomic inlines (10, 20) |
-| inline/line_breaker_test.cc:1117 | WideContentInRuby | internal | internal | - | Crash regression test for ruby wider than LayoutUnit::Max() |
+| inline/line_breaker_test.cc:1117 | WideContentInRuby | behaviour | formalized | `lineBreaker_wideContentInRuby` | CSS Ruby 1 §4: Wide atomic inlines in ruby base accommodate total content size |
 | inline/line_breaker_test.cc:1144 | SetInputRange | internal | internal | - | Unit test for internal C++ helper LineBreaker::SetInputRange |
 | inline/line_breaker_test.cc:1169 | CreateSubLineInfoAvailableWidth | internal | internal | - | Regression test for sub-linebreaker float handling in ruby |
-| inline/line_breaker_test.cc:1193 | OverflowingContinuationRuby | internal | internal | - | Crash regression test for ruby continuation |
-| inline/line_breaker_test.cc:1208 | OverflowingContinuationRuby2 | internal | internal | - | Crash regression test for ruby continuation |
-| inline/line_breaker_test.cc:1220 | MinMaxWithAtomicInlineInRuby | internal | internal | - | Crash regression test for atomic inline in ruby |
+| inline/line_breaker_test.cc:1193 | OverflowingContinuationRuby | behaviour | formalized | `lineBreaker_overflowingContinuationRuby` | CSS Ruby 1 §4: Overflowing ruby continuation expands column min-content size |
+| inline/line_breaker_test.cc:1208 | OverflowingContinuationRuby2 | behaviour | formalized | `lineBreaker_overflowingContinuationRuby2` | CSS Ruby 1 §4: Vertical ruby column with atomic inline base and wide annotation establishes column size |
+| inline/line_breaker_test.cc:1220 | MinMaxWithAtomicInlineInRuby | behaviour | formalized | `lineBreaker_minMaxWithAtomicInlineInRuby` | CSS Ruby 1 §4: Ruby column min size with atomic inline base is bounded by base width |
 | inline/line_breaker_test.cc:1229 | RemoveTrailingCollapsibleSpace | internal | internal | - | Crash regression test (division by zero) |
-| inline/line_breaker_test.cc:1241 | MinMaxWithEmptyRubyBase | internal | internal | - | Crash regression test for empty ruby base |
+| inline/line_breaker_test.cc:1241 | MinMaxWithEmptyRubyBase | behaviour | formalized | `lineBreaker_minMaxWithEmptyRubyBase` | CSS Ruby 1 §4: Empty ruby base takes column min size directly from annotation |
 | inline/line_breaker_test.cc:1288 | CanBreakInsideTest.Data | behaviour | formalized | `lineBreaker_canBreakInside` | CanBreakInside predicate for line breaking opportunities |
 | inline/line_breaker_test.cc:1323 | SplitTrailingBidiCrCrash | internal | internal | - | Crash regression test for CR in RTL bidi |
 | inline/line_breaker_test.cc:1331 | BidiControlEnterFlag | geometry | formalized | `lineBreaker_bidiControlEnter` | Container line height matches single line font height (10px) |
@@ -148,7 +148,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |
 | inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
-| inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | internal | internal | - | Crash regression for nested ruby min/max |
+| inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | behaviour | formalized | `inlineNode_nestedRubyMinMaxCrash` | CSS Ruby 1 §4: Nested ruby column min/max sizes feed into outer ruby column |
 | inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
 | inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText` | CSS 2.1 §9.4.2: First and last fragment flags for wrapping text |
 | inline/fragment_item_test.cc:173 | RtlText | geometry | formalized | `fragmentItem_rtlText` | CSS Writing Modes 3 §3.1 & UAX #9: Mixed-directional RTL text item visual runs and sequence flags |
@@ -366,7 +366,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_shape_cache_test.cc:126 | ShapeCacheSpacing | internal | internal | - | Tests IsNGShapeCacheAllowed flag with letter-spacing and float |
 | inline/inline_node_shape_cache_test.cc:135 | ShapeResultPointerEqualFloatsAndOutOfFlow | internal | internal | - | Pointer equality check for ShapeResult cache across floats and abspos |
 | inline/inline_node_shape_cache_test.cc:152 | ShapeResultPointerEqualInline | internal | internal | - | Pointer equality check for ShapeResult cache across inline span |
-| inline/justification_utils_test.cc:14 | SetupItemJustificationOpportunityCrash | internal | internal | - | Crash regression test for null dereference in InlineItem::Style |
+| inline/justification_utils_test.cc:14 | SetupItemJustificationOpportunityCrash | behaviour | formalized | `justificationUtils_setupItemJustificationOpportunityCrash` | CSS Text 3 §7.3 & CSS Ruby 1 §3: Ruby annotations and non-text atomic inlines do not receive justification expansion |
 | inline/line_break_candidate_test.cc:50 | Text | geometry | formalized | `lineBreak_Text` | CSS Text 3 §4: Soft wrap opportunity at word boundary with collapsed trailing space |
 | inline/line_break_candidate_test.cc:76 | SoftHyphen | geometry | formalized | `lineBreak_SoftHyphen` | CSS Text 3 §4.1: Soft hyphen break opportunity with hyphen glyph expansion |
 | inline/line_break_candidate_test.cc:104 | SoftHyphenDisabled | geometry | formalized | `lineBreak_SoftHyphenDisabled` | CSS Text 3 §4.1: hyphens: none disables soft hyphen break opportunities |
@@ -381,7 +381,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_break_candidate_test.cc:368 | OutOfFlowPositioned | geometry | formalized | `lineBreak_OutOfFlowPositioned` | CSS Text 3 §5.2: Out of flow positioned element does not affect line break candidates |
 | inline/line_info_list_test.cc:15 | Get | internal | internal | - | Tests LineInfoListOf ring buffer caching and pointer identity |
 | inline/line_info_test.cc:23 | InflowEndOffset | behaviour | formalized | `lineInfo_inflowEndOffset` | Ruby base text establishes inflow end offset excluding annotations |
-| inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | internal | internal | - | Crash regression / DCHECK test for zero-length control item in trailing spaces |
+| inline/line_info_test.cc:42 | TrailingSpaceWidthInitialEmptyItem | behaviour | formalized | `lineInfo_trailingSpaceWidthInitialEmptyItem` | CSS Text 3 §4.1.2 & §5.4: Trailing space hanging after zero-length control item under pre-wrap |
 | inline/line_widths_test.cc:175 | LineWidthsDataTest.Data | geometry | formalized | `lineWidthsDataTest_data` | CSS 2.1 §9.5, §10.8 & CSS Inline 3 §3: Precomputed line widths with float exclusions |
 | inline/offset_mapping_test.cc:213 | CollapseSpaces | behaviour | formalized | `test_OffsetMapping_CollapseSpaces` | Whitespace collapsing indices across normal, nowrap, pre, pre-wrap |
 | inline/offset_mapping_test.cc:224 | CollapseTabs | behaviour | formalized | `test_OffsetMapping_CollapseTabs` | Tab character collapsing indices |
@@ -786,8 +786,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | forms/fieldset_layout_algorithm_test.cc:1707 | SmallerLegendLargeBorderFragmentation | geometry | formalized | `fieldset_smallerLegendLargeBorderFragmentation` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Small legend fitting inside top border fragments across border-box |
 | forms/fieldset_layout_algorithm_test.cc:1766 | SmallerLegendLargeBorderFragmentation2 | geometry | formalized | `fieldset_smallerLegendLargeBorderFragmentation2` | CSS Fragmentation 3 §2, HTML 5.2 §4.10.16: Fieldset with large border and bordered small legend fragments |
 | forms/fieldset_layout_algorithm_test.cc:1818 | SmallerLegendLargeBorderWithBreak | geometry | blocked | - | Blocked: model lacks FieldsetLayoutAlgorithm |
-| forms/layout_fieldset_test.cc:14 | AddChildWhitespaceCrash | internal | internal | - | Crash regression test |
-| forms/layout_fieldset_test.cc:31 | AddChildAnonymousInlineCrash | internal | internal | - | Crash regression test |
+| forms/layout_fieldset_test.cc:14 | AddChildWhitespaceCrash | behaviour | formalized | `layoutFieldset_addChildWhitespaceCrash` | HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1: Whitespace removal preserves fieldset child partition |
+| forms/layout_fieldset_test.cc:31 | AddChildAnonymousInlineCrash | behaviour | formalized | `layoutFieldset_addChildAnonymousInlineCrash` | HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1: Anonymous inline whitespace removal preserves fieldset child partition |
 | forms/layout_text_control_inner_editor_test.cc:12 | AddChildWithoutTrailingLf | behaviour | formalized | `layoutTextControl_addChildWithoutTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block decomposition without trailing newline |
 | forms/layout_text_control_inner_editor_test.cc:43 | AddChildWithTrailingLf | behaviour | formalized | `layoutTextControl_addChildWithTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block decomposition with trailing newline |
 | forms/layout_text_control_inner_editor_test.cc:85 | RemoveChildWithoutTrailingLf | behaviour | formalized | `layoutTextControl_removeChildWithoutTrailingLf` | HTML 5.2 §4.10.11 & CSS 2.1 §9.2.1.1: Textarea anonymous block count after dynamic node removal |

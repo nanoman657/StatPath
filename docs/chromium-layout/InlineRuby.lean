@@ -361,4 +361,62 @@ theorem inlinifyRubyChildDisplay_tableCaption :
 theorem inlinifyRubyChildDisplay_tableColumn :
     inlinifyRubyChildDisplay .tableColumn = .tableColumn := rfl
 
+/-! ## 8. CSS Ruby 1 §4 Ruby Sizing and Min-Max Sizes -/
+
+/-- CSS Ruby 1 §4: Intrinsic min/max sizes for ruby base and annotations. -/
+structure RubyColumnSizes where
+  baseMin : Nat := 0
+  baseMax : Nat := 0
+  annotationMins : List Nat := []
+  annotationMaxs : List Nat := []
+  deriving DecidableEq, Repr, Inhabited
+
+/-- CSS Ruby 1 §4: Compute the min-content inline size of a ruby column.
+    The min-content size of a ruby column is the maximum of the base min-content size
+    and the min-content sizes of all its associated annotations. -/
+def computeRubyColumnMinSize (col : RubyColumnSizes) : Nat :=
+  col.annotationMins.foldl Nat.max col.baseMin
+
+/-- CSS Ruby 1 §4: Compute the max-content inline size of a ruby column.
+    The max-content size of a ruby column is the maximum of the base max-content size
+    and the max-content sizes of all its associated annotations. -/
+def computeRubyColumnMaxSize (col : RubyColumnSizes) : Nat :=
+  col.annotationMaxs.foldl Nat.max col.baseMax
+
+/-- CSS Ruby 1 §4 Law: When a ruby column has no annotations, its min size equals its base min size. -/
+theorem computeRubyColumnMinSize_empty_annotations (b : Nat) :
+    computeRubyColumnMinSize { baseMin := b, annotationMins := [] } = b := rfl
+
+/-- CSS Ruby 1 §4 Law: When a ruby column has no annotations, its max size equals its base max size. -/
+theorem computeRubyColumnMaxSize_empty_annotations (b : Nat) :
+    computeRubyColumnMaxSize { baseMax := b, annotationMaxs := [] } = b := rfl
+
+/-- CSS Ruby 1 §4 Law: When ruby base is empty (size 0), column min size is the annotation min size. -/
+theorem computeRubyColumnMinSize_empty_base (m : Nat) :
+    computeRubyColumnMinSize { baseMin := 0, annotationMins := [m] } = m := by
+  dsimp [computeRubyColumnMinSize]
+  exact Nat.zero_max m
+
+/-- CSS Ruby 1 §4 Law: Adding an atomic inline with size w to ruby base establishes minimum column size. -/
+theorem computeRubyColumnMinSize_with_base (w : Nat) :
+    computeRubyColumnMinSize { baseMin := w, annotationMins := [0] } = w := by
+  dsimp [computeRubyColumnMinSize]
+  exact Nat.max_zero w
+
+/-! ## 9. CSS Text 3 §7.3 & CSS Ruby 1 §3: Ruby Justification Opportunities -/
+
+/-- CSS Text 3 §7.3 & CSS Ruby 1 §3:
+    Whether a justification opportunity can occur between inline items in a ruby container.
+    Ruby annotations and non-text atomic inlines do not create spurious justification opportunities. -/
+def hasRubyJustificationOpportunity (isAnnotation : Bool) (hasText : Bool) : Bool :=
+  !isAnnotation && hasText
+
+/-- CSS Text 3 §7.3 Law: Ruby annotations never receive line justification expansion. -/
+theorem ruby_annotation_no_justification (hasText : Bool) :
+    hasRubyJustificationOpportunity true hasText = false := rfl
+
+/-- CSS Text 3 §7.3 Law: Atomic items without text do not generate justification opportunities. -/
+theorem ruby_atomic_inline_no_text_no_justification :
+    hasRubyJustificationOpportunity false false = false := rfl
+
 end ChromiumLayout

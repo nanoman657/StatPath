@@ -362,4 +362,48 @@ theorem fieldset_fragment_breaks_when_exceeds (w h s : Nat) (h_pos : s > 0) (h_g
   · rename_i hs; omega
   · exact decide_eq_true (by omega)
 
+/-! ## HTML 5.2 §4.10.16 & CSS 2.1 §9.2.1.1: Fieldset Child Organization -/
+
+/-- HTML 5.2 §4.10.16: Elements participating in fieldset child layout. -/
+inductive FieldsetChild where
+  | legend (content : String)
+  | content (tag : String) (text : String)
+  | whitespace
+  deriving DecidableEq, Repr, Inhabited
+
+/-- HTML 5.2 §4.10.16: Fieldset partitioning into rendered legend and content box. -/
+structure FieldsetChildPartition where
+  renderedLegend : Option String
+  contentChildren : List (String × String)
+  deriving DecidableEq, Repr, Inhabited
+
+/-- HTML 5.2 §4.10.16: Partition raw DOM children of a fieldset into
+    the rendered legend (first legend element) and the contents of the anonymous content box.
+    Collapsible whitespace is pruned. -/
+def partitionFieldsetChildren (children : List FieldsetChild) : FieldsetChildPartition :=
+  let rec loop (items : List FieldsetChild) (leg : Option String) (acc : List (String × String)) : FieldsetChildPartition :=
+    match items with
+    | [] => { renderedLegend := leg, contentChildren := acc.reverse }
+    | .whitespace :: rest => loop rest leg acc
+    | .legend s :: rest =>
+      match leg with
+      | none => loop rest (some s) acc
+      | some _ => loop rest leg (("legend", s) :: acc)
+    | .content tag text :: rest => loop rest leg ((tag, text) :: acc)
+  loop children none []
+
+/-- HTML 5.2 §4.10.16 Law: Empty children list partitions into none legend and empty contents. -/
+theorem partitionFieldsetChildren_empty :
+    partitionFieldsetChildren [] = { renderedLegend := none, contentChildren := [] } := rfl
+
+/-- HTML 5.2 §4.10.16 Law: Intervening whitespace does not alter the partition of legend and content. -/
+theorem partitionFieldsetChildren_whitespace_after_content (tag text s : String) :
+    partitionFieldsetChildren [.content tag text, .whitespace, .legend s] =
+    partitionFieldsetChildren [.content tag text, .legend s] := rfl
+
+/-- HTML 5.2 §4.10.16 Law: Intervening whitespace does not alter the partition with multiple contents. -/
+theorem partitionFieldsetChildren_whitespace_nested (tag text s : String) :
+    partitionFieldsetChildren [.content tag text, .whitespace, .whitespace, .legend s] =
+    partitionFieldsetChildren [.content tag text, .legend s] := rfl
+
 end ChromiumLayout

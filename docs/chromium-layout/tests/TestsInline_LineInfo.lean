@@ -9,6 +9,7 @@
 -/
 import LayoutTypes
 import InlineRuby
+import InlineBreakCandidate
 
 namespace ChromiumLayout
 
@@ -32,6 +33,16 @@ theorem lineInfo_inflowEndOffset :
       .rubyColumn offOpen offBaseEnd offAnnoEnd
     ]
     lineInflowEndOffset off0 results = 7 := by
+  decide
+
+/-! ## 2. Trailing Space Width with Initial Empty Item (`inline/line_info_test.cc:42`) -/
+
+/-- Test `LineInfoTest, TrailingSpaceWidthInitialEmptyItem` (`inline/line_info_test.cc:42`).
+    CSS Text 3 §4.1.2 & §5.4:
+    Under pre-wrap with zero available width, a trailing space following a zero-length control item
+    (carriage return U+000D) hangs outside the line box. -/
+theorem lineInfo_trailingSpaceWidthInitialEmptyItem :
+    computeHangingSpaceWidth .preWrap false 0 1 none 0 10 = 1 := by
   decide
 
 end ChromiumLayout
