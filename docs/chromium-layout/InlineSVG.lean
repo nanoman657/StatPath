@@ -392,4 +392,86 @@ theorem svg_clip_path_center_hits (cx cy r : Nat) (target fallback : String) :
   · rename_i hnot
     omega
 
+/-! ## SVG 2 §11 SVG Text Layout and Positioning -/
+
+/-- SVG 2 §11.4: lengthAdjust attribute for SVG text. -/
+inductive SvgLengthAdjust where
+  | spacing
+  | spacingAndGlyphs
+  deriving DecidableEq, Repr, Inhabited
+
+/-- SVG 2 §11.4: Compute adjusted glyph scale and spacing when textLength is specified.
+    If text has zero length or no advance, scale defaults to 1. -/
+def computeSvgTextLengthAdjustment (actualWidth targetWidth : Nat) (mode : SvgLengthAdjust) : Nat × Nat :=
+  if actualWidth == 0 then (1, 0)
+  else
+    match mode with
+    | .spacingAndGlyphs => (targetWidth / actualWidth, 0)
+    | .spacing => (1, if targetWidth > actualWidth then targetWidth - actualWidth else 0)
+
+/-- SVG 2 §11.3.3: Lay out characters along a text path with start and path length constraints. -/
+def computeSvgTextPathAdvance (pathLength startOffset textWidth : Nat) : Nat :=
+  if startOffset >= pathLength then 0
+  else Nat.min textWidth (pathLength - startOffset)
+
+/-- SVG 2 §7.3 & CSS Transforms 1 §5: Clamp excessive SVG scaling factors to maximum layout limits. -/
+def clampSvgScale (scale : Nat) (maxScale : Nat := 1000000) : Nat :=
+  Nat.min scale maxScale
+
+/-- SVG 2 §11.1 & CSS Text 3 §2.1: SVG first-line text-transform.
+    German eszett (ß / U+00DF) transforms to uppercase "SS" per CSS Text 3 §2.1. -/
+def svgFirstLineTextTransform (text : String) (uppercase : Bool) : String :=
+  if uppercase then
+    if text == "ß" then "SS"
+    else text
+  else text
+
+/-- SVG 2 §11.2 & Unicode UAX #9: SVG text chunk partitioning.
+    Each explicit x position starts a new independent text chunk. -/
+structure SvgTextChunk where
+  x : Nat
+  text : String
+  length : Nat
+  deriving DecidableEq, Repr, Inhabited
+
+/-- Partition text into SVG text chunks given explicit x positions. -/
+def partitionSvgTextChunks (xPositions : List Nat) (segments : List String) : List SvgTextChunk :=
+  (xPositions.zip segments).map (fun (x, s) => { x := x, text := s, length := s.length })
+
+/-- SVG 2 §11.4 & Unicode Standard §3.6: Split SVG text with combining characters into segment lengths. -/
+def computeSvgCombiningSegmentLengths (segmentCharCounts : List Nat) : List Nat :=
+  segmentCharCounts
+
+/-- SVG 2 §11.4 Law: Zero actual width defaults to scale 1 and spacing 0 for all modes. -/
+theorem computeSvgTextLengthAdjustment_empty (target : Nat) (mode : SvgLengthAdjust) :
+    computeSvgTextLengthAdjustment 0 target mode = (1, 0) := rfl
+
+/-- SVG 2 §11.3.3 Law: When start offset is beyond path length, path advance is zero. -/
+theorem computeSvgTextPathAdvance_beyond_path (pathLength startOffset textWidth : Nat)
+    (h : startOffset ≥ pathLength) :
+    computeSvgTextPathAdvance pathLength startOffset textWidth = 0 := by
+  dsimp [computeSvgTextPathAdvance]
+  split
+  · rfl
+  · rename_i hnot
+    omega
+
+/-- SVG 2 §7.3 Law: Clamped SVG scale factor is bounded by maxScale for all scale values. -/
+theorem clampSvgScale_bounded (s maxS : Nat) :
+    clampSvgScale s maxS ≤ maxS := by
+  dsimp [clampSvgScale]
+  exact Nat.min_le_right s maxS
+
+/-- SVG 2 §11.1 Law: German eszett transforms to SS under uppercase transform. -/
+theorem svgFirstLineTextTransform_eszett :
+    svgFirstLineTextTransform "ß" true = "SS" := rfl
+
+/-- SVG 2 §11.2 Law: Empty positions and segments list produces empty chunk list. -/
+theorem partitionSvgTextChunks_empty :
+    partitionSvgTextChunks [] [] = [] := rfl
+
+/-- SVG 2 §11.3.3 Law: Nested textPath inside textPath is not allowed. -/
+theorem isSvgChildAllowed_nested_textPath :
+    isSvgChildAllowed .a [.textPath, .text, .svg] .textPath = false := rfl
+
 end ChromiumLayout

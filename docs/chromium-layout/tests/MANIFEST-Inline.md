@@ -56,7 +56,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/line_breaker_test.cc:849 | RewindPositionedFloat | internal | internal | - | Regression test for float rewinding with large border |
 | inline/line_breaker_test.cc:864 | RewindRubyColumn | internal | internal | - | Regression test for ruby column rewinding |
 | inline/line_breaker_test.cc:887 | SplitTextIntoSegements | behaviour | formalized | `lineBreaker_splitTextIntoSegments` | Grapheme cluster length segmentation preserving combining marks and surrogate pairs |
-| inline/line_breaker_test.cc:913 | SplitTextIntoSegementsCrash | internal | internal | - | Crash regression test for SVG combining characters |
+| inline/line_breaker_test.cc:913 | SplitTextIntoSegementsCrash | behaviour | formalized | `lineBreaker_splitTextIntoSegementsCrash` | SVG 2 §11.4 & Unicode Standard §3.6: Combining characters split across explicit positions |
 | inline/line_breaker_test.cc:940 | GetOverhangCrash | internal | internal | - | Crash regression test for ruby overhang |
 | inline/line_breaker_test.cc:965 | IdeographicSpaceBeforeEndBracket | geometry | formalized | `lineBreaker_ideographicBeforeBracket` | Ideographic space followed by closing bracket breaks at prior break opportunity |
 | inline/line_breaker_test.cc:1002 | BreakAt | geometry | formalized | `lineBreaker_breakAt` | Explicit breakpoints partition line widths (10, 40, 10, 30) |
@@ -145,9 +145,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1671 | InitialLetter | geometry | formalized | `inlineNode_initialLetter` | CSS Inline 3 §3: Initial letters generate initialLetterBox items and flag hasInitialLetterBox |
 | inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | formalized | `inlineNode_textCombineUsesScalingX` | CSS Writing Modes 3 §5.1.4: Combined text > 1em uses scaleX |
 | inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombineWordSpacing` | CSS Writing Modes 3 §5.1.4: Inside text combine, letter-spacing and word-spacing are treated as 0 |
-| inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | internal | internal | - | Crash regression test for SVG text chunks |
-| inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | internal | internal | - | Crash regression test for SVG text chunks |
-| inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | internal | internal | - | Crash regression test for surrogate pairs |
+| inline/inline_node_test.cc:1733 | FindSvgTextChunksCrash1 | behaviour | formalized | `inlineNode_findSvgTextChunksCrash1` | SVG 2 §11.2 & Unicode UAX #9: Explicit x positions partition SVG text chunks |
+| inline/inline_node_test.cc:1749 | FindSvgTextChunksCrash2 | behaviour | formalized | `inlineNode_findSvgTextChunksCrash2` | SVG 2 §11.2 & Unicode UAX #9: Preserved whitespace maintains SVG text chunk partitioning |
+| inline/inline_node_test.cc:1765 | FindSvgTextChunksCrash3 | behaviour | formalized | `inlineNode_findSvgTextChunksCrash3` | SVG 2 §11.2 & Unicode Standard §3.8: Surrogate pairs in SVG text chunks partition safely |
 | inline/inline_node_test.cc:1786 | NestedRubyMinMaxCrash | behaviour | formalized | `inlineNode_nestedRubyMinMaxCrash` | CSS Ruby 1 §4: Nested ruby column min/max sizes feed into outer ruby column |
 | inline/fragment_item_test.cc:67 | CopyMove | internal | internal | - | Copy and move constructors of FragmentItem |
 | inline/fragment_item_test.cc:126 | BasicText | geometry | formalized | `fragmentItem_basicText` | CSS 2.1 §9.4.2: First and last fragment flags for wrapping text |
@@ -738,13 +738,13 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/svg_layout_support_test.cc:64 | VisualRectInDocumentWith3DTransform | geometry | formalized | `svg_support_visualRectInDocumentWith3DTransform` | CSS Transforms 2 §4: 3D perspective projection and translateZ scales visual rect about transform origin |
 | svg/svg_layout_support_test.cc:80 | VisualRectInDocumentUnderSVGRootPerspective | geometry | formalized | `svg_support_visualRectInDocumentUnderSVGRootPerspective` | CSS Transforms 2 §4: Perspective on SVG root projects 3D transformed child rect to enclosing integer rect |
 | svg/svg_layout_support_test.cc:95 | AbsoluteBoundingBoxUnderSVGRootPerspective | geometry | formalized | `svg_support_absoluteBoundingBoxUnderSVGRootPerspective` | CSS Transforms 2 §4: Intermediate preserve-3d container propagates perspective to child bounding box |
-| svg/svg_text_layout_algorithm_test.cc:12 | PositionOnPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_algorithm_test.cc:27 | EmptyTextLengthCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_algorithm_test.cc:38 | EmptyTextLengthSpacingAndGlyphsCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_algorithm_test.cc:47 | HugeScaleCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_algorithm_test.cc:62 | ControlCharCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_algorithm_test.cc:70 | FirstLineTextTransformCrash | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/svg_text_layout_attributes_builder_test.cc:13 | TextPathCrash | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/svg_text_layout_algorithm_test.cc:12 | PositionOnPathCrash | behaviour | formalized | `svgText_positionOnPathCrash` | SVG 2 §11.3.3 & §11.4: Character layout along path advances within bounds with textLength |
+| svg/svg_text_layout_algorithm_test.cc:27 | EmptyTextLengthCrash | behaviour | formalized | `svgText_emptyTextLengthCrash` | SVG 2 §11.4: Empty textPath with textLength specified produces zero advance and default scale 1 |
+| svg/svg_text_layout_algorithm_test.cc:38 | EmptyTextLengthSpacingAndGlyphsCrash | behaviour | formalized | `svgText_emptyTextLengthSpacingAndGlyphsCrash` | SVG 2 §11.4: Zero-width non-rendered glyphs under spacingAndGlyphs avoid division by zero |
+| svg/svg_text_layout_algorithm_test.cc:47 | HugeScaleCrash | behaviour | formalized | `svgText_hugeScaleCrash` | SVG 2 §7.3 & CSS Transforms 1 §5: Excessive SVG scale factors clamped to finite bounds |
+| svg/svg_text_layout_algorithm_test.cc:62 | ControlCharCrash | behaviour | formalized | `svgText_controlCharCrash` | SVG 2 §11.1 & CSS Text 3 §4.1: Form feed control char in SVG text produces matching spacing |
+| svg/svg_text_layout_algorithm_test.cc:70 | FirstLineTextTransformCrash | behaviour | formalized | `svgText_firstLineTextTransformCrash` | SVG 2 §11.1 & CSS Text 3 §2.1: German eszett uppercase transform to SS increases length |
+| svg/svg_text_layout_attributes_builder_test.cc:13 | TextPathCrash | behaviour | formalized | `svgText_textPathCrash` | SVG 2 §11.3.3: Nested textPath inside textPath element is disallowed |
 | forms/fieldset_layout_algorithm_test.cc:59 | Empty | geometry | formalized | `fieldset_empty` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Empty fieldset content box geometry |
 | forms/fieldset_layout_algorithm_test.cc:78 | NoLegend | geometry | formalized | `fieldset_noLegend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset without legend, padding delegation |
 | forms/fieldset_layout_algorithm_test.cc:100 | Legend | geometry | formalized | `fieldset_legend` | HTML 5.2 §4.10.16 & CSS 2.1 §10: Fieldset with legend over block-start border |

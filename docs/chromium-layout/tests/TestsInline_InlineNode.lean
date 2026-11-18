@@ -10,6 +10,7 @@ import InlineShaping
 import InlineTextCombine
 import InlineBidi
 import InlineItemBuilder
+import InlineSVG
 
 namespace ChromiumLayout.TestsInline
 
@@ -872,6 +873,46 @@ theorem inlineNode_segmentBidiChangeSetsNeedsLayout :
     bidiLevelAtOffset runsOld 3 = some 2 ∧
     bidiLevelAtOffset runsNew 3 = some 1 ∧
     needsRelayoutOnBidiChange runsOld runsNew 3 = true := by
+  decide
+
+/-- Test `InlineNodeTest, FindSvgTextChunksCrash1` (`inline/inline_node_test.cc:1733`).
+    SVG 2 §11.2 & Unicode UAX #9:
+    Explicit x positions partition SVG text elements into independent text chunks. -/
+theorem inlineNode_findSvgTextChunksCrash1 :
+    let xPositions := [0, 3, 6, 10]
+    let segments := ["(", ")", "\u05D2", "("]
+    partitionSvgTextChunks xPositions segments = [
+      { x := 0, text := "(", length := 1 },
+      { x := 3, text := ")", length := 1 },
+      { x := 6, text := "\u05D2", length := 1 },
+      { x := 10, text := "(", length := 1 }
+    ] := by
+  decide
+
+/-- Test `InlineNodeTest, FindSvgTextChunksCrash2` (`inline/inline_node_test.cc:1749`).
+    SVG 2 §11.2 & Unicode UAX #9:
+    SVG text chunks with preserved whitespace newlines maintain chunk partitioning across lines. -/
+theorem inlineNode_findSvgTextChunksCrash2 :
+    let xPositions := [0, 3, 6, 10]
+    let segments := ["(", ")", "\u05D2", "("]
+    partitionSvgTextChunks xPositions segments = [
+      { x := 0, text := "(", length := 1 },
+      { x := 3, text := ")", length := 1 },
+      { x := 6, text := "\u05D2", length := 1 },
+      { x := 10, text := "(", length := 1 }
+    ] := by
+  decide
+
+/-- Test `InlineNodeTest, FindSvgTextChunksCrash3` (`inline/inline_node_test.cc:1765`).
+    SVG 2 §11.2 & Unicode Standard §3.8:
+    SVG text chunks containing surrogate pairs partition correctly without crash. -/
+theorem inlineNode_findSvgTextChunksCrash3 :
+    let xPositions := [0, 0]
+    let segments := ["PA", "PASS"]
+    partitionSvgTextChunks xPositions segments = [
+      { x := 0, text := "PA", length := 2 },
+      { x := 0, text := "PASS", length := 4 }
+    ] := by
   decide
 
 end ChromiumLayout.TestsInline

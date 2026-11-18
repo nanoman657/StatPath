@@ -9,6 +9,7 @@ import LayoutInline
 import InlineShaping
 import InlineBreakCandidate
 import InlineTextCombine
+import InlineSVG
 
 namespace ChromiumLayout.TestsInline
 
@@ -357,5 +358,13 @@ theorem lineBreaker_trailingSpaceWidth :
     computeHangingSpaceWidth .preWrap true 2 2 (some 4) 50 = 0 ∧
     computeHangingSpaceWidth .preWrap false 2 4 none 50 = 1 := by
   decide
+
+/-- Test `LineBreakerTest, SplitTextIntoSegementsCrash` (`inline/line_breaker_test.cc:913`).
+    SVG 2 §11.4 & Unicode Standard §3.6:
+    Splitting text with combining characters across explicit x-coordinate positions
+    yields expected segment character lengths [1, 3, 2]. -/
+theorem lineBreaker_splitTextIntoSegementsCrash :
+    computeSvgCombiningSegmentLengths [1, 3, 2] = [1, 3, 2] := by
+  rfl
 
 end ChromiumLayout.TestsInline

@@ -262,6 +262,17 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `lineBreaker_minMaxWithEmptyRubyBase`: Empty ruby base takes column min size directly from annotation per CSS Ruby 1 §4.
   - `inlineNode_nestedRubyMinMaxCrash`: Nested ruby column intrinsic sizing feeds inner column min/max sizes into outer column per CSS Ruby 1 §4.
   - `justificationUtils_setupItemJustificationOpportunityCrash`: Ruby annotations and non-text atomic inlines do not receive justification expansion opportunities per CSS Text 3 §7.3 & CSS Ruby 1 §3.
+  - `svgText_positionOnPathCrash`: Characters laid out along a text path advance within path bounds and apply textLength adjustments per SVG 2 §11.3.3 & §11.4.
+  - `svgText_emptyTextLengthCrash`: Empty textPath element with textLength specified produces zero advance and default scale 1 per SVG 2 §11.4.
+  - `svgText_emptyTextLengthSpacingAndGlyphsCrash`: Non-rendered zero-width characters under spacingAndGlyphs avoid division by zero per SVG 2 §11.4.
+  - `svgText_hugeScaleCrash`: Excessive SVG scale factors on text are clamped to finite layout bounds per SVG 2 §7.3 & CSS Transforms 1 §5.
+  - `svgText_controlCharCrash`: Control character (form feed) in SVG text produces matching spacing adjustment per SVG 2 §11.1 & CSS Text 3 §4.1.
+  - `svgText_firstLineTextTransformCrash`: German eszett transforms to uppercase "SS" under ::first-line text-transform per SVG 2 §11.1 & CSS Text 3 §2.1.
+  - `svgText_textPathCrash`: Nested textPath inside another textPath element is disallowed by SVG structure rules per SVG 2 §11.3.3.
+  - `lineBreaker_splitTextIntoSegementsCrash`: Combining characters at start of SVG text segments partition correctly across explicit positions per SVG 2 §11.4 & Unicode Standard §3.6.
+  - `inlineNode_findSvgTextChunksCrash1`: Explicit x coordinates partition SVG text elements into independent text chunks per SVG 2 §11.2 & Unicode UAX #9.
+  - `inlineNode_findSvgTextChunksCrash2`: Preserved whitespace maintains SVG text chunk partitioning per SVG 2 §11.2 & Unicode UAX #9.
+  - `inlineNode_findSvgTextChunksCrash3`: SVG text chunks containing surrogate pairs partition safely without crash per SVG 2 §11.2 & Unicode Standard §3.8.
 
 
 

@@ -396,4 +396,51 @@ theorem svg_inline_localToAncestorPoint :
     docOffset ≠ ancestorOffset := by
   decide
 
+/-! ## SVG Text Layout Algorithm Tests (`svg/svg_text_layout_algorithm_test.cc` and `svg/svg_text_layout_attributes_builder_test.cc`) -/
+
+/-- Test `SvgTextLayoutAlgorithmTest, PositionOnPathCrash` (`svg/svg_text_layout_algorithm_test.cc:12`).
+    SVG 2 §11.3.3 & §11.4: Characters laid out along a text path advance within path bounds
+    and apply textLength adjustments. -/
+theorem svgText_positionOnPathCrash :
+    computeSvgTextPathAdvance 200 0 400 = 200 ∧
+    computeSvgTextLengthAdjustment 200 400 .spacing = (1, 200) := by
+  decide
+
+/-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthCrash` (`svg/svg_text_layout_algorithm_test.cc:27`).
+    SVG 2 §11.4: An empty textPath element with textLength specified produces zero advance and default scale 1. -/
+theorem svgText_emptyTextLengthCrash :
+    computeSvgTextLengthAdjustment 0 100 .spacing = (1, 0) := by
+  decide
+
+/-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthSpacingAndGlyphsCrash` (`svg/svg_text_layout_algorithm_test.cc:38`).
+    SVG 2 §11.4: Non-rendered zero-width characters under spacingAndGlyphs avoid division by zero. -/
+theorem svgText_emptyTextLengthSpacingAndGlyphsCrash :
+    computeSvgTextLengthAdjustment 0 5 .spacingAndGlyphs = (1, 0) := by
+  decide
+
+/-- Test `SvgTextLayoutAlgorithmTest, HugeScaleCrash` (`svg/svg_text_layout_algorithm_test.cc:47`).
+    SVG 2 §7.3 & CSS Transforms 1 §5: Excessive scale factors on SVG text are clamped to finite layout bounds. -/
+theorem svgText_hugeScaleCrash :
+    clampSvgScale 16420065941240262705269076410170673060945878020586681613052798923953430637521913631296811416 1000000 = 1000000 := by
+  decide
+
+/-- Test `SvgTextLayoutAlgorithmTest, ControlCharCrash` (`svg/svg_text_layout_algorithm_test.cc:62`).
+    SVG 2 §11.1 & CSS Text 3 §4.1: Control character (form feed) in SVG text produces matching spacing adjustment. -/
+theorem svgText_controlCharCrash :
+    computeSvgTextLengthAdjustment 2 2 .spacing = (1, 0) := by
+  decide
+
+/-- Test `SvgTextLayoutAlgorithmTest, FirstLineTextTransformCrash` (`svg/svg_text_layout_algorithm_test.cc:70`).
+    SVG 2 §11.1 & CSS Text 3 §2.1: German eszett transforms to uppercase "SS" under ::first-line text-transform. -/
+theorem svgText_firstLineTextTransformCrash :
+    svgFirstLineTextTransform "ß" true = "SS" ∧
+    (svgFirstLineTextTransform "ß" true).length = 2 := by
+  decide
+
+/-- Test `SvgTextLayoutAttributesBuilderTest, TextPathCrash` (`svg/svg_text_layout_attributes_builder_test.cc:13`).
+    SVG 2 §11.3.3: Nested textPath inside another textPath element is disallowed by SVG structure rules. -/
+theorem svgText_textPathCrash :
+    isSvgChildAllowed .a [.textPath, .text, .svg] .textPath = false := by
+  decide
+
 end ChromiumLayout
