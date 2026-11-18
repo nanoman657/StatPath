@@ -579,10 +579,10 @@ checks every row against the pinned sources and the Lean modules.
 | layout_box_test.cc:127 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRect | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:161 | LayoutBoxTest.ForegroundIsKnownToBeOpaqueInRectVerticalRL | behaviour | blocked | engine service, parked |
 | layout_box_test.cc:197 | LayoutBoxTest.BackgroundRect | behaviour | blocked | engine service, parked |
-| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | blocked | hollow: ancestor chain supplied as input, no derivation from CSS; needs real containing-block tree |
+| layout_box_test.cc:356 | LayoutBoxTest.LocationContainer | geometry | formalized | `TestsBlock.LocationContainer_vectors`, `BlockLocation.locationContainer`, `BlockLocation.locationContainer_skips_inlines` |
 | layout_box_test.cc:386 | LayoutBoxTest.TopLeftLocationFlipped | geometry | formalized | `TestsBlock.TopLeftLocationFlipped_vectors` |
 | layout_box_test.cc:401 | LayoutBoxTest.TableRowCellTopLeftLocationFlipped | geometry | formalized | `TestsBlock.TableRowCellTopLeftLocationFlipped_vectors` |
-| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | blocked | hollow: ancestor chain supplied as input, no derivation from CSS; needs real containing-block tree |
+| layout_box_test.cc:435 | LayoutBoxTest.LocationContainerOfSVG | geometry | partly formalized | `TestsBlock.LocationContainerOfSVG_vectors`, `BlockLocation.locationContainer`, `BlockLocation.foreignObject_no_container`; foreign x/y, StitchedSize and flipped-flag asserts not modelled |
 | layout_box_test.cc:465 | LayoutBoxTest.ControlClip | geometry | formalized | `TestsBlock.ControlClip_vectors`, `BlockOverflow.control_clip_rect_bounds` |
 | layout_box_test.cc:482 | LayoutBoxTest.VisualOverflowRectWithBlockChild | geometry | formalized | `TestsBlock.VisualOverflowRectWithBlockChild_vectors`, `BlockOverflow.visual_overflow_unclipped_ge_child` |
 | layout_box_test.cc:494 | LayoutBoxTest.VisualOverflowRectWithLegacyChild | geometry | blocked | needs LayoutBox visual overflow calculation with masks/filters |

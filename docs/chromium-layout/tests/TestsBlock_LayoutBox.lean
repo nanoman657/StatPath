@@ -1,6 +1,7 @@
 import BlockFlow
 import BlockFragmentation
 import BlockLength
+import BlockLocation
 import BlockOverflow
 import BlockScroll
 import BlockWritingMode
@@ -10,7 +11,7 @@ import OutOfFlowAnchor
 namespace ChromiumLayout
 namespace TestsBlock
 
-open BlockFlow BlockLength BlockOverflow BlockScroll BlockWritingMode ColumnWidth OutOfFlowAnchor
+open BlockFlow BlockLocation BlockLength BlockOverflow BlockScroll BlockWritingMode ColumnWidth OutOfFlowAnchor
 
 -- layout_box_test.cc:2033: ContentBoxFragmentedHtb
 -- In horizontal-tb, border-width: 1px 2px 3px 4px, padding: 5px 10px 15px 20px,
@@ -415,6 +416,31 @@ theorem LocationOfFloatLeftChildWithContainerScrollbars_vectors :
     rtl = (105, 30) ∧
     rtl_vlr = (90, 134) ∧
     rtl_vrl = (325, 134) := by
+  decide
+
+-- layout_box_test.cc:356: LocationContainer
+-- Ancestors innermost first; body > div > b(inline) > img, body > table > tbody > tr > td.
+theorem LocationContainer_vectors :
+    locationContainer .block [.block] = some 0 ∧
+    locationContainer .replaced [.inline, .block, .block] = some 1 ∧
+    locationContainer .table [.block] = some 0 ∧
+    locationContainer .tbody [.table, .block] = some 0 ∧
+    locationContainer .row [.tbody, .table, .block] = some 0 ∧
+    locationContainer .cell [.row, .tbody, .table, .block] = some 0 := by
+  decide
+
+-- layout_box_test.cc:435: LocationContainerOfSVG (container and child offset only;
+-- foreign x/y, StitchedSize and flipped flags are not modelled)
+theorem LocationContainerOfSVG_vectors :
+    let foreignBox : ContainerBox := {
+      wm := .verticalRl, dir := .ltr,
+      border := ⟨0, 0, 0, 0⟩, padding := ⟨0, 0, 0, 0⟩,
+      contentWidth := 100, contentHeight := 80
+    }
+    locationContainer .svgRoot [.block] = some 0 ∧
+    locationContainer .foreignObject [.svgRoot, .block] = none ∧
+    locationContainer .block [.foreignObject, .svgRoot, .block] = some 0 ∧
+    inFlowChildLocation foreignBox 33 55 0 0 = (67, 0) := by
   decide
 
 -- layout_box_test.cc:670: ContentsVisualOverflowPropagation
