@@ -9,6 +9,7 @@ import LayoutInline
 import InlineShaping
 import InlineTextCombine
 import InlineBidi
+import InlineItemBuilder
 
 namespace ChromiumLayout.TestsInline
 
@@ -551,6 +552,107 @@ theorem inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle :
     let normalTokens : List InlineCollectionToken := []
     (collectInlines preTokens).text = "\n" ∧
     (collectInlines normalTokens).text = "" := by
+  decide
+
+/-- Test: ReusingWithPreservedCase1 (inline_node_test.cc:1504)
+    CSS Text 3 §5.1:
+    Leading preserved space after <br> generates a break opportunity ZWS,
+    which is not generated when <br> is removed. -/
+theorem inlineNode_reusingWithPreservedCase1 :
+    let withBr := [
+      BuilderInput.text "a" .normal,
+      BuilderInput.opaqueChar .control '\n',
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    let withoutBr := [
+      BuilderInput.text "a" .normal,
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    (buildInlineString withBr = "a\n \u200Bijkl ") ∧
+    (buildInlineString withoutBr = "a ijkl ") := by
+  decide
+
+/-- Test: ReusingWithPreservedCase2 (inline_node_test.cc:1518)
+    CSS Text 3 §5.1:
+    In a pre-wrap container, leading space after <br> generates a break opportunity ZWS,
+    and removing <br> preserves both spaces without ZWS. -/
+theorem inlineNode_reusingWithPreservedCase2 :
+    let withBr := [
+      BuilderInput.text "a " .preWrap,
+      BuilderInput.opaqueChar .control '\n',
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    let withoutBr := [
+      BuilderInput.text "a " .preWrap,
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    (buildInlineString withBr = "a \n \u200Bijkl ") ∧
+    (buildInlineString withoutBr = "a  ijkl ") := by
+  decide
+
+/-- Test: ReusingWithPreservedCase3 (inline_node_test.cc:1532)
+    CSS Text 3 §5.1:
+    Multiple preserved spaces across line break generate break opportunities at each line start. -/
+theorem inlineNode_reusingWithPreservedCase3 :
+    let withBr := [
+      BuilderInput.text " " .preWrap,
+      BuilderInput.opaqueChar .control '\n',
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    let withoutBr := [
+      BuilderInput.text " " .preWrap,
+      BuilderInput.text " ijkl " .preWrap
+    ]
+    (buildInlineString withBr = " \u200B\n \u200Bijkl ") ∧
+    (buildInlineString withoutBr = " \u200B ijkl ") := by
+  decide
+
+/-- Test: ReusingWithCollapsed (inline_node_test.cc:1550)
+    CSS 2.1 §9.5 & CSS Text 3 §4.1:
+    Removing <br> between float and pre element preserves a single space before pre text. -/
+theorem inlineNode_reusingWithCollapsed :
+    let tokens := [
+      InlineCollectionToken.text "abc ",
+      InlineCollectionToken.floating,
+      InlineCollectionToken.text "x"
+    ]
+    (collectInlines tokens).text = "abc x" := by
+  decide
+
+/-- Test: ReusingRTLAsLTR (inline_node_test.cc:1564)
+    CSS Writing Modes 3 §2.1 & UAX #9:
+    Removing dir=rtl from span updates item count from 8 to 3 and resolves neutral brackets from RTL to LTR. -/
+theorem inlineNode_reusingRTLAsLTR :
+    let rtlTokens := [
+      InlineCollectionToken.openIsolate .rtl,
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "[Text]text",
+      InlineCollectionToken.closeTag
+    ]
+    let ltrTokens := [
+      InlineCollectionToken.openTag "span",
+      InlineCollectionToken.text "[Text]text",
+      InlineCollectionToken.closeTag
+    ]
+    let rtlRes := collectInlines rtlTokens
+    let rtlItems := segmentInlineText rtlRes.items rtlRes.text
+    let ltrRes := collectInlines ltrTokens
+    let ltrItems := segmentInlineText ltrRes.items ltrRes.text
+    (rtlRes.text = "\u2067[Text]text\u2069") ∧
+    (rtlItems.length = 8) ∧
+    (rtlItems[0]!.startOffset = 0) ∧ (rtlItems[0]!.endOffset = 1) ∧ (rtlItems[0]!.direction = .ltr) ∧
+    (rtlItems[1]!.startOffset = 1) ∧ (rtlItems[1]!.endOffset = 1) ∧ (rtlItems[1]!.direction = .rtl) ∧
+    (rtlItems[2]!.startOffset = 1) ∧ (rtlItems[2]!.endOffset = 2) ∧ (rtlItems[2]!.direction = .rtl) ∧
+    (rtlItems[3]!.startOffset = 2) ∧ (rtlItems[3]!.endOffset = 6) ∧ (rtlItems[3]!.direction = .ltr) ∧
+    (rtlItems[4]!.startOffset = 6) ∧ (rtlItems[4]!.endOffset = 7) ∧ (rtlItems[4]!.direction = .rtl) ∧
+    (rtlItems[5]!.startOffset = 7) ∧ (rtlItems[5]!.endOffset = 11) ∧ (rtlItems[5]!.direction = .ltr) ∧
+    (rtlItems[6]!.startOffset = 11) ∧ (rtlItems[6]!.endOffset = 11) ∧ (rtlItems[6]!.direction = .ltr) ∧
+    (rtlItems[7]!.startOffset = 11) ∧ (rtlItems[7]!.endOffset = 12) ∧ (rtlItems[7]!.direction = .ltr) ∧
+    (ltrRes.text = "[Text]text") ∧
+    (ltrItems.length = 3) ∧
+    (ltrItems[0]!.startOffset = 0) ∧ (ltrItems[0]!.endOffset = 0) ∧ (ltrItems[0]!.direction = .ltr) ∧
+    (ltrItems[1]!.startOffset = 0) ∧ (ltrItems[1]!.endOffset = 10) ∧ (ltrItems[1]!.direction = .ltr) ∧
+    (ltrItems[2]!.startOffset = 10) ∧ (ltrItems[2]!.endOffset = 10) ∧ (ltrItems[2]!.direction = .ltr) := by
   decide
 
 end ChromiumLayout.TestsInline

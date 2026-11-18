@@ -242,7 +242,9 @@ def resolveBidiParagraphRuns (text : String) (baseDir : TextDirection := .ltr) :
         | _ =>
           if isOv then (stack, topLvl, 'O')
           else if c.val ≥ 0x0590 && c.val ≤ 0x05FF then (stack, 1, 'R')
-          else if c.isAlpha || (c ≥ '0' && c ≤ '9') then (stack, topLvl, 'L')
+          else if c.isAlpha || (c ≥ '0' && c ≤ '9') then
+            let lvl := if topLvl % 2 == 1 then topLvl + 1 else topLvl
+            (stack, lvl, 'L')
           else (stack, topLvl, 'N')
       scan rest st' (lvl :: accL) (t :: accT)
   let (rawL, rawT) := scan text.toList [(baseLevel, false)] [] []
@@ -267,6 +269,26 @@ def resolveBidiParagraphRuns (text : String) (baseDir : TextDirection := .ltr) :
 theorem resolveBidiParagraphRuns_empty (dir : TextDirection) :
     resolveBidiParagraphRuns "" dir = [] := by
   cases dir <;> rfl
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9 Rule I1 Law:
+    In an odd (RTL) embedding level, Latin letters resolve to an even level (direction LTR). -/
+theorem resolveBidiParagraphRuns_latin_in_rtl_isolate :
+    resolveBidiParagraphRuns "\u2067Text\u2069" = [
+      { startOffset := 0, endOffset := 1, level := 0 },
+      { startOffset := 1, endOffset := 5, level := 2 },
+      { startOffset := 5, endOffset := 6, level := 0 }
+    ] := rfl
+
+/-- CSS Writing Modes 3 §2.1 & UAX #9 Law:
+    Neutral bracket characters inside an RTL isolate inherit the isolate's embedding level (odd, direction RTL). -/
+theorem resolveBidiParagraphRuns_brackets_in_rtl_isolate :
+    resolveBidiParagraphRuns "\u2067[Text]\u2069" = [
+      { startOffset := 0, endOffset := 1, level := 0 },
+      { startOffset := 1, endOffset := 2, level := 1 },
+      { startOffset := 2, endOffset := 6, level := 2 },
+      { startOffset := 6, endOffset := 7, level := 1 },
+      { startOffset := 7, endOffset := 8, level := 0 }
+    ] := rfl
 
 /-- CSS Writing Modes 3 §2.1 & UAX #9: Apply resolved bidi levels to inline collected items,
     splitting items at run boundaries. -/

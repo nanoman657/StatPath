@@ -193,8 +193,9 @@ def collectInlines (tokens : List InlineCollectionToken) (dir : TextDirection :=
     | .closeTag :: rest =>
       match isolateStack with
       | _ :: isoRest =>
-        let item : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
-        loop (offset + 1) isoRest (some '\u2069') (item :: accItems) (accChars ++ ['\u2069']) rest
+        let tagItem : InlineCollectedItem := { itemType := .closeTag, startOffset := offset, endOffset := offset, bidiLevel := baseLevel }
+        let ctlItem : InlineCollectedItem := { itemType := .control, startOffset := offset, endOffset := offset + 1, bidiLevel := baseLevel }
+        loop (offset + 1) isoRest (some '\u2069') (ctlItem :: tagItem :: accItems) (accChars ++ ['\u2069']) rest
       | [] =>
         let item : InlineCollectedItem := { itemType := .closeTag, startOffset := offset, endOffset := offset, bidiLevel := baseLevel }
         loop offset [] prevChar (item :: accItems) accChars rest

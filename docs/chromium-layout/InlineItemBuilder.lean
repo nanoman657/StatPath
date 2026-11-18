@@ -303,6 +303,16 @@ theorem block_in_inline_sets_space_collapsing (st : BuilderState) :
   dsimp [appendBuilderInput]
   exact ⟨rfl, rfl⟩
 
+/-- CSS Text 3 §5.1 Law:
+    Leading preserved space sequences in pre-wrap generate a break opportunity (zero-width space). -/
+theorem processPreWrapText_leading_space_break_opportunity :
+    processPreWrapText [' ', 'a'] true = [' ', '\u200B', 'a'] := rfl
+
+/-- CSS Text 3 §5.1 Law:
+    Preserved spaces not at line start do not generate a break opportunity. -/
+theorem processPreWrapText_midline_space_no_break_opportunity :
+    processPreWrapText [' ', 'a'] false = [' ', 'a'] := rfl
+
 theorem empty_text_preserves_builder_text (st : BuilderState) (m : WhiteSpaceMode) :
     (appendBuilderInput st (.text "" m)).text = st.text := by
   rfl

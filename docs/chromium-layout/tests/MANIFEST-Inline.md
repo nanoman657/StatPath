@@ -134,11 +134,11 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1425 | RemoveSegmentBreakFromJapaneseInRelayout | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/inline_node_test.cc:1442 | RemoveSegmentBreakFromJapaneseInRelayout2 | internal | internal | - | Disabled under SEGMENT_BREAK_TRANSFORMATION_FOR_EAST_ASIAN_WIDTH=0 |
 | inline/inline_node_test.cc:1459 | SegmentRanges | behaviour | internal | - | Segment offset range slicing |
-| inline/inline_node_test.cc:1504 | ReusingWithPreservedCase1 | behaviour | internal | - | Text content after removing br with pre-wrap |
-| inline/inline_node_test.cc:1518 | ReusingWithPreservedCase2 | behaviour | internal | - | Text content after removing br in pre-wrap container |
-| inline/inline_node_test.cc:1532 | ReusingWithPreservedCase3 | behaviour | internal | - | Text content with multiple pre-wrap spaces |
-| inline/inline_node_test.cc:1550 | ReusingWithCollapsed | behaviour | internal | - | Removing br with float preserves single space |
-| inline/inline_node_test.cc:1564 | ReusingRTLAsLTR | behaviour | internal | - | Removing dir=rtl attribute updates items from 8 to 3 |
+| inline/inline_node_test.cc:1504 | ReusingWithPreservedCase1 | behaviour | formalized | `inlineNode_reusingWithPreservedCase1` | CSS Text 3 §5.1: Leading preserved space in pre-wrap generates break opportunity ZWS after forced break |
+| inline/inline_node_test.cc:1518 | ReusingWithPreservedCase2 | behaviour | formalized | `inlineNode_reusingWithPreservedCase2` | CSS Text 3 §5.1: Container pre-wrap preserves multiple spaces without ZWS once break is removed |
+| inline/inline_node_test.cc:1532 | ReusingWithPreservedCase3 | behaviour | formalized | `inlineNode_reusingWithPreservedCase3` | CSS Text 3 §5.1: Preserved spaces across forced breaks each receive break opportunities at line starts |
+| inline/inline_node_test.cc:1550 | ReusingWithCollapsed | behaviour | formalized | `inlineNode_reusingWithCollapsed` | CSS 2.1 §9.5 & CSS Text 3 §4.1: Removing forced break between float and pre element preserves trailing space |
+| inline/inline_node_test.cc:1564 | ReusingRTLAsLTR | behaviour | formalized | `inlineNode_reusingRTLAsLTR` | CSS Writing Modes 3 §2.1 & UAX #9: Removing dir=rtl updates items from 8 to 3 and resolves neutral brackets from RTL to LTR |
 | inline/inline_node_test.cc:1590 | ReuseFirstNonSafe | internal | internal | - | Shape cache safe-to-reuse flag |
 | inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | internal | internal | - | Shape cache safe-to-reuse flag in RTL |
 | inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
