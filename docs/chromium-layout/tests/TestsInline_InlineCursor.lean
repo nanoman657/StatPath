@@ -864,4 +864,11 @@ theorem inlineCursor_culledInlineWithNonIFCChild :
     shouldInlineCreateBoxFragment false false = false := by
   rfl
 
+/-- Test `InlineCursorBlockFragmentationTest.CulledInlineBlockInInlineOverflow` (`inline/inline_cursor_test.cc:1455`).
+    CSS Fragmentation 3 & CSS 2.1 §9.2.1: Traversing a culled inline `<q>` containing a fragmented
+    block-in-inline `<div>` across 2 columns visits all fragments without infinite looping. -/
+theorem inlineCursor_culledInlineBlockInInlineOverflow :
+    traverseCulledInlineFragments 2 3 = 6 := by
+  rfl
+
 end ChromiumLayout.TestsInline

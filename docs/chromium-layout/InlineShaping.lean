@@ -547,4 +547,29 @@ theorem segmentRanges_single_clamp (e start end_ : Nat) (h1 : start < end_) (h2 
   unfold segmentRangesLoop
   simp [hnotle, hnotlt]
 
+/-! ## 6. CSS Text 3 §3 & OpenType §GPOS/GSUB Cross-Element Shaping Safety -/
+
+/-- CSS Text 3 §3 & OpenType §GPOS / §GSUB:
+    Whether an inline text item is safe to reuse from shape cache without re-shaping.
+    When adjacent items participate in cross-boundary shaping (e.g. kerning pair "AV" or ligature "fi"),
+    the item at the boundary is not safe to reuse independently (`needsShaping = true`). -/
+def isItemSafeToReuse (hasCrossBoundaryKerning : Bool) (hasCrossBoundaryLigature : Bool) : Bool :=
+  !hasCrossBoundaryKerning && !hasCrossBoundaryLigature
+
+/-- CSS Text 3 §3 Law: Items participating in cross-boundary kerning are never safe to reuse. -/
+theorem kerning_item_not_safe_to_reuse (lig : Bool) :
+    isItemSafeToReuse true lig = false := by
+  dsimp [isItemSafeToReuse]
+  rfl
+
+/-- CSS Text 3 §3 Law: Items participating in cross-boundary ligatures are never safe to reuse. -/
+theorem ligature_item_not_safe_to_reuse (kern : Bool) :
+    isItemSafeToReuse kern true = false := by
+  dsimp [isItemSafeToReuse]
+  cases kern <;> rfl
+
+/-- CSS Text 3 §3 Law: Items without cross-boundary kerning or ligatures are safe to reuse. -/
+theorem clean_item_safe_to_reuse :
+    isItemSafeToReuse false false = true := rfl
+
 end ChromiumLayout

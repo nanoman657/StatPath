@@ -290,6 +290,30 @@ done: TestsInline_LayoutTextCombine (DOM Mutation & Structural Tree Pass) +21
   - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: Bidi controls following line-clamp ellipsis have zero layout advance per CSS Overflow 3 & CSS Text 3.
   - `layoutTextFragment_setTextWithFirstLetter`: Non-empty text nodes create layout text fragments after DOM mutation per CSS Pseudo 4 §2.2.
   - `layoutTextFragment_splitTextWithZero`: First-letter selection is preserved across leading empty text nodes per CSS Pseudo 4 §2.2.
+  - `inlineCursor_culledInlineBlockInInlineOverflow`: Traversing culled inline spanning columns visits fragmented block-in-inline children without looping per CSS Fragmentation 3 & CSS 2.1 §9.2.1.
+  - `layoutInline_simpleContinuation`: Inline containing block child splits into continuations with anonymous block-in-inline wrapper per CSS 2.1 §9.2.1.1.
+  - `layoutInline_blockInInlineRemove`: Removing block child from continuation leaves only inline children with no anonymous wrapper per CSS 2.1 §9.2.1.1.
+  - `inlineNode_reuseFirstNonSafe`: Cross-boundary kerning ("AV") marks boundary text item not safe to reuse from shape cache per CSS Text 3 §3.
+  - `inlineNode_reuseFirstNonSafeRtl`: Cross-boundary kerning in RTL text marks boundary item not safe to reuse per CSS Text 3 §3.
+  - `inlineNode_shouldNotResueLigature`: Cross-boundary ligature formation ("fi") prevents independent shape cache reuse per CSS Text 3 §3.
+  - `layoutSvgForeignObject_getBBoxUseCounterForZeroHeight`: 1D degenerate bounding box (100x0) triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgForeignObject_getBBoxUseCounterForZeroWidth`: 1D degenerate bounding box (0x100) triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgForeignObject_getBBoxUseCounterForZeroWidthAndHeight`: 0x0 bounding box does not trigger 1D degenerate getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgForeignObject_getBBoxUseCounterForNonZeroWidthAndHeight`: Non-zero 2D box (100x100) does not trigger degenerate getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgImage_getBBoxUseCounterForZeroHeight`: Image with 100x0 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgImage_getBBoxUseCounterForZeroWidth`: Image with 0x100 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgImage_getBBoxUseCounterForZeroWidthAndHeight`: Image with 0x0 bbox does not trigger use counter per SVG 2 §13.2.
+  - `layoutSvgImage_getBBoxUseCounterForNonZeroWidthAndHeight`: Image with 100x100 bbox does not trigger use counter per SVG 2 §13.2.
+  - `layoutSvgRect_getBBoxUseCounterForZeroHeight`: Rect with 100x0 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgRect_getBBoxUseCounterForZeroWidth`: Rect with 0x100 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgRect_getBBoxUseCounterForZeroWidthAndHeight`: Rect with 0x0 bbox does not trigger use counter per SVG 2 §13.2.
+  - `layoutSvgRect_getBBoxUseCounterForNonZeroWidthAndHeight`: Rect with 100x100 bbox does not trigger use counter per SVG 2 §13.2.
+  - `layoutSvgViewportContainer_getBBoxUseCounterForZeroHeight`: Container with 100x0 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgViewportContainer_getBBoxUseCounterForZeroWidth`: Container with 0x100 bbox triggers getBBox use counter per SVG 2 §13.2.
+  - `layoutSvgViewportContainer_getBBoxUseCounterForZeroWidthAndHeight`: Container with 0x0 bbox does not trigger use counter per SVG 2 §13.2.
+  - `layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight`: Container with 100x100 bbox does not trigger use counter per SVG 2 §13.2.
+  - `hitTesting_occlusionHitTestSVGTextWithFilterCrash`: Filtered SVG text visual overflow intersects target, returning occluder text node per CSS Filters 1 §3.1 & SVG 2 §15.2.
+
 
 
 

@@ -121,4 +121,26 @@ theorem layoutInline_addDraggableRegionsVerticalRL :
     (r3 = []) := by
   decide
 
+/-! ### Test 9: SimpleContinuation (`layout_inline_test.cc:69`) -/
+/-- Test `LayoutInlineTest, SimpleContinuation` (`layout_inline_test.cc:69`).
+    CSS 2.1 §9.2.1.1: Inline element with block child splits into continuations:
+    first child is inline `before`, followed by anonymous block-in-inline wrapper around `blockChild`,
+    followed by inline `after`. -/
+theorem layoutInline_simpleContinuation :
+    let children := [(false, "before"), (true, "blockChild"), (false, "after")]
+    wrapBlockInInlineChildren children =
+      [.inline "before", .blockInInline "anon_blockChild" "blockChild", .inline "after"] := by
+  rfl
+
+/-! ### Test 10: BlockInInlineRemove (`layout_inline_test.cc:93`) -/
+/-- Test `LayoutInlineTest, BlockInInlineRemove` (`layout_inline_test.cc:93`).
+    CSS 2.1 §9.2.1.1: Removing block child leaves all remaining children as inlines,
+    so no anonymous block-in-inline wrappers remain. -/
+theorem layoutInline_blockInInlineRemove :
+    let original := [(false, "before"), (true, "block"), (false, "after")]
+    let remaining := removeInlineChild "block" original
+    remaining = [(false, "before"), (false, "after")] ∧
+    wrapBlockInInlineChildren remaining = [.inline "before", .inline "after"] := by
+  decide
+
 end ChromiumLayout.TestsInline

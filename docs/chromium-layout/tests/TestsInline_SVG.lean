@@ -443,4 +443,86 @@ theorem svgText_textPathCrash :
     isSvgChildAllowed .a [.textPath, .text, .svg] .textPath = false := by
   decide
 
+/-! ### SVG BBox Zero-Dimension Use Counter Tests (SVG 2 §13.2) -/
+
+/-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_foreign_object_test.cc:525`). -/
+theorem layoutSvgForeignObject_getBBoxUseCounterForZeroHeight :
+    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
+  rfl
+
+/-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_foreign_object_test.cc:545`). -/
+theorem layoutSvgForeignObject_getBBoxUseCounterForZeroWidth :
+    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
+  rfl
+
+/-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_foreign_object_test.cc:565`). -/
+theorem layoutSvgForeignObject_getBBoxUseCounterForZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
+  rfl
+
+/-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_foreign_object_test.cc:585`). -/
+theorem layoutSvgForeignObject_getBBoxUseCounterForNonZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
+  rfl
+
+/-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_image_test.cc:16`). -/
+theorem layoutSvgImage_getBBoxUseCounterForZeroHeight :
+    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
+  rfl
+
+/-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_image_test.cc:34`). -/
+theorem layoutSvgImage_getBBoxUseCounterForZeroWidth :
+    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
+  rfl
+
+/-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_image_test.cc:52`). -/
+theorem layoutSvgImage_getBBoxUseCounterForZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
+  rfl
+
+/-- Test `LayoutSVGImageTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_image_test.cc:70`). -/
+theorem layoutSvgImage_getBBoxUseCounterForNonZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
+  rfl
+
+/-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_rect_test.cc:16`). -/
+theorem layoutSvgRect_getBBoxUseCounterForZeroHeight :
+    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
+  rfl
+
+/-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_rect_test.cc:34`). -/
+theorem layoutSvgRect_getBBoxUseCounterForZeroWidth :
+    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
+  rfl
+
+/-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_rect_test.cc:52`). -/
+theorem layoutSvgRect_getBBoxUseCounterForZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
+  rfl
+
+/-- Test `LayoutSVGRectTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_rect_test.cc:70`). -/
+theorem layoutSvgRect_getBBoxUseCounterForNonZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
+  rfl
+
+/-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_viewport_container_test.cc:16`). -/
+theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroHeight :
+    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
+  rfl
+
+/-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_viewport_container_test.cc:36`). -/
+theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidth :
+    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
+  rfl
+
+/-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:56`). -/
+theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
+  rfl
+
+/-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:76`). -/
+theorem layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight :
+    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
+  rfl
+
 end ChromiumLayout

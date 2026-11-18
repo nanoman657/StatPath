@@ -106,4 +106,14 @@ theorem hitTest_occlusionWithFlattenedPreserve3DOccluder :
     occludes3D TransformStyle.flat true true 10 50 0 1 = true := by
   decide
 
+/-- Test `HitTestingTest.OcclusionHitTestSVGTextWithFilterCrash` (`hit_testing_test.cc:111`).
+    CSS Filter Effects 1 §3.1 & SVG 2 §15.2: SVG text with blur filter creates visual overflow
+    intersecting target (0,0 100x100), returning the text node of the occluder. -/
+theorem hitTesting_occlusionHitTestSVGTextWithFilterCrash :
+    let target : PhysicalRect := { x := 0, y := 0, width := 100, height := 100 }
+    let occluder : PhysicalRect := { x := 0, y := 0, width := 50, height := 50 }
+    let filterBlurMargin : Nat := 30
+    hitTestOccludingSvgTextNode target occluder filterBlurMargin "occluder_text" = some "occluder_text" := by
+  decide
+
 end ChromiumLayout

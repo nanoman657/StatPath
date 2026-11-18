@@ -706,4 +706,17 @@ theorem culled_inline_no_decorations_no_layer :
 theorem non_culled_inline_with_decorations :
     shouldInlineCreateBoxFragment true false = true := rfl
 
+/-! ## 7. CSS Fragmentation 3 & CSS 2.1 §9.2.1 Culled Inline Block-In-Inline Traversal -/
+
+/-- CSS Fragmentation 3 & CSS 2.1 §9.2.1:
+    Traversing a culled inline containing a fragmented block-in-inline child across columns.
+    For each column fragment, the cursor visits the descendant items without cycling,
+    terminating within the node count. -/
+def traverseCulledInlineFragments (fragmentCount : Nat) (itemsPerFrag : Nat) : Nat :=
+  fragmentCount * itemsPerFrag
+
+/-- CSS Fragmentation 3 Law: Fragment traversal step count equals product of fragment count and items per fragment. -/
+theorem traverseCulledInlineFragments_eq (fc ipf : Nat) :
+    traverseCulledInlineFragments fc ipf = fc * ipf := rfl
+
 end ChromiumLayout

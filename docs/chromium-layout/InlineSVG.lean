@@ -484,4 +484,42 @@ def svgChildMutatesParentIFC : Bool := false
 theorem svgChild_does_not_mutate_parent_ifc :
     svgChildMutatesParentIFC = false := rfl
 
+/-! ## 7. SVG 2 §13.2 / Blink getBBox Zero-Dimension Use Counter -/
+
+/-- SVG 2 §13.2: Whether `getBBox()` on an element triggers the `kGetBBoxForElementWithZeroWidthOrHeight`
+    telemetry metric. The metric counts elements with degenerate 1D bounding boxes where exactly one dimension
+    is zero (i.e. zero width and non-zero height, or non-zero width and zero height).
+    Elements with both dimensions non-zero or both zero do not trigger the counter. -/
+def shouldCountZeroWidthOrHeightBBox (width height : Nat) : Bool :=
+  (width == 0) != (height == 0)
+
+/-- SVG 2 §13.2 Law: Non-zero width with zero height always triggers the use counter. -/
+theorem shouldCountZeroWidthOrHeightBBox_zero_height (w : Nat) (hw : w > 0) :
+    shouldCountZeroWidthOrHeightBBox w 0 = true := by
+  dsimp [shouldCountZeroWidthOrHeightBBox]
+  have h1 : (w == 0) = false := by cases w with | zero => contradiction | succ => rfl
+  rw [h1]
+  rfl
+
+/-- SVG 2 §13.2 Law: Zero width with non-zero height always triggers the use counter. -/
+theorem shouldCountZeroWidthOrHeightBBox_zero_width (h : Nat) (hh : h > 0) :
+    shouldCountZeroWidthOrHeightBBox 0 h = true := by
+  dsimp [shouldCountZeroWidthOrHeightBBox]
+  have h1 : (h == 0) = false := by cases h with | zero => contradiction | succ => rfl
+  rw [h1]
+  rfl
+
+/-- SVG 2 §13.2 Law: Zero width and zero height never triggers the use counter. -/
+theorem shouldCountZeroWidthOrHeightBBox_both_zero :
+    shouldCountZeroWidthOrHeightBBox 0 0 = false := rfl
+
+/-- SVG 2 §13.2 Law: Non-zero width and non-zero height never triggers the use counter. -/
+theorem shouldCountZeroWidthOrHeightBBox_both_nonZero (w h : Nat) (hw : w > 0) (hh : h > 0) :
+    shouldCountZeroWidthOrHeightBBox w h = false := by
+  dsimp [shouldCountZeroWidthOrHeightBBox]
+  have h1 : (w == 0) = false := by cases w with | zero => contradiction | succ => rfl
+  have h2 : (h == 0) = false := by cases h with | zero => contradiction | succ => rfl
+  rw [h1, h2]
+  rfl
+
 end ChromiumLayout

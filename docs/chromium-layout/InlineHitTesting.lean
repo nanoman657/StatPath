@@ -155,4 +155,30 @@ theorem hit_test_scrolled_line_origin (qy lh : Nat) (h : qy < lh) (lines : List 
     cases lines <;> rfl
   · contradiction
 
+/-! ## 6. CSS Filter Effects 1 §3.1 & SVG 2 §15.2 Occluding SVG Text Hit Testing -/
+
+/-- Compute physical rect of filtered visual overflow bounding box. -/
+def filteredVisualOverflowPhysicalRect (content : PhysicalRect) (filterMargin : Nat) : PhysicalRect :=
+  let (fx, fy, fw, fh) := filterVisualOverflowRect content filterMargin
+  { x := if fx < 0 then 0 else fx.toNat,
+    y := if fy < 0 then 0 else fy.toNat,
+    width := fw, height := fh }
+
+/-- CSS Filter Effects 1 §3.1, CSS 2.1 §9.9 & SVG 2 §15.2:
+    Hit testing an SVG text element occluded by a filtered element.
+    When an occluder's filtered visual overflow rect intersects the target rect,
+    the inner text node of the occluder is identified as the occluding node. -/
+def hitTestOccludingSvgTextNode (targetRect occluderContent : PhysicalRect) (filterMargin : Nat) (textNodeId : String) : Option String :=
+  let filteredRect := filteredVisualOverflowPhysicalRect occluderContent filterMargin
+  if rectsIntersect targetRect filteredRect then some textNodeId
+  else none
+
+/-- CSS Filter Effects 1 §3.1 & SVG 2 §15.2 Law: Occluding SVG text with intersecting filter overflow returns occluder text node. -/
+theorem hitTestOccludingSvgTextNode_intersects (target occ : PhysicalRect) (fm : Nat) (id : String)
+    (h : rectsIntersect target (filteredVisualOverflowPhysicalRect occ fm) = true) :
+    hitTestOccludingSvgTextNode target occ fm id = some id := by
+  dsimp [hitTestOccludingSvgTextNode]
+  rw [h]
+  rfl
+
 end ChromiumLayout

@@ -139,9 +139,9 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:1532 | ReusingWithPreservedCase3 | behaviour | formalized | `inlineNode_reusingWithPreservedCase3` | CSS Text 3 §5.1: Preserved spaces across forced breaks each receive break opportunities at line starts |
 | inline/inline_node_test.cc:1550 | ReusingWithCollapsed | behaviour | formalized | `inlineNode_reusingWithCollapsed` | CSS 2.1 §9.5 & CSS Text 3 §4.1: Removing forced break between float and pre element preserves trailing space |
 | inline/inline_node_test.cc:1564 | ReusingRTLAsLTR | behaviour | formalized | `inlineNode_reusingRTLAsLTR` | CSS Writing Modes 3 §2.1 & UAX #9: Removing dir=rtl updates items from 8 to 3 and resolves neutral brackets from RTL to LTR |
-| inline/inline_node_test.cc:1590 | ReuseFirstNonSafe | internal | internal | - | Shape cache safe-to-reuse flag |
-| inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | internal | internal | - | Shape cache safe-to-reuse flag in RTL |
-| inline/inline_node_test.cc:1643 | ShouldNotResueLigature | internal | internal | - | Ligature shaping cache invalidation |
+| inline/inline_node_test.cc:1590 | ReuseFirstNonSafe | behaviour | formalized | `inlineNode_reuseFirstNonSafe` | Cross-boundary kerning prevents independent shape cache reuse per CSS Text 3 §3 |
+| inline/inline_node_test.cc:1617 | ReuseFirstNonSafeRtl | behaviour | formalized | `inlineNode_reuseFirstNonSafeRtl` | Cross-boundary kerning in RTL prevents shape cache reuse per CSS Text 3 §3 |
+| inline/inline_node_test.cc:1643 | ShouldNotResueLigature | behaviour | formalized | `inlineNode_shouldNotResueLigature` | Cross-boundary ligature formation prevents shape cache reuse per CSS Text 3 §3 |
 | inline/inline_node_test.cc:1671 | InitialLetter | geometry | formalized | `inlineNode_initialLetter` | CSS Inline 3 §3: Initial letters generate initialLetterBox items and flag hasInitialLetterBox |
 | inline/inline_node_test.cc:1692 | TextCombineUsesScalingX | geometry | formalized | `inlineNode_textCombineUsesScalingX` | CSS Writing Modes 3 §5.1.4: Combined text > 1em uses scaleX |
 | inline/inline_node_test.cc:1713 | TextCombineWordSpacing | geometry | formalized | `inlineNode_textCombineWordSpacing` | CSS Writing Modes 3 §5.1.4: Inside text combine, letter-spacing and word-spacing are treated as 0 |
@@ -281,7 +281,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_cursor_test.cc:1250 | CursorForDescendants | behaviour | formalized | `inlineCursor_cursorForDescendants` | CSS Inline 3 §2: CursorForDescendants limits cursor to subtree descending from current container |
 | inline/inline_cursor_test.cc:1292 | MoveToVisualFirstOrLast | behaviour | formalized | `inlineCursor_moveToVisualFirstOrLast` | UAX #9 L2 & CSS Writing Modes 3 §3.1: Visual first and last for layout object in mixed-bidi RTL line |
 | inline/inline_cursor_test.cc:1318 | MoveToLayoutObject | behaviour | formalized | `inlineCursor_moveToLayoutObject` | CSS 2.1 §9.4.2 & CSS Inline 3 §2: Enumerate fragments for layout object; culled inlines have none |
-| inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | internal | internal | - | Crash regression test for block-in-inline overflow |
+| inline/inline_cursor_test.cc:1455 | CulledInlineBlockInInlineOverflow | behaviour | formalized | `inlineCursor_culledInlineBlockInInlineOverflow` | Culled inline block-in-inline column fragmentation traversal |
 | inline/inline_cursor_test.cc:1473 | CulledInlineWithNonIFCChild | behaviour | formalized | `inlineCursor_culledInlineWithNonIFCChild` | Culled inline without decorations wrapping ruby creates no box fragment |
 | inline/inline_items_builder_test.cc:206 | CollapseSpaces | behaviour | formalized | `inlineItemsBuilder_collapseSpaces` | Whitespace space collapsing rules across modes |
 | inline/inline_items_builder_test.cc:216 | CollapseTabs | behaviour | formalized | `inlineItemsBuilder_collapseTabs` | Whitespace tab collapsing rules |
@@ -468,8 +468,8 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline_layout_test.cc:32 | BlockWithSingleTextNode | behaviour | formalized | `inlineLayout_blockWithSingleTextNode` | CSS 2.1 §9.4.2: Inline formatting context flattens DOM nodes into text stream |
 | inline_layout_test.cc:59 | BlockWithTextAndAtomicInline | behaviour | formalized | `inlineLayout_blockWithTextAndAtomicInline` | CSS 2.1 §9.4.2 & §10.8: Replaced atomic inline represented by object replacement character |
 | layout_inline_test.cc:38 | PhysicalLinesBoundingBox | geometry | formalized | `layoutInline_physicalLinesBoundingBox` | CSS 2.1 §9.4.2 & CSS Writing Modes 3 §4: Union of line fragment rectangles across LTR, RTL, and vertical-rl |
-| layout_inline_test.cc:69 | SimpleContinuation | internal | internal | - | LayoutObject tree continuation structure |
-| layout_inline_test.cc:93 | BlockInInlineRemove | internal | internal | - | DOM mutation and LayoutObject tree continuation updates |
+| layout_inline_test.cc:69 | SimpleContinuation | behaviour | formalized | `layoutInline_simpleContinuation` | Inline element with block child splits into continuations per CSS 2.1 §9.2.1.1 |
+| layout_inline_test.cc:93 | BlockInInlineRemove | behaviour | formalized | `layoutInline_blockInInlineRemove` | Removing block child removes anonymous block-in-inline wrapper per CSS 2.1 §9.2.1.1 |
 | layout_inline_test.cc:139 | RegionHitTest | behaviour | formalized | `layoutInline_regionHitTest` | CSS 2.1 §9.4.2: List-based hit testing rect intersects line box fragment |
 | layout_inline_test.cc:194 | RelativePositionedHitTest | behaviour | formalized | `layoutInline_relativePositionedHitTest` | CSS 2.1 §9.3.1: Relative positioned inline in separate paint layer is ignored during normal-flow hit testing |
 | layout_inline_test.cc:241 | MultilineRelativePositionedHitTest | behaviour | formalized | `layoutInline_multilineRelativePositionedHitTest` | CSS 2.1 §9.3.1 & §9.4.2: Hit testing multiline positioned inline selects item on corresponding line |
@@ -696,20 +696,20 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_foreign_object_test.cc:451 | ZoomChangesInvalidatePaintProperties | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_foreign_object_test.cc:489 | DisplayLocked | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/layout_svg_foreign_object_test.cc:507 | LocalToAncestorPoint | behaviour | formalized | `svg_foreign_localToAncestorPoint` | SVG 2 §13.2, CSS 2.1 §10: Target offset to document root vs foreignObject ancestor |
-| svg/layout_svg_foreign_object_test.cc:525 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_foreign_object_test.cc:545 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_foreign_object_test.cc:565 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_foreign_object_test.cc:585 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_image_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_image_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_image_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_image_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_foreign_object_test.cc:525 | GetBBoxUseCounterForZeroHeight | behaviour | formalized | `layoutSvgForeignObject_getBBoxUseCounterForZeroHeight` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_foreign_object_test.cc:545 | GetBBoxUseCounterForZeroWidth | behaviour | formalized | `layoutSvgForeignObject_getBBoxUseCounterForZeroWidth` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_foreign_object_test.cc:565 | GetBBoxUseCounterForZeroWidthAndHeight | behaviour | formalized | `layoutSvgForeignObject_getBBoxUseCounterForZeroWidthAndHeight` | SVG getBBox use counter ignores 0x0 boxes per SVG 2 §13.2 |
+| svg/layout_svg_foreign_object_test.cc:585 | GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | formalized | `layoutSvgForeignObject_getBBoxUseCounterForNonZeroWidthAndHeight` | SVG getBBox use counter ignores non-zero boxes per SVG 2 §13.2 |
+| svg/layout_svg_image_test.cc:16 | GetBBoxUseCounterForZeroHeight | behaviour | formalized | `layoutSvgImage_getBBoxUseCounterForZeroHeight` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_image_test.cc:34 | GetBBoxUseCounterForZeroWidth | behaviour | formalized | `layoutSvgImage_getBBoxUseCounterForZeroWidth` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_image_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | behaviour | formalized | `layoutSvgImage_getBBoxUseCounterForZeroWidthAndHeight` | SVG getBBox use counter ignores 0x0 boxes per SVG 2 §13.2 |
+| svg/layout_svg_image_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | formalized | `layoutSvgImage_getBBoxUseCounterForNonZeroWidthAndHeight` | SVG getBBox use counter ignores non-zero boxes per SVG 2 §13.2 |
 | svg/layout_svg_inline_test.cc:13 | IsChildAllowed | behaviour | formalized | `svg_inline_isChildAllowed` | SVG 2 §11.3.3: textPath element cannot have textPath descendant |
 | svg/layout_svg_inline_test.cc:25 | LocalToAncestorPoint | behaviour | formalized | `svg_inline_localToAncestorPoint` | SVG 2 §11.4, CSS 2.1 §10: Inline text target offset to document root vs container ancestor |
-| svg/layout_svg_rect_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_rect_test.cc:34 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_rect_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_rect_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_rect_test.cc:16 | GetBBoxUseCounterForZeroHeight | behaviour | formalized | `layoutSvgRect_getBBoxUseCounterForZeroHeight` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_rect_test.cc:34 | GetBBoxUseCounterForZeroWidth | behaviour | formalized | `layoutSvgRect_getBBoxUseCounterForZeroWidth` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_rect_test.cc:52 | GetBBoxUseCounterForZeroWidthAndHeight | behaviour | formalized | `layoutSvgRect_getBBoxUseCounterForZeroWidthAndHeight` | SVG getBBox use counter ignores 0x0 boxes per SVG 2 §13.2 |
+| svg/layout_svg_rect_test.cc:70 | GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | formalized | `layoutSvgRect_getBBoxUseCounterForNonZeroWidthAndHeight` | SVG getBBox use counter ignores non-zero boxes per SVG 2 §13.2 |
 | svg/layout_svg_root_test.cc:27 | VisualRectMappingWithoutViewportClipWithBorder | geometry | formalized | `svg_root_visualRectMappingWithoutViewportClipWithBorder` | SVG 2 §7.3, CSS 2.1 §10: Visual rect mapping with border offset when overflow is visible |
 | svg/layout_svg_root_test.cc:54 | VisualOverflowExpandsLayer | behaviour | blocked | - | Blocked: model lacks SVG layout algorithm |
 | svg/layout_svg_root_test.cc:74 | VisualRectMappingWithViewportClipAndBorder | geometry | formalized | `svg_root_visualRectMappingWithViewportClipAndBorder` | SVG 2 §7.3, CSS 2.1 §10: Visual rect mapping clipped to SVG viewport plus border offset |
@@ -727,10 +727,10 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | svg/layout_svg_text_test.cc:115 | ObjectBoundingBox | geometry | formalized | `svg_text_objectBoundingBox` | SVG 2 §11.4, §13.5: Text object bounding box width and height are finite and bounded |
 | svg/layout_svg_text_test.cc:136 | SubtreeLayout | internal | internal | - | Crash regression / lifecycle plumbing |
 | svg/layout_svg_text_test.cc:161 | WillBeRemovedFromTree | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_viewport_container_test.cc:16 | GetBBoxUseCounterForZeroHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_viewport_container_test.cc:36 | GetBBoxUseCounterForZeroWidth | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_viewport_container_test.cc:56 | GetBBoxUseCounterForZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
-| svg/layout_svg_viewport_container_test.cc:76 | GetBBoxUseCounterForNonZeroWidthAndHeight | internal | internal | - | Crash regression / lifecycle plumbing |
+| svg/layout_svg_viewport_container_test.cc:16 | GetBBoxUseCounterForZeroHeight | behaviour | formalized | `layoutSvgViewportContainer_getBBoxUseCounterForZeroHeight` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_viewport_container_test.cc:36 | GetBBoxUseCounterForZeroWidth | behaviour | formalized | `layoutSvgViewportContainer_getBBoxUseCounterForZeroWidth` | SVG getBBox use counter counts 1D degenerate bounding boxes per SVG 2 §13.2 |
+| svg/layout_svg_viewport_container_test.cc:56 | GetBBoxUseCounterForZeroWidthAndHeight | behaviour | formalized | `layoutSvgViewportContainer_getBBoxUseCounterForZeroWidthAndHeight` | SVG getBBox use counter ignores 0x0 boxes per SVG 2 §13.2 |
+| svg/layout_svg_viewport_container_test.cc:76 | GetBBoxUseCounterForNonZeroWidthAndHeight | behaviour | formalized | `layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight` | SVG getBBox use counter ignores non-zero boxes per SVG 2 §13.2 |
 | svg/svg_hit_test_perftest.cc:84 | HandleMouseMoveEvent | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/svg_hit_test_perftest.cc:105 | IntersectsClipPath | behaviour | blocked | - | Blocked: engine service, parked |
 | svg/svg_layout_support_test.cc:14 | FindClosestLayoutSVGText | behaviour | formalized | `svg_support_findClosestLayoutSVGText` | SVG 2 §11.4, CSSOM View §8: Closest SVG text candidate selected by Euclidean distance to bounding box |
@@ -835,7 +835,7 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | exclusions/exclusion_space_test.cc:1162 | CopyOnWriteDisabledFallback | internal | internal | - | ExclusionSpace copy-on-write memory optimization |
 | layout_quote_test.cc:40 | Locale | behaviour | formalized | `layoutQuote_locale` | `<q>` element delimiters use language from parent, while quote text uses element language |
 | hit_testing_test.cc:87 | OcclusionHitTest | behaviour | formalized | `hitTest_occlusion` | CSSOM View §8, CSS 2.1 §9.9: Occlusion hit test with negative margin top |
-| hit_testing_test.cc:111 | OcclusionHitTestSVGTextWithFilterCrash | internal | internal | - | Crash regression test |
+| hit_testing_test.cc:111 | OcclusionHitTestSVGTextWithFilterCrash | behaviour | formalized | `hitTesting_occlusionHitTestSVGTextWithFilterCrash` | Hit testing occluding filtered SVG text returns occluder text node per CSS Filters 1 §3.1 & SVG 2 §15.2 |
 | hit_testing_test.cc:136 | HitTestWithCallback | behaviour | formalized | `hitTest_withCallback` | CSSOM View §8: Hit testing with callback stopper stops at requested node |
 | hit_testing_test.cc:205 | OcclusionHitTestWithClipPath | behaviour | formalized | `hitTest_occlusionWithClipPath` | CSS Masking 1 §3, CSSOM View §8: Occlusion hit test with circular clip path |
 | hit_testing_test.cc:253 | OcclusionHitTestWithBorderShapeStrokeMode | behaviour | formalized | `hitTest_occlusionWithBorderShapeStrokeMode` | CSS Backgrounds and Borders 3 §7.1, CSSOM View §8: Border shape circle stroke mode early-out |

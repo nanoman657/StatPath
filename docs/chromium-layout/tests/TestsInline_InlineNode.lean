@@ -922,4 +922,25 @@ theorem inlineNode_addChildToSVGRoot :
     svgChildMutatesParentIFC = false := by
   rfl
 
+/-- Test `InlineNodeTest, ReuseFirstNonSafe` (`inline/inline_node_test.cc:1590`).
+    CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning between "A" and "V" in `<span>A</span>V`
+    marks boundary text item "V" as not safe to reuse without re-shaping. -/
+theorem inlineNode_reuseFirstNonSafe :
+    isItemSafeToReuse true false = false := by
+  rfl
+
+/-- Test `InlineNodeTest, ReuseFirstNonSafeRtl` (`inline/inline_node_test.cc:1617`).
+    CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning in RTL text under bidi-override
+    marks boundary text item "V" as not safe to reuse without re-shaping. -/
+theorem inlineNode_reuseFirstNonSafeRtl :
+    isItemSafeToReuse true false = false := by
+  rfl
+
+/-- Test `InlineNodeTest, ShouldNotResueLigature` (`inline/inline_node_test.cc:1643`).
+    CSS Text 3 §3 & OpenType §GSUB: Cross-boundary ligature formation ("fi") across `<span>`
+    boundary prevents independent reuse of shaped items from shape cache. -/
+theorem inlineNode_shouldNotResueLigature :
+    isItemSafeToReuse false true = false := by
+  rfl
+
 end ChromiumLayout.TestsInline

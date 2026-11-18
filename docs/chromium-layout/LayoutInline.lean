@@ -528,4 +528,52 @@ theorem blink_m4_test_vectors_pass :
     ∀ p ∈ blinkM4TestVectors, p.1 = p.2 :=
   pairs_eq_of_all_beq rfl
 
+/-! ## CSS 2.1 §9.2.1.1 Anonymous Block Boxes and Block-In-Inline Continuations -/
+
+/-- Node in a layout object tree representing inline elements and block-in-inline continuations. -/
+inductive LayoutInlineChild where
+  | inline (id : String)
+  | blockInInline (id : String) (blockChildId : String)
+  deriving DecidableEq, Repr
+
+/-- CSS 2.1 §9.2.1.1: Given an inline box containing mixed inline and block children,
+    split around block children into continuations and anonymous block-in-inline wrappers. -/
+def wrapBlockInInlineChildren (children : List (Bool × String)) : List LayoutInlineChild :=
+  children.map (fun (isBlock, id) =>
+    if isBlock then .blockInInline s!"anon_{id}" id
+    else .inline id)
+
+/-- Remove a child from an inline's child list. -/
+def removeInlineChild (idToRemove : String) (children : List (Bool × String)) : List (Bool × String) :=
+  children.filter (fun (_, id) => id ≠ idToRemove)
+
+/-- CSS 2.1 §9.2.1.1 Law: If all children are inline (no block children), wrapping produces no blockInInline wrappers. -/
+theorem wrapBlockInInline_all_inline (children : List (Bool × String))
+    (hAll : ∀ c ∈ children, c.1 = false) :
+    ∀ c ∈ wrapBlockInInlineChildren children, match c with | .blockInInline _ _ => false | .inline _ => true := by
+  intro c hc
+  rcases List.mem_map.mp hc with ⟨a, ha, rfl⟩
+  have ha1 := hAll a ha
+  cases a with | mk isBlock id =>
+    dsimp at ha1
+    subst ha1
+    rfl
+
+/-- CSS 2.1 §9.2.1.1 Law: Removing the only block child leaves all remaining children as inline. -/
+theorem remove_block_child_leaves_all_inline (bId : String) (inlines : List String) :
+    ∀ c ∈ removeInlineChild bId (inlines.map (fun id => (false, id)) ++ [(true, bId)]), c.1 = false := by
+  intro c hc
+  have hMem := (List.mem_filter.mp hc).1
+  have hNeq := (List.mem_filter.mp hc).2
+  rcases List.mem_append.mp hMem with hInlines | hBlock
+  · rcases List.mem_map.mp hInlines with ⟨a, _, rfl⟩
+    rfl
+  · cases hBlock with
+    | head =>
+      dsimp at hNeq
+      have h1 : bId = bId := rfl
+      have h2 : ¬(bId = bId) := of_decide_eq_true hNeq
+      contradiction
+    | tail _ hTail => contradiction
+
 end ChromiumLayout
