@@ -108,18 +108,18 @@ Test files in lane "inline" under `third_party/blink/renderer/core/layout/`:
 | inline/inline_node_test.cc:987 | NodeRemoveTest.NeedsCollectInlinesOnRemove | behaviour | formalized | `inlineNode_needsCollectInlinesOnRemove` | CSS 2.1 §9.4.2: Removing child from parent marks parent and container for inline collection |
 | inline/inline_node_test.cc:1034 | CollectInlinesShouldNotClearFirstInlineFragment | internal | internal | - | FirstInlineFragment preservation |
 | inline/inline_node_test.cc:1058 | SegmentBidiChangeSetsNeedsLayout | internal | internal | - | Bidi level change sets NeedsLayout |
-| inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | internal | - | Adding span adds OpenTag/CloseTag items |
-| inline/inline_node_test.cc:1097 | InvalidateRemoveSpan | behaviour | internal | - | Removing span sets NeedsCollectInlines |
-| inline/inline_node_test.cc:1107 | InvalidateAddInnerSpan | behaviour | internal | - | Adding inner span adds items |
-| inline/inline_node_test.cc:1123 | InvalidateRemoveInnerSpan | behaviour | internal | - | Removing inner span sets NeedsCollectInlines |
-| inline/inline_node_test.cc:1133 | InvalidateSetText | behaviour | internal | - | SetTextIfNeeded marks NeedsCollectInlines |
-| inline/inline_node_test.cc:1142 | InvalidateAddAbsolute | behaviour | internal | - | Adding absolute child adds OOF item |
-| inline/inline_node_test.cc:1159 | InvalidateRemoveAbsolute | behaviour | internal | - | Removing absolute child sets NeedsCollectInlines |
-| inline/inline_node_test.cc:1171 | InvalidateChangeToAbsolute | behaviour | internal | - | Changing to position:absolute replaces span items with OOF |
-| inline/inline_node_test.cc:1189 | InvalidateChangeFromAbsolute | behaviour | internal | - | Changing from absolute replaces OOF with span items |
-| inline/inline_node_test.cc:1207 | InvalidateAddFloat | behaviour | internal | - | Adding float child adds float item |
-| inline/inline_node_test.cc:1224 | InvalidateRemoveFloat | behaviour | internal | - | Removing float child sets NeedsCollectInlines |
-| inline/inline_node_test.cc:1236 | SpaceRestoredByInsertingWord | behaviour | internal | - | Inserting word between collapsed spaces restores space |
+| inline/inline_node_test.cc:1082 | InvalidateAddSpan | behaviour | formalized | `inlineNode_invalidateAddSpan` | CSS 2.1 §9.4.2: Adding empty span element adds open and close tag items (+2 items) |
+| inline/inline_node_test.cc:1097 | InvalidateRemoveSpan | behaviour | formalized | `inlineNode_invalidateRemoveSpan` | CSS 2.1 §9.4.2: Removing inline child marks container for inline collection |
+| inline/inline_node_test.cc:1107 | InvalidateAddInnerSpan | behaviour | formalized | `inlineNode_invalidateAddInnerSpan` | CSS 2.1 §9.4.2: Adding inner span adds open and close tag items (+2 items) |
+| inline/inline_node_test.cc:1123 | InvalidateRemoveInnerSpan | behaviour | formalized | `inlineNode_invalidateRemoveInnerSpan` | CSS 2.1 §9.4.2: Removing inner span marks container for inline collection |
+| inline/inline_node_test.cc:1133 | InvalidateSetText | behaviour | formalized | `inlineNode_invalidateSetText` | CSS 2.1 §9.4.2: Mutating text content marks container for inline collection |
+| inline/inline_node_test.cc:1142 | InvalidateAddAbsolute | behaviour | formalized | `inlineNode_invalidateAddAbsolute` | CSS 2.1 §9.3 & §9.4.2: Adding out-of-flow child adds single OOF item (+1 item) |
+| inline/inline_node_test.cc:1159 | InvalidateRemoveAbsolute | behaviour | formalized | `inlineNode_invalidateRemoveAbsolute` | CSS 2.1 §9.3 & §9.4.2: Removing out-of-flow child marks container for inline collection |
+| inline/inline_node_test.cc:1171 | InvalidateChangeToAbsolute | behaviour | formalized | `inlineNode_invalidateChangeToAbsolute` | CSS 2.1 §9.3 & §9.4.2: Changing in-flow span to absolute replaces open/close tags with single OOF item (-1 item) |
+| inline/inline_node_test.cc:1189 | InvalidateChangeFromAbsolute | behaviour | formalized | `inlineNode_invalidateChangeFromAbsolute` | CSS 2.1 §9.3 & §9.4.2: Changing out-of-flow child to in-flow span replaces OOF item with open/close tags (+1 item) |
+| inline/inline_node_test.cc:1207 | InvalidateAddFloat | behaviour | formalized | `inlineNode_invalidateAddFloat` | CSS 2.1 §9.5 & §9.4.2: Adding floating child adds single float item (+1 item) |
+| inline/inline_node_test.cc:1224 | InvalidateRemoveFloat | behaviour | formalized | `inlineNode_invalidateRemoveFloat` | CSS 2.1 §9.5 & §9.4.2: Removing floating child marks container for inline collection |
+| inline/inline_node_test.cc:1236 | SpaceRestoredByInsertingWord | behaviour | formalized | `inlineNode_spaceRestoredByInsertingWord` | CSS Text 3 §4.1 & CSS 2.1 §9.4.2: Spaces separated by empty tags collapse, but inserting text inside span restores both spaces |
 | inline/inline_node_test.cc:1251 | RemoveInlineNodeDataIfBlockBecomesEmpty1 | internal | internal | - | Clearing InlineNodeData when container becomes empty |
 | inline/inline_node_test.cc:1262 | RemoveInlineNodeDataIfBlockBecomesEmpty2 | internal | internal | - | Clearing InlineNodeData on innerHTML="" |
 | inline/inline_node_test.cc:1272 | RemoveInlineNodeDataIfBlockObtainsBlockChild | internal | internal | - | Clearing InlineNodeData when block child added |

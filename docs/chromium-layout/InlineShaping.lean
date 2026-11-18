@@ -28,6 +28,7 @@ inductive InlineItemType where
   | openTag
   | closeTag
   | floating
+  | outOfFlowPositioned
   | bidiControl
   deriving DecidableEq, Repr, Inhabited
 
@@ -89,6 +90,9 @@ inductive InlineCollectionToken where
   /-- CSS 2.1 §9.5 Floats: Floating box inside an inline formatting context.
       Floats are out-of-flow and produce a zero-length inline item in the text buffer. -/
   | floating
+  /-- CSS 2.1 §9.3 Positioning: Out-of-flow positioned box inside an inline formatting context.
+      OOF elements produce a zero-length inline item in the text buffer. -/
+  | outOfFlowPositioned
   /-- CSS Text 3 §4: Preserved newline character (e.g. within pre or pre-wrap). -/
   | newline
   /-- CSS Text 3 §4: Word break opportunity element (<wbr>). -/
@@ -135,6 +139,7 @@ def collectInlinesStep (offset : Nat) (isTextCombine : Bool := false) : InlineCo
   | .symbolMarker s =>
     (offset + s.length, { itemType := .text, startOffset := offset, endOffset := offset + s.length, isSymbolMarker := true }, s.toList)
   | .floating => (offset, { itemType := .floating, startOffset := offset, endOffset := offset }, [])
+  | .outOfFlowPositioned => (offset, { itemType := .outOfFlowPositioned, startOffset := offset, endOffset := offset }, [])
   | .openIsolate dir =>
     (offset + 1, { itemType := .control, startOffset := offset, endOffset := offset + 1 }, [if dir == .rtl then '\u2067' else '\u2066'])
 
@@ -152,6 +157,19 @@ theorem collectInlinesStep_floating_zero_length (offset : Nat) :
 theorem collectInlinesStep_floating_empty_chars (offset : Nat) :
     (collectInlinesStep offset false .floating).2.2 = [] := by
   rfl
+
+/-- CSS 2.1 §9.3 Law: Out-of-flow positioned elements do not advance character offset. -/
+theorem collectInlinesStep_outOfFlowPositioned_zero_advance (offset : Nat) :
+    (collectInlinesStep offset false .outOfFlowPositioned).1 = offset := rfl
+
+/-- CSS 2.1 §9.3 Law: Out-of-flow positioned elements produce zero-length items. -/
+theorem collectInlinesStep_outOfFlowPositioned_zero_length (offset : Nat) :
+    (collectInlinesStep offset false .outOfFlowPositioned).2.1.startOffset =
+      (collectInlinesStep offset false .outOfFlowPositioned).2.1.endOffset := rfl
+
+/-- CSS 2.1 §9.3 Law: Out-of-flow positioned elements emit no characters into the text buffer. -/
+theorem collectInlinesStep_outOfFlowPositioned_empty_chars (offset : Nat) :
+    (collectInlinesStep offset false .outOfFlowPositioned).2.2 = [] := rfl
 
 /-- CSS Writing Modes 3 §5.1.4 Law: Forced line breaks in text combine are classified as text items. -/
 theorem collectInlinesStep_textCombine_br_is_text (offset : Nat) :
@@ -315,7 +333,7 @@ def computeMinMaxSizesAhem (tokens : List InlineCollectionToken) : MinMaxSizes :
           processChars (wLen + 1) accW (tot + 1) cs
       let (endW, midWords, nextTot) := processChars curWordLen words totalChars chars
       toSegments endW midWords nextTot rest
-    | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .wbr :: rest | .openIsolate _ :: rest =>
+    | .openTag _ :: rest | .closeTag :: rest | .floating :: rest | .outOfFlowPositioned :: rest | .wbr :: rest | .openIsolate _ :: rest =>
       toSegments curWordLen words totalChars rest
     | .atomicInline wPx :: rest =>
       let wordsAfterPrev := if curWordLen > 0 then curWordLen :: words else words
@@ -388,5 +406,25 @@ theorem inflow_mutation_invalidates_ancestors (isInsert : Bool) :
     let (_, p, c, _) := computeNeedsCollectInlines (if isInsert then .insertNode false else .removeNode)
     p = true ∧ c = true := by
   cases isInsert <;> exact ⟨rfl, rfl⟩
+
+/-- CSS 2.1 §9.4.2 Law: Changing style that affects inlines always marks parent and container for inline collection. -/
+theorem style_change_affects_inlines_invalidates_ancestors :
+    let (_, p, c, _) := computeNeedsCollectInlines (.changeStyle true)
+    p = true ∧ c = true := ⟨rfl, rfl⟩
+
+/-- CSS 2.1 §9.4.2 & CSS 2.1 §9.3 Law: Independent out-of-flow insertion never invalidates container inlines. -/
+theorem oof_independent_insert_never_invalidates_container :
+    let (_, _, c, _) := computeNeedsCollectInlines (.insertNode true)
+    c = false := rfl
+
+/-- CSS 2.1 §9.4.2 Law: Removing any node always marks container for inline collection. -/
+theorem remove_node_invalidates_container :
+    let (_, _, c, _) := computeNeedsCollectInlines .removeNode
+    c = true := rfl
+
+/-- CSS 2.1 §9.4.2 Law: In-flow insertion always marks container for inline collection. -/
+theorem inflow_insert_invalidates_container :
+    let (_, _, c, _) := computeNeedsCollectInlines (.insertNode false)
+    c = true := rfl
 
 end ChromiumLayout

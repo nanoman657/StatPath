@@ -655,4 +655,107 @@ theorem inlineNode_reusingRTLAsLTR :
     (ltrItems[2]!.startOffset = 10) ∧ (ltrItems[2]!.endOffset = 10) ∧ (ltrItems[2]!.direction = .ltr) := by
   decide
 
+/-- inline/inline_node_test.cc:1082 InvalidateAddSpan
+    CSS 2.1 §9.4.2: Adding an empty span element adds openTag and closeTag items (+2 items). -/
+theorem inlineNode_invalidateAddSpan :
+    let beforeItems := (collectInlines [.text "before"]).items
+    let afterItems := (collectInlines [.text "before", .openTag "span", .closeTag]).items
+    afterItems.length = beforeItems.length + 2 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1097 InvalidateRemoveSpan
+    CSS 2.1 §9.4.2: Removing an inline child marks container block flow for inline recolletion. -/
+theorem inlineNode_invalidateRemoveSpan :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines .removeNode
+    containerNeeds = true := by
+  rfl
+
+/-- inline/inline_node_test.cc:1107 InvalidateAddInnerSpan
+    CSS 2.1 §9.4.2: Adding an inner span inside an existing span adds openTag and closeTag items (+2 items). -/
+theorem inlineNode_invalidateAddInnerSpan :
+    let beforeItems := (collectInlines [.openTag "span", .closeTag]).items
+    let afterItems := (collectInlines [.openTag "span", .openTag "span", .closeTag, .closeTag]).items
+    afterItems.length = beforeItems.length + 2 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1123 InvalidateRemoveInnerSpan
+    CSS 2.1 §9.4.2: Removing an inner span marks container block flow for inline recolletion. -/
+theorem inlineNode_invalidateRemoveInnerSpan :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines .removeNode
+    containerNeeds = true := by
+  rfl
+
+/-- inline/inline_node_test.cc:1133 InvalidateSetText
+    CSS 2.1 §9.4.2: Mutating text content marks container block flow for inline recolletion. -/
+theorem inlineNode_invalidateSetText :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines (.changeStyle true)
+    containerNeeds = true := by
+  rfl
+
+/-- inline/inline_node_test.cc:1142 InvalidateAddAbsolute
+    CSS 2.1 §9.3 & §9.4.2: Adding an out-of-flow positioned child adds a single OOF item (+1 item). -/
+theorem inlineNode_invalidateAddAbsolute :
+    let beforeItems := (collectInlines [.text "before"]).items
+    let afterItems := (collectInlines [.text "before", .outOfFlowPositioned]).items
+    afterItems.length = beforeItems.length + 1 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1159 InvalidateRemoveAbsolute
+    CSS 2.1 §9.3 & §9.4.2: Removing an out-of-flow child marks container block flow for inline recolletion. -/
+theorem inlineNode_invalidateRemoveAbsolute :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines .removeNode
+    containerNeeds = true := by
+  rfl
+
+/-- inline/inline_node_test.cc:1171 InvalidateChangeToAbsolute
+    CSS 2.1 §9.3 & §9.4.2: Changing an in-flow span to position:absolute replaces open/close tags with a single OOF item (-1 item). -/
+theorem inlineNode_invalidateChangeToAbsolute :
+    let beforeItems := (collectInlines [.text "before", .openTag "span", .closeTag]).items
+    let afterItems := (collectInlines [.text "before", .outOfFlowPositioned]).items
+    afterItems.length = beforeItems.length - 1 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1189 InvalidateChangeFromAbsolute
+    CSS 2.1 §9.3 & §9.4.2: Changing an out-of-flow child to an in-flow span replaces the OOF item with open/close tags (+1 item). -/
+theorem inlineNode_invalidateChangeFromAbsolute :
+    let beforeItems := (collectInlines [.text "before", .outOfFlowPositioned]).items
+    let afterItems := (collectInlines [.text "before", .openTag "span", .closeTag]).items
+    afterItems.length = beforeItems.length + 1 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1207 InvalidateAddFloat
+    CSS 2.1 §9.5 & §9.4.2: Adding a floating child adds a single float item (+1 item). -/
+theorem inlineNode_invalidateAddFloat :
+    let beforeItems := (collectInlines [.text "before"]).items
+    let afterItems := (collectInlines [.text "before", .floating]).items
+    afterItems.length = beforeItems.length + 1 := by
+  rfl
+
+/-- inline/inline_node_test.cc:1224 InvalidateRemoveFloat
+    CSS 2.1 §9.5 & §9.4.2: Removing a floating child marks container block flow for inline recolletion. -/
+theorem inlineNode_invalidateRemoveFloat :
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines .removeNode
+    containerNeeds = true := by
+  rfl
+
+/-- inline/inline_node_test.cc:1236 SpaceRestoredByInsertingWord
+    CSS Text 3 §4.1 & CSS 2.1 §9.4.2: Spaces separated by empty tags collapse across the tags,
+    but inserting text inside the span separates the spaces and prevents collapsing. -/
+theorem inlineNode_spaceRestoredByInsertingWord :
+    let beforeText := buildInlineString [
+      BuilderInput.text "before ",
+      BuilderInput.openTag,
+      BuilderInput.closeTag,
+      BuilderInput.text " after"
+    ]
+    let afterText := buildInlineString [
+      BuilderInput.text "before ",
+      BuilderInput.openTag,
+      BuilderInput.text "mid",
+      BuilderInput.closeTag,
+      BuilderInput.text " after"
+    ]
+    beforeText = "before after" ∧ afterText = "before mid after" := by
+  decide
+
 end ChromiumLayout.TestsInline

@@ -89,7 +89,7 @@ def computeLineBreakCandidates (tokens : List IndexedInlineToken) (hyphens : Hyp
           else acc
         | [] => acc
       processTokens idx textOffset visibleWidth lastWordEnd remainingOpen updatedAcc rest
-    | ⟨idx, .floating⟩ :: rest | ⟨idx, .wbr⟩ :: rest | ⟨idx, .openIsolate _⟩ :: rest =>
+    | ⟨idx, .floating⟩ :: rest | ⟨idx, .outOfFlowPositioned⟩ :: rest | ⟨idx, .wbr⟩ :: rest | ⟨idx, .openIsolate _⟩ :: rest =>
       processTokens idx textOffset visibleWidth lastWordEnd openTags acc rest
     | ⟨idx, .atomicInline w⟩ :: rest =>
       let newOffset := textOffset + 1
