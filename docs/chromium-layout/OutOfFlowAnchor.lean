@@ -167,5 +167,69 @@ theorem implicit_anchor_none :
     acceptableImplicitAnchor none = none := by
   rfl
 
+/-- Insert a scoped anchor into a duplicate-free set.
+    CSS Anchor Positioning 1 §3.1, §3.2 (`anchor_scope_test.cc:44`, `:56`). -/
+def scopedInsert (set : List ScopedAnchor) (entry : ScopedAnchor) : Bool × List ScopedAnchor :=
+  if set.contains entry then (false, set) else (true, entry :: set)
+
+/-- Membership lookup in a scoped anchor set.
+    CSS Anchor Positioning 1 §3.2 (`anchor_scope_test.cc:72`, `:80`, `:93`, `:115`). -/
+def scopedContains (set : List ScopedAnchor) (entry : ScopedAnchor) : Bool :=
+  set.contains entry
+
+/-- Removal from a scoped anchor set.
+    CSS Anchor Positioning 1 §3.2 (`anchor_scope_test.cc:80`). -/
+def scopedErase (set : List ScopedAnchor) (entry : ScopedAnchor) : List ScopedAnchor :=
+  set.erase entry
+
+/-- Inline anchor physical rectangle along a single line.
+    CSS Anchor Positioning 1 §3.1 (`anchor_evaluator_impl_test.cc:221`). -/
+def inlineAnchorRect (charOffset charCount fontSize itemHeight : Nat) : AnchorRect :=
+  ⟨charOffset * fontSize, 0, charCount * fontSize, itemHeight⟩
+
+/-- AnchorPositionScrollData attachment and scroll-adjustment eligibility
+    `(hasScrollData, needsScrollAdjustment)`.
+    CSS Anchor Positioning 1 §3.3, §4.3 (`anchor_position_scroll_data_test.cc:45`, `:94`). -/
+def anchorScrollDataState (isConnected isOutOfFlow hasPositionAnchor usesAnchorFn anchorFound : Bool) :
+    Bool × Bool :=
+  let hasData := isConnected && isOutOfFlow && hasPositionAnchor
+  (hasData, hasData && usesAnchorFn && anchorFound)
+
+/-- Clamped scroll adjustment offset when scroller or scroll-content size changes.
+    CSS Anchor Positioning 1 §4.3, CSS Overflow 3 §2.2 (`anchor_position_scroll_data_test.cc:142`, `:205`). -/
+def clampedScrollAdjustment (contentHeight scrollerHeight requestedScrollY : Nat) : Nat :=
+  min requestedScrollY (contentHeight - scrollerHeight)
+
+/-- Stretched block size in `position-area: bottom` after scroll-end relayout.
+    CSS Anchor Positioning 1 §4.2, §4.3 (`anchor_position_scroll_data_test.cc:266`). -/
+def positionAreaBottomStretchHeight (scrollerHeight anchorTop anchorHeight scrollY : Nat) : Nat :=
+  scrollerHeight - (anchorTop + anchorHeight - scrollY)
+
+/-- Outer scroller `scrollHeight` during compositor scroll vs after `scrollend` relayout.
+    CSS Anchor Positioning 1 §4.3, CSS Overflow 3 §2.2 (`anchor_position_scroll_data_test.cc:392`). -/
+def outerScrollHeightDuringAndAfterScroll
+    (baseScrollHeight anchorBottomInOuter anchoredHeight lastFinishedScrollY : Nat) : Nat :=
+  max baseScrollHeight (anchorBottomInOuter - lastFinishedScrollY + anchoredHeight)
+
+/-- Law: Re-inserting an existing scoped anchor into a singleton set yields `isNew = false`.
+    CSS Anchor Positioning 1 §3.2. -/
+theorem scopedInsert_duplicate_false (a : ScopedAnchor) :
+    scopedInsert [a] a = (false, [a]) := by
+  simp [scopedInsert]
+
+/-- Law: Clamped scroll adjustment never exceeds the requested scroll offset.
+    CSS Anchor Positioning 1 §4.3, CSS Overflow 3 §2.2. -/
+theorem clampedScrollAdjustment_le_requested (contentH scrollerH reqY : Nat) :
+    clampedScrollAdjustment contentH scrollerH reqY ≤ reqY := by
+  simp [clampedScrollAdjustment]
+  omega
+
+/-- Law: In-flow elements never attach `AnchorPositionScrollData`.
+    CSS Anchor Positioning 1 §3.3, §4.3. -/
+theorem anchorScrollDataState_inflow_false
+    (isConnected hasPos usesFn found : Bool) :
+    (anchorScrollDataState isConnected false hasPos usesFn found).1 = false := by
+  simp [anchorScrollDataState]
+
 end OutOfFlowAnchor
 end ChromiumLayout

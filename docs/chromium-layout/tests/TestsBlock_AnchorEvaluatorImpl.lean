@@ -121,5 +121,102 @@ theorem FrameViewHasRunningAnchorTransformAnimation_vectors :
     hasRunningAnchorTransformAnimation false = false := by
   decide
 
+-- anchor_evaluator_impl_test.cc:221: Inline
+theorem Inline_vectors :
+    inlineAnchorRect 2 2 10 10 = ⟨20, 0, 20, 10⟩ ∧
+    inlineAnchorRect 5 2 10 10 = ⟨50, 0, 20, 10⟩ ∧
+    inlineAnchorRect 8 2 10 10 = ⟨80, 0, 20, 10⟩ ∧
+    inlineAnchorRect 11 1 10 8 = ⟨110, 0, 10, 8⟩ ∧
+    inlineAnchorRect 13 1 10 10 = ⟨130, 0, 10, 10⟩ := by
+  decide
+
+-- anchor_scope_test.cc:44: HashDifferentNames
+theorem HashDifferentNames_vectors :
+    let foo : ScopedAnchor := { elementId := "", scopeId := 0, name := "foo" }
+    let bar : ScopedAnchor := { elementId := "", scopeId := 0, name := "bar" }
+    let (new1, s1) := scopedInsert [] foo
+    let (new2, _) := scopedInsert s1 bar
+    foo != bar ∧ new1 = true ∧ new2 = true := by
+  decide
+
+-- anchor_scope_test.cc:56: HashEqualNames
+theorem HashEqualNames_vectors :
+    let foo : ScopedAnchor := { elementId := "", scopeId := 0, name := "foo" }
+    let (new1, s1) := scopedInsert [] foo
+    let (new2, s2) := scopedInsert s1 foo
+    let (new3, _) := scopedInsert s2 foo
+    new1 = true ∧ new2 = false ∧ new3 = false := by
+  decide
+
+-- anchor_scope_test.cc:72: LookupEmpty
+theorem LookupEmpty_vectors :
+    let foo : ScopedAnchor := { elementId := "", scopeId := 0, name := "foo" }
+    scopedContains [] foo = false := by
+  decide
+
+-- anchor_scope_test.cc:80: LookupDeleted
+theorem LookupDeleted_vectors :
+    let foo : ScopedAnchor := { elementId := "", scopeId := 0, name := "foo" }
+    let (new1, s1) := scopedInsert [] foo
+    let s2 := scopedErase s1 foo
+    new1 = true ∧ s1.length = 1 ∧ s2.length = 0 ∧ scopedContains s2 foo = false := by
+  decide
+
+-- anchor_scope_test.cc:93: ElementEquality
+theorem ElementEquality_vectors :
+    let foo1 : ScopedAnchor := { elementId := "div1", scopeId := 0, name := "foo" }
+    let foo2 : ScopedAnchor := { elementId := "div1", scopeId := 0, name := "foo" }
+    let foo3 : ScopedAnchor := { elementId := "div2", scopeId := 0, name := "foo" }
+    (foo1 == foo2) = true ∧ (foo2 == foo3) = false := by
+  decide
+
+-- anchor_scope_test.cc:115: TreeScopeEquality
+theorem TreeScopeEquality_vectors :
+    let foo1 : ScopedAnchor := { elementId := "", scopeId := 1, name := "foo" }
+    let foo2 : ScopedAnchor := { elementId := "", scopeId := 1, name := "foo" }
+    let foo3 : ScopedAnchor := { elementId := "", scopeId := 2, name := "foo" }
+    (foo1 == foo2) = true ∧ (foo2 == foo3) = false := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:45: HasDataAndScrollAdjustment
+theorem HasDataAndScrollAdjustment_vectors :
+    anchorScrollDataState true true true true true = (true, true) ∧
+    anchorScrollDataState true true true false true = (true, false) ∧
+    anchorScrollDataState true true true true false = (true, false) ∧
+    anchorScrollDataState true false true true true = (false, false) := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:94: Detach
+theorem Detach_vectors :
+    (anchorScrollDataState true true true false true).1 = true ∧
+    (anchorScrollDataState false true true false true).1 = false ∧
+    (anchorScrollDataState true false true false true).1 = false := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:142: ScrollerSizeChange
+theorem ScrollerSizeChange_vectors :
+    clampedScrollAdjustment 400 100 300 = 300 ∧
+    clampedScrollAdjustment 400 200 300 = 200 := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:205: ScrollContentSizeChange
+theorem ScrollContentSizeChange_vectors :
+    clampedScrollAdjustment 400 100 300 = 300 ∧
+    clampedScrollAdjustment 300 100 300 = 200 := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:266: RelayoutOnScrollEnd
+theorem RelayoutOnScrollEnd_vectors :
+    positionAreaBottomStretchHeight 300 100 50 0 = 150 ∧
+    positionAreaBottomStretchHeight 300 100 50 50 = 200 := by
+  decide
+
+-- anchor_position_scroll_data_test.cc:392: ScrollableOverflowDuringAndAfterScroll
+theorem ScrollableOverflowDuringAndAfterScroll_vectors :
+    outerScrollHeightDuringAndAfterScroll 300 350 100 0 = 450 ∧
+    outerScrollHeightDuringAndAfterScroll 300 350 100 50 = 400 ∧
+    outerScrollHeightDuringAndAfterScroll 300 350 100 100 = 350 := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

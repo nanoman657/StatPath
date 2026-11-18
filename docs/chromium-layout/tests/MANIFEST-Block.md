@@ -1019,17 +1019,17 @@ checks every row against the pinned sources and the Lean modules.
 | scroll_anchor_test.cc:1428 | ScrollAnchorPageTest.SvgRelativeBoundsCrashAfterClearLayoutResults | internal | internal | Blink crash regression test |
 | scroll_anchor_test.cc:1460 | ScrollAnchorTest.SuppressScrollAnchorScopeWithNullScroller | behaviour | blocked | model lacks scroll anchoring engine |
 | anchor_scope_test.cc:33 | AnchorScopedNameTest.HashInsertDuplicate | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:44 | AnchorScopedNameTest.HashDifferentNames | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:56 | AnchorScopedNameTest.HashEqualNames | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:72 | AnchorScopedNameTest.LookupEmpty | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:80 | AnchorScopedNameTest.LookupDeleted | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:93 | AnchorScopedNameTest.ElementEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_scope_test.cc:115 | AnchorScopedNameTest.TreeScopeEquality | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_scope_test.cc:44 | AnchorScopedNameTest.HashDifferentNames | behaviour | formalized | `TestsBlock.HashDifferentNames_vectors`, `OutOfFlowAnchor.scopedInsert` |
+| anchor_scope_test.cc:56 | AnchorScopedNameTest.HashEqualNames | behaviour | formalized | `TestsBlock.HashEqualNames_vectors`, `OutOfFlowAnchor.scopedInsert`, `OutOfFlowAnchor.scopedInsert_duplicate_false` |
+| anchor_scope_test.cc:72 | AnchorScopedNameTest.LookupEmpty | behaviour | formalized | `TestsBlock.LookupEmpty_vectors`, `OutOfFlowAnchor.scopedContains` |
+| anchor_scope_test.cc:80 | AnchorScopedNameTest.LookupDeleted | behaviour | formalized | `TestsBlock.LookupDeleted_vectors`, `OutOfFlowAnchor.scopedErase` |
+| anchor_scope_test.cc:93 | AnchorScopedNameTest.ElementEquality | behaviour | formalized | `TestsBlock.ElementEquality_vectors`, `OutOfFlowAnchor.scopedContains` |
+| anchor_scope_test.cc:115 | AnchorScopedNameTest.TreeScopeEquality | behaviour | formalized | `TestsBlock.TreeScopeEquality_vectors`, `OutOfFlowAnchor.scopedContains` |
 | anchor_evaluator_impl_test.cc:71 | AnchorEvaluatorImplTest.AnchorNameAdd | behaviour | formalized | `TestsBlock.AnchorNameAdd_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
 | anchor_evaluator_impl_test.cc:104 | AnchorEvaluatorImplTest.AnchorNameChange | behaviour | formalized | `TestsBlock.AnchorNameChange_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
 | anchor_evaluator_impl_test.cc:141 | AnchorEvaluatorImplTest.AnchorNameRemove | behaviour | formalized | `TestsBlock.AnchorNameRemove_vectors`, `OutOfFlowAnchor.anchor_lookup_empty` |
 | anchor_evaluator_impl_test.cc:175 | AnchorEvaluatorImplTest.BlockFlow | behaviour | formalized | `TestsBlock.BlockFlow_vectors`, `OutOfFlowAnchor.anchor_top_le_bottom` |
-| anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_evaluator_impl_test.cc:221 | AnchorEvaluatorImplTest.Inline | behaviour | formalized | `TestsBlock.Inline_vectors`, `OutOfFlowAnchor.inlineAnchorRect` |
 | anchor_evaluator_impl_test.cc:284 | AnchorEvaluatorImplTest.OutOfFlow | behaviour | formalized | `TestsBlock.OutOfFlow_vectors`, `OutOfFlowAnchor.lookupAnchor` |
 | anchor_evaluator_impl_test.cc:310 | AnchorEvaluatorImplTest.Relative | behaviour | blocked | model lacks CSS anchor positioning engine |
 | anchor_evaluator_impl_test.cc:330 | AnchorEvaluatorImplTest.Transform | behaviour | formalized | `TestsBlock.Transform_vectors`, `OutOfFlowAnchor.transform_shifts_pos` |
@@ -1037,13 +1037,13 @@ checks every row against the pinned sources and the Lean modules.
 | anchor_evaluator_impl_test.cc:375 | AnchorEvaluatorImplTest.FragmentedContainingBlock | behaviour | formalized | `TestsBlock.FragmentedContainingBlock_vectors`, `OutOfFlowAnchor.lookupAnchor` |
 | anchor_evaluator_impl_test.cc:437 | AnchorEvaluatorImplTest.FragmentHasRunningAnchorTransformAnimation | behaviour | formalized | `TestsBlock.FragmentHasRunningAnchorTransformAnimation_vectors`, `OutOfFlowAnchor.no_running_anchor_transform_animation` |
 | anchor_evaluator_impl_test.cc:446 | AnchorEvaluatorImplTest.FrameViewHasRunningAnchorTransformAnimation | behaviour | formalized | `TestsBlock.FrameViewHasRunningAnchorTransformAnimation_vectors`, `OutOfFlowAnchor.no_running_anchor_transform_animation` |
-| anchor_position_scroll_data_test.cc:45 | AnchorPositionScrollDataTest.HasDataAndScrollAdjustment | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_position_scroll_data_test.cc:94 | AnchorPositionScrollDataTest.Detach | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_position_scroll_data_test.cc:142 | AnchorPositionScrollDataTest.ScrollerSizeChange | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_position_scroll_data_test.cc:205 | AnchorPositionScrollDataTest.ScrollContentSizeChange | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_position_scroll_data_test.cc:266 | AnchorPositionScrollDataTest.RelayoutOnScrollEnd | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:45 | AnchorPositionScrollDataTest.HasDataAndScrollAdjustment | behaviour | formalized | `TestsBlock.HasDataAndScrollAdjustment_vectors`, `OutOfFlowAnchor.anchorScrollDataState`, `OutOfFlowAnchor.anchorScrollDataState_inflow_false` |
+| anchor_position_scroll_data_test.cc:94 | AnchorPositionScrollDataTest.Detach | behaviour | formalized | `TestsBlock.Detach_vectors`, `OutOfFlowAnchor.anchorScrollDataState`, `OutOfFlowAnchor.anchorScrollDataState_inflow_false` |
+| anchor_position_scroll_data_test.cc:142 | AnchorPositionScrollDataTest.ScrollerSizeChange | behaviour | formalized | `TestsBlock.ScrollerSizeChange_vectors`, `OutOfFlowAnchor.clampedScrollAdjustment`, `OutOfFlowAnchor.clampedScrollAdjustment_le_requested` |
+| anchor_position_scroll_data_test.cc:205 | AnchorPositionScrollDataTest.ScrollContentSizeChange | behaviour | formalized | `TestsBlock.ScrollContentSizeChange_vectors`, `OutOfFlowAnchor.clampedScrollAdjustment`, `OutOfFlowAnchor.clampedScrollAdjustment_le_requested` |
+| anchor_position_scroll_data_test.cc:266 | AnchorPositionScrollDataTest.RelayoutOnScrollEnd | behaviour | formalized | `TestsBlock.RelayoutOnScrollEnd_vectors`, `OutOfFlowAnchor.positionAreaBottomStretchHeight` |
 | anchor_position_scroll_data_test.cc:327 | AnchorPositionScrollDataTest.RelayoutOnScrollEndSimpleTranslation | behaviour | blocked | model lacks CSS anchor positioning engine |
-| anchor_position_scroll_data_test.cc:392 | AnchorPositionScrollDataTest.ScrollableOverflowDuringAndAfterScroll | behaviour | blocked | model lacks CSS anchor positioning engine |
+| anchor_position_scroll_data_test.cc:392 | AnchorPositionScrollDataTest.ScrollableOverflowDuringAndAfterScroll | behaviour | formalized | `TestsBlock.ScrollableOverflowDuringAndAfterScroll_vectors`, `OutOfFlowAnchor.outerScrollHeightDuringAndAfterScroll` |
 | layout_shift_tracker_test.cc:44 | LayoutShiftTrackerTest.IgnoreAfterInput | behaviour | blocked | model lacks layout shift (CLS) tracking |
 | layout_shift_tracker_test.cc:63 | LayoutShiftTrackerTest.CompositedShiftBeforeFirstPaint | behaviour | blocked | model lacks layout shift (CLS) tracking |
 | layout_shift_tracker_test.cc:90 | LayoutShiftTrackerTest.IgnoreSVG | behaviour | blocked | model lacks layout shift (CLS) tracking |
