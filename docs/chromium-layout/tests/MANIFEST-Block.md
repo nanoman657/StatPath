@@ -40,7 +40,7 @@ checks every row against the pinned sources and the Lean modules.
 | block_layout_algorithm_test.cc:744 | BlockLayoutAlgorithmTest.CollapsingMarginsWithText | geometry | blocked | needs text line layout in `<p>`; expected offsets depend on the text's line box, not modelled by BlockFlow |
 | block_layout_algorithm_test.cc:772 | BlockLayoutAlgorithmTest.CollapsingMarginsCase6 | geometry | formalized | `TestsBlock.CollapsingMarginsCase6_vectors` |
 | block_layout_algorithm_test.cc:815 | BlockLayoutAlgorithmTest.CollapsingMarginsCase7 | geometry | formalized | `TestsBlock.CollapsingMarginsCase7_vectors`, `BlockFloat.clear_left_no_left` |
-| block_layout_algorithm_test.cc:869 | BlockLayoutAlgorithmTest.CollapsingMarginsEmptyBlockWithClearance | geometry | blocked | needs float, `clear`, abspos |
+| block_layout_algorithm_test.cc:869 | BlockLayoutAlgorithmTest.CollapsingMarginsEmptyBlockWithClearance | geometry | formalized | `TestsBlock.CollapsingMarginsEmptyBlockWithClearance_vectors`, `BlockFloat.emptyBlockWithClearanceLayout`, `BlockFloat.emptyBlockWithClearance_ge_floatBottom` |
 | block_layout_algorithm_test.cc:1029 | BlockLayoutAlgorithmTest.NewFormattingContextAutoMargins | geometry | formalized | `TestsBlock.NewFormattingContextAutoMargins_vectors`, `BlockFloat.new_fc_auto_margin` |
 | block_layout_algorithm_test.cc:1062 | BlockLayoutAlgorithmTest.BorderAndPadding | geometry | formalized | `TestsBlock.BorderAndPadding_div1`, `TestsBlock.BorderAndPadding_div2_offset` |
 | block_layout_algorithm_test.cc:1118 | BlockLayoutAlgorithmTest.PercentageResolutionSize | geometry | formalized | `TestsBlock.PercentageResolutionSize_widths` |
@@ -727,9 +727,9 @@ checks every row against the pinned sources and the Lean modules.
 | layout_object_test.cc:487 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectInBody | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:501 | LayoutObjectTest.ContainingBoxAbsoluteLayoutObjectShouldNotBeNonStaticallyPositionedInlineAncestor | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:533 | LayoutObjectTest.PaintingLayerOfOverflowClipLayerUnderColumnSpanAll | behaviour | blocked | model lacks paint layer hierarchy under column span |
-| layout_object_test.cc:549 | LayoutObjectTest.FloatUnderBlock | behaviour | blocked | model lacks floats |
+| layout_object_test.cc:549 | LayoutObjectTest.FloatUnderBlock | behaviour | formalized | `TestsBlock.FloatUnderBlock_vectors`, `BlockFloat.floatContainerAndLayer` |
 | layout_object_test.cc:570 | LayoutObjectTest.InlineFloatMismatch | behaviour | blocked | model lacks floats |
-| layout_object_test.cc:584 | LayoutObjectTest.FloatUnderInline | behaviour | blocked | model lacks floats |
+| layout_object_test.cc:584 | LayoutObjectTest.FloatUnderInline | behaviour | formalized | `TestsBlock.FloatUnderInline_vectors`, `BlockFloat.floatContainerAndLayer` |
 | layout_object_test.cc:616 | LayoutObjectTest.MutableForPaintingClearPaintFlags | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:650 | LayoutObjectTest.DelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |
 | layout_object_test.cc:673 | LayoutObjectTest.SubtreeAndDelayFullPaintInvalidation | internal | internal | Blink LayoutObject tree/property plumbing check |

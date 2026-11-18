@@ -424,5 +424,24 @@ theorem CollapsingMarginsCase6_vectors :
     res[1]!.y = 100 := by
   decide
 
+/-- `CollapsingMarginsEmptyBlockWithClearance` (line 869): self-collapsing empty block with clearance, abspos static position, and following in-flow sibling. -/
+theorem CollapsingMarginsEmptyBlockWithClearance_vectors :
+    BlockFloat.emptyBlockWithClearanceLayout 50 0 0 0 0 0 = (50, 50, 50) ∧
+    BlockFloat.emptyBlockWithClearanceLayout 50 0 (-60) 20 (-70) 50 = (50, 40, 70) ∧
+    BlockFloat.emptyBlockWithClearanceLayout 50 0 70 (-10) (-20) 80 = (60, 50, 60) ∧
+    (BlockFloat.emptyBlockWithClearanceLayout 50 30 20 (-10) 0 25).1 = 50 ∧
+    (BlockFloat.emptyBlockWithClearanceLayout 50 30 20 (-10) 0 25).2.2 = 55 := by
+  decide
+
+/-- `layout_object_test.cc:549`: FloatUnderBlock. -/
+theorem FloatUnderBlock_vectors :
+    BlockFloat.floatContainerAndLayer 2 2 1 = (1, 2, 2, false) := by
+  decide
+
+/-- `layout_object_test.cc:584`: FloatUnderInline. -/
+theorem FloatUnderInline_vectors :
+    BlockFloat.floatContainerAndLayer 3 2 3 = (3, 3, 2, false) := by
+  decide
+
 end TestsBlock
 end ChromiumLayout

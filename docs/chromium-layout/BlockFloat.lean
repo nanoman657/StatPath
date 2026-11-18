@@ -373,5 +373,55 @@ theorem flow_root_propagates (fuel id : Nat) (c : BoxDescendant) (rest : List Bo
   rw [h]
   rfl
 
+/-- Collapse two adjoining vertical margins (max positive plus min negative).
+    CSS 2.1 §8.3.1 Collapsing margins. -/
+def collapseMarginPair (m1 m2 : Int) : Int :=
+  max 0 (max m1 m2) + min 0 (min m1 m2)
+
+/-- Block-axis positions `(zeroTop, absTop, inflowTop)` for a self-collapsing
+    empty block `#zero` with `clear: left` after a float of bottom `floatBottom`,
+    followed by an out-of-flow `#abs` (static position) and an in-flow `#inflow`.
+    CSS 2.1 §8.3.1 (Collapsing margins), §9.5.2 (Clearance)
+    (`block_layout_algorithm_test.cc:869`). -/
+def emptyBlockWithClearanceLayout
+    (floatBottom mTopBottom mInnerTop mInnerBottom mZeroBottom mInflowTop : Int) :
+    Int × Int × Int :=
+  let mZeroInternal := collapseMarginPair mInnerTop mInnerBottom
+  let mBeforeClear := collapseMarginPair mTopBottom mZeroInternal
+  if mBeforeClear < floatBottom then
+    let strutBase := floatBottom - mZeroInternal
+    let outPos := max 0 (max mInnerBottom mZeroBottom)
+    let outNeg := min 0 (min mInnerBottom mZeroBottom)
+    (floatBottom, strutBase + outPos + outNeg, strutBase + max outPos mInflowTop + outNeg)
+  else
+    let outPos := max 0 (max mTopBottom (max mInnerTop (max mInnerBottom mZeroBottom)))
+    let outNeg := min 0 (min mTopBottom (min mInnerTop (min mInnerBottom mZeroBottom)))
+    (mBeforeClear, outPos + outNeg, max outPos mInflowTop + outNeg)
+
+/-- Painting layer, parent container, containing block box, and ancestor-skip flag
+    for a float under a block or inline parent (`layout_object_test.cc:549`, `:584`).
+    CSS 2.1 §9.5, §9.5.1, Appendix E.2. -/
+def floatContainerAndLayer (parentId enclosingBlockId nearestLayerId : Nat) :
+    Nat × Nat × Nat × Bool :=
+  (nearestLayerId, parentId, enclosingBlockId,
+   parentId != nearestLayerId && parentId != enclosingBlockId)
+
+/-- Law: Collapsing two margins is commutative.
+    CSS 2.1 §8.3.1. -/
+theorem collapseMarginPair_comm (m1 m2 : Int) :
+    collapseMarginPair m1 m2 = collapseMarginPair m2 m1 := by
+  simp only [collapseMarginPair]
+  omega
+
+/-- Law: A cleared empty block is always placed at or below `floatBottom`.
+    CSS 2.1 §9.5.2. -/
+theorem emptyBlockWithClearance_ge_floatBottom
+    (floatBottom mTopBottom mInnerTop mInnerBottom mZeroBottom mInflowTop : Int) :
+    floatBottom ≤
+      (emptyBlockWithClearanceLayout
+        floatBottom mTopBottom mInnerTop mInnerBottom mZeroBottom mInflowTop).1 := by
+  dsimp [emptyBlockWithClearanceLayout]
+  split <;> omega
+
 end BlockFloat
 end ChromiumLayout
