@@ -402,32 +402,43 @@ theorem svg_inline_localToAncestorPoint :
     SVG 2 §11.3.3 & §11.4: Characters laid out along a text path advance within path bounds
     and apply textLength adjustments. -/
 theorem svgText_positionOnPathCrash :
-    computeSvgTextPathAdvance 200 0 400 = 200 ∧
-    computeSvgTextLengthAdjustment 200 400 .spacing = (1, 200) := by
+    let pathLength := 200
+    let startOffset := 0
+    let specifiedTextLength := 400
+    computeSvgTextPathAdvance pathLength startOffset specifiedTextLength = 200 ∧
+    computeSvgTextLengthAdjustment pathLength specifiedTextLength .spacing = (1, 200) := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthCrash` (`svg/svg_text_layout_algorithm_test.cc:27`).
     SVG 2 §11.4: An empty textPath element with textLength specified produces zero advance and default scale 1. -/
 theorem svgText_emptyTextLengthCrash :
-    computeSvgTextLengthAdjustment 0 100 .spacing = (1, 0) := by
+    let emptyContentLength := 0
+    let specifiedTextLength := 100
+    computeSvgTextLengthAdjustment emptyContentLength specifiedTextLength .spacing = (1, 0) := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthSpacingAndGlyphsCrash` (`svg/svg_text_layout_algorithm_test.cc:38`).
     SVG 2 §11.4: Non-rendered zero-width characters under spacingAndGlyphs avoid division by zero. -/
 theorem svgText_emptyTextLengthSpacingAndGlyphsCrash :
-    computeSvgTextLengthAdjustment 0 5 .spacingAndGlyphs = (1, 0) := by
+    let zeroContentLength := 0
+    let specifiedTextLength := 5
+    computeSvgTextLengthAdjustment zeroContentLength specifiedTextLength .spacingAndGlyphs = (1, 0) := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, HugeScaleCrash` (`svg/svg_text_layout_algorithm_test.cc:47`).
     SVG 2 §7.3 & CSS Transforms 1 §5: Excessive scale factors on SVG text are clamped to finite layout bounds. -/
 theorem svgText_hugeScaleCrash :
-    clampSvgScale 16420065941240262705269076410170673060945878020586681613052798923953430637521913631296811416 1000000 = 1000000 := by
+    let hugeScale := 16420065941240262705269076410170673060945878020586681613052798923953430637521913631296811416
+    let maxScale := 1000000
+    clampSvgScale hugeScale maxScale = 1000000 := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, ControlCharCrash` (`svg/svg_text_layout_algorithm_test.cc:62`).
     SVG 2 §11.1 & CSS Text 3 §4.1: Control character (form feed) in SVG text produces matching spacing adjustment. -/
 theorem svgText_controlCharCrash :
-    computeSvgTextLengthAdjustment 2 2 .spacing = (1, 0) := by
+    let nonControlChars := 2  -- 'a' and 'd'
+    let targetLength := 2
+    computeSvgTextLengthAdjustment nonControlChars targetLength .spacing = (1, 0) := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, FirstLineTextTransformCrash` (`svg/svg_text_layout_algorithm_test.cc:70`).
@@ -447,82 +458,114 @@ theorem svgText_textPathCrash :
 
 /-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_foreign_object_test.cc:525`). -/
 theorem layoutSvgForeignObject_getBBoxUseCounterForZeroHeight :
-    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
-  rfl
+    let width := 100
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_foreign_object_test.cc:545`). -/
 theorem layoutSvgForeignObject_getBBoxUseCounterForZeroWidth :
-    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
-  rfl
+    let width := 0
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_foreign_object_test.cc:565`). -/
 theorem layoutSvgForeignObject_getBBoxUseCounterForZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
-  rfl
+    let width := 0
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGForeignObjectTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_foreign_object_test.cc:585`). -/
 theorem layoutSvgForeignObject_getBBoxUseCounterForNonZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
-  rfl
+    let width := 100
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_image_test.cc:16`). -/
 theorem layoutSvgImage_getBBoxUseCounterForZeroHeight :
-    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
-  rfl
+    let width := 100
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_image_test.cc:34`). -/
 theorem layoutSvgImage_getBBoxUseCounterForZeroWidth :
-    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
-  rfl
+    let width := 0
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGImageTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_image_test.cc:52`). -/
 theorem layoutSvgImage_getBBoxUseCounterForZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
-  rfl
+    let width := 0
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGImageTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_image_test.cc:70`). -/
 theorem layoutSvgImage_getBBoxUseCounterForNonZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
-  rfl
+    let width := 100
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_rect_test.cc:16`). -/
 theorem layoutSvgRect_getBBoxUseCounterForZeroHeight :
-    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
-  rfl
+    let width := 100
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_rect_test.cc:34`). -/
 theorem layoutSvgRect_getBBoxUseCounterForZeroWidth :
-    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
-  rfl
+    let width := 0
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGRectTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_rect_test.cc:52`). -/
 theorem layoutSvgRect_getBBoxUseCounterForZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
-  rfl
+    let width := 0
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGRectTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_rect_test.cc:70`). -/
 theorem layoutSvgRect_getBBoxUseCounterForNonZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
-  rfl
+    let width := 100
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_viewport_container_test.cc:16`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroHeight :
-    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
-  rfl
+    let width := 100
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_viewport_container_test.cc:36`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidth :
-    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
-  rfl
+    let width := 0
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = true := by
+  decide
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:56`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
-  rfl
+    let width := 0
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:76`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
-  rfl
+    let width := 100
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = false := by
+  decide
 
 end ChromiumLayout

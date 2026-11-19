@@ -363,3 +363,6 @@ done: TestsInline_RubyUtils +0
 done: TestsInline_List +0
 - Strengthened newly formalized theorems `layoutInlineListItem_getOffsetMappingNoCrash` and `layoutInlineListItem_offsetMappingBuilderNoCrash` to flow display mode ("inline list-item") and @counter-style rules through `isInlineListItem` per CSS Lists 3 §2.1.
 
+done: TestsInline_SVG +0
+- Strengthened 23 newly formalized theorems across SVG text layout algorithms (`svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `controlCharCrash`) and getBBox 1D degenerate use-counter evaluations across foreignObject, image, rect, and viewport containers to flow element dimensions and text lengths directly through general SVG model functions per SVG 2 §11 and §13.2.
+
