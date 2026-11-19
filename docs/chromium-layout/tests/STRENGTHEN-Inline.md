@@ -357,3 +357,6 @@ done: TestsInline_LayoutText +0
 done: TestsInline_LayoutTextFragment +0
 - Strengthened newly formalized theorems `layoutTextFragment_setTextWithFirstLetter` and `layoutTextFragment_splitTextWithZero` to flow initial text, split empty prefix, mutated string, and multi-node split lists through `hasLayoutTextFragment` and `findFirstLetterInNodes` per CSS Pseudo-Elements 4 §2.2.
 
+done: TestsInline_RubyUtils +0
+- Strengthened newly formalized theorem `justificationUtils_setupItemJustificationOpportunityCrash` to flow ruby annotation and non-text atomic inline tags into `hasRubyJustificationOpportunity` per CSS Text 3 §7.3 & CSS Ruby 1 §3.
+

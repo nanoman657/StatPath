@@ -228,11 +228,15 @@ theorem inlineNode_nestedRubyMinMaxCrash :
 
 /-- Test `JustificationUtilsTest, SetupItemJustificationOpportunityCrash` (`inline/justification_utils_test.cc:14`).
     CSS Text 3 §7.3 & CSS Ruby 1 §3:
-    In ruby containers with text-align: justify, ruby annotations and atomic inlines
+    In ruby containers with text-align: justify, ruby annotations (<rt>) and non-text atomic inlines (<svg>)
     do not receive justification expansion opportunities. -/
 theorem justificationUtils_setupItemJustificationOpportunityCrash :
-    hasRubyJustificationOpportunity true true = false ∧
-    hasRubyJustificationOpportunity false false = false := by
+    let rtIsAnnotation := true
+    let rtHasText := true
+    let svgIsAnnotation := false
+    let svgHasText := false
+    hasRubyJustificationOpportunity rtIsAnnotation rtHasText = false ∧
+    hasRubyJustificationOpportunity svgIsAnnotation svgHasText = false := by
   decide
 
 end ChromiumLayout
