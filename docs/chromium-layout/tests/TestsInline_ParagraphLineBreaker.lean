@@ -173,15 +173,17 @@ theorem scoreLineBreaker_lineCountMismatchFallback :
 /-- Test `ScoreLineBreakerTest.UseCountNotCountedForWrap` (`inline/score_line_breaker_test.cc:490`).
     CSS Text 4 §7.1: Default text-wrap does not count kTextWrapBalance or kTextWrapPretty. -/
 theorem scoreLineBreaker_useCountNotCountedForWrap :
-    isUseCountedTextWrapBalance TextWrapType.wrap = false ∧
-    isUseCountedTextWrapPretty TextWrapType.wrap = false := by
+    let wrapStyle := TextWrapType.wrap
+    isUseCountedTextWrapBalance wrapStyle = false ∧
+    isUseCountedTextWrapPretty wrapStyle = false := by
   decide
 
 /-- Test `ScoreLineBreakerTest.UseCountNotCountedForBalance` (`inline/score_line_breaker_test.cc:498`).
     CSS Text 4 §7.1: text-wrap: balance counts kTextWrapBalance, but not kTextWrapPretty. -/
 theorem scoreLineBreaker_useCountNotCountedForBalance :
-    isUseCountedTextWrapBalance TextWrapType.balance = true ∧
-    isUseCountedTextWrapPretty TextWrapType.balance = false := by
+    let balanceStyle := TextWrapType.balance
+    isUseCountedTextWrapBalance balanceStyle = true ∧
+    isUseCountedTextWrapPretty balanceStyle = false := by
   decide
 
 end ChromiumLayout.TestsInline

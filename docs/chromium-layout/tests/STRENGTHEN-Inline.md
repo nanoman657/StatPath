@@ -348,3 +348,6 @@ done: TestsInline_InlineCaretPosition +0
 done: TestsInline_LineInfo +0
 - Strengthened newly formalized theorem `lineInfo_trailingSpaceWidthInitialEmptyItem` to flow whitespace mode (.preWrap), initial zero-length control item, trailing space string (" "), and available width (0) through general hanging space calculation `computeHangingSpaceWidth` per CSS Text 3 §4.1.2 & §5.4.
 
+done: TestsInline_ParagraphLineBreaker +0
+- Strengthened newly formalized theorems `scoreLineBreaker_useCountNotCountedForWrap` and `scoreLineBreaker_useCountNotCountedForBalance` to bind CSS text-wrap styles through general use-counter predicates per CSS Text 4 §7.1.
+
