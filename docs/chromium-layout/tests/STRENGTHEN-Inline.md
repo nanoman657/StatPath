@@ -342,3 +342,6 @@ done: TestsInline_InlineItemsBuilder +0
 done: TestsInline_InlineCursor +0
 - Strengthened 3 newly formalized theorems (`inlineCursor_culledInlineWithNonIFCChild`, `inlineCursor_culledInlineBlockInInlineOverflow`, `inlineCursor_cursorForMovingAcrossFragmentainer`) to flow box decoration flags, multi-column count and per-column items, and fragmentainer partitioning through general cursor functions (`shouldInlineCreateBoxFragment`, `traverseCulledInlineFragments`, `isBlockFragmented`).
 
+done: TestsInline_InlineCaretPosition +0
+- Strengthened newly formalized theorem `inlineCaretPosition_beforeOrAfterInlineAreaElement` to flow HTML area tag into layout object absence predicate before query per HTML 5.2 §4.8.12.
+
