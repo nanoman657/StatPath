@@ -112,10 +112,9 @@ thin, needs pseudo-element anonymous LayoutText generation for ::after and ::mar
   - `layoutText_absoluteQuadsVRL`, `physicalLinesBoundingBox*`: run line boxes through `computeLinePhysicalRects` and `physicalLinesBoundingBox`.
   - `layoutText_setTextWithOffset*` (28 tests): run CharacterData mutations through `applyCharacterDataMutation`, `mutateAndCollapseText`, `computeTextMutationInvalidation`, and `formatLayoutTextItems`.
 
-unticked: TestsInline_LayoutTextFragment
-- Verified all theorems in file are not thin:
-  - `layoutTextFragment_basics`, `caretMinMaxOffset`, `caretMinMaxOffsetCollapsedRemainingText`, `resolvedTextLength`, `resolvedTextLengthSpacesInBetween`, `resolvedTextLengthCollapsedRemainingText`, `containsCaretOffset`, `containsCaretOffsetSpacesInBetween`, `containsCaretOffsetPre`, `containsCaretOffsetPreLine`, `isBeforeAfterNonCollapsedCharacterNoLineWrap`, `isBeforeAfterNonCollapsedLineWrapSpace`: all run input DOM strings through `buildDomOffsetMapping` and `splitFirstLetter` into `fragmentCaretMinOffset`, `fragmentCaretMaxOffset`, `fragmentResolvedTextLength`, `fragmentContainsCaretOffset`, and `fragmentIsBeforeNonCollapsed` / `fragmentIsAfterNonCollapsed`. No bare numbers or bypass helpers are used.
-  - `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter`: tests `applyCapitalizeTransform` with preceding letter context.
+thin, needs DOM mutation lifecycle (setData/splitText) for ::first-letter LayoutTextFragment: TestsInline_LayoutTextFragment
+- Thin theorems:
+  - `layoutTextFragment_setTextWithFirstLetter`, `splitTextWithZero`: needs DOM mutation (setData, splitText(0)) layout tree update for ::first-letter LayoutTextFragment
 
 done: TestsInline_LayoutInline +0
 - Rewrote thin theorem `layoutInline_absoluteBoundingBoxRectHandlingEmptyInline` to compute continuation bounding box `t6` from container width, line origin, and continuation child dimensions ((30 + 4) * 2 + 100) per CSS 2.1 §9.4.2 & §10.8 instead of hardcoded literal.
