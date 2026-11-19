@@ -42,7 +42,13 @@ theorem lineInfo_inflowEndOffset :
     Under pre-wrap with zero available width, a trailing space following a zero-length control item
     (carriage return U+000D) hangs outside the line box. -/
 theorem lineInfo_trailingSpaceWidthInitialEmptyItem :
-    computeHangingSpaceWidth .preWrap false 0 1 none 0 10 = 1 := by
+    let mode : WhiteSpaceMode := .preWrap
+    let hasForcedBreak := false
+    let controlItemLength := 0  -- U+000D CR produces zero-length item at start
+    let trailingSpaces := " "
+    let availableWidth := 0
+    let charWidth := 10
+    computeHangingSpaceWidth mode hasForcedBreak controlItemLength trailingSpaces.length none availableWidth charWidth = 1 := by
   decide
 
 end ChromiumLayout

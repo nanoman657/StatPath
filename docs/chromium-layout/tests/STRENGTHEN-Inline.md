@@ -345,3 +345,6 @@ done: TestsInline_InlineCursor +0
 done: TestsInline_InlineCaretPosition +0
 - Strengthened newly formalized theorem `inlineCaretPosition_beforeOrAfterInlineAreaElement` to flow HTML area tag into layout object absence predicate before query per HTML 5.2 §4.8.12.
 
+done: TestsInline_LineInfo +0
+- Strengthened newly formalized theorem `lineInfo_trailingSpaceWidthInitialEmptyItem` to flow whitespace mode (.preWrap), initial zero-length control item, trailing space string (" "), and available width (0) through general hanging space calculation `computeHangingSpaceWidth` per CSS Text 3 §4.1.2 & §5.4.
+
