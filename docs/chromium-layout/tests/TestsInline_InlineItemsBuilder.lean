@@ -8,6 +8,7 @@ import LayoutTypes
 import LayoutInline
 import InlineFragmentItem
 import InlineItemBuilder
+import InlineOffsetMapping
 import InlineBidi
 
 namespace ChromiumLayout.TestsInline
@@ -223,12 +224,28 @@ theorem inlineItemsBuilder_openCloseRubyColumns :
   decide
 
 /-- Test 31: OffsetMappingStaysConsistentUnderFullWidthTransform (inline_items_builder_test.cc:638).
-    CSS Text 3 §2.1 & CSS Text 3 §4.1: Under text-transform: full-width, space transforms to ideographic
-    space U+3000, and adjacent boundary spaces collapse consistently between layout and offset mapping. -/
+    CSS Text 3 §2.1 & CSS Text 3 §4.1:
+    `<div id="container" style="text-transform: full-width"><span id="prefix">x </span><span id="target"> foo</span></div>`
+    Under text-transform: full-width, space transforms to ideographic space U+3000,
+    and adjacent boundary spaces collapse consistently between layout and offset mapping passes. -/
 theorem inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform :
+    let prefixText := "x "
+    let targetText := " foo"
+    let builderInputs : List BuilderInput := [
+      .text prefixText,
+      .text targetText
+    ]
+    let domNodes : List DomNode := [
+      .text 0 prefixText .normal,
+      .text 1 targetText .normal
+    ]
+    let builtStr := buildInlineString builderInputs
+    let mapping := buildDomOffsetMapping domNodes
+    builtStr = "x foo" ∧
+    builtStr.length = 5 ∧
     transformFullWidthSpace ' ' = '\u3000' ∧
-    collapsedInlineBoundaryLength 2 4 true true = 5 ∧
-    collapsedInlineBoundaryLength 1 4 false true = 5 := by
+    collapsedIndicesForNode mapping 1 = [0] ∧
+    collapsedIndicesForNode mapping 0 = [] := by
   decide
 
 end ChromiumLayout.TestsInline
