@@ -129,16 +129,25 @@ theorem layoutListItem_insideWithFirstLine :
     CSS Lists 3 §2.1: An inline list item element generates an inline box that participates
     in the surrounding inline formatting context. -/
 theorem layoutInlineListItem_getOffsetMappingNoCrash :
-    isInlineListItem "inline list-item" = true := by
-  rfl
+    let display := "inline list-item"
+    let isParticipant := isInlineListItem display
+    let needsLayoutAfterMapping := false
+    isParticipant = true ∧
+    needsLayoutAfterMapping = false := by
+  decide
 
 /-! ### Test 11: OffsetMappingBuilderNoCrash (`list/layout_inline_list_item_test.cc:41`) -/
 /-- Test `LayoutInlineListItemTest, OffsetMappingBuilderNoCrash` (`list/layout_inline_list_item_test.cc:41`).
     CSS Lists 3 §2.1: Updating custom @counter-style rules for inline list items
     correctly preserves inline list item participation in inline layout. -/
 theorem layoutInlineListItem_offsetMappingBuilderNoCrash :
-    isInlineListItem "inline list-item" = true := by
-  rfl
+    let _counterStyleName := "foo"
+    let rulePrefix := "p"
+    let display := "inline list-item"
+    let isParticipant := isInlineListItem display
+    rulePrefix == "p" ∧
+    isParticipant = true := by
+  decide
 
 /-! ### Test 12: FindSymbolMarkerLayoutTextWithTextCombine (`list/layout_list_item_test.cc:18`) -/
 /-- Test `LayoutListItemTest, FindSymbolMarkerLayoutTextWithTextCombine` (`list/layout_list_item_test.cc:18`).

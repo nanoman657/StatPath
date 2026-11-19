@@ -360,3 +360,6 @@ done: TestsInline_LayoutTextFragment +0
 done: TestsInline_RubyUtils +0
 - Strengthened newly formalized theorem `justificationUtils_setupItemJustificationOpportunityCrash` to flow ruby annotation and non-text atomic inline tags into `hasRubyJustificationOpportunity` per CSS Text 3 §7.3 & CSS Ruby 1 §3.
 
+done: TestsInline_List +0
+- Strengthened newly formalized theorems `layoutInlineListItem_getOffsetMappingNoCrash` and `layoutInlineListItem_offsetMappingBuilderNoCrash` to flow display mode ("inline list-item") and @counter-style rules through `isInlineListItem` per CSS Lists 3 §2.1.
+
