@@ -190,10 +190,8 @@ theorem inlineCaretPosition_multiColumnSingleText :
     HTML 5.2 §4.8.12:
     The area element does not generate CSS layout boxes; caret position before or after returns none. -/
 theorem inlineCaretPosition_beforeOrAfterInlineAreaElement :
-    let tag := "area"
-    let hasLayoutObject := if tag == "area" then false else true
-    computeInlineCaretPositionForElement hasLayoutObject .beforeBox = none ∧
-    computeInlineCaretPositionForElement hasLayoutObject .afterBox = none := by
+    computeInlineCaretPositionForElement false .beforeBox = none ∧
+    computeInlineCaretPositionForElement false .afterBox = none := by
   decide
 
 end ChromiumLayout.TestsInline

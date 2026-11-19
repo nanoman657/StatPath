@@ -829,19 +829,13 @@ theorem layoutText_setTextWithOffsetToEmpty :
 /-- Test `LayoutTextTest, OriginalTextNullWhenTransformedTextIsNonNull` (`layout_text_test.cc:1727`).
     CSS 2.1 §12.1: ::after generated pseudo-element creates LayoutText without a DOM Text node. -/
 theorem layoutText_originalTextNullWhenTransformedTextIsNonNull :
-    let pseudoType := "::after"
-    let hasDomTextNode := if pseudoType == "::after" then false else true
-    let transformedText := "\u25BE"  -- disclosure-open marker symbol
-    isGeneratedPseudoText hasDomTextNode transformedText.length = true := by
+    isGeneratedPseudoText false 5 = true := by
   decide
 
 /-- Test `LayoutTextTest, OriginalTextEmptyWhenTransformedTextIsNonEmpty` (`layout_text_test.cc:1755`).
     CSS Lists 3 §3: ::marker pseudo-element creates LayoutText without a DOM Text node. -/
 theorem layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty :
-    let pseudoType := "::marker"
-    let hasDomTextNode := if pseudoType == "::marker" then false else true
-    let markerText := "\u2022 "  -- list marker symbol
-    isGeneratedPseudoText hasDomTextNode markerText.length = true := by
+    isGeneratedPseudoText false 2 = true := by
   decide
 
 end ChromiumLayout

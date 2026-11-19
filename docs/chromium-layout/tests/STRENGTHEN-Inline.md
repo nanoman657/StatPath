@@ -5,13 +5,13 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 - Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
 
-done: TestsInline_LineBreaker +0
+unticked: TestsInline_LineBreaker
 - Rewrote `lineBreaker_bidiControlEnter` to flow CSS input `font: 10px/1 Ahem; width: 40px; xxx-<bdi>xx</bdi>` through general line breaking and line box stacking.
 
-done: TestsInline_InlineLayoutAlgorithm +0
+unticked: TestsInline_InlineLayoutAlgorithm
 - Rewrote 9 theorems (`test_BreakToken_chain`, `inlineLayoutAlgorithm_boxForEndMargin`, `test_PositionFloatsWithMargins`, `test_InkOverflow`, `test_LineBoxWithHangingWidthRTLRightAligned`, `test_LineBoxWithHangingWidthRTLCenterAligned`, `test_TextFloatsAroundFloatsBefore`, `inlineLayoutAlgorithm_textBoxTrimOnInlineBox`, `inlineLayoutAlgorithm_textCombineBasic`) to flow test setup through `breakLines`, `createLineBox`, float positioning, and font metrics.
 
-done: TestsInline_InlineNode +0
+unticked: TestsInline_InlineNode
 - Rewrote `inlineNode_textCombineWordSpacing` to take CSS style properties (`writing-mode: vertical-rl`, `text-combine-upright: all`, `letter-spacing: 1px`, `word-spacing: 1px`) and flow them through `isTextCombineActive` into `effectiveLetterSpacing` and `effectiveWordSpacing`, asserting suppression to 0 per CSS Writing Modes 3 §5.1.4.
 - Other theorems in file verified not thin:
   - `inlineNode_collectInlinesText`, `inlineNode_collectInlinesBR`, `inlineNode_collectInlinesFloat`, `inlineNode_collectInlinesInlineBlock`, `inlineNode_collectInlinesUTF16`, `inlineNode_collectInlinesMaybeRtl`, `inlineNode_collectInlinesRtl`, `inlineNode_collectInlinesRtlWithSpan`, `inlineNode_collectInlinesTextCombineBR`, `inlineNode_collectInlinesTextCombineListItemMarker`, `inlineNode_collectInlinesTextCombineNewline`, `inlineNode_collectInlinesTextCombineWBR`, `inlineNode_textCombineUsesScalingX`, `inlineNode_collectInlinesMixedText`, `inlineNode_collectInlinesMixedTextEndWithON`, `inlineNode_segmentASCII`, `inlineNode_segmentHebrew`, `inlineNode_segmentSplit1To2`, `inlineNode_segmentSplit3To4`, `inlineNode_segmentBidiOverride`, `inlineNode_segmentBidiIsolate`, `inlineNode_preservedNewlineWithBidiAndRelayout`, `inlineNode_preservedNewlineWithRemovedBidiAndRelayout`, `inlineNode_preservedNewlineWithRemovedLtrDirAndRelayout`, `inlineNode_insertedWBRWithLineBreakInRelayout`, `inlineNode_collapsibleSpaceFollowingBRWithNoWrapStyle`, `inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle`, `inlineNode_reusingWithPreservedCase1`, `inlineNode_reusingWithPreservedCase2`, `inlineNode_reusingWithPreservedCase3`, `inlineNode_reusingWithCollapsed`, `inlineNode_reusingRTLAsLTR`: run DOM text and element tokens directly through general `collectInlines`, `buildInlineString`, `segmentInlineText`, and bidi resolution functions.
@@ -19,7 +19,7 @@ done: TestsInline_InlineNode +0
   - `inlineNode_minMaxSizesSaturated`: runs extreme atomic inline size through `computeMinMaxSizesAhem` to test LayoutUnit saturation.
   - `inlineNode_needsCollectInlinesOnStyle`, `inlineNode_needsCollectInlinesOnInsert`, `inlineNode_needsCollectInlinesOnRemove`, `inlineNode_invalidateAddSpan`, `inlineNode_invalidateRemoveSpan`, `inlineNode_invalidateAddInnerSpan`, `inlineNode_invalidateRemoveInnerSpan`, `inlineNode_invalidateSetText`, `inlineNode_invalidateAddAbsolute`, `inlineNode_invalidateRemoveAbsolute`, `inlineNode_invalidateChangeToAbsolute`, `inlineNode_invalidateChangeFromAbsolute`, `inlineNode_invalidateAddFloat`, `inlineNode_invalidateRemoveFloat`, `inlineNode_spaceRestoredByInsertingWord`, `inlineNode_needsCollectInlinesOnInsertToOutOfFlowButton`, `inlineNode_removeInlineNodeDataIfBlockBecomesEmpty1`, `inlineNode_removeInlineNodeDataIfBlockBecomesEmpty2`, `inlineNode_removeInlineNodeDataIfBlockObtainsBlockChild`, `inlineNode_segmentRanges`, `inlineNode_initialLetter`: run mutation operations, DOM structure transitions, segment range slicing, and initial letter classification through general functions (`computeNeedsCollectInlines`, `establishesInlineFormattingContext`, `segmentRanges`, `collectInlinesStep`, `hasInitialLetterBox`).
 
-done: TestsInline_InlineItemsBuilder +0
+unticked: TestsInline_InlineItemsBuilder
 - Rewrote 7 thin theorems (`inlineItemsBuilder_collapseAcrossElements`, `inlineItemsBuilder_collapseLeadingSpaces`, `inlineItemsBuilder_collapseTrailingSpaces`, `inlineItemsBuilder_collapseAllSpaces`, `inlineItemsBuilder_collapseLeadingNewlines`, `inlineItemsBuilder_collapseTrailingNewlines`, `inlineItemsBuilder_collapseNewlineAcrossElements`) to run multi-element append sequences through general builder function `buildInlineString` instead of single-string `collapseText`.
 - Other theorems in file verified not thin:
   - `inlineItemsBuilder_collapseSpaces`, `collapseTabs`, `collapseNewlines`, `collapseNewlinesAsSpaces`: run whitespace modes through `collapseText`.
@@ -34,7 +34,7 @@ done: TestsInline_OffsetMapping +0
   - `test_OffsetMapping_OneTextNode`, `TwoTextNodes`, `BRBetweenTextNodes`, `PreLine`, `FullyCollapsedWhiteSpaceNode`, `ReplacedElement`, `FirstLetter`, `FirstLetterWithLeadingSpace`, `FirstLetterWithoutRemainingText`, `WhiteSpaceTextNodeWithoutLayoutText`, `ContainerWithGeneratedContent`, `StartOfNextNonCollapsedContentWithPseudo`, `EndOfLastNonCollapsedContentWithPseudo`: run DOM node structures directly through `buildDomOffsetMapping` verifying units, text offsets, and non-collapsed boundary predicates.
   - `FirstLetterInDifferentBlock`, `NoWrapSpaceAndCollapsibleSpace`, `RestoreTrailingCollapsibleSpace*`, `Table`, `GetMappingForInlineBlock`, `BiDiAroundForcedBreakIn*`, `SoftHyphen`, `PreWrapAndReusing`, `TextOverflowEllipsis`, `WordBreak`: run specialized layout structures through respective offset mapping builders and scope resolution functions.
 
-done: TestsInline_InlineCursor +0
+unticked: TestsInline_InlineCursor
 - Rewrote thin theorem `inlineCursor_bidiLevelSimpleRTL` to construct BidiItem sequences and run them through `bidiLevels` into `reorderBidiRunsVisual` instead of passing bare tuple lists.
 - Other theorems in file verified not thin:
   - `inlineCursor_bidiLevelInlineBoxLTR`, `inlineCursor_bidiLevelInlineBoxRTL`, `inlineCursor_bidiLevelSimpleLTR`: run DOM/bidi items directly through `bidiLevels`.
@@ -42,7 +42,7 @@ done: TestsInline_InlineCursor +0
   - `inlineCursor_parent`, `containingLine`, `culledInline*`, `firstChild*`, `lastChild*`, `firstLastLogicalLeaf*`, `isEmptyLineBox`, `next*`, `previous*`, `cursorForDescendants`, `moveToLayoutObject`, `moveToVisualFirstOrLast`, `inlineCursor_culledInlineBlockChild`, `inlineCursor_moveToEndOfLineWithNoCharsLtr`, `inlineCursor_moveToEndOfLineWithNoCharsRtl`, `inlineCursor_firstNonPseudoLeafWithBlockImage`, `inlineCursor_nextWithEllipsisInlineBoxOnly`, `inlineCursor_positionForPointInChildBlockChildren`: construct `CursorNode` trees matching Blink HTML test cases and run them through general cursor navigation and hit-testing functions (`findParent`, `findFirstChild`, `findLastChild`, `firstLogicalLeaf`, `lastLogicalLeaf`, `findNext`, `findPrevious`, `itemsForLayoutObject`, `emptyLineBreakOffset`, `firstNonPseudoLeaf`, `positionForPointInBlockChildren`, etc.).
   - `inlineCursor_positionForPointInChildHorizontalLTR`, `HorizontalRTL`, `VerticalRTL`: run coordinate positions through general `hitTestTextOffset`.
 
-done: TestsInline_InlineCaretPosition +0
+unticked: TestsInline_InlineCaretPosition
 - Rewrote thin theorems (`inlineCaretPosition_inlineBoxesLTR`, `inlineCaretPosition_inlineBoxesRTL`) to flow CSS bidi properties through `bidiControlPrefix` per CSS Writing Modes 3 §2.4 to calculate text offsets from DOM offsets instead of hardcoded numbers.
 - Other theorems in file verified not thin:
   - `inlineCaretPosition_afterSpan`, `afterSpanCulled`, `inOneLineOfText`, `atSoftHyphen`, `atSoftLineWrap`, `atForcedLineBreak`, `atEmptyLine`, `inOneLineOfImage`, `atSoftLineWrapBetweenImages`, `atSoftLineWrapBetweenMultipleTextNodes`, `atSoftLineWrapBetweenMultipleTextNodesRtl`, `atSoftLineWrapBetweenDeepTextNodes`, `softLineWrap`: run DOM item sequences (`.span`, `.text`, `.image`, `.br`) through `buildCaretFragments` and query caret resolution via `computeCaretPosition`.
@@ -53,13 +53,13 @@ done: TestsInline_PhysicalLineBoxFragment +0
 - Verified neither theorem is thin:
   - `physicalLineBoxFragment_hasPropagatedDescendantsFloat` and `physicalLineBoxFragment_hasPropagatedDescendantsOOF` directly test `hasPropagatedDescendants` (the general model predicate in `InlineLineBox.lean` for `PhysicalLineBoxFragment::HasPropagatedDescendants()` per CSS 2.1 §9.5 and §9.3) on line item streams partitioned into normal flow items vs lines containing float / out-of-flow items, verifying propagation flags to the containing block. No bare numbers or indices are used.
 
-done: TestsInline_LineInfo +0
+unticked: TestsInline_LineInfo
 - Rewrote thin theorem `lineInfo_inflowEndOffset` to flow the test input strings ("abc", "def", "rt") through cumulative text and ruby column offsets per CSS Ruby 1 §3.1 into `lineInflowEndOffset` instead of hardcoding raw numbers.
 
 done: TestsInline_LineWidths +0
 - Verified `lineWidthsDataTest_data` is not thin: runs all 16 test cases from `line_widths_test.cc:175` with container widths, line heights, and item sequences (floats, text runs with strut metrics, baseline alignment tags, atomic inlines) through the general precomputation function `computeLineWidths` and `getLineWidthsList`. No bare indices or pre-formatted numbers are used.
 
-done: TestsInline_ParagraphLineBreaker +0
+unticked: TestsInline_ParagraphLineBreaker
 - Verified all theorems in file are not thin:
   - `paragraphLineBreaker_isDisabledBy*` and `scoreLineBreaker_ruby`: test CSS Text 4 §5.3 / §5.4 and CSS Ruby 1 §3 paragraph feature classification (`isBisectLineBreakDisabled`, `isScoreLineBreakDisabled`, `attemptParagraphBalancing`) across block-in-inline, floats, forced breaks, initial letter, tabulation, and ruby containers.
   - `scoreLineBreaker_balanceMaxLinesExceeded`: tests threshold logic `shouldBalanceParagraph` against `maxLinesForBalance`.
@@ -70,7 +70,7 @@ done: TestsInline_LineBreakCandidate +0
 - Verified all theorems in file are not thin:
   - `lineBreak_Text`, `SoftHyphen`, `SoftHyphenDisabled`, `Span`, `SpanMidWord`, `SpanCloseAfterSpace`, `OutOfFlowPositioned`, `ForcedBreak`, `AtomicInlineBr`, `AtomicInlineTrailingSpaces`, `TrailingSpacesCollapsed`: run input `IndexedInlineToken` sequences (text with soft hyphens, inline spans, atomic inlines, br elements) directly through the general line breaking candidate engine `computeLineBreakCandidates` per CSS Text 3 §4 and §5.2. No bare numbers or indices are bypassed.
 
-done: TestsInline_LayoutText +0
+unticked: TestsInline_LayoutText
 - Rewrote thin theorem `layoutText_floatFirstLetterPlainText` to flow the full input string ("Foo") through `splitFirstLetter` into `firstLetterLength` and `reconstructFirstLetterPlainText` per CSS Pseudo-Elements 4 §2.2 instead of using pre-split strings.
 - Other theorems in file verified not thin:
   - `layoutText_caretMinMaxOffset`, `resolvedTextLength`, `wordBreakElement`: run string inputs through `computeOffsetMappingUnits` extracting min/max non-collapsed offsets and resolved lengths.
@@ -83,7 +83,7 @@ done: TestsInline_LayoutText +0
   - `layoutText_absoluteQuadsVRL`, `physicalLinesBoundingBox*`: run line boxes through `computeLinePhysicalRects` and `physicalLinesBoundingBox`.
   - `layoutText_setTextWithOffset*` (28 tests): run CharacterData mutations through `applyCharacterDataMutation`, `mutateAndCollapseText`, `computeTextMutationInvalidation`, and `formatLayoutTextItems`.
 
-done: TestsInline_LayoutTextFragment +0
+unticked: TestsInline_LayoutTextFragment
 - Verified all theorems in file are not thin:
   - `layoutTextFragment_basics`, `caretMinMaxOffset`, `caretMinMaxOffsetCollapsedRemainingText`, `resolvedTextLength`, `resolvedTextLengthSpacesInBetween`, `resolvedTextLengthCollapsedRemainingText`, `containsCaretOffset`, `containsCaretOffsetSpacesInBetween`, `containsCaretOffsetPre`, `containsCaretOffsetPreLine`, `isBeforeAfterNonCollapsedCharacterNoLineWrap`, `isBeforeAfterNonCollapsedLineWrapSpace`: all run input DOM strings through `buildDomOffsetMapping` and `splitFirstLetter` into `fragmentCaretMinOffset`, `fragmentCaretMaxOffset`, `fragmentResolvedTextLength`, `fragmentContainsCaretOffset`, and `fragmentIsBeforeNonCollapsed` / `fragmentIsAfterNonCollapsed`. No bare numbers or bypass helpers are used.
   - `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter`: tests `applyCapitalizeTransform` with preceding letter context.
@@ -118,13 +118,13 @@ done: TestsInline_HyphenResult +0
 - Verified all theorems in file are not thin:
   - `hyphenResult_horizontal`, `verticalUpright`, `verticalMixed`: run hyphenation characters ("+=") with writing mode (horizontal-tb vs vertical-rl), text orientation (mixed vs upright), and feature fix flags directly through general shaping function `shapeHyphenResult` to evaluate glyph canvas rotation per CSS Writing Modes 3 §5.1.
 
-done: TestsInline_RubyUtils +0
+unticked: TestsInline_RubyUtils
 - Rewrote thin theorem `rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis` to derive annotation text height and emphasis mark height from CSS 20px font size via `computeTextEmphasisHeight fontSize` (CSS Text Decoration 3 §3.5 & CSS Ruby 1 §3.2) instead of hardcoding raw literals.
 - Other theorems in file verified not thin:
   - `rubyBlockPositionCalculator_groupLinesEmpty`: evaluates base line creation on empty column list via `groupLines`.
   - `rubyBlockPositionCalculator_groupLinesOneAnnotationLevel`, `groupLinesNested`, `groupLinesBothSides`, `groupLinesAnnotationForAnnotation`: run column ranges and ruby positions (.over / .under) through `groupLines` to calculate ruby line depth and column grouping per CSS Ruby 1 §2.3.1.
 
-done: TestsInline_List +0
+unticked: TestsInline_List
 - Verified all theorems in file are not thin:
   - `listMarker_fallbackToTextWhenImagesDisable`: evaluates image-disabled fallback directly through general `computeMarkerContent` (CSS Lists 3 §3.2).
   - `listMarker_addCounterStyle`, `listMarker_removeCounterStyle`: run `@counter-style` definitions through `formatCounterValue` (CSS Counter Styles 3 §2, §3.1.2).
@@ -190,7 +190,7 @@ done: TestsInline_Fieldset +0
   - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
   - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
 
-done: TestsInline_SVG +0
+unticked: TestsInline_SVG
 - Rewrote thin theorems:
   - `svg_foreign_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and inner div height (17px) per SVG 2 §13.2 & CSS 2.1 §10 instead of hardcoding raw point literals.
   - `svg_inline_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and local container offset (0px) per SVG 2 §11.4 & CSS 2.1 §10.
@@ -327,42 +327,22 @@ done: TestsInline_LayoutInline, TestsInline_ScoreLineBreaker, TestsInline_Fragme
   - `inlineCursor_nextIncludingFragmentainer`: Forward cursor traversal across column fragmentainers visits items in visual reading order per CSS Fragmentation 3 §3.
   - `inlineCursor_previousIncludingFragmentainer`: Backward cursor traversal across column fragmentainers visits items in exact reverse order per CSS Fragmentation 3 §3.
 
-done: TestsInline_LineBreaker +0
-- Strengthened line breaker theorems (splitTextIntoSegments, tableCellWidthCalculationQuirkOutOfFlow, boxDecorationBreakClone, rewindPositionedFloat, rewindRubyColumn, getOverhangCrash, setInputRange, createSubLineInfoAvailableWidth, removeTrailingCollapsibleSpace, splitTrailingBidiCrCrash) to flow test input characters, sliced item streams, in-flow text advance, and ruby widths through general line breaking functions.
 
-done: TestsInline_InlineLayoutAlgorithm +0
-- Strengthened 8 theorems (`test_EllipsisFallbackToDots`, `inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine`, `inlineLayoutAlgorithm_lineClampAndMaxContent`, `inlineLayoutAlgorithm_blockInInlineAppend`, `inlineLayoutAlgorithm_initialLetterEmpty`, `inlineLayoutAlgorithm_initialLetterWithEmptyInline`, `inlineLayoutAlgorithm_textFitDivisionByZero`, `inlineLayoutAlgorithm_boxFragmentInRubyCrash`, `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`) to flow glyph presence, font size, line-clamp max-content status, block-in-inline reusability, initial letter content flags, container and content widths, ruby base item types, and bidi control closing state through general functions.
 
-done: TestsInline_InlineNode +0
-- Strengthened 4 newly formalized theorems (`inlineNode_addChildToSVGRoot`, `inlineNode_reuseFirstNonSafe`, `inlineNode_reuseFirstNonSafeRtl`, `inlineNode_shouldNotResueLigature`) to flow DOM hierarchy context, character kerning pairs ("AV"), bidi direction, and cross-element ligature boundaries ("abf" + "i") through general shaping and context isolation functions into `isItemSafeToReuse`.
 
-done: TestsInline_InlineItemsBuilder +0
-- Strengthened `inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform` to flow DOM input texts ("x", "x ", " foo") and whitespace boundary collapsing through `collapsedInlineBoundaryLength` per CSS Text 3 §2.1 and §4.1.
 
-done: TestsInline_InlineCursor +0
-- Strengthened 3 newly formalized theorems (`inlineCursor_culledInlineWithNonIFCChild`, `inlineCursor_culledInlineBlockInInlineOverflow`, `inlineCursor_cursorForMovingAcrossFragmentainer`) to flow box decoration flags, multi-column count and per-column items, and fragmentainer partitioning through general cursor functions (`shouldInlineCreateBoxFragment`, `traverseCulledInlineFragments`, `isBlockFragmented`).
 
-done: TestsInline_InlineCaretPosition +0
-- Strengthened newly formalized theorem `inlineCaretPosition_beforeOrAfterInlineAreaElement` to flow HTML area tag into layout object absence predicate before query per HTML 5.2 §4.8.12.
 
-done: TestsInline_LineInfo +0
-- Strengthened newly formalized theorem `lineInfo_trailingSpaceWidthInitialEmptyItem` to flow whitespace mode (.preWrap), initial zero-length control item, trailing space string (" "), and available width (0) through general hanging space calculation `computeHangingSpaceWidth` per CSS Text 3 §4.1.2 & §5.4.
 
-done: TestsInline_ParagraphLineBreaker +0
-- Strengthened newly formalized theorems `scoreLineBreaker_useCountNotCountedForWrap` and `scoreLineBreaker_useCountNotCountedForBalance` to bind CSS text-wrap styles through general use-counter predicates per CSS Text 4 §7.1.
 
-done: TestsInline_LayoutText +0
-- Strengthened newly formalized theorems `layoutText_originalTextNullWhenTransformedTextIsNonNull` and `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty` to derive pseudo-element LayoutText existence from pseudo type (::after, ::marker) and non-empty rendered content length per CSS 2.1 §12.1 and CSS Lists 3 §3.
 
-done: TestsInline_LayoutTextFragment +0
-- Strengthened newly formalized theorems `layoutTextFragment_setTextWithFirstLetter` and `layoutTextFragment_splitTextWithZero` to flow initial text, split empty prefix, mutated string, and multi-node split lists through `hasLayoutTextFragment` and `findFirstLetterInNodes` per CSS Pseudo-Elements 4 §2.2.
 
-done: TestsInline_RubyUtils +0
-- Strengthened newly formalized theorem `justificationUtils_setupItemJustificationOpportunityCrash` to flow ruby annotation and non-text atomic inline tags into `hasRubyJustificationOpportunity` per CSS Text 3 §7.3 & CSS Ruby 1 §3.
 
-done: TestsInline_List +0
-- Strengthened newly formalized theorems `layoutInlineListItem_getOffsetMappingNoCrash` and `layoutInlineListItem_offsetMappingBuilderNoCrash` to flow display mode ("inline list-item") and @counter-style rules through `isInlineListItem` per CSS Lists 3 §2.1.
 
-done: TestsInline_SVG +0
-- Strengthened 23 newly formalized theorems across SVG text layout algorithms (`svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `controlCharCrash`) and getBBox 1D degenerate use-counter evaluations across foreignObject, image, rect, and viewport containers to flow element dimensions and text lengths directly through general SVG model functions per SVG 2 §11 and §13.2.
+
+
+
+
+
+
 

@@ -361,20 +361,16 @@ theorem layoutTextFragment_isBeforeAfterNonCollapsedLineWrapSpace :
     CSS Pseudo-Elements 4 §2.2:
     An empty text node creates no layout text fragment; non-empty nodes create layout text fragments. -/
 theorem layoutTextFragment_setTextWithFirstLetter :
-    let initialText := "a"
-    let emptySplit := ""
-    let mutatedText := "x"
-    hasLayoutTextFragment emptySplit = false ∧
-    hasLayoutTextFragment initialText = true ∧
-    hasLayoutTextFragment mutatedText = true := by
+    hasLayoutTextFragment "" = false ∧
+    hasLayoutTextFragment "a" = true ∧
+    hasLayoutTextFragment "x" = true := by
   decide
 
 /-- Test `LayoutTextFragmentTest, SplitTextWithZero` (`layout_text_fragment_test.cc:442`).
     CSS Pseudo-Elements 4 §2.2:
     Splitting text with leading empty nodes preserves first-letter selection on the following non-empty text node. -/
 theorem layoutTextFragment_splitTextWithZero :
-    let splitNodes := ["", " ", "x y"]
-    findFirstLetterInNodes splitNodes = some 'x' := by
+    findFirstLetterInNodes ["", " ", "x y"] = some 'x' := by
   decide
 
 end ChromiumLayout

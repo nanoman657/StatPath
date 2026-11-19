@@ -226,14 +226,9 @@ theorem inlineItemsBuilder_openCloseRubyColumns :
     CSS Text 3 §2.1 & CSS Text 3 §4.1: Under text-transform: full-width, space transforms to ideographic
     space U+3000, and adjacent boundary spaces collapse consistently between layout and offset mapping. -/
 theorem inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform :
-    let initialPrefix := "x"
-    let updatedPrefix := "x "
-    let target := " foo"
-    let initialLen := collapsedInlineBoundaryLength initialPrefix.length target.length false true
-    let updatedLen := collapsedInlineBoundaryLength updatedPrefix.length target.length true true
     transformFullWidthSpace ' ' = '\u3000' ∧
-    initialLen = 5 ∧
-    updatedLen = 5 := by
+    collapsedInlineBoundaryLength 2 4 true true = 5 ∧
+    collapsedInlineBoundaryLength 1 4 false true = 5 := by
   decide
 
 end ChromiumLayout.TestsInline
