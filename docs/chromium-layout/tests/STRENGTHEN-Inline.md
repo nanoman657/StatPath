@@ -5,8 +5,18 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 - Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
 
-unticked: TestsInline_LineBreaker
-- Rewrote `lineBreaker_bidiControlEnter` to flow CSS input `font: 10px/1 Ahem; width: 40px; xxx-<bdi>xx</bdi>` through general line breaking and line box stacking.
+thin, needs SVG combining cluster segmentation across explicit positions, table quirks min-max, ruby column rewinding, float rewind clamping, and line breaker sub-range/sub-line available width state machines: TestsInline_LineBreaker
+- Thin theorems:
+  - `lineBreaker_splitTextIntoSegementsCrash`: needs SVG combining character cluster segmentation across explicit positions (`<text x="...">`)
+  - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: needs table cell IFC min/max computation under quirks mode
+  - `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations`: needs inline box decoration clone fragmentation on empty spans
+  - `lineBreaker_rewindPositionedFloat`: needs float layout positioning and rewind width clamping
+  - `lineBreaker_rewindRubyColumn`: needs ruby column line breaker rewinding
+  - `lineBreaker_getOverhangCrash`: needs ruby overhang calculation with negative margins
+  - `lineBreaker_setInputRange`: needs LineBreaker.SetInputRange sub-range selection state machine
+  - `lineBreaker_createSubLineInfoAvailableWidth`: needs ruby sub-line breaker available width float isolation
+  - `lineBreaker_removeTrailingCollapsibleSpace`: needs trailing space collapsing with extreme word spacing
+  - `lineBreaker_splitTrailingBidiCrCrash`: needs bidi segmenter trailing CR handling under white-space: pre
 
 unticked: TestsInline_InlineLayoutAlgorithm
 - Rewrote 9 theorems (`test_BreakToken_chain`, `inlineLayoutAlgorithm_boxForEndMargin`, `test_PositionFloatsWithMargins`, `test_InkOverflow`, `test_LineBoxWithHangingWidthRTLRightAligned`, `test_LineBoxWithHangingWidthRTLCenterAligned`, `test_TextFloatsAroundFloatsBefore`, `inlineLayoutAlgorithm_textBoxTrimOnInlineBox`, `inlineLayoutAlgorithm_textCombineBasic`) to flow test setup through `breakLines`, `createLineBox`, float positioning, and font metrics.
