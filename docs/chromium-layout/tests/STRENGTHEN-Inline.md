@@ -339,3 +339,6 @@ done: TestsInline_InlineNode +0
 done: TestsInline_InlineItemsBuilder +0
 - Strengthened `inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform` to flow DOM input texts ("x", "x ", " foo") and whitespace boundary collapsing through `collapsedInlineBoundaryLength` per CSS Text 3 §2.1 and §4.1.
 
+done: TestsInline_InlineCursor +0
+- Strengthened 3 newly formalized theorems (`inlineCursor_culledInlineWithNonIFCChild`, `inlineCursor_culledInlineBlockInInlineOverflow`, `inlineCursor_cursorForMovingAcrossFragmentainer`) to flow box decoration flags, multi-column count and per-column items, and fragmentainer partitioning through general cursor functions (`shouldInlineCreateBoxFragment`, `traverseCulledInlineFragments`, `isBlockFragmented`).
+

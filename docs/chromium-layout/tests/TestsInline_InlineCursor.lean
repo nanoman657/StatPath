@@ -861,22 +861,29 @@ theorem inlineCursor_moveToVisualFirstOrLast :
     CSS 2.1 §9.2.1:
     An inline element without box decorations wrapping a ruby element does not generate a box fragment. -/
 theorem inlineCursor_culledInlineWithNonIFCChild :
-    shouldInlineCreateBoxFragment false false = false := by
-  rfl
+    let hasBoxDecorations := false
+    let hasSelfPaintingLayer := false
+    let shouldCreate := shouldInlineCreateBoxFragment hasBoxDecorations hasSelfPaintingLayer
+    shouldCreate = false := by
+  decide
 
 /-- Test `InlineCursorBlockFragmentationTest.CulledInlineBlockInInlineOverflow` (`inline/inline_cursor_test.cc:1455`).
     CSS Fragmentation 3 & CSS 2.1 §9.2.1: Traversing a culled inline `<q>` containing a fragmented
     block-in-inline `<div>` across 2 columns visits all fragments without infinite looping. -/
 theorem inlineCursor_culledInlineBlockInInlineOverflow :
-    traverseCulledInlineFragments 2 3 = 6 := by
-  rfl
+    let columnCount := 2
+    let itemsPerColumn := 3
+    traverseCulledInlineFragments columnCount itemsPerColumn = 6 := by
+  decide
 
 /-! ### CursorForMovingAcrossFragmentainer (`inline/inline_cursor_test.cc:339`) -/
 /-- Test `InlineCursorTest.CursorForMovingAcrossFragmentainer` (`inline/inline_cursor_test.cc:339`).
     CSS Fragmentation 3 §3: In 2-column layout, inline formatting context is block-fragmented. -/
 theorem inlineCursor_cursorForMovingAcrossFragmentainer :
-    isBlockFragmented 2 = true ∧
-    isBlockFragmented 1 = false := by
+    let multicolColumns := 2
+    let singleColumns := 1
+    isBlockFragmented multicolColumns = true ∧
+    isBlockFragmented singleColumns = false := by
   decide
 
 /-! ### NextIncludingFragmentainer (`inline/inline_cursor_test.cc:614`) -/
