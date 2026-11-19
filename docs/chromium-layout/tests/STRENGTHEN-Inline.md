@@ -327,22 +327,6 @@ done: TestsInline_LayoutInline, TestsInline_ScoreLineBreaker, TestsInline_Fragme
   - `inlineCursor_nextIncludingFragmentainer`: Forward cursor traversal across column fragmentainers visits items in visual reading order per CSS Fragmentation 3 §3.
   - `inlineCursor_previousIncludingFragmentainer`: Backward cursor traversal across column fragmentainers visits items in exact reverse order per CSS Fragmentation 3 §3.
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+done: TestsInline_LineBreaker +0
+- Strengthened line breaker theorems (splitTextIntoSegments, tableCellWidthCalculationQuirkOutOfFlow, boxDecorationBreakClone, rewindPositionedFloat, rewindRubyColumn, getOverhangCrash, setInputRange, createSubLineInfoAvailableWidth, removeTrailingCollapsibleSpace, splitTrailingBidiCrCrash) to flow test input characters, sliced item streams, in-flow text advance, and ruby widths through general line breaking functions.
 

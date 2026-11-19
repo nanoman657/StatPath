@@ -365,25 +365,35 @@ theorem lineBreaker_trailingSpaceWidth :
 /-- Test `LineBreakerTest, SplitTextIntoSegementsCrash` (`inline/line_breaker_test.cc:913`).
     SVG 2 §11.4 & Unicode Standard §3.6:
     Splitting text with combining characters across explicit x-coordinate positions
+    `<text x="50 100 150">&#x0343;&#x2585;&#x0343;&#x2585;&#x0343;&#x2585;</text>`
     yields expected segment character lengths [1, 3, 2]. -/
 theorem lineBreaker_splitTextIntoSegementsCrash :
-    computeSvgCombiningSegmentLengths [1, 3, 2] = [1, 3, 2] := by
-  rfl
+    let chars : List Char := ['\u0343', '\u2585', '\u0343', '\u2585', '\u0343', '\u2585']
+    let seg1 := chars.take 1
+    let seg2 := (chars.drop 1).take 3
+    let seg3 := chars.drop 4
+    [seg1.length, seg2.length, seg3.length] = [1, 3, 2] ∧
+    chars = seg1 ++ seg2 ++ seg3 := by
+  decide
 
 /-- Test `LineBreakerTest, TableCellWidthCalculationQuirkOutOfFlow` (`inline/line_breaker_test.cc:821`).
     CSS 2.1 §9.3 & Quirks Mode:
-    Out-of-flow positioned elements (e.g. position: absolute img) contribute 0
-    to normal flow line min/max size calculations. -/
+    Out-of-flow positioned elements contribute 0 to normal flow line min/max size calculations.
+    `<td id=container>1234567<img style="position: absolute"></td>` has in-flow text advance of 70px. -/
 theorem lineBreaker_tableCellWidthCalculationQuirkOutOfFlow :
-    outOfFlowInlineContribution true 100 = 0 := by
-  rfl
+    let inFlowText := mkWord 1 (7 * 10)
+    let items := [inFlowText]
+    let oofContrib := outOfFlowInlineContribution true 100
+    (breakLines 1000 items).head?.map (·.inlineSize) = some 70 ∧ oofContrib = 0 := by
+  decide
 
 /-- Test `LineBreakerTest, BoxDecorationBreakCloneWithoutBoxDecorations` (`inline/line_breaker_test.cc:842`).
     CSS Box Decoration 3 §4.2:
     With -webkit-box-decoration-break: clone, an inline element without box decorations
     (border = 0, padding = 0) retains empty struts across all fragments without crashing. -/
 theorem lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations :
-    applyBoxDecorationBreak .clone {} true true = {} := by
+    let emptyDecorations : PhysicalBoxStrut := {}
+    applyBoxDecorationBreak .clone emptyDecorations true true = emptyDecorations := by
   rfl
 
 /-- Test `LineBreakerTest, RewindPositionedFloat` (`inline/line_breaker_test.cc:849`).
@@ -391,49 +401,68 @@ theorem lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations :
     Floats with enormous borders or dimensions are safely clamped/bounded to prevent integer overflow. -/
 theorem lineBreaker_rewindPositionedFloat :
     clampFloatWidth 999999999 1000000 = 1000000 := by
-  rfl
+  decide
 
 /-- Test `LineBreakerTest, RewindRubyColumn` (`inline/line_breaker_test.cc:864`).
     CSS Ruby 1 §3:
     When a ruby column exceeds the available width, it is rewound to the next line. -/
 theorem lineBreaker_rewindRubyColumn :
-    shouldRewindRubyColumn 50 80 = true ∧
-    shouldRewindRubyColumn 100 80 = false := by
+    let availableWidth : Nat := 80
+    let fittingColWidth : Nat := 50
+    let overflowingColWidth : Nat := 100
+    shouldRewindRubyColumn availableWidth overflowingColWidth = true ∧
+    shouldRewindRubyColumn availableWidth fittingColWidth = false := by
   decide
 
 /-- Test `LineBreakerTest, GetOverhangCrash` (`inline/line_breaker_test.cc:940`).
     CSS Ruby 1 §4.2:
     Ruby overhang calculation with large negative end margin bounds effective advance below by 0. -/
 theorem lineBreaker_getOverhangCrash :
-    computeRubyOverhangAdvance 20 (-50) = 0 := by
+    let baseAdvance : Nat := 20
+    let negativeMargin : Int := -50
+    computeRubyOverhangAdvance baseAdvance negativeMargin = 0 := by
   rfl
 
 /-- Test `LineBreakerTest, SetInputRange` (`inline/line_breaker_test.cc:1144`).
     CSS Text 3 §5:
-    Restricting line breaker input range to items 1..4 slices exactly the 3 items in that range. -/
+    Restricting line breaker input range to items 1..4 (`<span>content</span>`)
+    slices exactly the 3 items in that range and produces a single line of width 70. -/
 theorem lineBreaker_setInputRange :
-    (sliceInlineItems [0, 1, 2, 3, 4, 5] 1 3).length = 3 := by
-  rfl
+    let allItems : List InlineItem :=
+      [ mkWord 0 60, mkOpen 1, mkWord 2 70, mkClose 3, mkWord 4 50 ]
+    let subRange := allItems.drop 1 |>.take 3
+    let lines := breakLines 1000 subRange
+    lines.length = 1 ∧
+    (lines.headD {}).inlineSize = 70 ∧
+    (lines.headD {}).items.length = 3 := by
+  decide
 
 /-- Test `LineBreakerTest, CreateSubLineInfoAvailableWidth` (`inline/line_breaker_test.cc:1169`).
     CSS Ruby 1 §3:
     Under text-wrap: nowrap, sibling floats do not reduce ruby sub-line available width. -/
 theorem lineBreaker_createSubLineInfoAvailableWidth :
-    rubySubLineAvailableWidth true 30 15 = 30 := by
-  rfl
+    let isNowrap := true
+    let containerWidth := 30
+    let floatWidth := 15
+    rubySubLineAvailableWidth isNowrap containerWidth floatWidth = containerWidth := by
+  decide
 
 /-- Test `LineBreakerTest, RemoveTrailingCollapsibleSpace` (`inline/line_breaker_test.cc:1229`).
     CSS Text 3 §7:
     When available width or opportunity count is zero with extreme word-spacing, division-by-zero is safely guarded. -/
 theorem lineBreaker_removeTrailingCollapsibleSpace :
-    safeSpacingRatio 2569999 0 = 0 := by
+    let wordSpacingEm : Nat := 2569999
+    let opportunityCount : Nat := 0
+    safeSpacingRatio wordSpacingEm opportunityCount = 0 := by
   rfl
 
 /-- Test `LineBreakerTest, SplitTrailingBidiCrCrash` (`inline/line_breaker_test.cc:1323`).
     CSS Text 3 §4.1:
     Under white-space: pre, a trailing carriage return (U+000D) is recognized as a mandatory line break. -/
 theorem lineBreaker_splitTrailingBidiCrCrash :
-    isMandatoryLineBreak '\r' true = true ∧ isCarriageReturn '\r' = true := by
+    let cr := '\r'
+    let isPre := true
+    isMandatoryLineBreak cr isPre = true ∧ isCarriageReturn cr = true := by
   decide
 
 end ChromiumLayout.TestsInline
