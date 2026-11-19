@@ -146,8 +146,9 @@ done: TestsInline_HyphenResult +0
 - Verified all theorems in file are not thin:
   - `hyphenResult_horizontal`, `verticalUpright`, `verticalMixed`: run hyphenation characters ("+=") with writing mode (horizontal-tb vs vertical-rl), text orientation (mixed vs upright), and feature fix flags directly through general shaping function `shapeHyphenResult` to evaluate glyph canvas rotation per CSS Writing Modes 3 §5.1.
 
-unticked: TestsInline_RubyUtils
-- Rewrote thin theorem `rubyBlockPositionCalculator_placeLinesNestedRubyWithTextEmphasis` to derive annotation text height and emphasis mark height from CSS 20px font size via `computeTextEmphasisHeight fontSize` (CSS Text Decoration 3 §3.5 & CSS Ruby 1 §3.2) instead of hardcoding raw literals.
+thin, needs line justification opportunity calculation for ruby and non-text children: TestsInline_RubyUtils
+- Thin theorems:
+  - `justificationUtils_setupItemJustificationOpportunityCrash`: needs SetupItemJustificationOpportunity pipeline for ruby items with non-text (SVG) children under text-align: justify
 - Other theorems in file verified not thin:
   - `rubyBlockPositionCalculator_groupLinesEmpty`: evaluates base line creation on empty column list via `groupLines`.
   - `rubyBlockPositionCalculator_groupLinesOneAnnotationLevel`, `groupLinesNested`, `groupLinesBothSides`, `groupLinesAnnotationForAnnotation`: run column ranges and ruby positions (.over / .under) through `groupLines` to calculate ruby line depth and column grouping per CSS Ruby 1 §2.3.1.
