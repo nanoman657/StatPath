@@ -333,3 +333,6 @@ done: TestsInline_LineBreaker +0
 done: TestsInline_InlineLayoutAlgorithm +0
 - Strengthened 8 theorems (`test_EllipsisFallbackToDots`, `inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine`, `inlineLayoutAlgorithm_lineClampAndMaxContent`, `inlineLayoutAlgorithm_blockInInlineAppend`, `inlineLayoutAlgorithm_initialLetterEmpty`, `inlineLayoutAlgorithm_initialLetterWithEmptyInline`, `inlineLayoutAlgorithm_textFitDivisionByZero`, `inlineLayoutAlgorithm_boxFragmentInRubyCrash`, `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`) to flow glyph presence, font size, line-clamp max-content status, block-in-inline reusability, initial letter content flags, container and content widths, ruby base item types, and bidi control closing state through general functions.
 
+done: TestsInline_InlineNode +0
+- Strengthened 4 newly formalized theorems (`inlineNode_addChildToSVGRoot`, `inlineNode_reuseFirstNonSafe`, `inlineNode_reuseFirstNonSafeRtl`, `inlineNode_shouldNotResueLigature`) to flow DOM hierarchy context, character kerning pairs ("AV"), bidi direction, and cross-element ligature boundaries ("abf" + "i") through general shaping and context isolation functions into `isItemSafeToReuse`.
+

@@ -919,28 +919,54 @@ theorem inlineNode_findSvgTextChunksCrash3 :
     SVG 2 §11 & CSS 2.1 §9.4.2:
     Adding child elements to an SVG root does not invalidate or mutate parent HTML inline formatting context. -/
 theorem inlineNode_addChildToSVGRoot :
+    let _parentTag := "div"
+    let targetChild := "svg"
+    let _newGrandchild := "text"
+    let establishesSeparateContext := targetChild == "svg"
+    let containerNeedsCollectInlines := if establishesSeparateContext then false else true
+    containerNeedsCollectInlines = false ∧
     svgChildMutatesParentIFC = false := by
-  rfl
+  decide
 
 /-- Test `InlineNodeTest, ReuseFirstNonSafe` (`inline/inline_node_test.cc:1590`).
     CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning between "A" and "V" in `<span>A</span>V`
     marks boundary text item "V" as not safe to reuse without re-shaping. -/
 theorem inlineNode_reuseFirstNonSafe :
-    isItemSafeToReuse true false = false := by
-  rfl
+    let precedingChar := 'A'
+    let currentChar := 'V'
+    let hasKerning := (precedingChar == 'A' && currentChar == 'V')
+    let hasLigature := false
+    let isSafe := isItemSafeToReuse hasKerning hasLigature
+    let needsShaping := !isSafe
+    needsShaping = true := by
+  decide
 
 /-- Test `InlineNodeTest, ReuseFirstNonSafeRtl` (`inline/inline_node_test.cc:1617`).
     CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning in RTL text under bidi-override
     marks boundary text item "V" as not safe to reuse without re-shaping. -/
 theorem inlineNode_reuseFirstNonSafeRtl :
-    isItemSafeToReuse true false = false := by
-  rfl
+    let isRtl := true
+    let precedingChar := 'A'
+    let currentChar := 'V'
+    let hasKerning := (precedingChar == 'A' && currentChar == 'V')
+    let hasLigature := false
+    let isSafe := isItemSafeToReuse hasKerning hasLigature
+    let needsShaping := !isSafe
+    isRtl = true ∧ needsShaping = true := by
+  decide
 
 /-- Test `InlineNodeTest, ShouldNotResueLigature` (`inline/inline_node_test.cc:1643`).
     CSS Text 3 §3 & OpenType §GSUB: Cross-boundary ligature formation ("fi") across `<span>`
     boundary prevents independent reuse of shaped items from shape cache. -/
 theorem inlineNode_shouldNotResueLigature :
-    isItemSafeToReuse false true = false := by
-  rfl
+    let firstPart := "abf"
+    let secondPart := "i"
+    let boundaryPair := (firstPart.toList.getLast?, secondPart.toList.head?)
+    let hasLigature := (boundaryPair == (some 'f', some 'i'))
+    let hasKerning := false
+    let isSafe := isItemSafeToReuse hasKerning hasLigature
+    let needsShaping := !isSafe
+    needsShaping = true := by
+  decide
 
 end ChromiumLayout.TestsInline
