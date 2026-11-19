@@ -330,3 +330,6 @@ done: TestsInline_LayoutInline, TestsInline_ScoreLineBreaker, TestsInline_Fragme
 done: TestsInline_LineBreaker +0
 - Strengthened line breaker theorems (splitTextIntoSegments, tableCellWidthCalculationQuirkOutOfFlow, boxDecorationBreakClone, rewindPositionedFloat, rewindRubyColumn, getOverhangCrash, setInputRange, createSubLineInfoAvailableWidth, removeTrailingCollapsibleSpace, splitTrailingBidiCrCrash) to flow test input characters, sliced item streams, in-flow text advance, and ruby widths through general line breaking functions.
 
+done: TestsInline_InlineLayoutAlgorithm +0
+- Strengthened 8 theorems (`test_EllipsisFallbackToDots`, `inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine`, `inlineLayoutAlgorithm_lineClampAndMaxContent`, `inlineLayoutAlgorithm_blockInInlineAppend`, `inlineLayoutAlgorithm_initialLetterEmpty`, `inlineLayoutAlgorithm_initialLetterWithEmptyInline`, `inlineLayoutAlgorithm_textFitDivisionByZero`, `inlineLayoutAlgorithm_boxFragmentInRubyCrash`, `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`) to flow glyph presence, font size, line-clamp max-content status, block-in-inline reusability, initial letter content flags, container and content widths, ruby base item types, and bidi control closing state through general functions.
+

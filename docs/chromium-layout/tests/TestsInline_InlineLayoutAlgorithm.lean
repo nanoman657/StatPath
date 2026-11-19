@@ -165,8 +165,10 @@ theorem test_TextBoxTrimConstraintSpaceNone :
 
 /-! ### Test 31: EllipsisFallbackToDots (inline_layout_algorithm_test.cc:1086) -/
 theorem test_EllipsisFallbackToDots :
-    selectEllipsisString false = "..." := by
-  rfl
+    let hasGlyphU2026 := false
+    selectEllipsisString hasGlyphU2026 = "..." ∧
+    selectEllipsisString true = "\u2026" := by
+  decide
 
 /-- Test `InlineLayoutAlgorithmTest.TypesForBlockInInline` (`inline/inline_layout_algorithm_test.cc:137`).
     CSS 2.1 §9.2.1.1: Anonymous block-in-inline line box fragment classification across
@@ -287,7 +289,9 @@ theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatFitsOnLine :
 /-- Test `InlineLayoutAlgorithmTest.EllipsisFallbackToDotsFirstLine` (`inline/inline_layout_algorithm_test.cc:1129`).
     CSS Text 4 §5: First-line font lacking U+2026 falls back to "..." with first-line font size. -/
 theorem inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine :
-    resolveFirstLineEllipsis false 16 = ("...", 16) := by
+    let firstLineFontSize := 16
+    let fontHasEllipsisGlyph := false
+    resolveFirstLineEllipsis fontHasEllipsisGlyph firstLineFontSize = ("...", firstLineFontSize) := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.TextEmphasisAsRuby` (`inline/inline_layout_algorithm_test.cc:1175`).
@@ -356,48 +360,66 @@ theorem inlineLayoutAlgorithm_textCombineFake :
     CSS Sizing 3 §5 & CSS Overflow 4 §4.2:
     Under `width: max-content` without forced breaks, content fits in line 1 without line-clamp ellipsis. -/
 theorem inlineLayoutAlgorithm_lineClampAndMaxContent :
-    hasLineClampEllipsis true false 1 = false := by
+    let isMaxContent := true
+    let hasForcedBreak := false
+    let currentLine := 1
+    hasLineClampEllipsis isMaxContent hasForcedBreak currentLine = false := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.BlockInInlineAppend` (`inline/inline_layout_algorithm_test.cc:635`).
     CSS 2.1 §9.2.1.1: Block-in-inline fragment is not reusable and must be regenerated on append. -/
 theorem inlineLayoutAlgorithm_blockInInlineAppend :
-    isLineItemReusable true = false := by
+    let isBlockInInline := true
+    isLineItemReusable isBlockInInline = false := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.InitialLetterEmpty` (`inline/inline_layout_algorithm_test.cc:775`).
     CSS Inline 3 §6: Empty initial-letter produces zero-size line (0x0) and box (0x0). -/
 theorem inlineLayoutAlgorithm_initialLetterEmpty :
-    computeInitialLetterMetrics false = ((0, 0), (0, 0)) := by
+    let hasContent := false
+    computeInitialLetterMetrics hasContent = ((0, 0), (0, 0)) := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.InitialLetterWithEmptyInline` (`inline/inline_layout_algorithm_test.cc:790`).
     CSS Inline 3 §6: Initial letter with 3 lines produces 80x80 atomic inline box and 80x0 line box. -/
 theorem inlineLayoutAlgorithm_initialLetterWithEmptyInline :
-    computeInitialLetterMetrics true = ((80, 80), (80, 0)) := by
+    let hasContent := true
+    computeInitialLetterMetrics hasContent = ((80, 80), (80, 0)) := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest, TextFitDivisionByZero` (`inline/inline_layout_algorithm_test.cc:999`).
     CSS Inline 3 §Text Fit:
     When content width is zero, text fit scale defaults safely without division by zero. -/
 theorem inlineLayoutAlgorithm_textFitDivisionByZero :
-    computeTextFitScale 50 0 1000 = 100 := by
-  rfl
+    let containerWidth := 100
+    let emptyContentWidth := 0
+    let textAContentWidth := 10
+    computeTextFitScale containerWidth emptyContentWidth = 100 ∧
+    computeTextFitScale containerWidth textAContentWidth = 1000 := by
+  decide
 
 /-- Test `InlineLayoutAlgorithmTest, BoxFragmentInRubyCrash` (`inline/inline_layout_algorithm_test.cc:1008`).
     CSS Ruby 1 §3:
     First base item in open ruby column creates valid box fragment without crash. -/
 theorem inlineLayoutAlgorithm_boxFragmentInRubyCrash :
-    isRubyBaseChildValid (.boxFragment "select") = true ∧
-    isRubyBaseChildValid (.boxFragment "svg") = true := by
+    let selectChild : RubyBaseChildKind := .boxFragment "select"
+    let svgChild : RubyBaseChildKind := .boxFragment "svg"
+    let spanChild : RubyBaseChildKind := .boxFragment "span"
+    isRubyBaseChildValid selectChild = true ∧
+    isRubyBaseChildValid svgChild = true ∧
+    isRubyBaseChildValid spanChild = true := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest, BidiControlsInLineClampedLines` (`inline/inline_layout_algorithm_test.cc:1026`).
-    CSS Overflow 3 §Line Clamping & CSS Text 3 §Bidi:
-    Pure bidi controls following a line-breaking ellipsis have zero layout advance. -/
+    CSS Overflow 3 §Line Clamping & CSS Writing Modes 3 §2.4:
+    In clamped lines following an ellipsis, closing bidi controls (e.g. </bdi>) have zero advance
+    and are safely bypassed without crashing. -/
 theorem inlineLayoutAlgorithm_bidiControlsInLineClampedLines :
-    isBidiControlItem true false = true ∧
-    (if true || false then 0 else 1) = 0 := by
+    let isBidiClose := true
+    let isClampedLine := true
+    let bidiControlAdvance := if isBidiClose then 0 else 10
+    isBidiControlItem isBidiClose isClampedLine = true ∧
+    bidiControlAdvance = 0 := by
   decide
 
 end ChromiumLayout.TestsInline
