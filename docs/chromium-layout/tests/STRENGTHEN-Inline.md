@@ -336,3 +336,6 @@ done: TestsInline_InlineLayoutAlgorithm +0
 done: TestsInline_InlineNode +0
 - Strengthened 4 newly formalized theorems (`inlineNode_addChildToSVGRoot`, `inlineNode_reuseFirstNonSafe`, `inlineNode_reuseFirstNonSafeRtl`, `inlineNode_shouldNotResueLigature`) to flow DOM hierarchy context, character kerning pairs ("AV"), bidi direction, and cross-element ligature boundaries ("abf" + "i") through general shaping and context isolation functions into `isItemSafeToReuse`.
 
+done: TestsInline_InlineItemsBuilder +0
+- Strengthened `inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform` to flow DOM input texts ("x", "x ", " foo") and whitespace boundary collapsing through `collapsedInlineBoundaryLength` per CSS Text 3 §2.1 and §4.1.
+
