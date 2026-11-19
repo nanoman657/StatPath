@@ -55,8 +55,11 @@ done: TestsInline_OffsetMapping +0
   - `test_OffsetMapping_OneTextNode`, `TwoTextNodes`, `BRBetweenTextNodes`, `PreLine`, `FullyCollapsedWhiteSpaceNode`, `ReplacedElement`, `FirstLetter`, `FirstLetterWithLeadingSpace`, `FirstLetterWithoutRemainingText`, `WhiteSpaceTextNodeWithoutLayoutText`, `ContainerWithGeneratedContent`, `StartOfNextNonCollapsedContentWithPseudo`, `EndOfLastNonCollapsedContentWithPseudo`: run DOM node structures directly through `buildDomOffsetMapping` verifying units, text offsets, and non-collapsed boundary predicates.
   - `FirstLetterInDifferentBlock`, `NoWrapSpaceAndCollapsibleSpace`, `RestoreTrailingCollapsibleSpace*`, `Table`, `GetMappingForInlineBlock`, `BiDiAroundForcedBreakIn*`, `SoftHyphen`, `PreWrapAndReusing`, `TextOverflowEllipsis`, `WordBreak`: run specialized layout structures through respective offset mapping builders and scope resolution functions.
 
-unticked: TestsInline_InlineCursor
-- Rewrote thin theorem `inlineCursor_bidiLevelSimpleRTL` to construct BidiItem sequences and run them through `bidiLevels` into `reorderBidiRunsVisual` instead of passing bare tuple lists.
+thin, needs multi-column block fragmentation for inline cursor, fragmentainer cursor traversal, and culled inline tree resolution with block-in-inline: TestsInline_InlineCursor
+- Thin theorems:
+  - `inlineCursor_culledInlineWithNonIFCChild`: needs culled inline box fragment generation logic for non-IFC child elements
+  - `inlineCursor_culledInlineBlockInInlineOverflow`: needs multi-column fragmentation traversal for culled inlines containing block-in-inline children
+  - `inlineCursor_cursorForMovingAcrossFragmentainer`, `nextIncludingFragmentainer`, `previousIncludingFragmentainer`: needs multi-column fragmentainer cursor traversal across column boundaries
 - Other theorems in file verified not thin:
   - `inlineCursor_bidiLevelInlineBoxLTR`, `inlineCursor_bidiLevelInlineBoxRTL`, `inlineCursor_bidiLevelSimpleLTR`: run DOM/bidi items directly through `bidiLevels`.
   - `inlineCursor_bidiLevelFirstLineTextTransform`, `inlineCursor_bidiLevelFirstLineTextTransformBR`: flow raw text through `applyTextTransform` into `bidiLevels`.
