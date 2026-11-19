@@ -18,8 +18,14 @@ thin, needs SVG combining cluster segmentation across explicit positions, table 
   - `lineBreaker_removeTrailingCollapsibleSpace`: needs trailing space collapsing with extreme word spacing
   - `lineBreaker_splitTrailingBidiCrCrash`: needs bidi segmenter trailing CR handling under white-space: pre
 
-unticked: TestsInline_InlineLayoutAlgorithm
-- Rewrote 9 theorems (`test_BreakToken_chain`, `inlineLayoutAlgorithm_boxForEndMargin`, `test_PositionFloatsWithMargins`, `test_InkOverflow`, `test_LineBoxWithHangingWidthRTLRightAligned`, `test_LineBoxWithHangingWidthRTLCenterAligned`, `test_TextFloatsAroundFloatsBefore`, `inlineLayoutAlgorithm_textBoxTrimOnInlineBox`, `inlineLayoutAlgorithm_textCombineBasic`) to flow test setup through `breakLines`, `createLineBox`, float positioning, and font metrics.
+thin, needs initial letter box layout, line clamp ellipsis placement with max-content sizing, block-in-inline reuse invalidation, text-fit CSS scaling, and ruby base box fragment generation: TestsInline_InlineLayoutAlgorithm
+- Thin theorems:
+  - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs initial letter multi-line box dimensioning and exclusion space sink
+  - `inlineLayoutAlgorithm_lineClampAndMaxContent`: needs line-clamp ellipsis layout under max-content intrinsic sizing
+  - `inlineLayoutAlgorithm_blockInInlineAppend`: needs block-in-inline line item cache invalidation
+  - `inlineLayoutAlgorithm_textFitDivisionByZero`: needs CSS text-fit layout scaling from content and container widths
+  - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: needs ruby base box fragment generation for replaced and SVG children
+  - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: needs trailing bidi control layout advance suppression after line-clamp ellipsis
 
 unticked: TestsInline_InlineNode
 - Rewrote `inlineNode_textCombineWordSpacing` to take CSS style properties (`writing-mode: vertical-rl`, `text-combine-upright: all`, `letter-spacing: 1px`, `word-spacing: 1px`) and flow them through `isTextCombineActive` into `effectiveLetterSpacing` and `effectiveWordSpacing`, asserting suppression to 0 per CSS Writing Modes 3 §5.1.4.
