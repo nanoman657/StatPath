@@ -98,8 +98,9 @@ done: TestsInline_LineBreakCandidate +0
 - Verified all theorems in file are not thin:
   - `lineBreak_Text`, `SoftHyphen`, `SoftHyphenDisabled`, `Span`, `SpanMidWord`, `SpanCloseAfterSpace`, `OutOfFlowPositioned`, `ForcedBreak`, `AtomicInlineBr`, `AtomicInlineTrailingSpaces`, `TrailingSpacesCollapsed`: run input `IndexedInlineToken` sequences (text with soft hyphens, inline spans, atomic inlines, br elements) directly through the general line breaking candidate engine `computeLineBreakCandidates` per CSS Text 3 §4 and §5.2. No bare numbers or indices are bypassed.
 
-unticked: TestsInline_LayoutText
-- Rewrote thin theorem `layoutText_floatFirstLetterPlainText` to flow the full input string ("Foo") through `splitFirstLetter` into `firstLetterLength` and `reconstructFirstLetterPlainText` per CSS Pseudo-Elements 4 §2.2 instead of using pre-split strings.
+thin, needs pseudo-element anonymous LayoutText generation for ::after and ::marker without DOM node: TestsInline_LayoutText
+- Thin theorems:
+  - `layoutText_originalTextNullWhenTransformedTextIsNonNull`, `originalTextEmptyWhenTransformedTextIsNonEmpty`: needs CSS pseudo-element generator (::after, ::marker) to produce anonymous LayoutText with empty DOM node
 - Other theorems in file verified not thin:
   - `layoutText_caretMinMaxOffset`, `resolvedTextLength`, `wordBreakElement`: run string inputs through `computeOffsetMappingUnits` extracting min/max non-collapsed offsets and resolved lengths.
   - `layoutText_containsCaretOffset`, `containsCaretOffsetInPre`, `isBeforeAfterNonCollapsedCharacterNoLineWrap`: run whitespace mode strings through `getSnapCode` and `computeOffsetMappingUnits`.
