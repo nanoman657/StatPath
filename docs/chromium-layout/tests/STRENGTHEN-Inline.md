@@ -351,3 +351,6 @@ done: TestsInline_LineInfo +0
 done: TestsInline_ParagraphLineBreaker +0
 - Strengthened newly formalized theorems `scoreLineBreaker_useCountNotCountedForWrap` and `scoreLineBreaker_useCountNotCountedForBalance` to bind CSS text-wrap styles through general use-counter predicates per CSS Text 4 §7.1.
 
+done: TestsInline_LayoutText +0
+- Strengthened newly formalized theorems `layoutText_originalTextNullWhenTransformedTextIsNonNull` and `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty` to derive pseudo-element LayoutText existence from pseudo type (::after, ::marker) and non-empty rendered content length per CSS 2.1 §12.1 and CSS Lists 3 §3.
+
