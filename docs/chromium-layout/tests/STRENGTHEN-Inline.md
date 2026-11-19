@@ -153,15 +153,9 @@ thin, needs line justification opportunity calculation for ruby and non-text chi
   - `rubyBlockPositionCalculator_groupLinesEmpty`: evaluates base line creation on empty column list via `groupLines`.
   - `rubyBlockPositionCalculator_groupLinesOneAnnotationLevel`, `groupLinesNested`, `groupLinesBothSides`, `groupLinesAnnotationForAnnotation`: run column ranges and ruby positions (.over / .under) through `groupLines` to calculate ruby line depth and column grouping per CSS Ruby 1 §2.3.1.
 
-unticked: TestsInline_List
-- Verified all theorems in file are not thin:
-  - `listMarker_fallbackToTextWhenImagesDisable`: evaluates image-disabled fallback directly through general `computeMarkerContent` (CSS Lists 3 §3.2).
-  - `listMarker_addCounterStyle`, `listMarker_removeCounterStyle`: run `@counter-style` definitions through `formatCounterValue` (CSS Counter Styles 3 §2, §3.1.2).
-  - `listMarker_overridePredefinedCounterStyle`, `listMarker_removeOverrideOfPredefinedCounterStyle`: evaluate override and restore of predefined `upper-roman` style through `formatCounterValue` (CSS Counter Styles 3 §6).
-  - `listMarker_overrideSameScopeCounterStyle`, `listMarker_removeOverrideOfSameScopeCounterStyle`: evaluate overriding of same-scope `@counter-style` rules through `formatCounterValue`.
-  - `listMarker_widthOfSymbolForFontSizeZero`: evaluates marker symbol dimensions for zero font-size via `markerSymbolWidth 0 "disc"` (CSS Lists 3 §3).
-  - `listMarker_modifyShadowDOMWithOwnCounterStyles`: runs shadow DOM scope chains through `formatScopedCounterValue` (CSS Counter Styles 3 §2 & DOM §4.2.1).
-  - `layoutListItem_insideWithFirstLine`: runs inside marker placement through `buildListMarkerBox` (CSS Lists 3 §3.1 & CSS Pseudo 4 §7.1).
+thin, needs IFC invalidation and offset mapping update lifecycle for display: inline list-item under counter-style mutations: TestsInline_List
+- Thin theorems:
+  - `layoutInlineListItem_getOffsetMappingNoCrash`, `offsetMappingBuilderNoCrash`: needs dynamic style recalc and IFC invalidation lifecycle for display: inline list-item with @counter-style rules
 
 done: TestsInline_LayoutQuote +0
 - Verified `layoutQuote_locale` is not thin:
