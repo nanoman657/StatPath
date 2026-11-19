@@ -213,10 +213,10 @@ done: TestsInline_Fieldset +0
   - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
   - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
 
-unticked: TestsInline_SVG
-- Rewrote thin theorems:
-  - `svg_foreign_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and inner div height (17px) per SVG 2 §13.2 & CSS 2.1 §10 instead of hardcoding raw point literals.
-  - `svg_inline_localToAncestorPoint`: derives document offset from preceding sibling div height (3px) and local container offset (0px) per SVG 2 §11.4 & CSS 2.1 §10.
+thin, needs SVG text layout algorithm pipeline (textPath/lengthAdjust) and SVG getBBox UseCounter telemetry: TestsInline_SVG
+- Thin theorems:
+  - `svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `controlCharCrash`, `firstLineTextTransformCrash`, `textPathCrash`: needs SVG text layout algorithm pipeline from `<text>`, `<textPath>`, `textLength`, and `lengthAdjust`
+  - `layoutSvgForeignObject_getBBoxUseCounter*`, `layoutSvgImage_getBBoxUseCounter*`, `layoutSvgRect_getBBoxUseCounter*`, `layoutSvgViewportContainer_getBBoxUseCounter*`: needs SVG DOM getBBox() 1D degenerate bounding box UseCounter telemetry (WebFeature::kSVG1DOMBBoxZeroWidthOrHeight)
 - Other theorems in file verified not thin:
   - `svg_container_transformAffectsVectorEffect`, `nestedSVG`, `hiddenContainerAndUse`, `svg_text_transformAffectsVectorEffect`: evaluate vector-effect: non-scaling-stroke tree propagation on SvgNode trees per SVG 2 §13.3.
   - `svg_shape_strokeBoundingBoxOnEmptyShape`: computes zero stroke bounding box on empty circle shape per SVG 2 §13.5.
