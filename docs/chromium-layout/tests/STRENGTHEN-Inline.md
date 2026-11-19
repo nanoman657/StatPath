@@ -354,3 +354,6 @@ done: TestsInline_ParagraphLineBreaker +0
 done: TestsInline_LayoutText +0
 - Strengthened newly formalized theorems `layoutText_originalTextNullWhenTransformedTextIsNonNull` and `layoutText_originalTextEmptyWhenTransformedTextIsNonEmpty` to derive pseudo-element LayoutText existence from pseudo type (::after, ::marker) and non-empty rendered content length per CSS 2.1 §12.1 and CSS Lists 3 §3.
 
+done: TestsInline_LayoutTextFragment +0
+- Strengthened newly formalized theorems `layoutTextFragment_setTextWithFirstLetter` and `layoutTextFragment_splitTextWithZero` to flow initial text, split empty prefix, mutated string, and multi-node split lists through `hasLayoutTextFragment` and `findFirstLetterInNodes` per CSS Pseudo-Elements 4 §2.2.
+
