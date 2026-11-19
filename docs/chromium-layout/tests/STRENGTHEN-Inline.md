@@ -66,8 +66,9 @@ thin, needs multi-column block fragmentation for inline cursor, fragmentainer cu
   - `inlineCursor_parent`, `containingLine`, `culledInline*`, `firstChild*`, `lastChild*`, `firstLastLogicalLeaf*`, `isEmptyLineBox`, `next*`, `previous*`, `cursorForDescendants`, `moveToLayoutObject`, `moveToVisualFirstOrLast`, `inlineCursor_culledInlineBlockChild`, `inlineCursor_moveToEndOfLineWithNoCharsLtr`, `inlineCursor_moveToEndOfLineWithNoCharsRtl`, `inlineCursor_firstNonPseudoLeafWithBlockImage`, `inlineCursor_nextWithEllipsisInlineBoxOnly`, `inlineCursor_positionForPointInChildBlockChildren`: construct `CursorNode` trees matching Blink HTML test cases and run them through general cursor navigation and hit-testing functions (`findParent`, `findFirstChild`, `findLastChild`, `firstLogicalLeaf`, `lastLogicalLeaf`, `findNext`, `findPrevious`, `itemsForLayoutObject`, `emptyLineBreakOffset`, `firstNonPseudoLeaf`, `positionForPointInBlockChildren`, etc.).
   - `inlineCursor_positionForPointInChildHorizontalLTR`, `HorizontalRTL`, `VerticalRTL`: run coordinate positions through general `hitTestTextOffset`.
 
-unticked: TestsInline_InlineCaretPosition
-- Rewrote thin theorems (`inlineCaretPosition_inlineBoxesLTR`, `inlineCaretPosition_inlineBoxesRTL`) to flow CSS bidi properties through `bidiControlPrefix` per CSS Writing Modes 3 §2.4 to calculate text offsets from DOM offsets instead of hardcoded numbers.
+thin, needs HTML non-rendered element (<area>) DOM-to-layout-object association in caret position resolution: TestsInline_InlineCaretPosition
+- Thin theorems:
+  - `inlineCaretPosition_beforeOrAfterInlineAreaElement`: needs HTML `<area>` element DOM-to-layout-object absence resolution in caret position pipeline
 - Other theorems in file verified not thin:
   - `inlineCaretPosition_afterSpan`, `afterSpanCulled`, `inOneLineOfText`, `atSoftHyphen`, `atSoftLineWrap`, `atForcedLineBreak`, `atEmptyLine`, `inOneLineOfImage`, `atSoftLineWrapBetweenImages`, `atSoftLineWrapBetweenMultipleTextNodes`, `atSoftLineWrapBetweenMultipleTextNodesRtl`, `atSoftLineWrapBetweenDeepTextNodes`, `softLineWrap`: run DOM item sequences (`.span`, `.text`, `.image`, `.br`) through `buildCaretFragments` and query caret resolution via `computeCaretPosition`.
   - `inlineCaretPosition_multiColumnSingleText`: maps multicolumn fragment slices to fragment IDs and offsets.
