@@ -226,8 +226,11 @@ theorem inlineItemsBuilder_openCloseRubyColumns :
 /-- Test 31: OffsetMappingStaysConsistentUnderFullWidthTransform (inline_items_builder_test.cc:638).
     CSS Text 3 §2.1 & CSS Text 3 §4.1:
     `<div id="container" style="text-transform: full-width"><span id="prefix">x </span><span id="target"> foo</span></div>`
-    Under text-transform: full-width, space transforms to ideographic space U+3000,
-    and adjacent boundary spaces collapse consistently between layout and offset mapping passes. -/
+    Under text-transform: full-width, space transforms to ideographic space U+3000 (`transformFullWidthSpace`),
+    and adjacent boundary spaces collapse consistently between layout and offset mapping passes.
+    Note: The `text-transform: full-width` transform through the builder pipeline is not covered by the
+    current model (the builder and offset mapping run under `.normal` whitespace mode; the character
+    transformation from space to ideographic space U+3000 is verified via `transformFullWidthSpace`). -/
 theorem inlineItemsBuilder_offsetMappingStaysConsistentUnderFullWidthTransform :
     let prefixText := "x "
     let targetText := " foo"
