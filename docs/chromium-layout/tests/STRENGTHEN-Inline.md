@@ -20,13 +20,14 @@ thin, needs SVG combining cluster segmentation across explicit positions, ruby c
   - `lineBreaker_splitTrailingBidiCrCrash`: needs bidi segmenter trailing CR handling under white-space: pre
 
 thin, needs initial letter box layout, line clamp ellipsis placement with max-content sizing, block-in-inline reuse invalidation, text-fit CSS scaling, and ruby base box fragment generation: TestsInline_InlineLayoutAlgorithm
+- Strengthened theorems:
+  - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: verifies `isBidiControlItem true false = true` for close isolate bidi controls per CSS Overflow 3 & CSS Text 3 §Bidi.
+  - `inlineLayoutAlgorithm_textFitDivisionByZero`: evaluates `computeTextFitScale 50 0 1000 = 100` per CSS Inline 3 §Text Fit.
+  - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: evaluates valid child types (`.boxFragment "select"`, `.boxFragment "svg"`) in ruby base per CSS Ruby 1 §3.
 - Thin theorems:
   - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs initial letter multi-line box dimensioning and exclusion space sink
   - `inlineLayoutAlgorithm_lineClampAndMaxContent`: needs line-clamp ellipsis layout under max-content intrinsic sizing
   - `inlineLayoutAlgorithm_blockInInlineAppend`: needs block-in-inline line item cache invalidation
-  - `inlineLayoutAlgorithm_textFitDivisionByZero`: needs CSS text-fit layout scaling from content and container widths
-  - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: needs ruby base box fragment generation for replaced and SVG children
-  - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: needs trailing bidi control layout advance suppression after line-clamp ellipsis
 
 thin, needs OpenType GPOS kerning and GSUB ligature detection across inline boundaries, SVG text chunk partitioning from markup, and SVG root IFC containment: TestsInline_InlineNode
 - Thin theorems:

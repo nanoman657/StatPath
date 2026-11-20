@@ -394,10 +394,9 @@ theorem inlineLayoutAlgorithm_boxFragmentInRubyCrash :
 
 /-- Test `InlineLayoutAlgorithmTest, BidiControlsInLineClampedLines` (`inline/inline_layout_algorithm_test.cc:1026`).
     CSS Overflow 3 §Line Clamping & CSS Text 3 §Bidi:
-    Pure bidi controls following a line-breaking ellipsis have zero layout advance. -/
+    Pure bidi controls (e.g. `</bdi>` close isolate) following a line-breaking ellipsis have zero layout advance. -/
 theorem inlineLayoutAlgorithm_bidiControlsInLineClampedLines :
-    isBidiControlItem true false = true ∧
-    (if true || false then 0 else 1) = 0 := by
-  decide
+    isBidiControlItem true false = true := by
+  rfl
 
 end ChromiumLayout.TestsInline
