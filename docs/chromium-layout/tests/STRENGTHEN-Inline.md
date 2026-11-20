@@ -222,10 +222,15 @@ done: TestsInline_Fieldset +0
   - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
   - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
 
-thin, needs SVG text layout algorithm pipeline (textPath/lengthAdjust) and SVG getBBox UseCounter telemetry: TestsInline_SVG
+thin, needs full SVG text layout algorithm pipeline (textPath/lengthAdjust): TestsInline_SVG
+- Strengthened theorems:
+  - `svgText_controlCharCrash`: flows preformatted text (`['a', '\x0c', 'd']`) through `collapseText .pre` preserving form feed, and evaluates `computeSvgTextLengthAdjustment 2 2 .spacing = (1, 0)` per SVG 2 §11.1 & CSS Text 3 §4.1.
+  - `svgText_firstLineTextTransformCrash`: transforms German eszett to uppercase `['S', 'S']` via `applyTextTransform` and evaluates `svgFirstLineTextTransform "ß" true = "SS"` per SVG 2 §11.1 & CSS Text 3 §2.1.
+  - `layoutSvgForeignObject_getBBoxUseCounter*`: flows DOM `SvgForeignObject` structures with test dimensions through `shouldCountZeroWidthOrHeightBBox fo.width fo.height` per SVG 2 §13.2.
+  - `layoutSvgRect_getBBoxUseCounter*`: flows DOM `SvgRectShape` structures with test dimensions through `shouldCountZeroWidthOrHeightBBox r.width r.height` per SVG 2 §13.2.
+  - `layoutSvgImage_getBBoxUseCounter*`: derives bounding box dimensions directly from element width/height attributes per SVG 2 §13.2.
 - Thin theorems:
-  - `svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `controlCharCrash`, `firstLineTextTransformCrash`, `textPathCrash`: needs SVG text layout algorithm pipeline from `<text>`, `<textPath>`, `textLength`, and `lengthAdjust`
-  - `layoutSvgForeignObject_getBBoxUseCounter*`, `layoutSvgImage_getBBoxUseCounter*`, `layoutSvgRect_getBBoxUseCounter*`, `layoutSvgViewportContainer_getBBoxUseCounter*`: needs SVG DOM getBBox() 1D degenerate bounding box UseCounter telemetry (WebFeature::kSVG1DOMBBoxZeroWidthOrHeight)
+  - `svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `textPathCrash`: needs full SVG text layout algorithm pipeline from `<text>`, `<textPath>`, `textLength`, and `lengthAdjust`
 - Other theorems in file verified not thin:
   - `svg_container_transformAffectsVectorEffect`, `nestedSVG`, `hiddenContainerAndUse`, `svg_text_transformAffectsVectorEffect`: evaluate vector-effect: non-scaling-stroke tree propagation on SvgNode trees per SVG 2 §13.3.
   - `svg_shape_strokeBoundingBoxOnEmptyShape`: computes zero stroke bounding box on empty circle shape per SVG 2 §13.5.
