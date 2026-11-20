@@ -919,7 +919,8 @@ theorem inlineNode_findSvgTextChunksCrash3 :
     SVG 2 §11 & CSS 2.1 §9.4.2:
     Adding child elements to an SVG root does not invalidate or mutate parent HTML inline formatting context. -/
 theorem inlineNode_addChildToSVGRoot :
-    svgChildMutatesParentIFC = false := by
+    let (_, _, containerNeeds, _) := computeNeedsCollectInlines (.insertNode true)
+    containerNeeds = false := by
   rfl
 
 /-- Test `InlineNodeTest, ReuseFirstNonSafe` (`inline/inline_node_test.cc:1590`).
