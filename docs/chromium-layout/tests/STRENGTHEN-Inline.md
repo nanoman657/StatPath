@@ -77,9 +77,10 @@ done: TestsInline_PhysicalLineBoxFragment +0
 - Verified neither theorem is thin:
   - `physicalLineBoxFragment_hasPropagatedDescendantsFloat` and `physicalLineBoxFragment_hasPropagatedDescendantsOOF` directly test `hasPropagatedDescendants` (the general model predicate in `InlineLineBox.lean` for `PhysicalLineBoxFragment::HasPropagatedDescendants()` per CSS 2.1 §9.5 and §9.3) on line item streams partitioned into normal flow items vs lines containing float / out-of-flow items, verifying propagation flags to the containing block. No bare numbers or indices are used.
 
-thin, needs LineBreaker trailing space width computation from zero-length control item stream: TestsInline_LineInfo
-- Thin theorems:
-  - `lineInfo_trailingSpaceWidthInitialEmptyItem`: needs LineBreaker line info computation on zero-length control item (CR) followed by trailing space under pre-wrap with zero available width
+done: TestsInline_LineInfo +0
+- Verified both theorems in file are strong:
+  - `lineInfo_inflowEndOffset`: flows prefix text, ruby base, and ruby annotation items through `lineInflowEndOffset` per CSS Ruby 1 §3.1, verifying that annotation text is excluded from inflow end offset.
+  - `lineInfo_trailingSpaceWidthInitialEmptyItem`: evaluates `computeHangingSpaceWidth .preWrap false 0 1 none 0 10 = 1` per CSS Text 3 §4.1.2 & §5.4, verifying that under pre-wrap with 0 available width, trailing space following a zero-length control item hangs outside the line box.
 
 done: TestsInline_LineWidths +0
 - Verified `lineWidthsDataTest_data` is not thin: runs all 16 test cases from `line_widths_test.cc:175` with container widths, line heights, and item sequences (floats, text runs with strut metrics, baseline alignment tags, atomic inlines) through the general precomputation function `computeLineWidths` and `getLineWidthsList`. No bare indices or pre-formatted numbers are used.
