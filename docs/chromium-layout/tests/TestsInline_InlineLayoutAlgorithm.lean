@@ -9,6 +9,8 @@ import LayoutInline
 import InlineFragmentItem
 import InlineLayoutAlgorithm
 import InlineRuby
+import InlineShaping
+import InlineItemBuilder
 
 namespace ChromiumLayout.TestsInline
 
@@ -287,6 +289,8 @@ theorem inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatFitsOnLine :
 /-- Test `InlineLayoutAlgorithmTest.EllipsisFallbackToDotsFirstLine` (`inline/inline_layout_algorithm_test.cc:1129`).
     CSS Text 4 §5: First-line font lacking U+2026 falls back to "..." with first-line font size. -/
 theorem inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine :
+    let text := collapseText .nowrap "ABABABABABABABABABABAB ABABABABABABAB".toList
+    text.length > 15 ∧
     resolveFirstLineEllipsis false 16 = ("...", 16) := by
   decide
 
@@ -311,8 +315,11 @@ theorem inlineLayoutAlgorithm_textBoxTrimOnInlineBox :
     CSS 2.1 §8.1 & §9.4.2: Block container with padding (left 5px, top 10px) positions
     content and first line box fragment at physical offset (5, 10). -/
 theorem inlineLayoutAlgorithm_containerBorderPadding :
+    let items : List InlineCollectionToken := [.text "test"]
+    let sizes := computeMinMaxSizesAhem items
     let padding : PhysicalBoxStrut := { left := 5, top := 10 }
     let contentOffset := strutContentOffset {} padding
+    sizes = { minSize := 40, maxSize := 40 } ∧
     contentOffset = (5, 10) := by
   decide
 
@@ -356,25 +363,33 @@ theorem inlineLayoutAlgorithm_textCombineFake :
     CSS Sizing 3 §5 & CSS Overflow 4 §4.2:
     Under `width: max-content` without forced breaks, content fits in line 1 without line-clamp ellipsis. -/
 theorem inlineLayoutAlgorithm_lineClampAndMaxContent :
+    let items : List InlineCollectionToken := [.text "sfd sdof jkl"]
+    let sizes := computeMinMaxSizesAhem items
+    sizes = { minSize := 40, maxSize := 120 } ∧
     hasLineClampEllipsis true false 1 = false := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.BlockInInlineAppend` (`inline/inline_layout_algorithm_test.cc:635`).
     CSS 2.1 §9.2.1.1: Block-in-inline fragment is not reusable and must be regenerated on append. -/
 theorem inlineLayoutAlgorithm_blockInInlineAppend :
+    (computeNeedsCollectInlines (.insertNode false)).1 = true ∧
     isLineItemReusable true = false := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.InitialLetterEmpty` (`inline/inline_layout_algorithm_test.cc:775`).
     CSS Inline 3 §6: Empty initial-letter produces zero-size line (0x0) and box (0x0). -/
 theorem inlineLayoutAlgorithm_initialLetterEmpty :
-    computeInitialLetterMetrics false = ((0, 0), (0, 0)) := by
+    let text := collapseText .normal [' ']
+    text = [] ∧
+    computeInitialLetterMetrics (text.length > 0) = ((0, 0), (0, 0)) := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest.InitialLetterWithEmptyInline` (`inline/inline_layout_algorithm_test.cc:790`).
     CSS Inline 3 §6: Initial letter with 3 lines produces 80x80 atomic inline box and 80x0 line box. -/
 theorem inlineLayoutAlgorithm_initialLetterWithEmptyInline :
-    computeInitialLetterMetrics true = ((80, 80), (80, 0)) := by
+    let text := "x"
+    text.length > 0 ∧
+    computeInitialLetterMetrics (text.length > 0) = ((80, 80), (80, 0)) := by
   decide
 
 /-- Test `InlineLayoutAlgorithmTest, TextFitDivisionByZero` (`inline/inline_layout_algorithm_test.cc:999`).

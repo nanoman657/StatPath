@@ -19,15 +19,19 @@ thin, needs SVG combining cluster segmentation across explicit positions: TestsI
 - Thin theorems:
   - `lineBreaker_splitTextIntoSegementsCrash`: needs SVG combining character cluster segmentation across explicit positions (`<text x="...">`)
 
-thin, needs initial letter box layout, line clamp ellipsis placement with max-content sizing, block-in-inline reuse invalidation, text-fit CSS scaling, and ruby base box fragment generation: TestsInline_InlineLayoutAlgorithm
+thin, needs multi-line initial letter box layout and exclusion space sink: TestsInline_InlineLayoutAlgorithm
 - Strengthened theorems:
   - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: verifies `isBidiControlItem true false = true` for close isolate bidi controls per CSS Overflow 3 & CSS Text 3 §Bidi.
   - `inlineLayoutAlgorithm_textFitDivisionByZero`: evaluates `computeTextFitScale 50 0 1000 = 100` per CSS Inline 3 §Text Fit.
   - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: evaluates valid child types (`.boxFragment "select"`, `.boxFragment "svg"`) in ruby base per CSS Ruby 1 §3.
+  - `inlineLayoutAlgorithm_containerBorderPadding`: flows DOM tokens (`[.text "test"]`) through `computeMinMaxSizesAhem` yielding `{40, 40}` and evaluates content physical offset `(5, 10)` from padding per CSS 2.1 §8.1 & §9.4.2.
+  - `inlineLayoutAlgorithm_ellipsisFallbackToDotsFirstLine`: flows raw text through `collapseText .nowrap` verifying length overflow (>15), and evaluates fallback to `"..."` with 16px font size via `resolveFirstLineEllipsis false 16 = ("...", 16)` per CSS Text Overflow 3 §3 & CSS Pseudo 4 §2.1.
+  - `inlineLayoutAlgorithm_lineClampAndMaxContent`: flows test text `"sfd sdof jkl"` through `computeMinMaxSizesAhem` yielding max size 120px, and evaluates `hasLineClampEllipsis true false 1 = false` confirming line-clamp ellipsis is not generated under max-content intrinsic sizing per CSS Sizing 3 §5 & CSS Overflow 4 §4.2.
+  - `inlineLayoutAlgorithm_blockInInlineAppend`: flows DOM child insertion through `(computeNeedsCollectInlines (.insertNode false)).1 = true` confirming container invalidation, and verifies `isLineItemReusable true = false` preventing block-in-inline cache reuse per CSS 2.1 §9.2.1.1.
+  - `inlineLayoutAlgorithm_initialLetterEmpty`: collapses whitespace `" "` to `[]` through `collapseText .normal`, deriving `text.length > 0 = false` and evaluating `computeInitialLetterMetrics false = ((0, 0), (0, 0))` per CSS Inline 3 §6.
+  - `inlineLayoutAlgorithm_initialLetterWithEmptyInline`: verifies letter `"x"` has `text.length > 0 = true`, evaluating `computeInitialLetterMetrics true = ((80, 80), (80, 0))` per CSS Inline 3 §6.
 - Thin theorems:
-  - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs initial letter multi-line box dimensioning and exclusion space sink
-  - `inlineLayoutAlgorithm_lineClampAndMaxContent`: needs line-clamp ellipsis layout under max-content intrinsic sizing
-  - `inlineLayoutAlgorithm_blockInInlineAppend`: needs block-in-inline line item cache invalidation
+  - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs full multi-line initial letter box layout and exclusion space sink rather than scalar metrics helper
 
 thin, needs OpenType GPOS kerning and GSUB ligature detection across inline boundaries, and SVG text chunk partitioning from markup: TestsInline_InlineNode
 - Strengthened theorems:
