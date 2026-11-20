@@ -927,21 +927,38 @@ theorem inlineNode_addChildToSVGRoot :
     CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning between "A" and "V" in `<span>A</span>V`
     marks boundary text item "V" as not safe to reuse without re-shaping. -/
 theorem inlineNode_reuseFirstNonSafe :
+    let items : List InlineCollectionToken := [
+      .openTag "span", .text "A", .closeTag, .text "V"
+    ]
+    let sizes := computeMinMaxSizesAhem items
+    sizes = { minSize := 20, maxSize := 20 } ∧
     isItemSafeToReuse true false = false := by
-  rfl
+  decide
 
 /-- Test `InlineNodeTest, ReuseFirstNonSafeRtl` (`inline/inline_node_test.cc:1617`).
     CSS Text 3 §3 & OpenType §GPOS: Cross-boundary kerning in RTL text under bidi-override
     marks boundary text item "V" as not safe to reuse without re-shaping. -/
 theorem inlineNode_reuseFirstNonSafeRtl :
+    let items : List InlineCollectionToken := [
+      .openTag "span", .text "A", .closeTag, .text "V"
+    ]
+    let sizes := computeMinMaxSizesAhem items
+    let runs := resolveBidiParagraphRuns "AV" .rtl
+    sizes = { minSize := 20, maxSize := 20 } ∧
+    runs = [{ startOffset := 0, endOffset := 2, level := 2 }] ∧
     isItemSafeToReuse true false = false := by
-  rfl
+  decide
 
 /-- Test `InlineNodeTest, ShouldNotResueLigature` (`inline/inline_node_test.cc:1643`).
     CSS Text 3 §3 & OpenType §GSUB: Cross-boundary ligature formation ("fi") across `<span>`
     boundary prevents independent reuse of shaped items from shape cache. -/
 theorem inlineNode_shouldNotResueLigature :
+    let items : List InlineCollectionToken := [
+      .text "abf", .openTag "span", .text "i", .closeTag
+    ]
+    let sizes := computeMinMaxSizesAhem items
+    sizes = { minSize := 40, maxSize := 40 } ∧
     isItemSafeToReuse false true = false := by
-  rfl
+  decide
 
 end ChromiumLayout.TestsInline

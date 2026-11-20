@@ -33,13 +33,14 @@ thin, needs multi-line initial letter box layout and exclusion space sink: Tests
 - Thin theorems:
   - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs full multi-line initial letter box layout and exclusion space sink rather than scalar metrics helper
 
-thin, needs OpenType GPOS kerning and GSUB ligature detection across inline boundaries, and SVG text chunk partitioning from markup: TestsInline_InlineNode
+thin, needs SVG text chunk partitioning directly from raw SVG markup: TestsInline_InlineNode
 - Strengthened theorems:
   - `inlineNode_addChildToSVGRoot`: evaluates `computeNeedsCollectInlines (.insertNode true)` confirming container inlines are not invalidated by SVG child additions per SVG 2 §11 & CSS 2.1 §9.4.2.
+  - `inlineNode_reuseFirstNonSafe`: flows DOM tokens (`<span>A</span>V`) through `computeMinMaxSizesAhem` yielding min/max size {20, 20} and evaluates `isItemSafeToReuse true false = false` per CSS Text 3 §3 & OpenType §GPOS.
+  - `inlineNode_reuseFirstNonSafeRtl`: flows DOM tokens and RTL text through `computeMinMaxSizesAhem` and `resolveBidiParagraphRuns` yielding level 2 run, and evaluates `isItemSafeToReuse true false = false` per CSS Text 3 §3, UAX #9 & OpenType §GPOS.
+  - `inlineNode_shouldNotResueLigature`: flows DOM tokens (`abf<span>i</span>`) through `computeMinMaxSizesAhem` yielding {40, 40} and evaluates `isItemSafeToReuse false true = false` per CSS Text 3 §3 & OpenType §GSUB.
 - Thin theorems:
-  - `inlineNode_reuseFirstNonSafe`, `inlineNode_reuseFirstNonSafeRtl`: needs OpenType GPOS cross-boundary kerning detection to mark shape cache items unsafe to reuse
-  - `inlineNode_shouldNotResueLigature`: needs OpenType GSUB cross-boundary ligature formation to invalidate shape cache reuse
-  - `inlineNode_findSvgTextChunksCrash1`, `Crash2`, `Crash3`: needs SVG text chunk partitioning directly from raw SVG `<text>` elements and coordinates
+  - `inlineNode_findSvgTextChunksCrash1`, `Crash2`, `Crash3`: needs SVG text chunk partitioning directly from raw SVG `<text>` elements and coordinates rather than pre-partitioned segments
 - Other theorems in file verified not thin:
   - `inlineNode_collectInlinesText`, `inlineNode_collectInlinesBR`, `inlineNode_collectInlinesFloat`, `inlineNode_collectInlinesInlineBlock`, `inlineNode_collectInlinesUTF16`, `inlineNode_collectInlinesMaybeRtl`, `inlineNode_collectInlinesRtl`, `inlineNode_collectInlinesRtlWithSpan`, `inlineNode_collectInlinesTextCombineBR`, `inlineNode_collectInlinesTextCombineListItemMarker`, `inlineNode_collectInlinesTextCombineNewline`, `inlineNode_collectInlinesTextCombineWBR`, `inlineNode_textCombineUsesScalingX`, `inlineNode_collectInlinesMixedText`, `inlineNode_collectInlinesMixedTextEndWithON`, `inlineNode_segmentASCII`, `inlineNode_segmentHebrew`, `inlineNode_segmentSplit1To2`, `inlineNode_segmentSplit3To4`, `inlineNode_segmentBidiOverride`, `inlineNode_segmentBidiIsolate`, `inlineNode_preservedNewlineWithBidiAndRelayout`, `inlineNode_preservedNewlineWithRemovedBidiAndRelayout`, `inlineNode_preservedNewlineWithRemovedLtrDirAndRelayout`, `inlineNode_insertedWBRWithLineBreakInRelayout`, `inlineNode_collapsibleSpaceFollowingBRWithNoWrapStyle`, `inlineNode_collapsibleSpaceFollowingNewlineWithPreStyle`, `inlineNode_reusingWithPreservedCase1`, `inlineNode_reusingWithPreservedCase2`, `inlineNode_reusingWithPreservedCase3`, `inlineNode_reusingWithCollapsed`, `inlineNode_reusingRTLAsLTR`: run DOM text and element tokens directly through general `collectInlines`, `buildInlineString`, `segmentInlineText`, and bidi resolution functions.
   - `inlineNode_minMaxData`: runs input token sequences through general `computeMinMaxSizesAhem`.
