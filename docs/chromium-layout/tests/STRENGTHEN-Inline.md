@@ -57,16 +57,14 @@ done: TestsInline_OffsetMapping +0
   - `test_OffsetMapping_OneTextNode`, `TwoTextNodes`, `BRBetweenTextNodes`, `PreLine`, `FullyCollapsedWhiteSpaceNode`, `ReplacedElement`, `FirstLetter`, `FirstLetterWithLeadingSpace`, `FirstLetterWithoutRemainingText`, `WhiteSpaceTextNodeWithoutLayoutText`, `ContainerWithGeneratedContent`, `StartOfNextNonCollapsedContentWithPseudo`, `EndOfLastNonCollapsedContentWithPseudo`: run DOM node structures directly through `buildDomOffsetMapping` verifying units, text offsets, and non-collapsed boundary predicates.
   - `FirstLetterInDifferentBlock`, `NoWrapSpaceAndCollapsibleSpace`, `RestoreTrailingCollapsibleSpace*`, `Table`, `GetMappingForInlineBlock`, `BiDiAroundForcedBreakIn*`, `SoftHyphen`, `PreWrapAndReusing`, `TextOverflowEllipsis`, `WordBreak`: run specialized layout structures through respective offset mapping builders and scope resolution functions.
 
-thin, needs multi-column block fragmentation for inline cursor, fragmentainer cursor traversal, and culled inline tree resolution with block-in-inline: TestsInline_InlineCursor
-- Thin theorems:
-  - `inlineCursor_culledInlineWithNonIFCChild`: needs culled inline box fragment generation logic for non-IFC child elements
-  - `inlineCursor_culledInlineBlockInInlineOverflow`: needs multi-column fragmentation traversal for culled inlines containing block-in-inline children
-  - `inlineCursor_cursorForMovingAcrossFragmentainer`, `nextIncludingFragmentainer`, `previousIncludingFragmentainer`: needs multi-column fragmentainer cursor traversal across column boundaries
-- Other theorems in file verified not thin:
+done: TestsInline_InlineCursor +0
+- Verified all 64 theorems in file are strong:
   - `inlineCursor_bidiLevelInlineBoxLTR`, `inlineCursor_bidiLevelInlineBoxRTL`, `inlineCursor_bidiLevelSimpleLTR`: run DOM/bidi items directly through `bidiLevels`.
   - `inlineCursor_bidiLevelFirstLineTextTransform`, `inlineCursor_bidiLevelFirstLineTextTransformBR`: flow raw text through `applyTextTransform` into `bidiLevels`.
   - `inlineCursor_parent`, `containingLine`, `culledInline*`, `firstChild*`, `lastChild*`, `firstLastLogicalLeaf*`, `isEmptyLineBox`, `next*`, `previous*`, `cursorForDescendants`, `moveToLayoutObject`, `moveToVisualFirstOrLast`, `inlineCursor_culledInlineBlockChild`, `inlineCursor_moveToEndOfLineWithNoCharsLtr`, `inlineCursor_moveToEndOfLineWithNoCharsRtl`, `inlineCursor_firstNonPseudoLeafWithBlockImage`, `inlineCursor_nextWithEllipsisInlineBoxOnly`, `inlineCursor_positionForPointInChildBlockChildren`: construct `CursorNode` trees matching Blink HTML test cases and run them through general cursor navigation and hit-testing functions (`findParent`, `findFirstChild`, `findLastChild`, `firstLogicalLeaf`, `lastLogicalLeaf`, `findNext`, `findPrevious`, `itemsForLayoutObject`, `emptyLineBreakOffset`, `firstNonPseudoLeaf`, `positionForPointInBlockChildren`, etc.).
   - `inlineCursor_positionForPointInChildHorizontalLTR`, `HorizontalRTL`, `VerticalRTL`: run coordinate positions through general `hitTestTextOffset`.
+  - `inlineCursor_culledInlineWithNonIFCChild`, `inlineCursor_culledInlineBlockInInlineOverflow`: evaluate `shouldInlineCreateBoxFragment` (no box fragment for unstyled inline wrapping ruby) and `traverseCulledInlineFragments` (fragmented block-in-inline traversal) per CSS 2.1 §9.2.1 & CSS Fragmentation 3.
+  - `inlineCursor_cursorForMovingAcrossFragmentainer`, `nextIncludingFragmentainer`, `previousIncludingFragmentainer`: evaluate `isBlockFragmented`, `traverseFragmentainers`, and `traverseFragmentainersReverse` across multi-column fragmentainers per CSS Fragmentation 3 §3 & CSS Multi-column 1 §3.
 
 thin, needs HTML non-rendered element (<area>) DOM-to-layout-object association in caret position resolution: TestsInline_InlineCaretPosition
 - Thin theorems:
