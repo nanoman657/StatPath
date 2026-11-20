@@ -5,16 +5,17 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 - Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
 
-thin, needs SVG combining cluster segmentation across explicit positions, table quirks min-max, ruby column rewinding, float rewind clamping, and line breaker sub-range/sub-line available width state machines: TestsInline_LineBreaker
+thin, needs SVG combining cluster segmentation across explicit positions, ruby column rewinding, float rewind clamping, and trailing space word-spacing collapsing: TestsInline_LineBreaker
+- Strengthened theorems:
+  - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: flows test DOM tokens (`1234567` and out-of-flow image) through `computeMinMaxSizesAhem` yielding min/max size {70, 70} per CSS 2.1 §9.3.
+  - `lineBreaker_setInputRange`: flows test DOM tokens (`before<span>content</span>after`) through `sliceInlineItems` yielding `[.openTag "span", .text "content", .closeTag]` per CSS Text 3 §5.
+  - `lineBreaker_createSubLineInfoAvailableWidth`: derives ruby sub-line available width (30px) under nowrap with 40px sibling float through `rubySubLineAvailableWidth` per CSS Ruby 1 §3.
 - Thin theorems:
   - `lineBreaker_splitTextIntoSegementsCrash`: needs SVG combining character cluster segmentation across explicit positions (`<text x="...">`)
-  - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: needs table cell IFC min/max computation under quirks mode
   - `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations`: needs inline box decoration clone fragmentation on empty spans
   - `lineBreaker_rewindPositionedFloat`: needs float layout positioning and rewind width clamping
   - `lineBreaker_rewindRubyColumn`: needs ruby column line breaker rewinding
   - `lineBreaker_getOverhangCrash`: needs ruby overhang calculation with negative margins
-  - `lineBreaker_setInputRange`: needs LineBreaker.SetInputRange sub-range selection state machine
-  - `lineBreaker_createSubLineInfoAvailableWidth`: needs ruby sub-line breaker available width float isolation
   - `lineBreaker_removeTrailingCollapsibleSpace`: needs trailing space collapsing with extreme word spacing
   - `lineBreaker_splitTrailingBidiCrCrash`: needs bidi segmenter trailing CR handling under white-space: pre
 

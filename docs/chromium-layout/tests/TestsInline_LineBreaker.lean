@@ -375,7 +375,11 @@ theorem lineBreaker_splitTextIntoSegementsCrash :
     Out-of-flow positioned elements (e.g. position: absolute img) contribute 0
     to normal flow line min/max size calculations. -/
 theorem lineBreaker_tableCellWidthCalculationQuirkOutOfFlow :
-    outOfFlowInlineContribution true 100 = 0 := by
+    let items : List InlineCollectionToken := [
+      .text "1234567",
+      .outOfFlowPositioned
+    ]
+    computeMinMaxSizesAhem items = { minSize := 70, maxSize := 70 } := by
   rfl
 
 /-- Test `LineBreakerTest, BoxDecorationBreakCloneWithoutBoxDecorations` (`inline/line_breaker_test.cc:842`).
@@ -410,16 +414,23 @@ theorem lineBreaker_getOverhangCrash :
 
 /-- Test `LineBreakerTest, SetInputRange` (`inline/line_breaker_test.cc:1144`).
     CSS Text 3 §5:
-    Restricting line breaker input range to items 1..4 slices exactly the 3 items in that range. -/
+    Restricting line breaker input range to <span>...</span> slices exactly the 3 items in that range. -/
 theorem lineBreaker_setInputRange :
-    (sliceInlineItems [0, 1, 2, 3, 4, 5] 1 3).length = 3 := by
+    let items : List InlineCollectionToken := [
+      .text "before",
+      .openTag "span",
+      .text "content",
+      .closeTag,
+      .text "after"
+    ]
+    sliceInlineItems items 1 3 = [.openTag "span", .text "content", .closeTag] := by
   rfl
 
 /-- Test `LineBreakerTest, CreateSubLineInfoAvailableWidth` (`inline/line_breaker_test.cc:1169`).
     CSS Ruby 1 §3:
-    Under text-wrap: nowrap, sibling floats do not reduce ruby sub-line available width. -/
+    Under text-wrap: nowrap, sibling floats (40px button) do not reduce ruby sub-line available width (30px). -/
 theorem lineBreaker_createSubLineInfoAvailableWidth :
-    rubySubLineAvailableWidth true 30 15 = 30 := by
+    rubySubLineAvailableWidth true 30 40 = 30 := by
   rfl
 
 /-- Test `LineBreakerTest, RemoveTrailingCollapsibleSpace` (`inline/line_breaker_test.cc:1229`).
