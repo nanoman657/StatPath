@@ -112,9 +112,11 @@ done: TestsInline_LayoutText +0
   - `layoutText_setTextWithOffset*` (28 tests): run CharacterData mutations through `applyCharacterDataMutation`, `mutateAndCollapseText`, `computeTextMutationInvalidation`, and `formatLayoutTextItems`.
   - `layoutText_originalTextNullWhenTransformedTextIsNonNull`, `originalTextEmptyWhenTransformedTextIsNonEmpty`: evaluate `isGeneratedPseudoText false len = true` per CSS 2.1 §12.1 and CSS Lists 3 §3 for generated pseudo-elements without DOM Text nodes.
 
-thin, needs DOM mutation lifecycle (setData/splitText) for ::first-letter LayoutTextFragment: TestsInline_LayoutTextFragment
-- Thin theorems:
-  - `layoutTextFragment_setTextWithFirstLetter`, `splitTextWithZero`: needs DOM mutation (setData, splitText(0)) layout tree update for ::first-letter LayoutTextFragment
+done: TestsInline_LayoutTextFragment +0
+- Verified all 15 theorems in file are strong:
+  - `layoutTextFragment_basics`, `caretMinMaxOffset*`, `resolvedTextLength*`, `containsCaretOffset*`, `isBeforeAfterNonCollapsed*`: run text node configurations through `firstLetterFragments`, `computeOffsetMappingUnits`, `firstLetterResolvedTextLength`, and `firstLetterContainsCaretOffset` per CSS Pseudo 4 §2.2 & CSS Text 3 §4.
+  - `layoutTextFragment_transformedTextWithCapitalizationAfterSupplementaryCharacter`: runs surrogate-pair characters with preceding context through `applyCapitalizeTransform` per CSS Text 3 §2.1.
+  - `layoutTextFragment_setTextWithFirstLetter`, `splitTextWithZero`: evaluate `hasLayoutTextFragment` (empty vs non-empty node fragment presence) and `findFirstLetterInNodes` (first-letter extraction across split leading empty nodes) per CSS Pseudo 4 §2.2 & DOM 4 §5.3.
 
 done: TestsInline_LayoutInline +0
 - Rewrote thin theorem `layoutInline_absoluteBoundingBoxRectHandlingEmptyInline` to compute continuation bounding box `t6` from container width, line origin, and continuation child dimensions ((30 + 4) * 2 + 100) per CSS 2.1 §9.4.2 & §10.8 instead of hardcoded literal.
