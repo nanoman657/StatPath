@@ -148,12 +148,13 @@ done: TestsInline_HyphenResult +0
 - Verified all theorems in file are not thin:
   - `hyphenResult_horizontal`, `verticalUpright`, `verticalMixed`: run hyphenation characters ("+=") with writing mode (horizontal-tb vs vertical-rl), text orientation (mixed vs upright), and feature fix flags directly through general shaping function `shapeHyphenResult` to evaluate glyph canvas rotation per CSS Writing Modes 3 §5.1.
 
-thin, needs line justification opportunity calculation for ruby and non-text children: TestsInline_RubyUtils
-- Thin theorems:
-  - `justificationUtils_setupItemJustificationOpportunityCrash`: needs SetupItemJustificationOpportunity pipeline for ruby items with non-text (SVG) children under text-align: justify
-- Other theorems in file verified not thin:
-  - `rubyBlockPositionCalculator_groupLinesEmpty`: evaluates base line creation on empty column list via `groupLines`.
-  - `rubyBlockPositionCalculator_groupLinesOneAnnotationLevel`, `groupLinesNested`, `groupLinesBothSides`, `groupLinesAnnotationForAnnotation`: run column ranges and ruby positions (.over / .under) through `groupLines` to calculate ruby line depth and column grouping per CSS Ruby 1 §2.3.1.
+done: TestsInline_RubyUtils +0
+- Verified all 18 theorems in file are strong:
+  - `rubyBlockPositionCalculator_groupLines*` and `placeLinesNestedRubyWithTextEmphasis`: evaluate grouping, nesting levels, and baseline depth across ruby annotations per CSS Ruby 1 §2.3.1.
+  - `layoutRubyBase_addChild*` and `changeToRubyNoBlockChildren`: evaluate inlinification of block/table children inside ruby base without anonymous block containers per CSS Ruby 1 §2.1 & CSS 2.1 §9.2.1.1.
+  - `layoutRubyAsBlock_textCombineCrash`: evaluates LayoutTextCombine wrapping for ruby block in vertical-rl with text-combine-upright per CSS Writing Modes 3 §5.1.
+  - `lineBreaker_wideContentInRuby`, `overflowingContinuationRuby*`, `minMaxWithAtomicInlineInRuby`, `minMaxWithEmptyRubyBase`, `inlineNode_nestedRubyMinMaxCrash`: calculate ruby column min/max sizes with wide content, overflowing continuations, atomic inlines, and nested rubies per CSS Ruby 1 §4.
+  - `justificationUtils_setupItemJustificationOpportunityCrash`: evaluates `hasRubyJustificationOpportunity` for annotation items and SVG non-text children under text-align: justify per CSS Text 3 §7.3 & CSS Ruby 1 §3.
 
 thin, needs IFC invalidation and offset mapping update lifecycle for display: inline list-item under counter-style mutations: TestsInline_List
 - Thin theorems:
