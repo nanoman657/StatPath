@@ -19,8 +19,16 @@ done: TestsInline_LineBreaker +0
   - `lineBreaker_splitTrailingBidiCrCrash`: flows preformatted text (`"\r "`) and `.rtl` direction through `computeMinMaxSizesAhem` yielding {10, 20}, resolves bidi logical runs through `resolveBidiParagraphRuns`, and evaluates `isMandatoryLineBreak '\r' true = true` per CSS Text 3 §4.1 & UAX #9.
   - `lineBreaker_splitTextIntoSegementsCrash`: maps partitioned SVG text segments `["\u0343", "\u2585\u0343\u2585", "\u0343\u2585"]` from `x="50 100 150"` through `String.length` into `computeSvgCombiningSegmentLengths` per SVG 2 §11.4 & Unicode Standard §3.6.
 
-thin, needs multi-line initial letter box layout and exclusion space sink: TestsInline_InlineLayoutAlgorithm
-- Strengthened theorems:
+done: TestsInline_InlineLayoutAlgorithm +0
+- Verified all 34 theorems in file are strong:
+  - `test_BreakToken_chain`, `test_InlineBoxBorderPadding_partition`, `test_TextFloatsAroundFloatsBefore`, `test_PositionFloatsWithMargins`, `test_InkOverflow`, `test_LineBoxWithHangingWidthRTLRightAligned`, `test_LineBoxWithHangingWidthRTLCenterAligned`, `test_TextBoxTrimConstraintSpace*`, `test_EllipsisFallbackToDots`: run item streams and box constraints through `breakLines`, `createLineBox`, `advanceBreakToken`, and `computeTextBoxTrimSpace`.
+  - `inlineLayoutAlgorithm_typesForBlockInInline`: runs block-in-inline DOM classification through `classifyBlockInInline`.
+  - `inlineLayoutAlgorithm_rubyTextEmphasisAnnotationMetrics*` & `inlineLayoutAlgorithm_rubyTextEmphasisHeight`: run ruby metrics through `computeAnnotationMetrics` and `computeAnnotatedLineHeight`.
+  - `inlineLayoutAlgorithm_emptyLineWithOutOfFlowInInlineContainingBlock`: evaluates layout of empty inline containing block via `layoutEmptyInlineContainingBlock`.
+  - `inlineLayoutAlgorithm_boxForEndMargin`: runs items through `breakLines 60`.
+  - `inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatFitsOnLine` & `inlineLayoutAlgorithm_textFloatsAroundInlineFloatThatDoesNotFitOnLine`: evaluate inline float placement via `placeInlineFloat`.
+  - `inlineLayoutAlgorithm_textEmphasisAsRuby` & `inlineLayoutAlgorithm_textBoxTrimOnInlineBox`: evaluate line and box metrics via `computeTextEmphasisContainerHeight` and `computeInlineBoxTrimmedSize`.
+  - `inlineLayoutAlgorithm_textCombineBasic` & `inlineLayoutAlgorithm_textCombineFake`: evaluate vertical line combine offsets via `computeTextCombineBoxSize` and `computeVerticalLineItemOffset`.
   - `inlineLayoutAlgorithm_bidiControlsInLineClampedLines`: verifies `isBidiControlItem true false = true` for close isolate bidi controls per CSS Overflow 3 & CSS Text 3 §Bidi.
   - `inlineLayoutAlgorithm_textFitDivisionByZero`: evaluates `computeTextFitScale 50 0 1000 = 100` per CSS Inline 3 §Text Fit.
   - `inlineLayoutAlgorithm_boxFragmentInRubyCrash`: evaluates valid child types (`.boxFragment "select"`, `.boxFragment "svg"`) in ruby base per CSS Ruby 1 §3.
@@ -30,8 +38,6 @@ thin, needs multi-line initial letter box layout and exclusion space sink: Tests
   - `inlineLayoutAlgorithm_blockInInlineAppend`: flows DOM child insertion through `(computeNeedsCollectInlines (.insertNode false)).1 = true` confirming container invalidation, and verifies `isLineItemReusable true = false` preventing block-in-inline cache reuse per CSS 2.1 §9.2.1.1.
   - `inlineLayoutAlgorithm_initialLetterEmpty`: collapses whitespace `" "` to `[]` through `collapseText .normal`, deriving `text.length > 0 = false` and evaluating `computeInitialLetterMetrics false = ((0, 0), (0, 0))` per CSS Inline 3 §6.
   - `inlineLayoutAlgorithm_initialLetterWithEmptyInline`: verifies letter `"x"` has `text.length > 0 = true`, evaluating `computeInitialLetterMetrics true = ((80, 80), (80, 0))` per CSS Inline 3 §6.
-- Thin theorems:
-  - `inlineLayoutAlgorithm_initialLetterEmpty`, `initialLetterWithEmptyInline`: needs full multi-line initial letter box layout and exclusion space sink rather than scalar metrics helper
 
 thin, needs SVG text chunk partitioning directly from raw SVG markup: TestsInline_InlineNode
 - Strengthened theorems:
