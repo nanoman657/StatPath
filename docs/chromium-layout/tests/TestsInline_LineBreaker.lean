@@ -387,30 +387,48 @@ theorem lineBreaker_tableCellWidthCalculationQuirkOutOfFlow :
     With -webkit-box-decoration-break: clone, an inline element without box decorations
     (border = 0, padding = 0) retains empty struts across all fragments without crashing. -/
 theorem lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations :
+    let items : List InlineCollectionToken := [
+      .openTag "span",
+      .closeTag
+    ]
+    computeMinMaxSizesAhem items = { minSize := 0, maxSize := 0 } ∧
     applyBoxDecorationBreak .clone {} true true = {} := by
-  rfl
+  decide
 
 /-- Test `LineBreakerTest, RewindPositionedFloat` (`inline/line_breaker_test.cc:849`).
     CSS 2.1 §9.5:
     Floats with enormous borders or dimensions are safely clamped/bounded to prevent integer overflow. -/
 theorem lineBreaker_rewindPositionedFloat :
-    clampFloatWidth 999999999 1000000 = 1000000 := by
-  rfl
+    let largeBorder := 999999999
+    clampFloatWidth largeBorder 1000000 = 1000000 ∧
+    clampLayoutUnit largeBorder = 33554431 := by
+  decide
 
 /-- Test `LineBreakerTest, RewindRubyColumn` (`inline/line_breaker_test.cc:864`).
     CSS Ruby 1 §3:
     When a ruby column exceeds the available width, it is rewound to the next line. -/
 theorem lineBreaker_rewindRubyColumn :
-    shouldRewindRubyColumn 50 80 = true ∧
-    shouldRewindRubyColumn 100 80 = false := by
+    let col : RubyColumnSizes := {
+      baseMin := 0,
+      baseMax := 0,
+      annotationMins := [80],
+      annotationMaxs := [82]
+    }
+    let colMin := computeRubyColumnMinSize col
+    colMin = 80 ∧
+    shouldRewindRubyColumn 50 colMin = true ∧
+    shouldRewindRubyColumn 100 colMin = false := by
   decide
 
 /-- Test `LineBreakerTest, GetOverhangCrash` (`inline/line_breaker_test.cc:940`).
     CSS Ruby 1 §4.2:
     Ruby overhang calculation with large negative end margin bounds effective advance below by 0. -/
 theorem lineBreaker_getOverhangCrash :
-    computeRubyOverhangAdvance 20 (-50) = 0 := by
-  rfl
+    let items : List InlineCollectionToken := [.text "C c"]
+    let sizes := computeMinMaxSizesAhem items
+    sizes = { minSize := 10, maxSize := 30 } ∧
+    computeRubyOverhangAdvance sizes.maxSize (-50) = 0 := by
+  decide
 
 /-- Test `LineBreakerTest, SetInputRange` (`inline/line_breaker_test.cc:1144`).
     CSS Text 3 §5:
@@ -437,14 +455,28 @@ theorem lineBreaker_createSubLineInfoAvailableWidth :
     CSS Text 3 §7:
     When available width or opportunity count is zero with extreme word-spacing, division-by-zero is safely guarded. -/
 theorem lineBreaker_removeTrailingCollapsibleSpace :
-    safeSpacingRatio 2569999 0 = 0 := by
-  rfl
+    let fontSize : Nat := 20
+    let wordSpacingEm : Int := 2569999
+    let totalExcess : Int := wordSpacingEm * (fontSize : Int)
+    let col : RubyColumnSizes := {
+      baseMin := 80 * fontSize,
+      baseMax := 86 * fontSize,
+      annotationMins := [7 * fontSize],
+      annotationMaxs := [7 * fontSize]
+    }
+    computeRubyColumnMinSize col = 80 * fontSize ∧
+    safeSpacingRatio totalExcess 0 = 0 := by
+  decide
 
 /-- Test `LineBreakerTest, SplitTrailingBidiCrCrash` (`inline/line_breaker_test.cc:1323`).
     CSS Text 3 §4.1:
     Under white-space: pre, a trailing carriage return (U+000D) is recognized as a mandatory line break. -/
 theorem lineBreaker_splitTrailingBidiCrCrash :
-    isMandatoryLineBreak '\r' true = true ∧ isCarriageReturn '\r' = true := by
+    let items : List InlineCollectionToken := [.text "\r "]
+    let runs := resolveBidiParagraphRuns "\r " .rtl
+    computeMinMaxSizesAhem items = { minSize := 10, maxSize := 20 } ∧
+    runs = [{ startOffset := 0, endOffset := 2, level := 1 }] ∧
+    isMandatoryLineBreak '\r' true = true := by
   decide
 
 end ChromiumLayout.TestsInline

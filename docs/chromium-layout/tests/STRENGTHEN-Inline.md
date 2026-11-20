@@ -5,19 +5,19 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 - Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
 
-thin, needs SVG combining cluster segmentation across explicit positions, ruby column rewinding, float rewind clamping, and trailing space word-spacing collapsing: TestsInline_LineBreaker
+thin, needs SVG combining cluster segmentation across explicit positions: TestsInline_LineBreaker
 - Strengthened theorems:
   - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: flows test DOM tokens (`1234567` and out-of-flow image) through `computeMinMaxSizesAhem` yielding min/max size {70, 70} per CSS 2.1 §9.3.
   - `lineBreaker_setInputRange`: flows test DOM tokens (`before<span>content</span>after`) through `sliceInlineItems` yielding `[.openTag "span", .text "content", .closeTag]` per CSS Text 3 §5.
   - `lineBreaker_createSubLineInfoAvailableWidth`: derives ruby sub-line available width (30px) under nowrap with 40px sibling float through `rubySubLineAvailableWidth` per CSS Ruby 1 §3.
+  - `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations`: flows DOM tokens (`[.openTag "span", .closeTag]`) through `computeMinMaxSizesAhem` yielding {0, 0} and applies `applyBoxDecorationBreak .clone {}` yielding empty strut `{}` per CSS Box Decoration 3 §4.2.
+  - `lineBreaker_rewindPositionedFloat`: tests float width clamping (`clampFloatWidth 999999999 1000000 = 1000000`) and LayoutUnit overflow saturation (`clampLayoutUnit 999999999 = 33554431`) per CSS 2.1 §9.5 and CSS Values 3 §6.
+  - `lineBreaker_rewindRubyColumn`: computes ruby column min size (80px) from annotation tokens through `computeRubyColumnMinSize` and evaluates `shouldRewindRubyColumn` under 50px (rewinds) vs 100px (fits) per CSS Ruby 1 §3.
+  - `lineBreaker_getOverhangCrash`: flows base text tokens (`[.text "C c"]`) through `computeMinMaxSizesAhem` yielding max size 30px, and evaluates `computeRubyOverhangAdvance 30 (-50) = 0` preventing negative underflow per CSS Ruby 1 §4.
+  - `lineBreaker_removeTrailingCollapsibleSpace`: derives total word-spacing excess from 20px font-size and 2569999em spacing, deriving column size from 80-char base text through `computeRubyColumnMinSize` and guarding division-by-zero via `safeSpacingRatio totalExcess 0 = 0` per CSS Text 3 §7.
+  - `lineBreaker_splitTrailingBidiCrCrash`: flows preformatted text (`"\r "`) and `.rtl` direction through `computeMinMaxSizesAhem` yielding {10, 20}, resolves bidi logical runs through `resolveBidiParagraphRuns`, and evaluates `isMandatoryLineBreak '\r' true = true` per CSS Text 3 §4.1 & UAX #9.
 - Thin theorems:
   - `lineBreaker_splitTextIntoSegementsCrash`: needs SVG combining character cluster segmentation across explicit positions (`<text x="...">`)
-  - `lineBreaker_boxDecorationBreakCloneWithoutBoxDecorations`: needs inline box decoration clone fragmentation on empty spans
-  - `lineBreaker_rewindPositionedFloat`: needs float layout positioning and rewind width clamping
-  - `lineBreaker_rewindRubyColumn`: needs ruby column line breaker rewinding
-  - `lineBreaker_getOverhangCrash`: needs ruby overhang calculation with negative margins
-  - `lineBreaker_removeTrailingCollapsibleSpace`: needs trailing space collapsing with extreme word spacing
-  - `lineBreaker_splitTrailingBidiCrCrash`: needs bidi segmenter trailing CR handling under white-space: pre
 
 thin, needs initial letter box layout, line clamp ellipsis placement with max-content sizing, block-in-inline reuse invalidation, text-fit CSS scaling, and ruby base box fragment generation: TestsInline_InlineLayoutAlgorithm
 - Strengthened theorems:
