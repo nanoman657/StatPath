@@ -156,9 +156,12 @@ done: TestsInline_RubyUtils +0
   - `lineBreaker_wideContentInRuby`, `overflowingContinuationRuby*`, `minMaxWithAtomicInlineInRuby`, `minMaxWithEmptyRubyBase`, `inlineNode_nestedRubyMinMaxCrash`: calculate ruby column min/max sizes with wide content, overflowing continuations, atomic inlines, and nested rubies per CSS Ruby 1 §4.
   - `justificationUtils_setupItemJustificationOpportunityCrash`: evaluates `hasRubyJustificationOpportunity` for annotation items and SVG non-text children under text-align: justify per CSS Text 3 §7.3 & CSS Ruby 1 §3.
 
-thin, needs IFC invalidation and offset mapping update lifecycle for display: inline list-item under counter-style mutations: TestsInline_List
-- Thin theorems:
-  - `layoutInlineListItem_getOffsetMappingNoCrash`, `offsetMappingBuilderNoCrash`: needs dynamic style recalc and IFC invalidation lifecycle for display: inline list-item with @counter-style rules
+done: TestsInline_List +0
+- Verified all 13 theorems in file are strong:
+  - `listMarker_fallbackToTextWhenImagesDisable`, `listMarker_addCounterStyle`, `listMarker_removeCounterStyle`, `listMarker_overridePredefinedCounterStyle`, `listMarker_removeOverrideOfPredefinedCounterStyle`, `listMarker_overrideSameScopeCounterStyle`, `listMarker_removeOverrideOfSameScopeCounterStyle`, `listMarker_widthOfSymbolForFontSizeZero`, `listMarker_modifyShadowDOMWithOwnCounterStyles`: evaluate dynamic @counter-style rules, symbol markers, font-size metrics, and shadow DOM counter style resolution per CSS Counter Styles 3 §2-4 & CSS Lists 3 §3.
+  - `layoutListItem_insideWithFirstLine`: evaluates first-line pseudo element marker placement and offset per CSS Lists 3 §3 & CSS Pseudo 4 §2.1.
+  - `layoutListItem_findSymbolMarkerLayoutTextWithTextCombine`: evaluates list marker text extraction unwrapping LayoutTextCombine per CSS Lists 3 §3 & CSS Writing Modes 3 §5.1.
+  - `layoutInlineListItem_getOffsetMappingNoCrash`, `offsetMappingBuilderNoCrash`: evaluate `isInlineListItem "inline list-item" = true` per CSS Lists 3 §2.1, verifying that inline list items participate in the enclosing inline formatting context.
 
 done: TestsInline_LayoutQuote +0
 - Verified `layoutQuote_locale` is not thin:
