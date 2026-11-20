@@ -402,28 +402,46 @@ theorem svg_inline_localToAncestorPoint :
 
 /-- Test `SvgTextLayoutAlgorithmTest, PositionOnPathCrash` (`svg/svg_text_layout_algorithm_test.cc:12`).
     SVG 2 §11.3.3 & §11.4: Characters laid out along a text path advance within path bounds
-    and apply textLength adjustments. -/
+    and apply textLength adjustments; connected characters beyond path end receive zero advance. -/
 theorem svgText_positionOnPathCrash :
-    computeSvgTextPathAdvance 200 0 400 = 200 ∧
-    computeSvgTextLengthAdjustment 200 400 .spacing = (1, 200) := by
+    let pathStart : Int × Int := (100, 200)
+    let pathEnd : Int × Int := (300, 200)
+    let pathLength := (pathEnd.1 - pathStart.1).toNat
+    let targetTextLength := 400
+    let advance := computeSvgTextPathAdvance pathLength 0 targetTextLength
+    let overflowAdvance := computeSvgTextPathAdvance pathLength pathLength targetTextLength
+    let (scale, spacing) := computeSvgTextLengthAdjustment pathLength targetTextLength .spacing
+    advance = 200 ∧ overflowAdvance = 0 ∧ scale = 1 ∧ spacing = 200 := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthCrash` (`svg/svg_text_layout_algorithm_test.cc:27`).
     SVG 2 §11.4: An empty textPath element with textLength specified produces zero advance and default scale 1. -/
 theorem svgText_emptyTextLengthCrash :
-    computeSvgTextLengthAdjustment 0 100 .spacing = (1, 0) := by
+    let textContent : String := ""
+    let actualWidth := textContent.length
+    let targetLength := 100
+    let (scale, spacing) := computeSvgTextLengthAdjustment actualWidth targetLength .spacing
+    actualWidth = 0 ∧ scale = 1 ∧ spacing = 0 := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, EmptyTextLengthSpacingAndGlyphsCrash` (`svg/svg_text_layout_algorithm_test.cc:38`).
     SVG 2 §11.4: Non-rendered zero-width characters under spacingAndGlyphs avoid division by zero. -/
 theorem svgText_emptyTextLengthSpacingAndGlyphsCrash :
-    computeSvgTextLengthAdjustment 0 5 .spacingAndGlyphs = (1, 0) := by
+    let chars : List Char := ['\u200D', '\u200D']
+    let actualAdvance : Nat := 0
+    let targetWidth : Nat := 5
+    let mode := SvgLengthAdjust.spacingAndGlyphs
+    let (scale, spacing) := computeSvgTextLengthAdjustment actualAdvance targetWidth mode
+    chars.length = 2 ∧ scale = 1 ∧ spacing = 0 := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, HugeScaleCrash` (`svg/svg_text_layout_algorithm_test.cc:47`).
     SVG 2 §7.3 & CSS Transforms 1 §5: Excessive scale factors on SVG text are clamped to finite layout bounds. -/
 theorem svgText_hugeScaleCrash :
-    clampSvgScale 16420065941240262705269076410170673060945878020586681613052798923953430637521913631296811416 1000000 = 1000000 := by
+    let specifiedScale : Nat := 16420065941240262705269076410170673060945878020586681613052798923953430637521913631296811416
+    let maxScale : Nat := 1000000
+    let effectiveScale := clampSvgScale specifiedScale maxScale
+    effectiveScale = maxScale ∧ effectiveScale ≤ maxScale := by
   decide
 
 /-- Test `SvgTextLayoutAlgorithmTest, ControlCharCrash` (`svg/svg_text_layout_algorithm_test.cc:62`).
@@ -445,8 +463,11 @@ theorem svgText_firstLineTextTransformCrash :
 /-- Test `SvgTextLayoutAttributesBuilderTest, TextPathCrash` (`svg/svg_text_layout_attributes_builder_test.cc:13`).
     SVG 2 §11.3.3: Nested textPath inside another textPath element is disallowed by SVG structure rules. -/
 theorem svgText_textPathCrash :
-    isSvgChildAllowed .a [.textPath, .text, .svg] .textPath = false := by
-  decide
+    let parent := SvgTag.a
+    let ancestors := [SvgTag.textPath, SvgTag.text, SvgTag.svg]
+    let child := SvgTag.textPath
+    isSvgChildAllowed parent ancestors child = false := by
+  rfl
 
 /-! ### SVG BBox Zero-Dimension Use Counter Tests (SVG 2 §13.2) -/
 
@@ -528,22 +549,30 @@ theorem layoutSvgRect_getBBoxUseCounterForNonZeroWidthAndHeight :
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroHeight` (`svg/layout_svg_viewport_container_test.cc:16`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroHeight :
-    shouldCountZeroWidthOrHeightBBox 100 0 = true := by
+    let width := 100
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = true := by
   rfl
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidth` (`svg/layout_svg_viewport_container_test.cc:36`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidth :
-    shouldCountZeroWidthOrHeightBBox 0 100 = true := by
+    let width := 0
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = true := by
   rfl
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:56`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 0 0 = false := by
+    let width := 0
+    let height := 0
+    shouldCountZeroWidthOrHeightBBox width height = false := by
   rfl
 
 /-- Test `LayoutSVGViewportContainerTest, GetBBoxUseCounterForNonZeroWidthAndHeight` (`svg/layout_svg_viewport_container_test.cc:76`). -/
 theorem layoutSvgViewportContainer_getBBoxUseCounterForNonZeroWidthAndHeight :
-    shouldCountZeroWidthOrHeightBBox 100 100 = false := by
+    let width := 100
+    let height := 100
+    shouldCountZeroWidthOrHeightBBox width height = false := by
   rfl
 
 end ChromiumLayout

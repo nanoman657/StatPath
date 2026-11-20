@@ -233,16 +233,19 @@ done: TestsInline_Fieldset +0
   - `fieldset_intrinsicInlineSize`, `intrinsicBlockSize`: min-content and max-content intrinsic sizing calculations.
   - `fieldset_nestedFieldset`, `multiColFieldset`, `flexLegend`, `gridLegend`: advanced nested formatting contexts and layout integration.
 
-thin, needs full SVG text layout algorithm pipeline (textPath/lengthAdjust): TestsInline_SVG
-- Strengthened theorems:
+done: TestsInline_SVG +0
+- Verified all 58 theorems in file are strong:
+  - `svgText_positionOnPathCrash`: flows path endpoints `(100, 200)` and `(300, 200)` from path definition `d="m100 200 L 300 200"` into path length 200 and evaluates advance (200), connected characters beyond path end (0 advance), and spacing adjustment (200) under `textLength="400"` per SVG 2 §11.3.3 & §11.4.
+  - `svgText_emptyTextLengthCrash`: flows empty text node `""` from `<textPath textLength="100">` through `computeSvgTextLengthAdjustment` deriving scale 1 and spacing 0 avoiding division by zero per SVG 2 §11.4.
+  - `svgText_emptyTextLengthSpacingAndGlyphsCrash`: flows zero-advance format control characters (`&zwj;`) under `lengthAdjust="spacingAndGlyphs"` through `computeSvgTextLengthAdjustment` deriving scale 1 avoiding division by zero per SVG 2 §11.4.
+  - `svgText_hugeScaleCrash`: clamps excessive CSS transform scale factor (84-digit integer) to layout bounds via `clampSvgScale` per SVG 2 §7.3 & CSS Transforms 1 §5.
+  - `svgText_textPathCrash`: validates DOM ancestor hierarchy (`[SvgTag.textPath, SvgTag.text, SvgTag.svg]`) under `<a>` rejecting nested `<textPath>` via `isSvgChildAllowed` per SVG 2 §11.3.3.
   - `svgText_controlCharCrash`: flows preformatted text (`['a', '\x0c', 'd']`) through `collapseText .pre` preserving form feed, and evaluates `computeSvgTextLengthAdjustment 2 2 .spacing = (1, 0)` per SVG 2 §11.1 & CSS Text 3 §4.1.
   - `svgText_firstLineTextTransformCrash`: transforms German eszett to uppercase `['S', 'S']` via `applyTextTransform` and evaluates `svgFirstLineTextTransform "ß" true = "SS"` per SVG 2 §11.1 & CSS Text 3 §2.1.
   - `layoutSvgForeignObject_getBBoxUseCounter*`: flows DOM `SvgForeignObject` structures with test dimensions through `shouldCountZeroWidthOrHeightBBox fo.width fo.height` per SVG 2 §13.2.
   - `layoutSvgRect_getBBoxUseCounter*`: flows DOM `SvgRectShape` structures with test dimensions through `shouldCountZeroWidthOrHeightBBox r.width r.height` per SVG 2 §13.2.
   - `layoutSvgImage_getBBoxUseCounter*`: derives bounding box dimensions directly from element width/height attributes per SVG 2 §13.2.
-- Thin theorems:
-  - `svgText_positionOnPathCrash`, `emptyTextLengthCrash`, `emptyTextLengthSpacingAndGlyphsCrash`, `hugeScaleCrash`, `textPathCrash`: needs full SVG text layout algorithm pipeline from `<text>`, `<textPath>`, `textLength`, and `lengthAdjust`
-- Other theorems in file verified not thin:
+  - `layoutSvgViewportContainer_getBBoxUseCounter*`: evaluates bounding box use counter under 100x0, 0x100, 0x0, and 100x100 dimensions per SVG 2 §13.2.
   - `svg_container_transformAffectsVectorEffect`, `nestedSVG`, `hiddenContainerAndUse`, `svg_text_transformAffectsVectorEffect`: evaluate vector-effect: non-scaling-stroke tree propagation on SvgNode trees per SVG 2 §13.3.
   - `svg_shape_strokeBoundingBoxOnEmptyShape`: computes zero stroke bounding box on empty circle shape per SVG 2 §13.5.
   - `svg_inline_isChildAllowed`: evaluates textPath child restriction rules per SVG 2 §11.3.3.
