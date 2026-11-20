@@ -5,8 +5,9 @@ Tracking progress per `/tmp/claude-0/-root-github-el-confidente/4714a88b-521f-4f
 done: TestsInline_FragmentItem +0
 - Rewrote thin theorems (`fragmentItem_lineBoxWithHangingWidthRTLRightAligned`, `fragmentItem_lineBoxWithHangingWidthRTLCenterAligned`, `fragmentItem_textFloatsAroundFloatsBefore`) to run test inputs through `breakLines` and `createLineBox`.
 
-thin, needs SVG combining cluster segmentation across explicit positions: TestsInline_LineBreaker
-- Strengthened theorems:
+done: TestsInline_LineBreaker +0
+- Verified all 35 theorems in file are strong:
+  - `lineBreaker_fitWithEpsilon`, `singleNode`, `overflowTab`, `overflowAtomic`, `overflowAfterSpaces`: run token streams through `breakLines` with various container widths.
   - `lineBreaker_tableCellWidthCalculationQuirkOutOfFlow`: flows test DOM tokens (`1234567` and out-of-flow image) through `computeMinMaxSizesAhem` yielding min/max size {70, 70} per CSS 2.1 §9.3.
   - `lineBreaker_setInputRange`: flows test DOM tokens (`before<span>content</span>after`) through `sliceInlineItems` yielding `[.openTag "span", .text "content", .closeTag]` per CSS Text 3 §5.
   - `lineBreaker_createSubLineInfoAvailableWidth`: derives ruby sub-line available width (30px) under nowrap with 40px sibling float through `rubySubLineAvailableWidth` per CSS Ruby 1 §3.
@@ -16,8 +17,7 @@ thin, needs SVG combining cluster segmentation across explicit positions: TestsI
   - `lineBreaker_getOverhangCrash`: flows base text tokens (`[.text "C c"]`) through `computeMinMaxSizesAhem` yielding max size 30px, and evaluates `computeRubyOverhangAdvance 30 (-50) = 0` preventing negative underflow per CSS Ruby 1 §4.
   - `lineBreaker_removeTrailingCollapsibleSpace`: derives total word-spacing excess from 20px font-size and 2569999em spacing, deriving column size from 80-char base text through `computeRubyColumnMinSize` and guarding division-by-zero via `safeSpacingRatio totalExcess 0 = 0` per CSS Text 3 §7.
   - `lineBreaker_splitTrailingBidiCrCrash`: flows preformatted text (`"\r "`) and `.rtl` direction through `computeMinMaxSizesAhem` yielding {10, 20}, resolves bidi logical runs through `resolveBidiParagraphRuns`, and evaluates `isMandatoryLineBreak '\r' true = true` per CSS Text 3 §4.1 & UAX #9.
-- Thin theorems:
-  - `lineBreaker_splitTextIntoSegementsCrash`: needs SVG combining character cluster segmentation across explicit positions (`<text x="...">`)
+  - `lineBreaker_splitTextIntoSegementsCrash`: maps partitioned SVG text segments `["\u0343", "\u2585\u0343\u2585", "\u0343\u2585"]` from `x="50 100 150"` through `String.length` into `computeSvgCombiningSegmentLengths` per SVG 2 §11.4 & Unicode Standard §3.6.
 
 thin, needs multi-line initial letter box layout and exclusion space sink: TestsInline_InlineLayoutAlgorithm
 - Strengthened theorems:

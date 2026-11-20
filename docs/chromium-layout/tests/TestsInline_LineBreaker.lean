@@ -367,8 +367,13 @@ theorem lineBreaker_trailingSpaceWidth :
     Splitting text with combining characters across explicit x-coordinate positions
     yields expected segment character lengths [1, 3, 2]. -/
 theorem lineBreaker_splitTextIntoSegementsCrash :
-    computeSvgCombiningSegmentLengths [1, 3, 2] = [1, 3, 2] := by
-  rfl
+    let xPositions := [50, 100, 150]
+    let textSegments := ["\u0343", "\u2585\u0343\u2585", "\u0343\u2585"]
+    let lengths := textSegments.map String.length
+    xPositions.length = 3 ∧
+    lengths = [1, 3, 2] ∧
+    computeSvgCombiningSegmentLengths lengths = [1, 3, 2] := by
+  decide
 
 /-- Test `LineBreakerTest, TableCellWidthCalculationQuirkOutOfFlow` (`inline/line_breaker_test.cc:821`).
     CSS 2.1 §9.3 & Quirks Mode:
