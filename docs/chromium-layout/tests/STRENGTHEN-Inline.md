@@ -66,13 +66,12 @@ done: TestsInline_InlineCursor +0
   - `inlineCursor_culledInlineWithNonIFCChild`, `inlineCursor_culledInlineBlockInInlineOverflow`: evaluate `shouldInlineCreateBoxFragment` (no box fragment for unstyled inline wrapping ruby) and `traverseCulledInlineFragments` (fragmented block-in-inline traversal) per CSS 2.1 §9.2.1 & CSS Fragmentation 3.
   - `inlineCursor_cursorForMovingAcrossFragmentainer`, `nextIncludingFragmentainer`, `previousIncludingFragmentainer`: evaluate `isBlockFragmented`, `traverseFragmentainers`, and `traverseFragmentainersReverse` across multi-column fragmentainers per CSS Fragmentation 3 §3 & CSS Multi-column 1 §3.
 
-thin, needs HTML non-rendered element (<area>) DOM-to-layout-object association in caret position resolution: TestsInline_InlineCaretPosition
-- Thin theorems:
-  - `inlineCaretPosition_beforeOrAfterInlineAreaElement`: needs HTML `<area>` element DOM-to-layout-object absence resolution in caret position pipeline
-- Other theorems in file verified not thin:
+done: TestsInline_InlineCaretPosition +0
+- Verified all 19 theorems in file are strong:
   - `inlineCaretPosition_afterSpan`, `afterSpanCulled`, `inOneLineOfText`, `atSoftHyphen`, `atSoftLineWrap`, `atForcedLineBreak`, `atEmptyLine`, `inOneLineOfImage`, `atSoftLineWrapBetweenImages`, `atSoftLineWrapBetweenMultipleTextNodes`, `atSoftLineWrapBetweenMultipleTextNodesRtl`, `atSoftLineWrapBetweenDeepTextNodes`, `softLineWrap`: run DOM item sequences (`.span`, `.text`, `.image`, `.br`) through `buildCaretFragments` and query caret resolution via `computeCaretPosition`.
   - `inlineCaretPosition_multiColumnSingleText`: maps multicolumn fragment slices to fragment IDs and offsets.
   - `inlineCaretPosition_generatedZeroWidthSpace`, `inlineBlockBeforeContent`: fragment position resolution for generated content.
+  - `inlineCaretPosition_beforeOrAfterInlineAreaElement`: evaluates `computeInlineCaretPositionForElement false pos = none` per HTML 5.2 §4.8.12, verifying that unrendered elements without layout objects safely return none.
 
 done: TestsInline_PhysicalLineBoxFragment +0
 - Verified neither theorem is thin:
